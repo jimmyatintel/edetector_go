@@ -22,6 +22,8 @@ var Client_detect_UDP_Server net.PacketConn
 var Tcp_enable bool
 var Udp_enable bool
 
+var Task_channel map[string](chan string)
+
 func Connect_init() int {
 	var err error
 	if Tcp_enable, err = fflag.FFLAG.FeatureEnabled("client_tcp"); Tcp_enable && err == nil {
@@ -60,11 +62,11 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			go handleTCPRequest(conn)
+			task := make(chan string)
+			go handleTCPRequest(conn, task)
 		}
 	}
 	c <- "TCP Server is nil"
-	return
 }
 func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 	if Client_detect_TCP_Server != nil {
@@ -74,11 +76,10 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			go handleTCPRequest(conn)
+			go handleTCPRequest(conn, nil)
 		}
 	}
 	c <- "TCP Server is nil"
-	return
 }
 func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 	if Client_UDP_Server != nil {
@@ -94,7 +95,9 @@ func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 	c <- "UDP Server is nil"
 	return
 }
+func Conn_command_start() {
 
+}
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	wg := new(sync.WaitGroup)
 	defer wg.Done()
@@ -102,11 +105,13 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	TCP_CHANNEL := make(chan string)
 	TCP_DETECT_CHANNEL := make(chan string)
 	UDP_CHANNEL := make(chan string)
+	Task_channel = make(map[string](chan string))
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
+	// go Conn_command_start()
 	rt := 0
 	if Tcp_enable {
 		select {
