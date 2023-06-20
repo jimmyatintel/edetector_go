@@ -6,6 +6,7 @@ import (
 
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/mariadb/query"
 	"strings"
 )
 
@@ -32,6 +33,14 @@ type DataPacket struct {
 	Work       task.TaskType
 	Message    string
 	Raw_data   []byte
+}
+type TaskPacket struct {
+	// Packet is a struct that contains the packet data
+	Key     string
+	Work    task.TaskType
+	User    string
+	Message string
+	Data    []byte
 }
 
 // var Uuid uuid.UUID
@@ -74,8 +83,6 @@ func (p *WorkPacket) NewPacket(data []byte, buf []byte) error {
 	}
 	p.Message = string(data[64 : 64+nullIndex])
 	return nil
-	// p.Rkey = Uuid.String()
-	// logger.Info("New packet:", zap.Any("MacAddress", p.MacAddress), zap.Any("IpAddress", p.IpAddress), zap.Any("Work", p.Work), zap.Any("Message", p.Message))
 }
 func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	error := errors.New("invalid data packet")
@@ -103,9 +110,30 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	}
 	p.Raw_data = buf
 	return nil
-
-	// p.Rkey = Uuid.String()
-	// logger.Info("New packet:", zap.Any("MacAddress", p.MacAddress), zap.Any("IpAddress", p.IpAddress), zap.Any("Work", p.Work), zap.Any("Message", p.Message))
+}
+func (p *TaskPacket) NewPacket(data []byte) error {
+	error := errors.New("invalid Task packet")
+	nullIndex := bytes.IndexByte(data[0:32], 0)
+	if nullIndex == -1 {
+		return error
+	}
+	p.Key = string(data[0:nullIndex])
+	nullIndex = bytes.IndexByte(data[32:56], 0)
+	if nullIndex == -1 {
+		return error
+	}
+	p.Work = task.GetTaskType(string(data[32 : 32+nullIndex]))
+	nullIndex = bytes.IndexByte(data[56:76], 0)
+	if nullIndex == -1 {
+		return error
+	}
+	p.User = string(data[56 : 56+nullIndex])
+	nullIndex = bytes.IndexByte(data[76:], 0)
+	if nullIndex == -1 {
+		return error
+	}
+	p.Message = string(data[76 : 76+nullIndex])
+	return nil
 }
 func ljust(s string, width int, fillChar string) []byte {
 	data := []byte(s)
@@ -132,10 +160,21 @@ func (p *DataPacket) Fluent() []byte {
 	data = append(data, ljust(p.Message, 960, " ")...)
 	return data
 }
+func (p *TaskPacket) Fluent() []byte {
+	data := []byte("")
+	data = append(data, ljust(p.Key, 32, " ")...)
+	data = append(data, ljust(string(p.Work), 24, " ")...)
+	data = append(data, ljust(p.User, 20, " ")...)
+	data = append(data, ljust(p.Message, 948, " ")...)
+	return data
+}
 func (p *WorkPacket) GetMessage() string {
 	return p.Message
 }
 func (p *DataPacket) GetMessage() string {
+	return p.Message
+}
+func (p *TaskPacket) GetMessage() string {
 	return p.Message
 }
 func (p *WorkPacket) GetTaskType() task.TaskType {
@@ -144,11 +183,17 @@ func (p *WorkPacket) GetTaskType() task.TaskType {
 func (p *DataPacket) GetTaskType() task.TaskType {
 	return p.Work
 }
+func (p *TaskPacket) GetTaskType() task.TaskType {
+	return p.Work
+}
 func (p *WorkPacket) GetMacAddress() string {
 	return p.MacAddress
 }
 func (p *DataPacket) GetMacAddress() string {
 	return p.MacAddress
+}
+func (p *TaskPacket) GetMacAddress() string {
+	return query.GetMachineMAC(p.Key)
 }
 func (p *WorkPacket) GetipAddress() string {
 	return p.IpAddress
@@ -156,9 +201,15 @@ func (p *WorkPacket) GetipAddress() string {
 func (p *DataPacket) GetipAddress() string {
 	return p.IpAddress
 }
+func (p *TaskPacket) GetipAddress() string {
+	return query.GetMachineIP(p.Key)
+}
 func (p *WorkPacket) GetRKey() string {
 	return p.Rkey
 }
 func (p *DataPacket) GetRKey() string {
 	return "null"
+}
+func (p *TaskPacket) GetRKey() string {
+	return p.Key
 }

@@ -17,11 +17,12 @@ import (
 
 var Client_TCP_Server net.Listener
 var Client_detect_TCP_Server net.Listener
+var Task_server_TCP_Server net.Listener
 var Client_UDP_Server net.PacketConn
 var Client_detect_UDP_Server net.PacketConn
 var Tcp_enable bool
 var Udp_enable bool
-
+var Task_enable bool
 var Task_channel map[string](chan string)
 
 func Connect_init() int {
@@ -47,6 +48,14 @@ func Connect_init() int {
 			return 1
 		}
 		Client_detect_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
+		if err != nil {
+			logger.Error("Error listening:", zap.Any("error", err.Error()))
+			return 1
+		}
+	}
+	if Task_enable, err = fflag.FFLAG.FeatureEnabled("task_server_enable"); Task_enable && err == nil {
+		logger.Info("task server is enabled")
+		Task_server_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_TASK_PORT"))
 		if err != nil {
 			logger.Error("Error listening:", zap.Any("error", err.Error()))
 			return 1
@@ -95,9 +104,19 @@ func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 	c <- "UDP Server is nil"
 	return
 }
-func Conn_command_start() {
-
+func Conn_task_server_start(c chan string, task_channel map[string](chan string), ctx context.Context) {
+	if Task_server_TCP_Server != nil {
+		for {
+			conn, err := Task_server_TCP_Server.Accept()
+			if err != nil {
+				// fmt.Println("Error accepting: ", err.Error())
+				c <- err.Error()
+			}
+			go handleTaskrequest(conn)
+		}
+	}
 }
+
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	wg := new(sync.WaitGroup)
 	defer wg.Done()
@@ -105,12 +124,14 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	TCP_CHANNEL := make(chan string)
 	TCP_DETECT_CHANNEL := make(chan string)
 	UDP_CHANNEL := make(chan string)
-	Task_channel = make(map[string](chan string))
+	Task_map_channel := make(map[string](chan string))
+	TASK_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
+	go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
 	// go Conn_command_start()
 	rt := 0
 	if Tcp_enable {
