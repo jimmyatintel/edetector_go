@@ -20,7 +20,7 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	logger.Info("GiveInfo: ", zap.Any("message", p.GetMessage()))
 	np := packet.CheckIsWork(p)
 	ClientInfo := client.PacketClientInfo(np)
-	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") {
+	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") {
 		ClientInfo.KeyNum = strings.Replace(uuid.New().String(), "-", "", -1)
 	}
 	query.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())

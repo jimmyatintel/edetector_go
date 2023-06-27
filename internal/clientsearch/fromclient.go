@@ -106,10 +106,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 				return
 			}
 		}
-		if *Key != "null" && task_chan != nil {
-			Task_channel[*Key] = task_chan
-			fmt.Println("set task " + *Key)
-		}
+		// wait for key to join the packet
+		// if *Key != "null" && task_chan != nil {
+		// 	Task_channel[*Key] = task_chan
+		// 	fmt.Println("set task " + *Key)
+		// }
 	}
 }
 
