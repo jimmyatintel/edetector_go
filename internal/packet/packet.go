@@ -30,6 +30,7 @@ type DataPacket struct {
 	// Packet is a struct that contains the packet data
 	MacAddress string
 	IpAddress  string
+	Rkey       string
 	Work       task.TaskType
 	Message    string
 	Raw_data   []byte
@@ -96,17 +97,22 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 		return error
 	}
 	p.IpAddress = string(data[20 : 20+nullIndex])
-	nullIndex = bytes.IndexByte(data[40:64], 0)
+	nullIndex = bytes.IndexByte(data[40:73], 0)
 	if nullIndex == -1 {
 		return error
 	}
-	p.Work = task.GetTaskType(string(data[40 : 40+nullIndex]))
-	nullIndex = bytes.IndexByte(data[64:], 0)
+	p.Rkey = string(data[40 : 40+nullIndex])
+	nullIndex = bytes.IndexByte(data[73:97], 0)
 	if nullIndex == -1 {
-		p.Message = string(data[64:])
+		return error
+	}
+	p.Work = task.GetTaskType(string(data[73 : 73+nullIndex]))
+	nullIndex = bytes.IndexByte(data[97:], 0)
+	if nullIndex == -1 {
+		p.Message = string(data[97:])
 
 	} else {
-		p.Message = string(data[64 : 64+nullIndex])
+		p.Message = string(data[97 : 97+nullIndex])
 	}
 	p.Raw_data = buf
 	return nil
@@ -208,7 +214,7 @@ func (p *WorkPacket) GetRKey() string {
 	return p.Rkey
 }
 func (p *DataPacket) GetRKey() string {
-	return "null"
+	return p.Rkey
 }
 func (p *TaskPacket) GetRKey() string {
 	return p.Key

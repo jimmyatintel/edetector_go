@@ -96,10 +96,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
+				logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
-			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WrokMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
