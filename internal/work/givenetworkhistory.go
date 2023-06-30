@@ -15,6 +15,7 @@ import (
 
 var Data_acache []byte
 
+
 type NetworkJson struct {
 	PID                string `json:"pid"`
 	Address            string `json:"address"`
