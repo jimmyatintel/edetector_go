@@ -87,7 +87,7 @@ func GiveNetworkHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.T
 
 func GiveNetworkHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	change2json(p)
+	ChangeNetwork2Json(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -101,7 +101,7 @@ func GiveNetworkHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func change2json(p packet.Packet) {
+func ChangeNetwork2Json(p packet.Packet) {
 	lines := strings.Split(p.GetMessage(), "\n")
 	var dataSlice []NetworkJson
 	for _, line := range lines {
