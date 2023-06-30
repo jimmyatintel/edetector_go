@@ -17,6 +17,7 @@ type Packet interface {
 	GetipAddress() string
 	Fluent() []byte
 	GetTaskType() task.TaskType
+	GetRkey() string
 }
 type WorkPacket struct {
 	// Packet is a struct that contains the packet data
@@ -30,6 +31,7 @@ type DataPacket struct {
 	// Packet is a struct that contains the packet data
 	MacAddress string
 	IpAddress  string
+	Rkey       string
 	Work       task.TaskType
 	Message    string
 	Raw_data   []byte
@@ -43,7 +45,6 @@ type TaskPacket struct {
 	Data    []byte
 }
 
-//alalal
 // var Uuid uuid.UUID
 
 func init() {
@@ -60,8 +61,9 @@ func CheckIsData(p Packet) DataPacket {
 	return *NewPacket
 }
 
+// commit
 func (p *WorkPacket) NewPacket(data []byte, buf []byte) error {
-	error := errors.New("invalid work packet")
+	error := errors.New("invalid data packet")
 	nullIndex := bytes.IndexByte(data[0:20], 0)
 	if nullIndex == -1 {
 		return error
@@ -72,21 +74,23 @@ func (p *WorkPacket) NewPacket(data []byte, buf []byte) error {
 		return error
 	}
 	p.IpAddress = string(data[20 : 20+nullIndex])
-	nullIndex = bytes.IndexByte(data[40:64], 0)
+	nullIndex = bytes.IndexByte(data[40:76], 0)
 	if nullIndex == -1 {
 		return error
 	}
-	// fmt.Println("function", string(data[40:40+nullIndex]))
-	p.Work = task.GetTaskType(string(data[40 : 40+nullIndex]))
-	nullIndex = bytes.IndexByte(data[64:], 0)
-	// if p.Work == task.UNDEFINE {
-	// 	type_error := errors.New("invalid task type" + string(data[40 : 40+nullIndex]))
-	// 	return type_error
-	// }
+	p.Rkey = string(data[40 : 40+nullIndex])
+	nullIndex = bytes.IndexByte(data[76:100], 0)
 	if nullIndex == -1 {
 		return error
 	}
-	p.Message = string(data[64 : 64+nullIndex])
+	p.Work = task.GetTaskType(string(data[76 : 76+nullIndex]))
+	nullIndex = bytes.IndexByte(data[100:], 0)
+	if nullIndex == -1 {
+		p.Message = string(data[100:])
+
+	} else {
+		p.Message = string(data[100 : 100+nullIndex])
+	}
 	return nil
 }
 func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
@@ -101,17 +105,22 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 		return error
 	}
 	p.IpAddress = string(data[20 : 20+nullIndex])
-	nullIndex = bytes.IndexByte(data[40:64], 0)
+	nullIndex = bytes.IndexByte(data[40:76], 0)
 	if nullIndex == -1 {
 		return error
 	}
-	p.Work = task.GetTaskType(string(data[40 : 40+nullIndex]))
-	nullIndex = bytes.IndexByte(data[64:], 0)
+	p.Rkey = string(data[40 : 40+nullIndex])
+	nullIndex = bytes.IndexByte(data[76:100], 0)
 	if nullIndex == -1 {
-		p.Message = string(data[64:])
+		return error
+	}
+	p.Work = task.GetTaskType(string(data[76 : 76+nullIndex]))
+	nullIndex = bytes.IndexByte(data[100:], 0)
+	if nullIndex == -1 {
+		p.Message = string(data[100:])
 
 	} else {
-		p.Message = string(data[64 : 64+nullIndex])
+		p.Message = string(data[100 : 100+nullIndex])
 	}
 	p.Raw_data = buf
 	return nil
@@ -153,16 +162,18 @@ func (p *WorkPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
+	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.Message, 960, " ")...)
+	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
 func (p *DataPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
+	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.Message, 960, " ")...)
+	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
 func (p *TaskPacket) Fluent() []byte {
@@ -209,12 +220,12 @@ func (p *DataPacket) GetipAddress() string {
 func (p *TaskPacket) GetipAddress() string {
 	return query.GetMachineIP(p.Key)
 }
-func (p *WorkPacket) GetRKey() string {
+func (p *WorkPacket) GetRkey() string {
 	return p.Rkey
 }
-func (p *DataPacket) GetRKey() string {
-	return "null"
+func (p *DataPacket) GetRkey() string {
+	return p.Rkey
 }
-func (p *TaskPacket) GetRKey() string {
+func (p *TaskPacket) GetRkey() string {
 	return p.Key
 }
