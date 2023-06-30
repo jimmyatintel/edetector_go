@@ -29,11 +29,12 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	query.Online(ClientInfo.KeyNum, tm)
 	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
 	redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
-	*Key = ClientInfo.KeyNum
+	*Key = p.GetRkey()
 	// logger.Info("Redis get", zap.Any("key", ClientInfo.KeyNum), zap.Any("value", redis.Redis_get(ClientInfo.KeyNum)))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
+		Rkey:       p.GetRkey(),
 		Work:       task.OPEN_CHECK_THREAD,
 		Message:    ClientInfo.KeyNum,
 	}

@@ -65,13 +65,13 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
-			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
+			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WrokMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				fmt.Println(*Key)
 			}
 			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
 				return
 			}
 		} else if reqLen > 0 && Key != nil && *Key == "null" {
