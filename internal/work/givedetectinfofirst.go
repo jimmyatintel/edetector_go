@@ -13,12 +13,11 @@ import (
 
 func GiveDetectInfoFirst(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	// front process back netowork
-	logger.Info("GiveDetectInfoFirst: ", zap.Any("Key", p.GetRkey()), zap.Any("message", p.GetMessage()))
+	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetMessage()))
 	rt := query.First_detect_info(*Key, p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Rkey:       p.GetRkey(),
 		Work:       task.UPDATE_DETECT_MODE,
 		Message:    rt,
 	}

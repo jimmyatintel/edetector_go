@@ -15,9 +15,8 @@ func GiveProcessInformation(p packet.Packet, Key *string, conn net.Conn) (task.T
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		// Rkey:       p.GetRkey(),
-		Work:    task.GET_PROCESS_INFORMATION,
-		Message: "null",
+		Work:       task.GET_PROCESS_INFORMATION,
+		Message:    "null",
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -31,7 +30,6 @@ func GiveProcessInfoData(p packet.Packet, Key *string, conn net.Conn) (task.Task
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Rkey:       p.GetRkey(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
@@ -47,7 +45,6 @@ func GiveProcessInfoEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Rkey:       p.GetRkey(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
