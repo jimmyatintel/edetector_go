@@ -12,6 +12,7 @@ import (
 
 var Data_acache []byte
 
+// lalalal
 func GiveNetworkHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
