@@ -150,9 +150,6 @@ func handleTaskrequest(conn net.Conn) {
 				return
 			}
 		}
-
-		
-		
 	}
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
