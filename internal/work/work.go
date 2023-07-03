@@ -10,6 +10,10 @@ import (
 
 var WrokMap map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error)
 
+type Request_data interface {
+	Elastical() ([]byte, error)
+}
+
 func init() {
 	WrokMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
 		task.GIVE_INFO:              GiveInfo,
