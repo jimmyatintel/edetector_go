@@ -135,6 +135,7 @@ func handleTaskrequest(conn net.Conn) {
 			logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 		}
 		fmt.Println(string(content))
+		//todo handle task
 	}
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {

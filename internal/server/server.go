@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
 	fflag "edetector_go/internal/fflag"
+	"edetector_go/pkg/elastic"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
@@ -67,5 +68,12 @@ func serverinit() {
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
 		fmt.Println("rabbit is enabled.")
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		err := elastic.SetElkClient()
+		if err != nil {
+			logger.Error("Error connecting to elastic: " + err.Error())
+		}
+		fmt.Println("elastic is enabled.")
 	}
 }
