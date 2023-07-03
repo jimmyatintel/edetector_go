@@ -10,6 +10,7 @@ import (
 	// fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	work "edetector_go/internal/work"
+	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
@@ -30,7 +31,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 	defer func() {
 		Key = nil
 	}()
-	if task_chan != nil {
+	if task_chan != nil { //! 不確定具體用途
 		go func() {
 			for {
 				select {
@@ -117,6 +118,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 func handleTaskrequest(conn net.Conn) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
+	Key = new(string)
+	*Key = "null"
+	defer func() {
+		Key = nil
+	}()
+
 	for {
 		reqLen, err := conn.Read(buf)
 		if err != nil {
@@ -128,14 +135,21 @@ func handleTaskrequest(conn net.Conn) {
 				return
 			}
 		}
-		content := buf[:reqLen]
-		NewPacket := new(packet.TaskPacket)
-		err = NewPacket.NewPacket(content)
-		if err != nil {
-			logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+		if reqLen <= 1024 {
+			content := buf[:reqLen]
+			NewPacket := new(packet.TaskPacket)
+			err = NewPacket.NewPacket(content)
+			if err != nil {
+				logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				return
+			}
+			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
+			_, err = work_from_api.WrokapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
+			if err != nil {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
+				return
+			}
 		}
-		fmt.Println(string(content))
-		//todo handle task
 	}
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {

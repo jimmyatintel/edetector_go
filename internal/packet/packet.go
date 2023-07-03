@@ -3,11 +3,13 @@ package packet
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
 	"strings"
+	"encoding/json"
 )
 
 type Packet interface {
@@ -17,6 +19,15 @@ type Packet interface {
 	GetipAddress() string
 	Fluent() []byte
 	GetTaskType() task.TaskType
+	GetRkey() string
+}
+type UserPacket interface {
+	NewPacket(data []byte) error
+	GetMessage() string
+	GetMacAddress() string
+	GetipAddress() string
+	Fluent() []byte
+	GetUserTaskType() task.UserTaskType
 	GetRkey() string
 }
 type WorkPacket struct {
@@ -39,7 +50,7 @@ type DataPacket struct {
 type TaskPacket struct {
 	// Packet is a struct that contains the packet data
 	Key     string
-	Work    task.TaskType
+	Work    task.UserTaskType
 	User    string
 	Message string
 	Data    []byte
@@ -126,27 +137,45 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-	error := errors.New("invalid Task packet")
-	nullIndex := bytes.IndexByte(data[0:32], 0)
-	if nullIndex == -1 {
-		return error
+	var jsonData map[string]interface{}
+	err := json.Unmarshal(data, &jsonData)
+	if err != nil {
+		return err
 	}
-	p.Key = string(data[0:nullIndex])
-	nullIndex = bytes.IndexByte(data[32:56], 0)
-	if nullIndex == -1 {
-		return error
+	key, ok := jsonData["key"].(string)
+	if !ok {
+		return errors.New("invalid key field")
 	}
-	p.Work = task.GetTaskType(string(data[32 : 32+nullIndex]))
-	nullIndex = bytes.IndexByte(data[56:76], 0)
-	if nullIndex == -1 {
-		return error
+	p.Key = key
+
+	work, ok := jsonData["work"].(string)
+	if !ok {
+		return errors.New("invalid work field")
 	}
-	p.User = string(data[56 : 56+nullIndex])
-	nullIndex = bytes.IndexByte(data[76:], 0)
-	if nullIndex == -1 {
-		return error
+	p.Work = task.UserTaskType(work)
+
+	user, ok := jsonData["user"].(string)
+	if !ok {
+		return errors.New("invalid user field")
 	}
-	p.Message = string(data[76 : 76+nullIndex])
+	p.User = user
+
+	messageObj, ok := jsonData["message"].(map[string]interface{})
+	if !ok {
+		return errors.New("invalid message field")
+	}
+
+	process, ok := messageObj["process"].(bool)
+	if !ok {
+		return errors.New("invalid process field in message")
+	}
+	network, ok := messageObj["network"].(bool)
+	if !ok {
+		return errors.New("invalid network field in message")
+	}
+	p.Message = fmt.Sprintf("%v|%v", process, network)
+	fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
+
 	return nil
 }
 func ljust(s string, width int, fillChar string) []byte {
@@ -199,7 +228,7 @@ func (p *WorkPacket) GetTaskType() task.TaskType {
 func (p *DataPacket) GetTaskType() task.TaskType {
 	return p.Work
 }
-func (p *TaskPacket) GetTaskType() task.TaskType {
+func (p *TaskPacket) GetUserTaskType() task.UserTaskType {
 	return p.Work
 }
 func (p *WorkPacket) GetMacAddress() string {
