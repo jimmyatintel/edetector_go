@@ -21,7 +21,7 @@ type NetworkJson struct {
 	Address            string `json:"address"`
 	Timestamp          string `json:"timestamp"`
 	ProcessTime        string `json:"process_time"`
-	ConnectionINorOUT  string `json:"connection_INorOUT"`
+	ConnINorOUT        string `json:"conn_INorOUT"`
 	AgentPort          string `json:"agent_port"`
 }
 
@@ -112,7 +112,7 @@ func ChangeNetwork2Json(p packet.Packet) {
 				Address:            values[1],
 				Timestamp:          values[2],
 				ProcessTime:        values[3],
-				ConnectionINorOUT:  values[4],
+				ConnINorOUT:        values[4],
 				AgentPort:          values[5],
 			}
 

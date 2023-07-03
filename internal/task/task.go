@@ -17,3 +17,12 @@ func GetTaskType(work string) TaskType {
 	}
 	return UNDEFINE
 }
+
+func GetUserTaskType(work string) UserTaskType {
+	for _, v := range UserWorklist {
+		if v == UserTaskType(work) {
+			return v
+		}
+	}
+	return USER_UNDEFINE
+}
