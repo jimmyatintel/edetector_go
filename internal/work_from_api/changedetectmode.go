@@ -6,27 +6,11 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"encoding/json"
-	"edetector_go/pkg/logger"
-	"encoding/json"
 	"net"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap"
 )
 
-type Request struct {
-	Key     string `json:"key"`
-	Work    string `json:"work"`
-	User    string `json:"user"`
-	Message struct {
-		Process bool `json:"process"`
-		Network bool `json:"network"`
-	} `json:"message"`
-}
-
-type Response struct {
-	IsSuccess bool   `json:"isSuccess"`
-	Message   string `json:"message"`
 type Request struct {
 	Key     string `json:"key"`
 	Work    string `json:"work"`
