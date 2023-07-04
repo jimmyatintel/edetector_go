@@ -163,9 +163,3 @@ func handleTaskrequest(conn net.Conn) {
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
 }
-
-func SendUserTCPtoClient(key string, packet packet.WorkPacket) error{
-	task_chan := Task_channel[key]
-	task_chan <- packet
-	return nil
-}
