@@ -18,12 +18,12 @@ import (
 var Data_acache []byte
 
 type NetworkJson struct {
-	PID               string `json:"pid"`
+	PID               int    `json:"pid"`
 	Address           string `json:"address"`
-	Timestamp         string `json:"timestamp"`
-	ProcessTime       string `json:"process_time"`
-	ConnectionINorOUT string `json:"connection_INorOUT"`
-	AgentPort         string `json:"agent_port"`
+	Timestamp         int64  `json:"timestamp"`
+	ProcessTime       int64  `json:"process_time"`
+	ConnectionINorOUT bool   `json:"connection_inorout"`
+	AgentPort         int    `json:"agent_port"`
 }
 
 func (n NetworkJson) Elastical() ([]byte, error) {
