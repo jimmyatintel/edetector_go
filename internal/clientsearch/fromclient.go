@@ -23,7 +23,7 @@ import (
 
 var Key *string
 
-func handleTCPRequest(conn net.Conn, task_chan chan string) {
+func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
 	Key = new(string)
@@ -36,7 +36,9 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 			for {
 				select {
 				case message := <-task_chan:
-					fmt.Println("get task msg: " + message)
+					
+					fmt.Println("get task msg: " + string(message.Message))
+
 				}
 			}
 		}()
@@ -160,4 +162,10 @@ func handleTaskrequest(conn net.Conn) {
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
+}
+
+func SendUserTCPtoClient(key string, packet packet.WorkPacket) error{
+	task_chan := Task_channel[key]
+	task_chan <- packet
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	logger "edetector_go/pkg/logger"
+	packet "edetector_go/internal/packet"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ var Client_detect_UDP_Server net.PacketConn
 var Tcp_enable bool
 var Udp_enable bool
 var Task_enable bool
-var Task_channel map[string](chan string)
+var Task_channel map[string](chan packet.WorkPacket)
 
 func Connect_init() int {
 	var err error
@@ -64,7 +65,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	Task_channel = make(map[string](chan string))
+	Task_channel = make(map[string](chan packet.WorkPacket))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
@@ -72,8 +73,8 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			task := make(chan string)
-			go handleTCPRequest(conn, task)
+			new_task_chan := make(chan packet.WorkPacket)
+			go handleTCPRequest(conn, new_task_chan)
 		}
 	}
 	c <- "TCP Server is nil"
