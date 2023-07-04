@@ -3,8 +3,9 @@ package clientsearchsend
 import (
 	// "context"
 	C_AES "edetector_go/internal/C_AES"
-	packet "edetector_go/internal/packet"
-	taskchannel "edetector_go/internal/taskchannel"
+	"edetector_go/internal/taskchannel"
+	"edetector_go/internal/packet"
+
 	"net"
 )
 
