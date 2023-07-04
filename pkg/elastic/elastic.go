@@ -43,7 +43,7 @@ func IndexRequest(name string, body string) {
 		panic(err)
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	// logger.Info(res.String())
 }
 
 func searchRequest(name string, body string) {
