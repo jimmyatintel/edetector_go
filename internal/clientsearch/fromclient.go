@@ -72,10 +72,9 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
-				fmt.Println("give info: ", *Key)
 				// wait for key to join the packet
 				taskchannel.Task_channel[*Key] = task_chan
-				fmt.Println("set task " + *Key)
+				fmt.Println("set key-channel mapping" + *Key)
 			}
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
