@@ -6,7 +6,7 @@ import (
 )
 
 func GetMachineIP(KeyNum string) (ip string) {
-	res, err := mariadb.DB.Query("SELECT ip FROM client WHERE client_id = ?)", KeyNum)
+	res, err := mariadb.DB.Query("SELECT ip FROM client WHERE client_id = ?", KeyNum)
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -23,7 +23,7 @@ func GetMachineIP(KeyNum string) (ip string) {
 }
 
 func GetMachineMAC(KeyNum string) (mac string) {
-	res, err := mariadb.DB.Query("SELECT mac FROM client WHERE client_id = ?)", KeyNum)
+	res, err := mariadb.DB.Query("SELECT mac FROM client WHERE client_id = ?", KeyNum)
 	if err != nil {
 		logger.Error(err.Error())
 		return
