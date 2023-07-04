@@ -22,7 +22,7 @@ func ChangeDetectMode(p packet.UserPacket, Key *string, conn net.Conn) (task.Tas
 		Work:       task.UPDATE_DETECT_MODE,
 		Message:    p.GetMessage(), // "0|0"
 	}
-	err := clientsearchsend.SendUserTCPtoClient(p.GetRkey(), send_packet)
+	err := clientsearchsend.SendUserTCPtoClient(send_packet.Fluent(), p.GetRkey())
 	if err != nil {
 		return task.FAIL, err
 	}

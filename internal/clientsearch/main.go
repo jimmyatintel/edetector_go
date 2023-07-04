@@ -5,7 +5,6 @@ import (
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	logger "edetector_go/pkg/logger"
-	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
 	"fmt"
 
@@ -65,7 +64,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	taskchannel.Task_channel = make(map[string](chan packet.WorkPacket))
+	taskchannel.Task_channel = make(map[string](chan []byte))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
@@ -73,7 +72,7 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			new_task_chan := make(chan packet.WorkPacket)
+			new_task_chan := make(chan []byte)
 			go handleTCPRequest(conn, new_task_chan)
 		}
 	}

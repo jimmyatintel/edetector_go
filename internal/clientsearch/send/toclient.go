@@ -4,7 +4,6 @@ import (
 	// "context"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/taskchannel"
-	"edetector_go/internal/packet"
 
 	"net"
 )
@@ -24,8 +23,8 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-func SendUserTCPtoClient(key string, packet packet.WorkPacket) error{
+func SendUserTCPtoClient(data []byte, key string) error{
 	task_chan := taskchannel.Task_channel[key]
-	task_chan <- packet
+	task_chan <- data
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
@@ -24,7 +25,7 @@ import (
 
 var Key *string
 
-func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
+func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
 	Key = new(string)
@@ -37,9 +38,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 			for {
 				select {
 				case message := <-task_chan:
-					
-					fmt.Println("get task msg: " + string(message.Message))
-
+					fmt.Println("get task msg: " + string(message))
+					clientsearchsend.SendTCPtoClient(message, conn)
 				}
 			}
 		}()
@@ -72,7 +72,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
-				fmt.Println(*Key)
+				fmt.Println("give info: ", *Key)
+				// wait for key to join the packet
+				taskchannel.Task_channel[*Key] = task_chan
+				fmt.Println("set task " + *Key)
 			}
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
@@ -109,11 +112,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
 			}
-		}
-		// wait for key to join the packet
-		if *Key != "null" && task_chan != nil {
-			taskchannel.Task_channel[*Key] = task_chan
-			fmt.Println("set task " + *Key)
 		}
 	}
 }
