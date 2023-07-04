@@ -20,5 +20,7 @@ func ChangeDetectMode(p packet.UserPacket, Key *string, conn net.Conn) (task.Tas
 	// 	return task.FAIL, err
 	// }
 
+	
+
 	return task.SUCCESS, nil
 }
