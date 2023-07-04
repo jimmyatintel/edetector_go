@@ -8,14 +8,14 @@ import (
 	"net"
 )
 
-var WrokMap map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error)
+var WorkMap map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error)
 
 type Request_data interface {
 	Elastical() ([]byte, error)
 }
 
 func init() {
-	WrokMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
+	WorkMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
 		task.GIVE_INFO:              GiveInfo,
 		task.GIVE_DETECT_INFO_FIRST: GiveDetectInfoFirst,
 		task.CHECK_CONNECT:          CheckConnect,
