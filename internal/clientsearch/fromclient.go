@@ -12,6 +12,7 @@ import (
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
+	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 
@@ -111,7 +112,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 		}
 		// wait for key to join the packet
 		if *Key != "null" && task_chan != nil {
-			Task_channel[*Key] = task_chan
+			taskchannel.Task_channel[*Key] = task_chan
 			fmt.Println("set task " + *Key)
 		}
 	}
@@ -162,10 +163,4 @@ func handleTaskrequest(conn net.Conn) {
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
-}
-
-func SendUserTCPtoClient(key string, packet packet.WorkPacket) error{
-	task_chan := Task_channel[key]
-	task_chan <- packet
-	return nil
 }

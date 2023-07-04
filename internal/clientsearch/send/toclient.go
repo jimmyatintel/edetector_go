@@ -3,6 +3,8 @@ package clientsearchsend
 import (
 	// "context"
 	C_AES "edetector_go/internal/C_AES"
+	packet "edetector_go/internal/packet"
+	taskchannel "edetector_go/internal/taskchannel"
 	"net"
 )
 
@@ -21,7 +23,8 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-// func SendUserTCPtoClient(key string) error{
-	
-// 	return nil
-// }
+func SendUserTCPtoClient(key string, packet packet.WorkPacket) error{
+	task_chan := taskchannel.Task_channel[key]
+	task_chan <- packet
+	return nil
+}
