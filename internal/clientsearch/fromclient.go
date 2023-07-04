@@ -149,7 +149,7 @@ func handleTaskrequest(conn net.Conn) {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
 				return
 			}
-		}else {
+		} else {
 			logger.Error("Task packet is longer than 1024")
 			return
 		}
