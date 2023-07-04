@@ -20,3 +20,8 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	}
 	return nil
 }
+
+func SendUserTCPtoClient(key string) error{
+	
+	return nil
+}

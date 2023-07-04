@@ -1,6 +1,7 @@
 package workfromapi
 
 import (
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
@@ -64,7 +65,10 @@ func ChangeDetectMode(p packet.UserPacket, Key *string, conn net.Conn) (task.Tas
 	}
 
 	// Inform agent: "0|0"
-
+	err_agent := clientsearchsend.SendUserTCPtoClient(p.GetRkey())
+	if err_agent != nil {
+		return task.FAIL, err_agent
+	}
 	// Generate and send response
 	response := Response{
 		IsSuccess: true,
