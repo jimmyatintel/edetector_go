@@ -67,7 +67,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 				return
 			}
 			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
-			_, err = work.WrokMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
+			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				fmt.Println(*Key)
 			}
@@ -101,7 +101,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
-			_, err = work.WrokMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
+			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
@@ -144,7 +144,7 @@ func handleTaskrequest(conn net.Conn) {
 				return
 			}
 			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
-			_, err = work_from_api.WrokapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
+			_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
 				return
