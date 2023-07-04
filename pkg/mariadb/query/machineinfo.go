@@ -38,3 +38,4 @@ func GetMachineMAC(KeyNum string) (mac string) {
 	}
 	return mac
 }
+
