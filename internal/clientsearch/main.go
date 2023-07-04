@@ -116,6 +116,7 @@ func Conn_task_server_start(c chan string, task_channel map[string](chan string)
 			go handleTaskrequest(conn)
 		}
 	}
+	c <- "Task Server is nil"
 }
 
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {

@@ -108,10 +108,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan string) {
 			}
 		}
 		// wait for key to join the packet
-		// if *Key != "null" && task_chan != nil {
-		// 	Task_channel[*Key] = task_chan
-		// 	fmt.Println("set task " + *Key)
-		// }
+		if *Key != "null" && task_chan != nil {
+			Task_channel[*Key] = task_chan
+			fmt.Println("set task " + *Key)
+		}
 	}
 }
 
@@ -149,6 +149,9 @@ func handleTaskrequest(conn net.Conn) {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
 				return
 			}
+		}else {
+			logger.Error("Task packet is longer than 1024")
+			return
 		}
 	}
 }
