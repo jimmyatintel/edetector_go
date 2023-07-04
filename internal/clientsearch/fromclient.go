@@ -147,8 +147,11 @@ func handleTaskrequest(conn net.Conn) {
 			_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
+				NewPacket.Respond(conn, false, err.Error())
 				return
 			}
+			NewPacket.Respond(conn, true, "Success")
+
 		} else {
 			logger.Error("Task packet is longer than 1024")
 			return
