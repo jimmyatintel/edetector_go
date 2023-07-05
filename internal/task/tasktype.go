@@ -4,42 +4,55 @@ type TaskType string
 type UserTaskType string
 
 const (
+	// handshake
 	GIVE_INFO              TaskType = "GiveInfo"
 	OPEN_CHECK_THREAD      TaskType = "OpenCheckthread"
 	UNDEFINE               TaskType = "Undefine"
 	GIVE_DETECT_INFO_FIRST TaskType = "GiveDetectInfoFirst"
 	GIVE_DETECT_INFO       TaskType = "GiveDetectInfo"
-	UPDATE_DETECT_MODE     TaskType = "UpdateDetectMode"
-	CHECK_CONNECT          TaskType = "CheckConnect"
 
+	// check connect & ack
+	CHECK_CONNECT          TaskType = "CheckConnect"
+	DATA_RIGHT                TaskType = "DataRight"
+
+	// process history
 	GET_PROCESS_HISTORY_INFO  TaskType = "GetProcessHistoryInfo"
 	GIVE_PROCESS_HISTORY      TaskType = "GiveProcessHistory"
 	GIVE_PROCESS_HISTORY_DATA TaskType = "GiveProcessHistoryData"
 	GIVE_PROCESS_HISTORY_END  TaskType = "GiveProcessHistoryEnd"
 
-	GIVE_DETECT_PROCESS_RISK TaskType = "GiveDetectProcessRisk"
+	// process risk
 	GET_DETECT_PROCESS_RISK  TaskType = "GetDetectProcessRisk"
+	GIVE_DETECT_PROCESS_RISK TaskType = "GiveDetectProcessRisk"
 	GIVE_DETECT_PROCESS_OVER TaskType = "GiveDetectProcessOver"
 	GIVE_DETECT_PROCESS_END  TaskType = "GiveDetectProcessEnd"
 
+	// process info
 	GET_PROCESS_INFORMATION  TaskType = "GetProcessInformation"
 	GIVE_PROCESS_INFORMATION TaskType = "GiveProcessInformation"
 	GIVE_PROCESS_INFO_DATA   TaskType = "GiveProcessInfoData"
 	GIVE_PROCESS_INFO_END    TaskType = "GiveProcessInfoEnd"
 
-	GIVE_NETWORK_HISTORY      TaskType = "GiveNetworkHistory"
+	// network history
 	GET_NETWORK_HISTORY_INFO  TaskType = "GetNetworkHistoryInfo"
+	GIVE_NETWORK_HISTORY      TaskType = "GiveNetworkHistory"
 	GIVE_NETWORK_HISTORY_DATA TaskType = "GiveNetworkHistoryData"
 	GIVE_NETWORK_HISTORY_END  TaskType = "GiveNetworkHistoryEnd"
 
+	// detect
+	UPDATE_DETECT_MODE     TaskType = "UpdateDetectMode"
+
+	// scan
+	GET_SCAN_INFO_DATA        TaskType = "GetScanInfoData"
+	
+	// collection
+	GET_COLLECTION_INFO_DATA  TaskType = "GetCollectionInfoData"
+	
+	// drive
+	GET_DRIVE                 TaskType = "GetDrive" 
 	GIVE_DRIVE_INFO           TaskType = "GiveDriveInfo"
 
-	GET_SCAN_INFO_DATA        TaskType = "GetScanInfoData"
-	GET_COLLECTION_INFO_DATA  TaskType = "GetCollectionInfoData"
-	GET_DRIVE                 TaskType = "GetDrive" 
-	DATA_RIGHT                TaskType = "DataRight"
-
-	// Task from API
+	// task from API
 	CHANGE_DETECT_MODE        UserTaskType = "ChangeDetectMode"
 	START_SCAN                UserTaskType = "StartScan"
 	START_GET_DRIVE           UserTaskType = "StartGetDrive"
