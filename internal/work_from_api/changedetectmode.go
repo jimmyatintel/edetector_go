@@ -12,7 +12,7 @@ import (
 
 func ChangeDetectMode(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("ChangeDetectMode: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.UPDATE_DETECT_MODE)
+	err := clientsearchsend.SendUserTCPtoClient(p, task.UPDATE_DETECT_MODE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -25,12 +25,12 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType) error{
+func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error{
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       workType,
-		Message:    p.GetMessage(), // "0|0"
+		Message:    msg, // "0|0"
 	}
 	task_chan := taskchannel.Task_channel[p.GetRkey()]
 	task_chan <- send_packet.Fluent()
