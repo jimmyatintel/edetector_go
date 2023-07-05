@@ -34,15 +34,15 @@ func createIndex(name string) {
 }
 
 func IndexRequest(name string, body string) {
-	req := esapi.IndexRequest{
-		Index: name,
-		Body:  strings.NewReader(body),
-	}
-	res, err := req.Do(context.Background(), es)
-	if err != nil {
-		panic(err)
-	}
-	defer res.Body.Close()
+	// req := esapi.IndexRequest{
+	// 	Index: name,
+	// 	Body:  strings.NewReader(body),
+	// }
+	// res, err := req.Do(context.Background(), es)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer res.Body.Close()
 	// logger.Info(res.String())
 }
 
