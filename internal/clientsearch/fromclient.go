@@ -21,6 +21,7 @@ import (
 
 	// "io/ioutil"
 	"net"
+	// "encoding/binary"
 )
 
 var Key *string
@@ -75,16 +76,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
+			// fmt.Println("task type: ", NewPacket.GetTaskType())
 			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
+			if err != nil {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
+				return
+			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
 				taskchannel.Task_channel[*Key] = task_chan
 				fmt.Println("set key-channel mapping: " + *Key)
-			}
-			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
-				return
 			}
 		} else if reqLen > 0 && Key != nil && *Key == "null" {
 			Data_acache := make([]byte, 0)
@@ -110,6 +112,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 			if err != nil {
 				logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				return
+			}
+			if NewPacket.GetTaskType() == "Undefine" {
+				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
