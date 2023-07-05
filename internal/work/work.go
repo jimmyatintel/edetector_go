@@ -52,5 +52,6 @@ func init() {
 		task.GET_SCAN_INFO_DATA:          GetScanInfoData,
 		task.PROCESS:                     Process,
 		task.GIVE_PROCESS_DATA:           GiveProcessData,
+		task.GIVE_PROCESS_DATA_END:       GiveProcessDataEnd,
 	}
 }
