@@ -72,10 +72,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
 				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
-				logger.Error("pkt content: ", zap.String("error", string(decrypt_buf)))
+				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
-			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
+			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet

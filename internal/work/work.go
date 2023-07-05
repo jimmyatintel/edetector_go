@@ -35,5 +35,6 @@ func init() {
 		task.GIVE_PROCESS_HISTORY_DATA: GiveProcessHistoryData,
 		task.GIVE_PROCESS_HISTORY_END:  GiveProcessHistoryEnd,
 		task.GIVE_DETECT_INFO:          GiveDetectInfo,
+		task.GIVE_DRIVE_INFO:           GiveDriveInfo,
 	}
 }
