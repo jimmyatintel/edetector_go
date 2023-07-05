@@ -32,10 +32,16 @@ const (
 	GIVE_NETWORK_HISTORY_DATA TaskType = "GiveNetworkHistoryData"
 	GIVE_NETWORK_HISTORY_END  TaskType = "GiveNetworkHistoryEnd"
 
-	DATA_RIGHT TaskType = "DataRight"
+	GET_SCAN_INFO_DATA        TaskType = "GetScanInfoData"
+	GET_COLLECTION_INFO_DATA  TaskType = "GetCollectionInfoData"
+	GET_DRIVE                 TaskType = "GetDrive" 
+	DATA_RIGHT                TaskType = "DataRight"
 
 	// Task from API
 	CHANGE_DETECT_MODE        UserTaskType = "ChangeDetectMode"
+	START_SCAN                UserTaskType = "StartScan"
+	START_GET_DRIVE           UserTaskType = "StartGetDrive"
+	START_COLLECTION          UserTaskType = "StartCollection"
 	USER_UNDEFINE             UserTaskType = "Undefine"
 )
 
@@ -44,4 +50,4 @@ var Worklist = []TaskType{GIVE_INFO, OPEN_CHECK_THREAD, GIVE_DETECT_INFO_FIRST, 
 	GIVE_NETWORK_HISTORY, GIVE_NETWORK_HISTORY_DATA, GIVE_NETWORK_HISTORY_END, GIVE_PROCESS_HISTORY_DATA, GIVE_PROCESS_HISTORY_END,
 	GIVE_DETECT_PROCESS_OVER, GIVE_DETECT_PROCESS_END}
 
-var UserWorklist = []UserTaskType{CHANGE_DETECT_MODE}
+var UserWorklist = []UserTaskType{CHANGE_DETECT_MODE, START_SCAN, START_GET_DRIVE, START_COLLECTION}
