@@ -16,13 +16,8 @@ func ChangeDetectMode(p packet.UserPacket, Key *string, conn net.Conn) (task.Tas
 
 	// Inform agent
 	logger.Info("GiveDetectProcessOver: ", zap.Any("message", p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.UPDATE_DETECT_MODE,
-		Message:    p.GetMessage(), // "0|0"
-	}
-	err := clientsearchsend.SendUserTCPtoClient(p.GetRkey(), send_packet)
+
+	err := clientsearchsend.SendUserTCPtoClient(p, task.UPDATE_DETECT_MODE)
 	if err != nil {
 		return task.FAIL, err
 	}

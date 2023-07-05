@@ -12,6 +12,7 @@ import (
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
@@ -24,7 +25,7 @@ import (
 
 var Key *string
 
-func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
+func handleTCPRequest(conn net.Conn, task_chan chan []byte) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
 	Key = new(string)
@@ -37,9 +38,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 			for {
 				select {
 				case message := <-task_chan:
-					
-					fmt.Println("get task msg: " + string(message.Message))
-
+					fmt.Println("get task msg: " + string(message))
+					clientsearchsend.SendTCPtoClient(message, conn)
 				}
 			}
 		}()
@@ -69,10 +69,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
+			if NewPacket.GetTaskType() == "Undefine" {
+				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				return
+			}
 			logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
-				fmt.Println(*Key)
+				// wait for key to join the packet
+				taskchannel.Task_channel[*Key] = task_chan
+				fmt.Println("set key-channel mapping: " + *Key)
 			}
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
@@ -110,11 +117,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.WorkPacket) {
 				return
 			}
 		}
-		// wait for key to join the packet
-		if *Key != "null" && task_chan != nil {
-			taskchannel.Task_channel[*Key] = task_chan
-			fmt.Println("set task " + *Key)
-		}
 	}
 }
 
@@ -144,6 +146,11 @@ func handleTaskrequest(conn net.Conn) {
 			err = NewPacket.NewPacket(content)
 			if err != nil {
 				logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				return
+			}
+			if NewPacket.GetUserTaskType() == "Undefine" {
+				nullIndex := bytes.IndexByte(content[76:100], 0)
+				logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76 : 76+nullIndex])))
 				return
 			}
 			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))

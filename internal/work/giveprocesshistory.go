@@ -23,7 +23,7 @@ type ProcessJson struct {
 }
 
 func GiveProcessHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessHistory: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
