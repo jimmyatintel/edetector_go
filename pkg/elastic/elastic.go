@@ -74,3 +74,4 @@ func searchRequest(name string, body string) {
 	defer res.Body.Close()
 	logger.Info(res.String())
 }
+

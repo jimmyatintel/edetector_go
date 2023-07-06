@@ -3,11 +3,14 @@ package packet
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
 	"strings"
+	"encoding/json"
+	"net"
 )
 
 type Packet interface {
@@ -18,6 +21,16 @@ type Packet interface {
 	Fluent() []byte
 	GetTaskType() task.TaskType
 	GetRkey() string
+}
+type UserPacket interface {
+	NewPacket(data []byte) error
+	GetMessage() string
+	GetMacAddress() string
+	GetipAddress() string
+	Fluent() []byte
+	GetUserTaskType() task.UserTaskType
+	GetRkey() string
+	Respond(conn net.Conn, isSuccess bool, message string) error
 }
 type WorkPacket struct {
 	// Packet is a struct that contains the packet data
@@ -38,11 +51,16 @@ type DataPacket struct {
 }
 type TaskPacket struct {
 	// Packet is a struct that contains the packet data
-	Key     string
-	Work    task.TaskType
-	User    string
-	Message string
-	Data    []byte
+	Key      string              `json:"key"`
+	Work     task.UserTaskType   `json:"work"`
+	User     string              `json:"user"`
+	Message  string              `json:"message"`
+	Data     []byte              `json:"data"`
+}
+type AckPacket struct {
+	// Packet is a struct that contains the packet data
+	IsSuccess  bool     `json:"isSuccess"`
+	Message    string   `json:"message"`
 }
 
 // var Uuid uuid.UUID
@@ -126,27 +144,29 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-	error := errors.New("invalid Task packet")
-	nullIndex := bytes.IndexByte(data[0:32], 0)
-	if nullIndex == -1 {
-		return error
+
+	err:= json.Unmarshal(data, p)
+	if err != nil {
+		return err
 	}
-	p.Key = string(data[0:nullIndex])
-	nullIndex = bytes.IndexByte(data[32:56], 0)
-	if nullIndex == -1 {
-		return error
+	p.Work = task.UserTaskType(p.Work)
+
+	fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
+	return nil
+}
+func (p *TaskPacket) Respond(conn net.Conn, isSuccess bool, message string) error {
+	res := AckPacket {
+		IsSuccess: isSuccess,
+		Message: message,
 	}
-	p.Work = task.GetTaskType(string(data[32 : 32+nullIndex]))
-	nullIndex = bytes.IndexByte(data[56:76], 0)
-	if nullIndex == -1 {
-		return error
+	resJSON, err := json.Marshal(res)
+	if err != nil {
+		return err
 	}
-	p.User = string(data[56 : 56+nullIndex])
-	nullIndex = bytes.IndexByte(data[76:], 0)
-	if nullIndex == -1 {
-		return error
+	_, err = conn.Write(resJSON)
+	if err != nil {
+		return err
 	}
-	p.Message = string(data[76 : 76+nullIndex])
 	return nil
 }
 func ljust(s string, width int, fillChar string) []byte {
@@ -199,7 +219,7 @@ func (p *WorkPacket) GetTaskType() task.TaskType {
 func (p *DataPacket) GetTaskType() task.TaskType {
 	return p.Work
 }
-func (p *TaskPacket) GetTaskType() task.TaskType {
+func (p *TaskPacket) GetUserTaskType() task.UserTaskType {
 	return p.Work
 }
 func (p *WorkPacket) GetMacAddress() string {

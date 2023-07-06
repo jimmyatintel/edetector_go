@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	logger "edetector_go/pkg/logger"
+	taskchannel "edetector_go/internal/taskchannel"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -23,7 +24,6 @@ var Client_detect_UDP_Server net.PacketConn
 var Tcp_enable bool
 var Udp_enable bool
 var Task_enable bool
-var Task_channel map[string](chan string)
 
 func Connect_init() int {
 	var err error
@@ -64,7 +64,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	Task_channel = make(map[string](chan string))
+	taskchannel.Task_worker_channel = make(map[string](chan []byte))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
@@ -72,13 +72,14 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			task := make(chan string)
-			go handleTCPRequest(conn, task)
+			new_task_chan := make(chan []byte)
+			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
 	c <- "TCP Server is nil"
 }
 func Conn_TCP_detect_start(c chan string, ctx context.Context) {
+	taskchannel.Task_detect_channel = make(map[string](chan []byte))
 	if Client_detect_TCP_Server != nil {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
@@ -86,7 +87,8 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			go handleTCPRequest(conn, nil)
+			new_task_chan := make(chan []byte)
+			go handleTCPRequest(conn, new_task_chan, "detect")
 		}
 	}
 	c <- "TCP Server is nil"
@@ -116,6 +118,7 @@ func Conn_task_server_start(c chan string, task_channel map[string](chan string)
 			go handleTaskrequest(conn)
 		}
 	}
+	c <- "Task Server is nil"
 }
 
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
@@ -190,4 +193,4 @@ func Main(ctx context.Context, Connection_close_chan chan<- int) {
 	// 	logger.Error("Start Connection error")
 	// 	os.Exit(1)
 	// }
-}
+} 

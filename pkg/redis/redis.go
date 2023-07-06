@@ -19,7 +19,7 @@ func checkflag() bool {
 }
 func Redis_init() *redis.Client {
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "0.0.0.0:" + config.Viper.GetString("REDIS_PORT"),
+		Addr:     config.Viper.GetString("REDIS_HOST") + ":" + config.Viper.GetString("REDIS_PORT"),
 		Password: config.Viper.GetString("REDIS_PASSWORD"),
 		DB:       config.Viper.GetInt("REDIS_DB"),
 	})
