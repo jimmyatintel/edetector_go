@@ -60,8 +60,8 @@ func GiveProcessDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "null",
+		Work:       task.GET_SCAN_INFO_DATA,
+		Message:    "Process",
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {

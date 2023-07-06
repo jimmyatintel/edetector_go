@@ -35,6 +35,11 @@ func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
+
+	// err := clientsearchsend.SendDetectTCPtoClient(p, task.GET_DRIVE, p.GetMessage(), "worker")
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
 }
 
 func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {

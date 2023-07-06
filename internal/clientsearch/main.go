@@ -6,6 +6,7 @@ import (
 	fflag "edetector_go/internal/fflag"
 	logger "edetector_go/pkg/logger"
 	taskchannel "edetector_go/internal/taskchannel"
+	packet "edetector_go/internal/packet"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -64,7 +65,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	taskchannel.Task_worker_channel = make(map[string](chan []byte))
+	taskchannel.Task_worker_channel = make(map[string](chan packet.Packet))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
@@ -72,14 +73,14 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			new_task_chan := make(chan []byte)
+			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
 	c <- "TCP Server is nil"
 }
 func Conn_TCP_detect_start(c chan string, ctx context.Context) {
-	taskchannel.Task_detect_channel = make(map[string](chan []byte))
+	taskchannel.Task_detect_channel = make(map[string](chan packet.Packet))
 	if Client_detect_TCP_Server != nil {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
@@ -87,7 +88,7 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			new_task_chan := make(chan []byte)
+			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "detect")
 		}
 	}

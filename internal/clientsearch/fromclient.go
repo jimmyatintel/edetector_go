@@ -26,11 +26,12 @@ import (
 
 var Key *string
 
-func handleTCPRequest(conn net.Conn, task_chan chan []byte, port string) {
+func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
 	Key = new(string)
 	*Key = "null"
+	flag := 0
 	defer func() {
 		Key = nil
 	}()
@@ -39,8 +40,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte, port string) {
 			for {
 				select {
 				case message := <-task_chan:
-					fmt.Println("get task msg: " + string(message))
-					clientsearchsend.SendTCPtoClient(message, conn)
+					data := message.Fluent()
+					fmt.Println(port + " port get task msg: " + string(data))
+					err := clientsearchsend.SendTCPtoClient(data, conn)
+					if err != nil {
+						logger.Error("Send failed:", zap.Any("error", err.Error()))
+					}
 				}
 			}
 		}()
@@ -85,14 +90,15 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte, port string) {
 			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
-				taskchannel.Task_worker_channel[*Key] = task_chan
-				fmt.Println("set worker key-channel mapping: " + *Key)
+				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
+				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
 			}
 			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
-			if port == "detect" {
+			if port == "detect" && flag == 0{
 				// wait for key to join the packet
-				taskchannel.Task_detect_channel["8beba472f3f44cabbbb44fd232171933"] = task_chan
-				fmt.Println("set detect key-channel mapping: " + "8beba472f3f44cabbbb44fd232171933")
+				taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
+				fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
+				flag = 1
 			}
 		} else if reqLen > 0 && Key != nil && *Key == "null" {
 			Data_acache := make([]byte, 0)
