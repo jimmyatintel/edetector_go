@@ -18,6 +18,7 @@ func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
 		// handshake
 		task.GIVE_INFO:                GiveInfo,
+		task.GIVE_DETECT_PORT_INFO:    GiveDetectPortInfo,
 		task.GIVE_DETECT_INFO_FIRST:   GiveDetectInfoFirst,
 		task.GIVE_DETECT_INFO:         GiveDetectInfo,
 
@@ -46,6 +47,8 @@ func init() {
 
 		// drive
 		task.GIVE_DRIVE_INFO:             GiveDriveInfo,
+		task.GIVE_EXPLORER_DATA:          GiveExplorerData,
+		task.GIVE_EXPLORER_END:           GiveExplorerEnd,
 
 		// scan
 		// task.GET_PROCESS_INFO:            GetProcessInfo,
@@ -53,5 +56,9 @@ func init() {
 		task.PROCESS:                     Process,
 		task.GIVE_PROCESS_DATA:           GiveProcessData,
 		task.GIVE_PROCESS_DATA_END:       GiveProcessDataEnd,
+		task.GIVE_SCAN_PROGRESS:          GiveScanProgress,
+		task.GIVE_SCAN_DATA:              GiveScanData,
+		task.GIVE_SCAN_DATA_INFO:         GiveScanDataInfo,
+		task.GIVE_SCAN_DATA_OVER:         GiveScanDataOver,
 	}
 }

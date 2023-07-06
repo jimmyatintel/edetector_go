@@ -8,6 +8,7 @@ import (
 	"edetector_go/internal/taskchannel"
 
 	"net"
+	"errors"
 )
 
 func init() {
@@ -25,14 +26,21 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error{
+func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string, port string) error{
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       workType,
 		Message:    msg, // "0|0"
 	}
-	task_chan := taskchannel.Task_channel[p.GetRkey()]
-	task_chan <- send_packet.Fluent()
-	return nil
+	if port == "worker" {
+		task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
+		task_chan <- send_packet.Fluent()
+		return nil
+	} else if port == "detect" {
+		task_chan := taskchannel.Task_detect_channel[p.GetRkey()]
+		task_chan <- send_packet.Fluent()
+		return nil
+	}
+	return errors.New("invalid port")
 }

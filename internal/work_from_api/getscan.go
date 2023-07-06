@@ -12,7 +12,7 @@ import (
 
 func StartScan(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("StartScan: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN_INFO_DATA, p.GetMessage())
+	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN_INFO_DATA, p.GetMessage(), "detect")
 	if err != nil {
 		return task.FAIL, err
 	}

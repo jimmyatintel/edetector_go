@@ -64,7 +64,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	taskchannel.Task_channel = make(map[string](chan []byte))
+	taskchannel.Task_worker_channel = make(map[string](chan []byte))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
@@ -73,12 +73,13 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				c <- err.Error()
 			}
 			new_task_chan := make(chan []byte)
-			go handleTCPRequest(conn, new_task_chan)
+			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
 	c <- "TCP Server is nil"
 }
 func Conn_TCP_detect_start(c chan string, ctx context.Context) {
+	taskchannel.Task_detect_channel = make(map[string](chan []byte))
 	if Client_detect_TCP_Server != nil {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
@@ -86,7 +87,8 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
-			go handleTCPRequest(conn, nil)
+			new_task_chan := make(chan []byte)
+			go handleTCPRequest(conn, new_task_chan, "detect")
 		}
 	}
 	c <- "TCP Server is nil"

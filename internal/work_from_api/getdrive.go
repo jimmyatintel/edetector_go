@@ -12,7 +12,7 @@ import (
 
 func StartGetDrive(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("StartGetDrive: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DRIVE, p.GetMessage())
+	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DRIVE, p.GetMessage(), "worker")
 	if err != nil {
 		return task.FAIL, err
 	}
