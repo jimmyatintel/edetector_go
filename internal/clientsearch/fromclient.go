@@ -88,10 +88,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan []byte, port string) {
 				taskchannel.Task_worker_channel[*Key] = task_chan
 				fmt.Println("set worker key-channel mapping: " + *Key)
 			}
-			if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
+			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
+			if port == "detect" {
 				// wait for key to join the packet
-				taskchannel.Task_detect_channel[*Key] = task_chan
-				fmt.Println("set detect key-channel mapping: " + *Key)
+				taskchannel.Task_detect_channel["8beba472f3f44cabbbb44fd232171933"] = task_chan
+				fmt.Println("set detect key-channel mapping: " + "8beba472f3f44cabbbb44fd232171933")
 			}
 		} else if reqLen > 0 && Key != nil && *Key == "null" {
 			Data_acache := make([]byte, 0)

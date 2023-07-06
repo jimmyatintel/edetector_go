@@ -6,9 +6,10 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/internal/taskchannel"
+	"fmt"
 
-	"net"
 	"errors"
+	"net"
 )
 
 func init() {
@@ -27,6 +28,7 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 }
 
 func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string, port string) error{
+	fmt.Println("port", port)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -38,6 +40,7 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 		task_chan <- send_packet.Fluent()
 		return nil
 	} else if port == "detect" {
+		fmt.Println("detect!!")
 		task_chan := taskchannel.Task_detect_channel[p.GetRkey()]
 		task_chan <- send_packet.Fluent()
 		return nil
