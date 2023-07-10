@@ -9,7 +9,7 @@ import (
 	"net"
 
 	// "encoding/json"
-	"fmt"
+	// "fmt"
 	"strings"
 
 	"go.uber.org/zap"
@@ -28,18 +28,27 @@ func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 		Work:       task.TRANSPORT_EXPLORER,
 		Message:    drive + "|" + driveInfo + "|Explorer|ScheduleName",
 	}
-	fmt.Println(string(task.TRANSPORT_EXPLORER))
-	fmt.Println(drive + "|" + driveInfo + "|Explorer|ScheduleName")
+	// fmt.Println(string(task.TRANSPORT_EXPLORER))
+	// fmt.Println(drive + "|" + driveInfo + "|Explorer|ScheduleName")
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
+	// msg := drive + "|" + driveInfo + "|Explorer|ScheduleName"
+	// var user_packet = packet.TaskPacket{
+	// 	Key:        p.GetRkey(),
+	// 	Work:       task.USER_TRANSPORT_EXPLORER,
+	// 	Message:    msg,
+	// }
+	// fmt.Println(string(task.TRANSPORT_EXPLORER))
+	// fmt.Println(drive + "|" + driveInfo + "|Explorer|ScheduleName")
 
-	// err := clientsearchsend.SendDetectTCPtoClient(p, task.GET_DRIVE, p.GetMessage(), "worker")
+	// err := clientsearchsend.SendUserTCPtoClient(&user_packet, task.TRANSPORT_EXPLORER, msg, "worker")
 	// if err != nil {
 	// 	return task.FAIL, err
 	// }
+	// return task.SUCCESS, nil
 }
 
 func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {

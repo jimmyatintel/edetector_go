@@ -75,6 +75,7 @@ const (
 	START_SCAN                UserTaskType = "StartScan"
 	START_GET_DRIVE           UserTaskType = "StartGetDrive"
 	START_COLLECTION          UserTaskType = "StartCollection"
+	USER_TRANSPORT_EXPLORER   UserTaskType = "TransportExplorer"
 	USER_UNDEFINE             UserTaskType = "Undefine"
 )
 

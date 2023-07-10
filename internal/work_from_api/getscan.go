@@ -16,9 +16,9 @@ func StartScan(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult
 	if err != nil {
 		return task.FAIL, err
 	}
-	err_ := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN_INFO_DATA, p.GetMessage(), "detect")
-	if err_ != nil {
-		return task.FAIL, err
-	}
+	// err_ := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN_INFO_DATA, p.GetMessage(), "detect")
+	// if err_ != nil {
+	// 	return task.FAIL, err
+	// }
     return task.SUCCESS, nil
 }

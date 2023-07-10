@@ -88,6 +88,7 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				// fmt.Println("Error accepting: ", err.Error())
 				c <- err.Error()
 			}
+			// fmt.Println("new conn")
 			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "detect")
 		}

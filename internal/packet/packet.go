@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	// "fmt"
 
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
@@ -151,7 +151,7 @@ func (p *TaskPacket) NewPacket(data []byte) error {
 	}
 	p.Work = task.UserTaskType(p.Work)
 
-	fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
+	// fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
 	return nil
 }
 func (p *TaskPacket) Respond(conn net.Conn, isSuccess bool, message string) error {
@@ -193,7 +193,8 @@ func (p *DataPacket) Fluent() []byte {
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
 	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.Message, 65436, " ")...)
+	// data = append(data, ljust(p.Message, 65436, " ")...)
+	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
 func (p *TaskPacket) Fluent() []byte {

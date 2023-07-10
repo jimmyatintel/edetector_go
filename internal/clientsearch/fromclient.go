@@ -8,12 +8,12 @@ import (
 	"edetector_go/internal/task"
 
 	// fflag "edetector_go/internal/fflag"
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
+	taskchannel "edetector_go/internal/taskchannel"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
-	clientsearchsend "edetector_go/internal/clientsearch/send"
-	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 
@@ -31,7 +31,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	buf := make([]byte, 2048)
 	Key = new(string)
 	*Key = "null"
-	flag := 0
 	defer func() {
 		Key = nil
 	}()
@@ -41,6 +40,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
+					fmt.Println(len(data))
 					fmt.Println(port + " port get task msg: " + string(data))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {
@@ -94,12 +94,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
 			}
 			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
-			if port == "detect" && flag == 0{
-				// wait for key to join the packet
-				taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
-				fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
-				flag = 1
-			}
+			// if port == "detect"{
+			// 	// wait for key to join the packet
+			// 	taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
+			// 	fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
+			// }
 		} else if reqLen > 0 && Key != nil && *Key == "null" {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
@@ -132,6 +131,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
+			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if err != nil {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
