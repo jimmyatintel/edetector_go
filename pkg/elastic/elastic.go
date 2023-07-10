@@ -3,6 +3,7 @@ package elastic
 import (
 	"context"
 	"edetector_go/config"
+	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
 	"strings"
 
@@ -12,6 +13,12 @@ import (
 
 var es *elasticsearch.Client
 
+func flagcheck() bool {
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		return true
+	}
+	return false
+}
 func SetElkClient() error {
 	var err error
 	cfg := elasticsearch.Config{
@@ -22,6 +29,9 @@ func SetElkClient() error {
 }
 
 func createIndex(name string) {
+	if flagcheck() == false {
+		return
+	}
 	req := esapi.IndicesCreateRequest{
 		Index: name,
 	}
@@ -34,6 +44,9 @@ func createIndex(name string) {
 }
 
 func IndexRequest(name string, body string) {
+	if flagcheck() == false {
+		return
+	}
 	req := esapi.IndexRequest{
 		Index: name,
 		Body:  strings.NewReader(body),
@@ -47,6 +60,9 @@ func IndexRequest(name string, body string) {
 }
 
 func searchRequest(name string, body string) {
+	if flagcheck() == false {
+		return
+	}
 	req := esapi.SearchRequest{
 		Index: []string{name},
 		Body:  strings.NewReader(body),

@@ -16,24 +16,49 @@ type Request_data interface {
 
 func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
-		task.GIVE_INFO:              GiveInfo,
-		task.GIVE_DETECT_INFO_FIRST: GiveDetectInfoFirst,
-		task.CHECK_CONNECT:          CheckConnect,
-		// task.GET_PROCESS_INFORMATION:  GetProcessInformation,
-		task.GIVE_PROCESS_INFORMATION: GiveProcessInformation,
-		task.GIVE_PROCESS_INFO_DATA:   GiveProcessInfoData,
-		task.GIVE_PROCESS_INFO_END:    GiveProcessInfoEnd,
-		task.GIVE_DETECT_PROCESS_RISK: GiveDetectProcessRisk,
-		task.GIVE_DETECT_PROCESS_OVER: GiveDetectProcessOver,
-		task.GIVE_DETECT_PROCESS_END:  GiveDetectProcessEnd,
+		// handshake
+		task.GIVE_INFO:                GiveInfo,
+		task.GIVE_DETECT_PORT_INFO:    GiveDetectPortInfo,
+		task.GIVE_DETECT_INFO_FIRST:   GiveDetectInfoFirst,
+		task.GIVE_DETECT_INFO:         GiveDetectInfo,
 
-		task.GIVE_NETWORK_HISTORY:      GiveNetworkHistory,
-		task.GIVE_NETWORK_HISTORY_DATA: GiveNetworkHistoryData,
-		task.GIVE_NETWORK_HISTORY_END:  GiveNetworkHistoryEnd,
+		// check connect & ack
+		task.CHECK_CONNECT:            CheckConnect,
 
-		task.GIVE_PROCESS_HISTORY:      GiveProcessHistory,
-		task.GIVE_PROCESS_HISTORY_DATA: GiveProcessHistoryData,
-		task.GIVE_PROCESS_HISTORY_END:  GiveProcessHistoryEnd,
-		task.GIVE_DETECT_INFO:          GiveDetectInfo,
+		// process history
+		task.GIVE_PROCESS_HISTORY:         GiveProcessHistory,
+		task.GIVE_PROCESS_HISTORY_DATA:    GiveProcessHistoryData,
+		task.GIVE_PROCESS_HISTORY_END:     GiveProcessHistoryEnd,
+
+		// process risk
+		task.GIVE_DETECT_PROCESS_RISK:     GiveDetectProcessRisk,
+		task.GIVE_DETECT_PROCESS_OVER:     GiveDetectProcessOver,
+		task.GIVE_DETECT_PROCESS_END:      GiveDetectProcessEnd,
+
+		// process info
+		task.GIVE_PROCESS_INFORMATION:    GiveProcessInformation,
+		task.GIVE_PROCESS_INFO_DATA:      GiveProcessInfoData,
+		task.GIVE_PROCESS_INFO_END:       GiveProcessInfoEnd,
+
+		// network history
+		task.GIVE_NETWORK_HISTORY:        GiveNetworkHistory,
+		task.GIVE_NETWORK_HISTORY_DATA:   GiveNetworkHistoryData,
+		task.GIVE_NETWORK_HISTORY_END:    GiveNetworkHistoryEnd,
+
+		// drive
+		task.GIVE_DRIVE_INFO:             GiveDriveInfo,
+		task.GIVE_EXPLORER_DATA:          GiveExplorerData,
+		task.GIVE_EXPLORER_END:           GiveExplorerEnd,
+
+		// scan
+		// task.GET_PROCESS_INFO:            GetProcessInfo,
+		task.GET_SCAN_INFO_DATA:          GetScanInfoData,
+		task.PROCESS:                     Process,
+		task.GIVE_PROCESS_DATA:           GiveProcessData,
+		task.GIVE_PROCESS_DATA_END:       GiveProcessDataEnd,
+		task.GIVE_SCAN_PROGRESS:          GiveScanProgress,
+		task.GIVE_SCAN_DATA:              GiveScanData,
+		task.GIVE_SCAN_DATA_INFO:         GiveScanDataInfo,
+		task.GIVE_SCAN_DATA_OVER:         GiveScanDataOver,
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	"edetector_go/pkg/redis"
+	// "edetector_go/pkg/redis"
 	"net"
 	"strings"
 	"time"
@@ -28,7 +28,7 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	tm := time.Now().Unix()
 	query.Online(ClientInfo.KeyNum, tm)
 	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
-	redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
+	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
 	*Key = ClientInfo.KeyNum
 	// logger.Info("Redis get", zap.Any("key", ClientInfo.KeyNum), zap.Any("value", redis.Redis_get(ClientInfo.KeyNum)))
 	var send_packet = packet.WorkPacket{
@@ -41,5 +41,10 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	if err != nil {
 		return task.FAIL, err
 	}
+	return task.SUCCESS, nil
+}
+
+func GiveDetectPortInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveDetectPortInfo: ", zap.Any("message", p.GetMessage()))
 	return task.SUCCESS, nil
 }

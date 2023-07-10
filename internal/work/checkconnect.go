@@ -10,7 +10,9 @@ import (
 )
 
 func CheckConnect(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("CheckConnect: ", zap.Any("key", *Key))
+	if Key != nil{
+		logger.Info("CheckConnect: ", zap.Any("key", *Key))
+	}
 	// query.Update_time()
 	return task.SUCCESS, nil
 }

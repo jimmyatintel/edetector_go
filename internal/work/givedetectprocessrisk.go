@@ -26,7 +26,7 @@ func GiveDetectProcessRisk(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 }
 
 func GiveDetectProcessOver(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectProcessOver: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveDetectProcessOver: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -41,7 +41,7 @@ func GiveDetectProcessOver(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 }
 
 func GiveDetectProcessEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectProcessEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveDetectProcessEnd: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

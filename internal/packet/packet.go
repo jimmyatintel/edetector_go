@@ -3,13 +3,14 @@ package packet
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	// "fmt"
 
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
 	"strings"
 	"encoding/json"
+	"net"
 )
 
 type Packet interface {
@@ -29,6 +30,7 @@ type UserPacket interface {
 	Fluent() []byte
 	GetUserTaskType() task.UserTaskType
 	GetRkey() string
+	Respond(conn net.Conn, isSuccess bool, message string) error
 }
 type WorkPacket struct {
 	// Packet is a struct that contains the packet data
@@ -49,11 +51,16 @@ type DataPacket struct {
 }
 type TaskPacket struct {
 	// Packet is a struct that contains the packet data
-	Key     string
-	Work    task.UserTaskType
-	User    string
-	Message string
-	Data    []byte
+	Key      string              `json:"key"`
+	Work     task.UserTaskType   `json:"work"`
+	User     string              `json:"user"`
+	Message  string              `json:"message"`
+	Data     []byte              `json:"data"`
+}
+type AckPacket struct {
+	// Packet is a struct that contains the packet data
+	IsSuccess  bool     `json:"isSuccess"`
+	Message    string   `json:"message"`
 }
 
 // var Uuid uuid.UUID
@@ -137,45 +144,29 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-	var jsonData map[string]interface{}
-	err := json.Unmarshal(data, &jsonData)
+
+	err:= json.Unmarshal(data, p)
 	if err != nil {
 		return err
 	}
-	key, ok := jsonData["key"].(string)
-	if !ok {
-		return errors.New("invalid key field")
-	}
-	p.Key = key
+	p.Work = task.UserTaskType(p.Work)
 
-	work, ok := jsonData["work"].(string)
-	if !ok {
-		return errors.New("invalid work field")
+	// fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
+	return nil
+}
+func (p *TaskPacket) Respond(conn net.Conn, isSuccess bool, message string) error {
+	res := AckPacket {
+		IsSuccess: isSuccess,
+		Message: message,
 	}
-	p.Work = task.UserTaskType(work)
-
-	user, ok := jsonData["user"].(string)
-	if !ok {
-		return errors.New("invalid user field")
+	resJSON, err := json.Marshal(res)
+	if err != nil {
+		return err
 	}
-	p.User = user
-
-	messageObj, ok := jsonData["message"].(map[string]interface{})
-	if !ok {
-		return errors.New("invalid message field")
+	_, err = conn.Write(resJSON)
+	if err != nil {
+		return err
 	}
-
-	process, ok := messageObj["process"].(bool)
-	if !ok {
-		return errors.New("invalid process field in message")
-	}
-	network, ok := messageObj["network"].(bool)
-	if !ok {
-		return errors.New("invalid network field in message")
-	}
-	p.Message = fmt.Sprintf("%v|%v", process, network)
-	fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
-
 	return nil
 }
 func ljust(s string, width int, fillChar string) []byte {
@@ -202,6 +193,7 @@ func (p *DataPacket) Fluent() []byte {
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
 	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
+	// data = append(data, ljust(p.Message, 65436, " ")...)
 	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
