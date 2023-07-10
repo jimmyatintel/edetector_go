@@ -12,7 +12,7 @@ import (
 
 func StartCollect(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("StartCollect: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.IMPORT_STARTUP, "All", "worker")
+	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_COLLECT_INFO, "", "worker")
 	if err != nil {
 		return task.FAIL, err
 	}

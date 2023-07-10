@@ -53,7 +53,8 @@ func init() {
 		task.GIVE_EXPLORER_ERROR:         GiveExplorerError,
 
 		// collection
-		task.IMPORT_STARTUP:              ImportStartup,
+		task.IMPORT_STARTUP:               ImportStartup,
+		task.COLLECT_INFO:                 CollectInfo,
 		task.GIVE_COLLECT_PROGRESS:        GiveCollectProgress,
 		task.GIVE_COLLECT_DATA_INFO:       GiveCollectDataInfo,
 		task.GIVE_COLLECT_DATA:            GiveCollectData,

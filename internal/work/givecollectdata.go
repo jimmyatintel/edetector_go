@@ -21,6 +21,21 @@ func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func CollectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("CollectInfo: ", zap.Any("message", p.GetMessage()))
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
 		Work:       task.GET_COLLECT_INFO_DATA,
 		Message:    "10",
 	}
