@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func StartCollect(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("StartCollect: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.IMPORT_STARTUP, "All", "worker")
+func StartGetExplorer(p packet.UserPacket, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("StartGetExplorer: ", zap.Any("message", p.GetMessage()))
+	err := clientsearchsend.SendUserTCPtoClient(p, task.EXPLORER_INFO, p.GetMessage(), "worker")
 	if err != nil {
 		return task.FAIL, err
 	}

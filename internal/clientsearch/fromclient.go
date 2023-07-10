@@ -140,7 +140,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 	}
 }
-
 func handleTaskrequest(conn net.Conn) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
@@ -191,5 +190,4 @@ func handleTaskrequest(conn net.Conn) {
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
-
 }

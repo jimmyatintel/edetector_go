@@ -16,21 +16,14 @@ import (
 )
 
 
-func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetMessage()))
-	// parts := strings.Split(p.GetMessage(), "-")
-	// drive := parts[0]
-	// driveInfo := strings.Split(parts[1], ",")[0]
-
+func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("ImportStartup: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.EXPLORER_INFO,
-		Message:    "null",
-		// Message:    drive + "|" + driveInfo + "|Explorer|ScheduleName",
+		Work:       task.GET_COLLECT_INFO_DATA,
+		Message:    "10",
 	}
-	// fmt.Println(string(task.TRANSPORT_EXPLORER))
-	// fmt.Println(drive + "|" + driveInfo + "|Explorer|ScheduleName")
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -38,26 +31,8 @@ func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 	return task.SUCCESS, nil
 }
 
-func Explorer(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.TRANSPORT_EXPLORER,
-		Message:    "C|NTFS|Explorer|ScheduleName",
-		// Message:    drive + "|" + driveInfo + "|Explorer|ScheduleName",
-	}
-	// fmt.Println(string(task.TRANSPORT_EXPLORER))
-	// fmt.Println(drive + "|" + driveInfo + "|Explorer|ScheduleName")
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
+func GiveCollectProgress(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -71,8 +46,8 @@ func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskRes
 	return task.SUCCESS, nil
 }
 
-func GiveExplorerEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetMessage()))
+func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -86,8 +61,38 @@ func GiveExplorerEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	return task.SUCCESS, nil
 }
 
-func GiveExplorerError(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetMessage()))
+func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveCollectData: ", zap.Any("message", p.GetMessage()))
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveCollectDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetMessage()))
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveCollectDataError(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveCollectDataError: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

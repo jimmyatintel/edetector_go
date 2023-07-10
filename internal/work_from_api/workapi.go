@@ -15,6 +15,7 @@ func init() {
 		task.CHANGE_DETECT_MODE: ChangeDetectMode,
 		task.START_SCAN: StartScan,
 		task.START_GET_DRIVE: StartGetDrive,
-		task.START_COLLECTION: StartCollection,
+		task.START_GET_EXPLORER: StartGetExplorer,
+		task.START_COLLECTION: StartCollect,
 	}
 }
