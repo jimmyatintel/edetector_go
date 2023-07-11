@@ -4,9 +4,9 @@ import (
 	"context"
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
-	logger "edetector_go/pkg/logger"
-	taskchannel "edetector_go/internal/taskchannel"
 	packet "edetector_go/internal/packet"
+	taskchannel "edetector_go/internal/taskchannel"
+	logger "edetector_go/pkg/logger"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -109,19 +109,20 @@ func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 	c <- "UDP Server is nil"
 	return
 }
-func Conn_task_server_start(c chan string, task_channel map[string](chan string), ctx context.Context) {
-	if Task_server_TCP_Server != nil {
-		for {
-			conn, err := Task_server_TCP_Server.Accept()
-			if err != nil {
-				// fmt.Println("Error accepting: ", err.Error())
-				c <- err.Error()
-			}
-			go handleTaskrequest(conn)
-		}
-	}
-	c <- "Task Server is nil"
-}
+
+// func Conn_task_server_start(c chan string, task_channel map[string](chan string), ctx context.Context) {
+// 	if Task_server_TCP_Server != nil {
+// 		for {
+// 			conn, err := Task_server_TCP_Server.Accept()
+// 			if err != nil {
+// 				// fmt.Println("Error accepting: ", err.Error())
+// 				c <- err.Error()
+// 			}
+// 			go handleTaskrequest(conn)
+// 		}
+// 	}
+// 	c <- "Task Server is nil"
+// }
 
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	wg := new(sync.WaitGroup)
@@ -130,14 +131,14 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	TCP_CHANNEL := make(chan string)
 	TCP_DETECT_CHANNEL := make(chan string)
 	UDP_CHANNEL := make(chan string)
-	Task_map_channel := make(map[string](chan string))
-	TASK_CHANNEL := make(chan string)
+	// Task_map_channel := make(map[string](chan string))
+	// TASK_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
-	go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
+	// go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
 	// go Conn_command_start()
 	rt := 0
 	if Tcp_enable {
@@ -190,9 +191,4 @@ func Main(ctx context.Context, Connection_close_chan chan<- int) {
 		os.Exit(1)
 	}
 	Connect_start(ctx, Connection_close_chan)
-
-	// if Connect_start() == 1 {
-	// 	logger.Error("Start Connection error")
-	// 	os.Exit(1)
-	// }
-} 
+}

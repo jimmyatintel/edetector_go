@@ -77,7 +77,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
@@ -127,7 +127,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
@@ -141,52 +141,24 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	}
 }
 
-func handleTaskrequest(conn net.Conn) {
-	defer conn.Close()
-	buf := make([]byte, 2048)
-	Key = new(string)
-	*Key = "null"
-	defer func() {
-		Key = nil
-	}()
-
-	for {
-		reqLen, err := conn.Read(buf)
-		if err != nil {
-			if err.Error() == "EOF" {
-				logger.Debug("Connection close")
-				return
-			} else {
-				logger.Error("Error reading:", zap.Any("error", err.Error()))
-				return
-			}
-		}
-		if reqLen <= 1024 {
-			content := buf[:reqLen]
-			NewPacket := new(packet.TaskPacket)
-			err = NewPacket.NewPacket(content)
-			if err != nil {
-				logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
-				return
-			}
-			if NewPacket.GetUserTaskType() == "Undefine" {
-				nullIndex := bytes.IndexByte(content[76:100], 0)
-				logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76 : 76+nullIndex])))
-				return
-			}
-			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
-			_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
-			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
-				NewPacket.Respond(conn, false, err.Error())
-				return
-			}
-			NewPacket.Respond(conn, true, "Success")
-
-		} else {
-			logger.Error("Task packet is longer than 1024")
-			return
-		}
+func HandleTaskrequest(content []byte) {
+	reqLen := len(content)
+	NewPacket := new(packet.TaskPacket)
+	err := NewPacket.NewPacket(content)
+	if err != nil {
+		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+		return
+	}
+	if NewPacket.GetUserTaskType() == "Undefine" {
+		nullIndex := bytes.IndexByte(content[76:100], 0)
+		logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
+		return
+	}
+	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
+	_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket)
+	if err != nil {
+		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
+		return
 	}
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
