@@ -1,12 +1,16 @@
 package taskservice
 
 import (
+	"bytes"
 	"context"
-	"edetector_go/internal/clientsearch"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/packet"
+	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/redis"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var ctx context.Context
@@ -58,11 +62,34 @@ func taskhandler(agent string, ch chan string, ctx context.Context) {
 			logger.Info("Task handler for " + agent + " is handling task " + taskid)
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
-			clientsearch.HandleTaskrequest(b)
+			handleTaskrequest(b)
 		}
 	}
 
 }
+
+func handleTaskrequest(content []byte) {
+	reqLen := len(content)
+	NewPacket := new(packet.TaskPacket)
+	err := NewPacket.NewPacket(content)
+	if err != nil {
+		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+		return
+	}
+	if NewPacket.GetUserTaskType() == "Undefine" {
+		nullIndex := bytes.IndexByte(content[76:100], 0)
+		logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
+		return
+	}
+	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
+	_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket)
+	if err != nil {
+		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
+		return
+
+	}
+}
+
 func Stop() {
 	ctx.Done()
 }

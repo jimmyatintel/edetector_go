@@ -12,7 +12,6 @@ import (
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
 	work "edetector_go/internal/work"
-	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
@@ -65,7 +64,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-		 if reqLen <= 1024 && Key != nil {
+		if reqLen <= 1024 && Key != nil {
 			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
@@ -142,27 +141,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 	}
 }
-func HandleTaskrequest(content []byte) {
-	reqLen := len(content)
-	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
-	if err != nil {
-		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
-		return
-	}
-	if NewPacket.GetUserTaskType() == "Undefine" {
-		nullIndex := bytes.IndexByte(content[76:100], 0)
-		logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
-		return
-	}
-	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
-	_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket)
-	if err != nil {
-		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
-		return
 
-	}
-}
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
 

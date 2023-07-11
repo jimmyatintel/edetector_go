@@ -6,6 +6,7 @@ import (
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
+	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
 	"fmt"
 
@@ -54,14 +55,14 @@ func Connect_init() int {
 			return 1
 		}
 	}
-	if Task_enable, err = fflag.FFLAG.FeatureEnabled("task_server_enable"); Task_enable && err == nil {
-		logger.Info("task server is enabled")
-		Task_server_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_TASK_PORT"))
-		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
-		}
-	}
+	// if Task_enable, err = fflag.FFLAG.FeatureEnabled("task_server_enable"); Task_enable && err == nil {
+	// 	logger.Info("task server is enabled")
+	// 	Task_server_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_TASK_PORT"))
+	// 	if err != nil {
+	// 		logger.Error("Error listening:", zap.Any("error", err.Error()))
+	// 		return 1
+	// 	}
+	// }
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
@@ -136,6 +137,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
+	go taskservice.Start()
 	// go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
 	// go Conn_command_start()
 	rt := 0
