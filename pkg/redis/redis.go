@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
+	"edetector_go/pkg/logger"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -49,6 +50,10 @@ func Redis_get(key string) string {
 	if !checkflag() {
 		return ""
 	}
-	val, _ := RedisClient.Get(context.Background(), key).Result()
+	val, err := RedisClient.Get(context.Background(), key).Result()
+	if err != nil {
+		logger.Error("Error getting value from redis" + err.Error())
+		return ""
+	}
 	return val
 }
