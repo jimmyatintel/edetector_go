@@ -5,7 +5,9 @@ import (
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"net"
+	// "strconv"
 
 	"go.uber.org/zap"
 	// "encoding/json"
@@ -68,28 +70,49 @@ func GiveProcessHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func ChangeProcess2Json(p packet.Packet) {
+func ChangeProcess2Json(p packet.Packet) []elasticquery.Request_data{
 	// lines := strings.Split(p.GetMessage(), "\n")
-	// var dataSlice []ProcessJson
+	// var dataSlice []elasticquery.Request_data
 	// for _, line := range lines {
 	// 	values := strings.Split(line, "|")
+	// 	pid, err := strconv.Atoi(values[0])
+	// 	if err != nil {
+	// 		fmt.Println("Error converting pid to int:", err)
+	// 		return nil
+	// 	}
+	// 	parent_pid, err := strconv.Atoi(values[1])
+	// 	if err != nil {
+	// 		fmt.Println("Error converting parent_pid to int:", err)
+	// 		return nil
+	// 	}
+	// 	process_time, err := strconv.Atoi(values[3])
+	// 	if err != nil {
+	// 		fmt.Println("Error converting process_time to int:", err)
+	// 		return nil
+	// 	}
+	// 	parent_time, err := strconv.Atoi(values[5])
+	// 	if err != nil {
+	// 		fmt.Println("Error converting parent_time to int:", err)
+	// 		return nil
+	// 	}
 	// 	if len(values) == 6 {
 	// 		data := ProcessJson{
-	// 			PID:                values[0],
-	// 			Parent_PID:         values[1],
+	// 			PID:                pid,
+	// 			Parent_PID:         parent_pid,
 	// 			ProcessName:        values[2],
-	// 			ProcessTime:        values[3],
+	// 			ProcessTime:        process_time,
 	// 			ParentName:         values[4],
-	// 			ParentTime:         values[5],
+	// 			ParentTime:         parent_time,
 	// 		}
-
-	// 		dataSlice = append(dataSlice, data)
+	// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
 	// 	}
 	// }
 	// jsonData, err := json.Marshal(dataSlice)
 	// if err != nil {
 	// 	fmt.Println("Error converting to JSON:", err)
-	// 	return
+	// 	return nil
 	// }
 	// logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
+	// return dataSlice
+	return nil
 }

@@ -65,8 +65,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-
-		if reqLen <= 1024 && Key != nil {
+		 if reqLen <= 1024 && Key != nil {
 			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
@@ -77,7 +76,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
@@ -99,7 +98,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			// 	taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
 			// 	fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
 			// }
-		} else if reqLen > 0 && Key != nil && *Key == "null" {
+		} else if reqLen > 0 && Key != nil {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
@@ -117,6 +116,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			decrypt_buf := bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+			// fmt.Println("decrypted", decrypt_buf)
 			// logger.Info("Receive Large TCP from client", zap.Any("data", string(decrypt_buf)), zap.Any("len", len(Data_acache)))
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
@@ -127,7 +127,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
@@ -170,7 +170,7 @@ func handleTaskrequest(conn net.Conn) {
 			}
 			if NewPacket.GetUserTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(content[76:100], 0)
-				logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76 : 76+nullIndex])))
+				logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
 				return
 			}
 			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))

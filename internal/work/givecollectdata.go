@@ -4,9 +4,16 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	C_AES "edetector_go/internal/C_AES"
+	"fmt"
+	"os"
+	"strconv"
+	"bytes"
+
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
+	"io/ioutil"
 
 	// "encoding/json"
 	// "fmt"
@@ -15,6 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
+var DataLen int
 
 func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("ImportStartup: ", zap.Any("message", p.GetMessage()))
@@ -24,6 +32,7 @@ func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
+	fmt.Println("send: ", send_packet)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -39,6 +48,7 @@ func CollectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, 
 		Work:       task.GET_COLLECT_INFO_DATA,
 		Message:    "10",
 	}
+	fmt.Println("send: ", send_packet)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -63,13 +73,19 @@ func GiveCollectProgress(p packet.Packet, Key *string, conn net.Conn) (task.Task
 
 func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetMessage()))
+	len, err := strconv.Atoi(p.GetMessage())
+	DataLen = len
+	// fmt.Println(DataLen)
+	if err != nil {
+		return task.FAIL, err
+	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -78,13 +94,34 @@ func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.Task
 
 func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectData: ", zap.Any("message", p.GetMessage()))
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
+
+	fileName := "edetector_go/download/db.db"
+	// fileName := "edetector_go/download/"+ time.Now().Format(time.RFC3339) + "db.db"
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	_, err = file.Seek(0, 2)
+	if err != nil {
+		return task.FAIL, err
+	}
+	_, err = file.Write(decrypt_buf)
+	if err != nil {
+		return task.FAIL, err
+	}
+	fmt.Println("success", fileName)
+	file.Close()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -93,13 +130,22 @@ func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 
 func GiveCollectDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetMessage()))
+	filePath := "edetector_go/download/db.db"
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = ioutil.WriteFile(filePath, data[:DataLen], 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
