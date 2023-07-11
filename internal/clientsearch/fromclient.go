@@ -92,12 +92,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
 			}
-			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
-			// if port == "detect"{
-			// 	// wait for key to join the packet
-			// 	taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
-			// 	fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
-			// }
 		} else if reqLen > 0 && Key != nil {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
@@ -116,7 +110,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			decrypt_buf := bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
-			// fmt.Println("decrypted", decrypt_buf)
 			// logger.Info("Receive Large TCP from client", zap.Any("data", string(decrypt_buf)), zap.Any("len", len(Data_acache)))
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
@@ -134,7 +127,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
 			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
 			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				logger.Error("Function Error:", zap.Any("error", err))
+				// logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
 			}
 		}

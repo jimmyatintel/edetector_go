@@ -23,6 +23,7 @@ import (
 )
 
 var DataLen int
+var FileName = "db.db"
 
 func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("ImportStartup: ", zap.Any("message", p.GetMessage()))
@@ -74,11 +75,15 @@ func GiveCollectProgress(p packet.Packet, Key *string, conn net.Conn) (task.Task
 func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetMessage()))
 	len, err := strconv.Atoi(p.GetMessage())
-	DataLen = len
-	// fmt.Println(DataLen)
 	if err != nil {
 		return task.FAIL, err
 	}
+	DataLen = len
+    file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+    if err != nil {
+        return task.FAIL, err
+    }
+    file.Close()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -99,9 +104,7 @@ func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
 
-	fileName := "edetector_go/download/db.db"
-	// fileName := "edetector_go/download/"+ time.Now().Format(time.RFC3339) + "db.db"
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -113,7 +116,6 @@ func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	if err != nil {
 		return task.FAIL, err
 	}
-	fmt.Println("success", fileName)
 	file.Close()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -130,12 +132,11 @@ func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 
 func GiveCollectDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetMessage()))
-	filePath := "edetector_go/download/db.db"
-	data, err := ioutil.ReadFile(filePath)
+	data, err := ioutil.ReadFile(FileName)
 	if err != nil {
 		return task.FAIL, err
 	}
-	err = ioutil.WriteFile(filePath, data[:DataLen], 0644)
+	err = ioutil.WriteFile(FileName, data[:DataLen], 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
