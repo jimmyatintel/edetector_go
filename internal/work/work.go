@@ -47,9 +47,19 @@ func init() {
 
 		// drive
 		task.GIVE_DRIVE_INFO:             GiveDriveInfo,
+		task.EXPLORER:                    Explorer,
 		task.GIVE_EXPLORER_DATA:          GiveExplorerData,
 		task.GIVE_EXPLORER_END:           GiveExplorerEnd,
+		task.GIVE_EXPLORER_ERROR:         GiveExplorerError,
 
+		// collection
+		task.IMPORT_STARTUP:               ImportStartup,
+		task.COLLECT_INFO:                 CollectInfo,
+		task.GIVE_COLLECT_PROGRESS:        GiveCollectProgress,
+		task.GIVE_COLLECT_DATA_INFO:       GiveCollectDataInfo,
+		task.GIVE_COLLECT_DATA:            GiveCollectData,
+		task.GIVE_COLLECT_DATA_END:        GiveCollectDataEnd,
+		task.GIVE_COLLECT_DATA_ERROR:      GiveCollectDataError,
 		// scan
 		// task.GET_PROCESS_INFO:            GetProcessInfo,
 		task.GET_SCAN_INFO_DATA:          GetScanInfoData,

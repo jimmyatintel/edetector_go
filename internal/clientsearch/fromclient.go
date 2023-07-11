@@ -65,8 +65,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-
-		if reqLen <= 1024 && Key != nil {
+		 if reqLen <= 1024 && Key != nil {
 			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
@@ -82,10 +81,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				return
 			}
 			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
-			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
-			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				return
+			}
+			_, err = taskFunc(NewPacket, Key, conn)
 			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
+				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return
 			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
@@ -93,13 +96,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
 			}
-			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
-			// if port == "detect"{
-			// 	// wait for key to join the packet
-			// 	taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
-			// 	fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
-			// }
-		} else if reqLen > 0 && Key != nil && *Key == "null" {
+		} else if reqLen > 0 && Key != nil {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
@@ -132,15 +129,19 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				return
 			}
 			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
-			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
-			if err != nil {
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				return
+			}
+			_, err = taskFunc(NewPacket, Key, conn)
+			if err != nil {
+				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return
 			}
 		}
 	}
 }
-
 func HandleTaskrequest(content []byte) {
 	reqLen := len(content)
 	NewPacket := new(packet.TaskPacket)
@@ -159,6 +160,7 @@ func HandleTaskrequest(content []byte) {
 	if err != nil {
 		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
 		return
+
 	}
 }
 func handleUDPRequest(addr net.Addr, buf []byte) {
