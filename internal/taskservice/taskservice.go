@@ -3,7 +3,8 @@ package taskservice
 import (
 	"bytes"
 	"context"
-	"edetector_go/internal/fflag"
+
+	// "edetector_go/internal/fflag"
 	"edetector_go/internal/packet"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
@@ -15,16 +16,18 @@ import (
 
 var ctx context.Context
 
-var taskchans map[string]chan string
+var taskchans = make(map[string]chan string)
 
-func Start() {
-	if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-		logger.Info("Task service enable.")
-		go Main(ctx)
-	} else {
-		logger.Info("Task service disable.")
-		return
-	}
+func Start(ctx context.Context) {
+	// if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
+	logger.Info("Task service enable.")
+	go Main(ctx)
+	// } else if err != nil{
+	// 	logger.Error("Task service error:", zap.Any("error", err.Error()))
+	// } else {
+	// 	logger.Info("Task service disable.")
+	// 	return
+	// }
 }
 
 func Main(ctx context.Context) {
@@ -43,29 +46,31 @@ func Main(ctx context.Context) {
 func findtask(ctx context.Context) {
 	unhandle_task := loadallunhandletask()
 	for _, task := range unhandle_task {
-		if _, ok := taskchans[task.agentid]; !ok {
-			taskchans[task.agentid] = make(chan string, 1024)
-			go taskhandler(task.agentid, taskchans[task.agentid], ctx)
+		if task.clientid == "8beba472f3f44cabbbb44fd232171933" {
+			if _, ok := taskchans[task.clientid]; !ok {
+				taskchans[task.clientid] = make(chan string, 1024)
+				go taskhandler(task.clientid, taskchans[task.clientid], ctx)
+			}
+			taskchans[task.clientid] <- task.taskid
+			change_task_status(task.taskid, task.clientid, 1)
 		}
-		taskchans[task.agentid] <- task.taskid
-		change_task_status(task.taskid, task.agentid, 1)
 	}
 }
 
-func taskhandler(agent string, ch chan string, ctx context.Context) {
+func taskhandler(client string, ch chan string, ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Task handler for " + agent + " is shutting down...")
+			logger.Info("Task handler for " + client + " is shutting down...")
 			return
 		case taskid := <-ch:
-			logger.Info("Task handler for " + agent + " is handling task " + taskid)
+			logger.Info("Task handler for " + client + " is handling task " + taskid)
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
+			change_task_status(taskid, client, 2)
 			handleTaskrequest(b)
 		}
 	}
-
 }
 
 func handleTaskrequest(content []byte) {
@@ -82,11 +87,15 @@ func handleTaskrequest(content []byte) {
 		return
 	}
 	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
-	_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket)
-	if err != nil {
-		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
+	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
+	if !ok {
+		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()))
 		return
-
+	}
+	_, err = taskFunc(NewPacket)
+	if err != nil {
+		logger.Error("Task Failed:", zap.Any("error", err.Error()))
+		return
 	}
 }
 

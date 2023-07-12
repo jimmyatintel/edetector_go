@@ -36,15 +36,3 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 	task_chan <- &send_packet
 	return nil
 }
-
-func SendDriveTCPtoClient(p packet.Packet, key string, workType task.TaskType, msg string) error{
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       workType,
-		Message:    msg,
-	}
-	task_chan := taskchannel.Task_worker_channel[key]
-	task_chan <- &send_packet
-	return nil
-}

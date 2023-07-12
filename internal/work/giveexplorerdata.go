@@ -7,6 +7,7 @@ import (
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
+	"strings"
 
 	// "encoding/json"
 	// "fmt"
@@ -16,11 +17,13 @@ import (
 
 func Explorer(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
+	parts := strings.Split(p.GetMessage(), "|")
+	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.TRANSPORT_EXPLORER,
-		Message:    "|Explorer|ScheduleName",
+		Message:    msg,
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {

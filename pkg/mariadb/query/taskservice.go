@@ -6,11 +6,11 @@ import (
 	"strconv"
 )
 
-func Load_stored_task(taskid string, agentid string, status int) [][]string {
-	qu := "select task_id, agent_id, status from task where "
+func Load_stored_task(taskid string, client_id string, status int) [][]string {
+	qu := "select task_id, client_id, status from task where "
 	var result [][]string
-	if agentid != "nil" {
-		qu = qu + "agent_id = " + agentid
+	if client_id != "nil" {
+		qu = qu + "client_id = " + client_id
 	}
 	if taskid != "nil" {
 		qu = qu + "task_id = " + taskid

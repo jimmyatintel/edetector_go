@@ -10,7 +10,7 @@ import (
 )
 
 func StartGetExplorer(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartGetExplorer: ", zap.Any("message", p.GetMessage()))
+	logger.Info("ExplorerInfo: ", zap.Any("message", p.GetMessage()))
 	err := clientsearchsend.SendUserTCPtoClient(p, task.EXPLORER_INFO, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

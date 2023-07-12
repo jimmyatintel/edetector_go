@@ -4,6 +4,8 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	taskservice "edetector_go/internal/taskservice"
+
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
@@ -14,7 +16,6 @@ import (
 
 	"go.uber.org/zap"
 )
-
 
 func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetMessage()))
@@ -32,12 +33,11 @@ func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 	drives := strings.Split(p.GetMessage(), "|")
 	for _, d := range drives {
 		parts := strings.Split(d, "-")
-		if len(parts) == 2{
+		if len(parts) == 2 {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
-			msg := drive + "|" + driveInfo
-			logger.Info("ExplorerInfo: ", zap.Any("message", msg))
-			err = clientsearchsend.SendDriveTCPtoClient(p, p.GetRkey(), task.EXPLORER_INFO, msg + "|Explorer|ScheduleName|0|2048")
+			msg := drive + "|" + driveInfo + "|Explorer|ScheduleName|0|2048"
+			err = taskservice.AddTask2db(p.GetRkey(), task.START_GET_EXPLORER, msg)
 			if err != nil {
 				return task.FAIL, err
 			}

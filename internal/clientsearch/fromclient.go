@@ -79,7 +79,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
-			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
@@ -127,7 +127,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
-			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))

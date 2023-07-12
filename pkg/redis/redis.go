@@ -29,6 +29,7 @@ func Redis_init() *redis.Client {
 		fmt.Println("Error connecting to redis")
 		return nil
 	}
+	fmt.Println("redis is enabled.")
 	return RedisClient
 }
 

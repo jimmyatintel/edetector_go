@@ -6,17 +6,17 @@ import (
 )
 
 type task_columns struct {
-	agentid string
+	clientid string
 	taskid  string
 	status  int
 }
 
 func loadfromdb(q task_columns) []task_columns {
-	result := query.Load_stored_task(q.taskid, q.agentid, q.status)
+	result := query.Load_stored_task(q.taskid, q.clientid, q.status)
 	var ret []task_columns
 	for _, v := range result {
 		tmp := task_columns{}
-		tmp.agentid = v[1]
+		tmp.clientid = v[1]
 		tmp.taskid = v[0]
 		tmp.status, _ = strconv.Atoi(v[2])
 		ret = append(ret, tmp)
@@ -26,12 +26,16 @@ func loadfromdb(q task_columns) []task_columns {
 
 func loadallunhandletask() []task_columns {
 	var q task_columns
+	q.taskid = "nil"
+	q.clientid = "nil"
 	q.status = 0
 	return loadfromdb(q)
 }
 
 func loadallprocesstask() []task_columns {
 	var q task_columns
+	q.taskid = "nil"
+	q.clientid = "nil"
 	q.status = 1
 	return loadfromdb(q)
 }

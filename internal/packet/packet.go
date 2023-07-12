@@ -146,7 +146,6 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-
 	err:= json.Unmarshal(data, p)
 	if err != nil {
 		return err
