@@ -85,8 +85,8 @@ func GiveScanProgress(p packet.Packet, Key *string, conn net.Conn) (task.TaskRes
 	return task.SUCCESS, nil
 }
 
-func GiveScanData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanData: ", zap.Any("message", p.GetMessage()))
+func GiveScanDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveScanDataInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -100,8 +100,8 @@ func GiveScanData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult,
 	return task.SUCCESS, nil
 }
 
-func GiveScanDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanDataInfo: ", zap.Any("message", p.GetMessage()))
+func GiveScanData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveScanData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

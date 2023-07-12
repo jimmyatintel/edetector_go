@@ -55,14 +55,6 @@ func Connect_init() int {
 			return 1
 		}
 	}
-	// if Task_enable, err = fflag.FFLAG.FeatureEnabled("task_server_enable"); Task_enable && err == nil {
-	// 	logger.Info("task server is enabled")
-	// 	Task_server_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_TASK_PORT"))
-	// 	if err != nil {
-	// 		logger.Error("Error listening:", zap.Any("error", err.Error()))
-	// 		return 1
-	// 	}
-	// }
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {

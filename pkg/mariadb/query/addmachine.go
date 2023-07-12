@@ -55,7 +55,7 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	}
 	_, err = method.Exec(
 		"INSERT INTO client_task_status (client_id, scan_schedule, scan_finish_time, collect_schedule, collect_finish_time, file_schedule, file_finish_time, image_finish_time) VALUE (?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE client_id = ?",
-		ClientInfo.KeyNum, "null", "null", "null", "null", "null", "null", "null", ClientInfo.KeyNum,
+		ClientInfo.KeyNum, nil, nil, nil, nil, nil, nil, nil, ClientInfo.KeyNum,
 	)
 	if err != nil {
 		logger.Error(err.Error())

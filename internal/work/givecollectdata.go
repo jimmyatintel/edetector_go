@@ -26,7 +26,7 @@ var DataLen int
 var FileName = "db.db"
 
 func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("ImportStartup: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("ImportStartup: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -42,7 +42,7 @@ func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 }
 
 func CollectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("CollectInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("CollectInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -98,7 +98,7 @@ func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.Task
 }
 
 func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetMessage()))
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)

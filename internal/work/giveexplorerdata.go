@@ -33,7 +33,7 @@ func Explorer(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 }
 
 func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

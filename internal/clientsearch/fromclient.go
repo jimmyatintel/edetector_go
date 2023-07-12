@@ -40,7 +40,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				case message := <-task_chan:
 					data := message.Fluent()
 					fmt.Println(len(data))
-					fmt.Println(port + " port get task msg: " + string(data))
+					fmt.Println("get task msg: " + string(data))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {
 						logger.Error("Send failed:", zap.Any("error", err.Error()))
@@ -117,7 +117,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
-				logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
