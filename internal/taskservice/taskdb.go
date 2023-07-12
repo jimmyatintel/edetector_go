@@ -40,6 +40,14 @@ func loadallprocesstask() []task_columns {
 	return loadfromdb(q)
 }
 
-func change_task_status(taskid string, agentid string, status int) {
+func Find_task_id(clientid string, tasktype string) string {
+	return query.Select_task_id(clientid, tasktype)
+}
+
+func Change_task_status(taskid string, status int) {
 	query.Update_task_status(taskid, status)
+}
+
+func Change_task_timestamp(clientid string, tasktype string) {
+	query.Update_task_timestamp(clientid, tasktype)
 }

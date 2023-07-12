@@ -3,6 +3,7 @@ package taskservice
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	// "edetector_go/internal/fflag"
 	"edetector_go/internal/packet"
@@ -20,12 +21,13 @@ var taskchans = make(map[string]chan string)
 
 func Start(ctx context.Context) {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-	logger.Info("Task service enable.")
-	go Main(ctx)
+		time.Sleep(30 * time.Second)
+		fmt.Println("Task service enable.")
+		go Main(ctx)
 	// } else if err != nil{
 	// 	logger.Error("Task service error:", zap.Any("error", err.Error()))
 	// } else {
-	// 	logger.Info("Task service disable.")
+	// 	fmt.Println("Task service disable.")
 	// 	return
 	// }
 }
@@ -52,7 +54,7 @@ func findtask(ctx context.Context) {
 				go taskhandler(taskchans[task.clientid], task.clientid, ctx)
 			}
 			taskchans[task.clientid] <- task.taskid
-			change_task_status(task.taskid, task.clientid, 1)
+			Change_task_status(task.taskid, 1)
 		}
 	}
 }
@@ -67,7 +69,7 @@ func taskhandler(ch chan string, client string, ctx context.Context) {
 			logger.Info("Task handler for " + client + " is handling task " + taskid)
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
-			change_task_status(taskid, client, 2)
+			Change_task_status(taskid, 2)
 			handleTaskrequest(b, taskid, client)
 		}
 	}
@@ -97,9 +99,12 @@ func handleTaskrequest(content []byte, taskid string, client string) {
 		logger.Error("Task Failed:", zap.Any("error", err.Error()))
 		return
 	}
-	// taskid := <-ch:
-	logger.Info("Task for " + client + " finished: " + taskid)
-	change_task_status(taskid, client, 3)
+}
+
+func Finish_task(clientid string, tasktype string) {
+	taskID := Find_task_id(clientid, tasktype)
+	Change_task_status(taskID, 3)
+	Change_task_timestamp(clientid, tasktype)
 }
 
 func Stop() {

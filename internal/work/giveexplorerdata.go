@@ -4,6 +4,7 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	taskservice "edetector_go/internal/taskservice"
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
@@ -14,6 +15,19 @@ import (
 
 	"go.uber.org/zap"
 )
+
+type ExplorerJson struct {
+	Ind                 int `json:"ind"`
+	FileName            string `json:"file_name"`
+	Parent_Ind          int `json:"parent_ind"`
+	IsDeleted           bool `json:"isDeleted"`
+	IsDirectory         bool `json:"isDirectory"`
+	CreateTime          int `json:"create_time"`
+	WriteTime           int `json:"write_time"`
+	AccessTime          int `json:"access_time"`
+	EntryModifiedTime   int `json:"entry_modified_time"`
+	Datalen             int `json:"data_len"`
+}
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
@@ -59,6 +73,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	taskservice.Finish_task(p.GetRkey(), "StartGetDrive")
 	return task.SUCCESS, nil
 }
 

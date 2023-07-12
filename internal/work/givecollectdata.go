@@ -5,6 +5,7 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	C_AES "edetector_go/internal/C_AES"
+	taskservice "edetector_go/internal/taskservice"
 	"fmt"
 	"os"
 	"strconv"
@@ -150,6 +151,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
+	taskservice.Finish_task(p.GetRkey(), "StartCollect")
 	return task.SUCCESS, nil
 }
 

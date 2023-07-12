@@ -30,6 +30,5 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetMessage()))
-
 	return task.SUCCESS, nil
 }

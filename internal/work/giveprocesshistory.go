@@ -15,7 +15,7 @@ import (
 	// "strings"
 )
 
-type ProcessJson struct {
+type ProcessDetectJson struct {
 	PID                 int `json:"pid"`
 	Parent_PID          int `json:"parent_pid"`
 	ProcessName         string `json:"process_name"`
