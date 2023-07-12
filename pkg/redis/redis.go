@@ -40,11 +40,11 @@ func Redis_close() {
 	RedisClient.Close()
 }
 
-func Redis_set(key string, value string) {
+func Redis_set(key string, value string) error{
 	if !checkflag() {
-		return
+		return nil
 	}
-	RedisClient.Set(context.Background(), key, value, 0)
+	return RedisClient.Set(context.Background(), key, value, 0).Err()
 }
 
 func Redis_get(key string) string {

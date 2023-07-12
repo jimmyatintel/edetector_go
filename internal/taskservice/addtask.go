@@ -30,6 +30,9 @@ func AddTask2db(deviceId string, work task.UserTaskType, msg string) error {
 		return err
 	}
 
-	redis.Redis_set(taskId, string(pktString))
+	err = redis.Redis_set(taskId, string(pktString))
+	if err != nil {
+		return err
+	}
 	return nil
 }
