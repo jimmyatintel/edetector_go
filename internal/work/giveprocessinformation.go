@@ -7,17 +7,18 @@ import (
 	"edetector_go/pkg/logger"
 	"net"
 
-	"go.uber.org/zap"
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 type ProcessInfoJson struct {
-	PID            string `json:"pid"`
-	ProcessTime    string `json:"process_time"`
-	Path           string `json:"path"`
-	CommandLine    string `json:"command_line"`
+	PID         string `json:"pid"`
+	ProcessTime string `json:"process_time"`
+	Path        string `json:"path"`
+	CommandLine string `json:"command_line"`
 }
 
 func GiveProcessInformation(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -73,10 +74,10 @@ func ChangeProcessInfo2Json(p packet.Packet) {
 		values := strings.Split(line, "|")
 		if len(values) == 4 {
 			data := ProcessInfoJson{
-				PID:             values[0],
-				ProcessTime:     values[1],
-				Path:            values[2],
-				CommandLine:     values[3],
+				PID:         values[0],
+				ProcessTime: values[1],
+				Path:        values[2],
+				CommandLine: values[3],
 			}
 
 			dataSlice = append(dataSlice, data)

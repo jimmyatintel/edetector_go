@@ -4,9 +4,10 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	"edetector_go/pkg/logger"
 	elasticquery "edetector_go/pkg/elastic/query"
+	"edetector_go/pkg/logger"
 	"net"
+
 	// "strconv"
 
 	"go.uber.org/zap"
@@ -16,12 +17,12 @@ import (
 )
 
 type ProcessDetectJson struct {
-	PID                 int `json:"pid"`
-	Parent_PID          int `json:"parent_pid"`
-	ProcessName         string `json:"process_name"`
-	ProcessTime         int `json:"process_time"`
-	ParentName          string `json:"parent_name"`
-	ParentTime          int `json:"parent_time"`
+	PID         int    `json:"pid"`
+	Parent_PID  int    `json:"parent_pid"`
+	ProcessName string `json:"process_name"`
+	ProcessTime int    `json:"process_time"`
+	ParentName  string `json:"parent_name"`
+	ParentTime  int    `json:"parent_time"`
 }
 
 func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -70,7 +71,7 @@ func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func ChangeProcess2Json(p packet.Packet) []elasticquery.Request_data{
+func ChangeProcess2Json(p packet.Packet) []elasticquery.Request_data {
 	// lines := strings.Split(p.GetMessage(), "\n")
 	// var dataSlice []elasticquery.Request_data
 	// for _, line := range lines {
