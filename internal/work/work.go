@@ -8,14 +8,14 @@ import (
 	"net"
 )
 
-var WorkMap map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error)
+var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
 
 type Request_data interface {
 	Elastical() ([]byte, error)
 }
 
 func init() {
-	WorkMap = map[task.TaskType]func(packet.Packet, *string, net.Conn) (task.TaskResult, error){
+	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
 		// handshake
 		task.GIVE_INFO:                GiveInfo,
 		task.GIVE_DETECT_PORT_INFO:    GiveDetectPortInfo,

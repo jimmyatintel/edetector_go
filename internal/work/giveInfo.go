@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) { // the first packet: insert user info
+func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the first packet: insert user info
 	logger.Info("GiveInfo: ", zap.Any("message", p.GetMessage()))
 	np := packet.CheckIsWork(p)
 	ClientInfo := client.PacketClientInfo(np)
@@ -29,7 +29,6 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	query.Online(ClientInfo.KeyNum, tm)
 	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
 	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
-	*Key = ClientInfo.KeyNum
 	// logger.Info("Redis get", zap.Any("key", ClientInfo.KeyNum), zap.Any("value", redis.Redis_get(ClientInfo.KeyNum)))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -44,7 +43,7 @@ func GiveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func GiveDetectPortInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectPortInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectPortInfo: ", zap.Any("message", p.GetMessage()))
 	return task.SUCCESS, nil
 }

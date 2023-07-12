@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Process(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func Process(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Process: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -25,7 +25,7 @@ func Process(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, erro
 	return task.SUCCESS, nil
 }
 
-func GetScanInfoData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GetScanInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GetScanInfoData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -40,7 +40,7 @@ func GetScanInfoData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	return task.SUCCESS, nil
 }
 
-func GiveProcessData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -55,7 +55,7 @@ func GiveProcessData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	return task.SUCCESS, nil
 }
 
-func GiveProcessDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessDataEnd: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -70,7 +70,7 @@ func GiveProcessDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	return task.SUCCESS, nil
 }
 
-func GiveScanProgress(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanProgress: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -85,7 +85,7 @@ func GiveScanProgress(p packet.Packet, Key *string, conn net.Conn) (task.TaskRes
 	return task.SUCCESS, nil
 }
 
-func GiveScanDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanDataInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -100,7 +100,7 @@ func GiveScanDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskRes
 	return task.SUCCESS, nil
 }
 
-func GiveScanData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveScanData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -115,7 +115,7 @@ func GiveScanData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult,
 	return task.SUCCESS, nil
 }
 
-func GiveScanDataOver(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanDataOver: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

@@ -11,10 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func GiveDetectInfoFirst(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// front process back netowork
 	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetMessage()))
-	rt := query.First_detect_info(*Key, p.GetMessage())
+	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -28,7 +28,7 @@ func GiveDetectInfoFirst(p packet.Packet, Key *string, conn net.Conn) (task.Task
 	return task.SUCCESS, nil
 }
 
-func GiveDetectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetMessage()))
 
 	return task.SUCCESS, nil

@@ -23,16 +23,10 @@ import (
 	// "encoding/binary"
 )
 
-var Key *string
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
-	Key = new(string)
-	*Key = "null"
-	defer func() {
-		Key = nil
-	}()
 	if task_chan != nil {
 		go func() {
 			for {
@@ -64,7 +58,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-		if reqLen <= 1024 && Key != nil {
+		if reqLen <= 1024 {
 			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
@@ -85,7 +79,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
 			}
-			_, err = taskFunc(NewPacket, Key, conn)
+			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return
@@ -95,7 +89,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
 			}
-		} else if reqLen > 0 && Key != nil {
+		} else if reqLen > 0 {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
@@ -132,7 +126,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
 			}
-			_, err = taskFunc(NewPacket, Key, conn)
+			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return

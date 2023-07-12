@@ -9,10 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func CheckConnect(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
-	if Key != nil{
-		logger.Info("CheckConnect: ", zap.Any("key", *Key))
-	}
+func CheckConnect(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("CheckConnect: ", zap.Any("key", p.GetRkey()))
 	// query.Update_time()
 	return task.SUCCESS, nil
 }

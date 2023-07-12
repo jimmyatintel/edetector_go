@@ -25,7 +25,7 @@ import (
 var DataLen int
 var FileName = "db.db"
 
-func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("ImportStartup: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -41,7 +41,7 @@ func ImportStartup(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult
 	return task.SUCCESS, nil
 }
 
-func CollectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("CollectInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -57,7 +57,7 @@ func CollectInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, 
 	return task.SUCCESS, nil
 }
 
-func GiveCollectProgress(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -72,7 +72,7 @@ func GiveCollectProgress(p packet.Packet, Key *string, conn net.Conn) (task.Task
 	return task.SUCCESS, nil
 }
 
-func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetMessage()))
 	len, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -97,7 +97,7 @@ func GiveCollectDataInfo(p packet.Packet, Key *string, conn net.Conn) (task.Task
 	return task.SUCCESS, nil
 }
 
-func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetMessage()))
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
@@ -130,7 +130,7 @@ func GiveCollectData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	return task.SUCCESS, nil
 }
 
-func GiveCollectDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetMessage()))
 	data, err := ioutil.ReadFile(FileName)
 	if err != nil {
@@ -153,7 +153,7 @@ func GiveCollectDataEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	return task.SUCCESS, nil
 }
 
-func GiveCollectDataError(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataError: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

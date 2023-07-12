@@ -20,7 +20,7 @@ type ProcessInfoJson struct {
 	CommandLine    string `json:"command_line"`
 }
 
-func GiveProcessInformation(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessInformation(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessinformation: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -35,7 +35,7 @@ func GiveProcessInformation(p packet.Packet, Key *string, conn net.Conn) (task.T
 	return task.SUCCESS, nil
 }
 
-func GiveProcessInfoData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessInfoData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -50,7 +50,7 @@ func GiveProcessInfoData(p packet.Packet, Key *string, conn net.Conn) (task.Task
 	return task.SUCCESS, nil
 }
 
-func GiveProcessInfoEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessInfoEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessInfoEnd: ", zap.Any("message", p.GetMessage()))
 	ChangeProcessInfo2Json(p)
 	var send_packet = packet.WorkPacket{

@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func Explorer(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
@@ -32,7 +32,7 @@ func Explorer(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -47,7 +47,7 @@ func GiveExplorerData(p packet.Packet, Key *string, conn net.Conn) (task.TaskRes
 	return task.SUCCESS, nil
 }
 
-func GiveExplorerEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -62,7 +62,7 @@ func GiveExplorerEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResu
 	return task.SUCCESS, nil
 }
 
-func GiveExplorerError(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

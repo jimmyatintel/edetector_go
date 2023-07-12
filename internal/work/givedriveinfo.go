@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func GiveDriveInfo(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

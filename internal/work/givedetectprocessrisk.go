@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func GiveDetectProcessRisk(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectProcessRisk: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -25,7 +25,7 @@ func GiveDetectProcessRisk(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func GiveDetectProcessOver(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveDetectProcessOver: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -40,7 +40,7 @@ func GiveDetectProcessOver(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func GiveDetectProcessEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveDetectProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveDetectProcessEnd: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

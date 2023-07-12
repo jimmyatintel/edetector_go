@@ -24,7 +24,7 @@ type ProcessJson struct {
 	ParentTime          int `json:"parent_time"`
 }
 
-func GiveProcessHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -39,7 +39,7 @@ func GiveProcessHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	return task.SUCCESS, nil
 }
 
-func GiveProcessHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -54,7 +54,7 @@ func GiveProcessHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.T
 	return task.SUCCESS, nil
 }
 
-func GiveProcessHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetMessage()))
 	ChangeProcess2Json(p)
 	var send_packet = packet.WorkPacket{

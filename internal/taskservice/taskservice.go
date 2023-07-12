@@ -49,7 +49,7 @@ func findtask(ctx context.Context) {
 		if task.clientid == "8beba472f3f44cabbbb44fd232171933" {
 			if _, ok := taskchans[task.clientid]; !ok {
 				taskchans[task.clientid] = make(chan string, 1024)
-				go taskhandler(task.clientid, taskchans[task.clientid], ctx)
+				go taskhandler(taskchans[task.clientid], task.clientid, ctx)
 			}
 			taskchans[task.clientid] <- task.taskid
 			change_task_status(task.taskid, task.clientid, 1)
@@ -57,7 +57,7 @@ func findtask(ctx context.Context) {
 	}
 }
 
-func taskhandler(client string, ch chan string, ctx context.Context) {
+func taskhandler(ch chan string, client string, ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -68,12 +68,12 @@ func taskhandler(client string, ch chan string, ctx context.Context) {
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
 			change_task_status(taskid, client, 2)
-			handleTaskrequest(b)
+			handleTaskrequest(b, taskid, client)
 		}
 	}
 }
 
-func handleTaskrequest(content []byte) {
+func handleTaskrequest(content []byte, taskid string, client string) {
 	reqLen := len(content)
 	NewPacket := new(packet.TaskPacket)
 	err := NewPacket.NewPacket(content)
@@ -97,6 +97,9 @@ func handleTaskrequest(content []byte) {
 		logger.Error("Task Failed:", zap.Any("error", err.Error()))
 		return
 	}
+	// taskid := <-ch:
+	logger.Info("Task for " + client + " finished: " + taskid)
+	change_task_status(taskid, client, 3)
 }
 
 func Stop() {
