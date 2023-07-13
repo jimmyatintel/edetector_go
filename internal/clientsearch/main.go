@@ -6,6 +6,7 @@ import (
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
+	taskservice "edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
 	"fmt"
 
@@ -66,6 +67,7 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				c <- err.Error()
 			}
 			new_task_chan := make(chan packet.Packet)
+			fmt.Println("new worker connect")
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
@@ -128,6 +130,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
+	go taskservice.Start(ctx)
 	// go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
 	// go Conn_command_start()
 	rt := 0

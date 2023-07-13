@@ -14,6 +14,7 @@ import (
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -27,6 +28,7 @@ import (
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
+	key := "null"
 	if task_chan != nil {
 		go func() {
 			for {
@@ -44,11 +46,15 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	}
 	for {
 		reqLen, err := conn.Read(buf)
-		// buf, err := ioutil.ReadAll(conn)
-		// reqLen := len(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
-				logger.Debug("Connection close")
+				if key != "null"{
+					err = redis.Offline(key)
+					if err != nil {
+						logger.Error("Update offline error:", zap.Any("error", err.Error()))
+					}
+				}
+				logger.Debug(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
 				logger.Error("Error reading:", zap.Any("error", err.Error()))
@@ -85,8 +91,15 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
+				key = NewPacket.GetRkey()
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
+			}
+			if NewPacket.GetTaskType() != task.GIVE_INFO && NewPacket.GetTaskType() != task.GIVE_DETECT_INFO_FIRST {
+				err = redis.Online(key)
+				if err != nil {
+					logger.Error("Upate online failed:", zap.Any("error", err.Error()))
+				}
 			}
 		} else if reqLen > 0 {
 			Data_acache := make([]byte, 0)
@@ -95,7 +108,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				reqLen, err := conn.Read(buf)
 				if err != nil {
 					if err.Error() == "EOF" {
-						logger.Debug("Connection close")
+						if key != "null"{
+							redis.Offline(key)
+						}
+						logger.Info(string(key) + " " + string(port) + " Connection close")
 						return
 					} else {
 						logger.Error("Error reading:", zap.Any("error", err.Error()))
@@ -130,11 +146,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return
 			}
+			err = redis.Online(key)
+			if err != nil {
+				logger.Error("Upate online failed:", zap.Any("error", err.Error()))
+			}
 		}
 	}
 }
 
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
-
 }

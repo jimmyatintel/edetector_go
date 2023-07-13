@@ -9,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"bytes"
+	"fmt"
+	"errors"
 
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
@@ -24,6 +26,7 @@ import (
 
 var DataLen int
 var FileName = "db.db"
+var count = 0
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("ImportStartup: ", zap.Any("message", p.GetMessage()))
@@ -125,6 +128,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	count = count + 1
 	return task.SUCCESS, nil
 }
 
@@ -133,6 +137,16 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	data, err := ioutil.ReadFile(FileName)
 	if err != nil {
 		return task.FAIL, err
+	}
+	fileInfo, err := os.Stat(FileName)
+	if err != nil {
+		return task.FAIL, err
+	}
+	realLen := fileInfo.Size()
+	fmt.Println("File Size: ", realLen)
+	fmt.Println("count: ", count)
+	if int(realLen) < DataLen {
+		return task.FAIL, errors.New("incomplete data")
 	}
 	err = ioutil.WriteFile(FileName, data[:DataLen], 0644)
 	if err != nil {

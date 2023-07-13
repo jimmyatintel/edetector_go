@@ -13,7 +13,7 @@ func AddTask2db(deviceId string, work task.UserTaskType, msg string) error {
 	taskId := uuid.NewString()
 
 	// store into mariaDB
-	query := "INSERT INTO task (task_id, client_id, type, status, timestamp) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)"
+	query := "INSERT INTO task (task_id, client_id, type, status, timestamp, start, finish) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, 0)"
 	_, err := mariadb.DB.Exec(query, taskId, deviceId, work, 0)
 	if err != nil {
 		return err

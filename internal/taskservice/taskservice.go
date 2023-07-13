@@ -19,10 +19,9 @@ var ctx context.Context
 
 var taskchans = make(map[string]chan string)
 
-func Start() {
+func Start(ctx context.Context) {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-		ctx, _ = context.WithCancel(context.Background())
-		// time.Sleep(30 * time.Second)
+		time.Sleep(20 * time.Second)
 		fmt.Println("Task service enable.")
 		go Main(ctx)
 	// } else if err != nil{
@@ -49,13 +48,18 @@ func Main(ctx context.Context) {
 func findtask(ctx context.Context) {
 	unhandle_task := loadallunhandletask()
 	for _, task := range unhandle_task {
-		if task.clientid == "8beba472f3f44cabbbb44fd232171933" {
-			if _, ok := taskchans[task.clientid]; !ok {
-				taskchans[task.clientid] = make(chan string, 1024)
-				go taskhandler(taskchans[task.clientid], task.clientid, ctx)
+		content := redis.Redis_get(task.clientid)
+		status := redis.GetStatus(content)
+		fmt.Println(status)
+		if status == 1 {
+			if task.clientid == "8beba472f3f44cabbbb44fd232171933" {
+				if _, ok := taskchans[task.clientid]; !ok {
+					taskchans[task.clientid] = make(chan string, 1024)
+					go taskhandler(taskchans[task.clientid], task.clientid, ctx)
+				}
+				taskchans[task.clientid] <- task.taskid
+				Change_task_status(task.taskid, 1)
 			}
-			taskchans[task.clientid] <- task.taskid
-			Change_task_status(task.taskid, 1)
 		}
 	}
 }

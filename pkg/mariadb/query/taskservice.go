@@ -48,9 +48,21 @@ func Select_task_id(clientid string, tasktype string) string {
 }
 
 func Update_task_status(taskid string, status int) {
-	_, err := mariadb.DB.Exec("update task set status = ? where task_id = ?", status, taskid)
-	if err != nil {
-		logger.Error(err.Error())
+	if status == 1 {
+		_, err := mariadb.DB.Exec("update task set status = ? where task_id = ?", status, taskid)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	} else if status == 2 {
+		_, err := mariadb.DB.Exec("UPDATE task SET status = ?, start = 1 WHERE task_id = ?", status, taskid)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	} else if status == 3 {
+		_, err := mariadb.DB.Exec("UPDATE task SET status = ?, finish = 1 WHERE task_id = ?", status, taskid)
+		if err != nil {
+			logger.Error(err.Error())
+		}
 	}
 }
 

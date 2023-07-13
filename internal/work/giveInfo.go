@@ -7,10 +7,8 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	// "edetector_go/pkg/redis"
 	"net"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -25,11 +23,6 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	}
 	query.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	query.Addmachine(ClientInfo)
-	tm := time.Now().Unix()
-	query.Online(ClientInfo.KeyNum, tm)
-	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
-	// redis.Redis_set(ClientInfo.KeyNum, ClientInfo.Marshal())
-	// logger.Info("Redis get", zap.Any("key", ClientInfo.KeyNum), zap.Any("value", redis.Redis_get(ClientInfo.KeyNum)))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

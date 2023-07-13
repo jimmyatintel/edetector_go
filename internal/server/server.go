@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"go.uber.org/zap"
 )
 
 func Main() {
@@ -43,6 +44,10 @@ func Main() {
 }
 func servershutdown() {
 	// rabbitmq.Connection_close()
+	err := redis.Offline("8beba472f3f44cabbbb44fd232171933") //! temp version
+	if err != nil {
+		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+	}
 	redis.Redis_close()
 }
 func serverinit() {

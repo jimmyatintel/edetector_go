@@ -4,15 +4,12 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"net"
 
 	"go.uber.org/zap"
 )
-
-var handshake int = 0
 
 func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// front process back netowork
@@ -33,9 +30,5 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetMessage()))
-	if handshake == 0 {
-		taskservice.Start()
-		handshake = 1
-	}
 	return task.SUCCESS, nil
 }
