@@ -25,8 +25,41 @@ type ProcessScanJson struct {
 	IsHide      bool   `json:"is_hide"`
 }
 
-type ScanJson struct {
+type ScanInfoJson struct {
+	PID        int    `json:"pid"`
+	FineName   string `json:"file_name"`
+	FilePath   string `json:"file_path"`
+	FileHash   string `json:"file_hash"`
+	Isinjected int    `json:"is_injected"`
+	Mode       string `json:"mode"`
+	Count      int    `json:"count"`
+	AllCount   int    `json:"all_count"`
+	IsStartRun bool   `json:"is_start_run"`
+}
 
+type ScanOverJson struct {
+	PID               int    `json:"pid"`
+	Mode              string `json:"mode"`
+	ProcessTime       int    `json:"process_time"`
+	DetectTime        string `json:"detect_time"`
+	ProcessName       string `json:"process_name"`
+	ProcessPath       string `json:"process_path"`
+	ProcessHash       string `json:"process_hash"`
+	Parent_PID        int    `json:"parent_pid"`
+	ParentTime        int    `json:"parent_time"`
+	ParentPath        string `json:"parent_path"`
+	InjectedHash      string `json:"injected_hash"`
+	StartRun          int    `json:"start_run"`
+	HideAttribute     int    `json:"hide_attribute"`
+	HideProcess       int    `json:"hide_process"`
+	SignerSubjectName string `json:"signer_subject_name"`
+	IsInjection       string `json:"is_injection"`
+	IsOtherdll        bool   `json:"is_other_dll"`
+	IsInlineHook      string `json:"is_inline_hook"`
+	IsNetwork         int    `json:"is_network"`
+}
+
+type ScanJson struct {
 }
 
 func Process(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -86,7 +119,6 @@ func GiveProcessDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
-	taskservice.Finish_task(p.GetRkey(), "StartScan")
 	return task.SUCCESS, nil
 }
 
@@ -162,6 +194,6 @@ func GiveScanDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	// taskservice.Finish_task(p.GetRkey(), "StartScan")
+	taskservice.Finish_task(p.GetRkey(), "StartScan")
 	return task.SUCCESS, nil
 }

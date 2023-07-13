@@ -11,27 +11,25 @@ import (
 )
 
 type ProcessOverJson struct {
-	// PID         int    `json:"pid"`
-	// Mode  int    `json:"parent_pid"`
-	// ProcessName string `json:"process_name"`
-	// ProcessPath
-	// ProcessHash int    `json:"process_time"`
-	// DetectTime
-	// ProcessTime
-	// Parent_PID
-	// ParentTime
-	// ParentPath
-	// UnknownHash
-	// Injected
-	// StartRun
-	// HideAttribute
-	// HideProcess
-	// SignerSubjectName
-	// IsInjectionOther
-	// IsInjectionPE
-	// IsNetwork
-	// IsOtherdll
-	// IsInlineHook
+	PID               int    `json:"pid"`
+	Mode              string `json:"mode"`
+	ProcessCTime      int    `json:"process_c_time"`
+	ProcessTime       string `json:"process_time"`
+	ProcessName       string `json:"process_name"`
+	ProcessPath       string `json:"process_path"`
+	ProcessHash       string `json:"process_hash"`
+	Parent_PID        int    `json:"parent_pid"`
+	ParentCTime       int    `json:"parent_C_time"`
+	ParentPath        string `json:"parent_path"`
+	InjectedHash      string `json:"injected_hash"`
+	StartRun          int    `json:"start_run"`
+	HideAttribute     int    `json:"hide_attribute"`
+	HideProcess       int    `json:"hide_process"`
+	SignerSubjectName string `json:"signer_subject_name"`
+	Injection         string `json:"injection"`
+	DllStr            string `json:"dll_str"`
+	InlineStr         string `json:"inline_str"`
+	NetStr            string `json:"net_str"`
 }
 
 func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {

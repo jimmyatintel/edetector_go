@@ -100,6 +100,9 @@ func handleTaskrequest(content []byte, taskid string, client string) {
 		logger.Error("Task Failed:", zap.Any("error", err.Error()))
 		return
 	}
+	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
+		Change_task_status(taskid, 3)
+	}
 }
 
 func Finish_task(clientid string, tasktype string) {
