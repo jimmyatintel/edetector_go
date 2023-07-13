@@ -19,9 +19,10 @@ var ctx context.Context
 
 var taskchans = make(map[string]chan string)
 
-func Start(ctx context.Context) {
+func Start() {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-		time.Sleep(30 * time.Second)
+		ctx, _ = context.WithCancel(context.Background())
+		// time.Sleep(30 * time.Second)
 		fmt.Println("Task service enable.")
 		go Main(ctx)
 	// } else if err != nil{
@@ -36,7 +37,7 @@ func Main(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Task service is shutting down...")
+			fmt.Println("Task service is shutting down...")
 			return
 		default:
 			findtask(ctx)
@@ -63,7 +64,7 @@ func taskhandler(ch chan string, client string, ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Info("Task handler for " + client + " is shutting down...")
+			fmt.Println("Task handler for " + client + " is shutting down...")
 			return
 		case taskid := <-ch:
 			logger.Info("Task handler for " + client + " is handling task " + taskid)

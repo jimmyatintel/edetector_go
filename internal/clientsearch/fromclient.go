@@ -33,7 +33,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
-					fmt.Println(len(data))
 					fmt.Println("get task msg: " + string(data))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {

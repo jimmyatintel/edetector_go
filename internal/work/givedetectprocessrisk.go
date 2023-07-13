@@ -10,6 +10,30 @@ import (
 	"go.uber.org/zap"
 )
 
+type ProcessOverJson struct {
+	// PID         int    `json:"pid"`
+	// Mode  int    `json:"parent_pid"`
+	// ProcessName string `json:"process_name"`
+	// ProcessPath
+	// ProcessHash int    `json:"process_time"`
+	// DetectTime
+	// ProcessTime
+	// Parent_PID
+	// ParentTime
+	// ParentPath
+	// UnknownHash
+	// Injected
+	// StartRun
+	// HideAttribute
+	// HideProcess
+	// SignerSubjectName
+	// IsInjectionOther
+	// IsInjectionPE
+	// IsNetwork
+	// IsOtherdll
+	// IsInlineHook
+}
+
 func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectProcessRisk: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{

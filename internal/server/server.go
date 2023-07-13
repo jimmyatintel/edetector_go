@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
 	fflag "edetector_go/internal/fflag"
+	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -27,6 +28,7 @@ func Main() {
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
+	taskservice.Stop()
 	fmt.Println("Server is shutting down...")
 	servershutdown()
 	select {

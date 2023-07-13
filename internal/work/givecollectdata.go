@@ -6,7 +6,6 @@ import (
 	task "edetector_go/internal/task"
 	C_AES "edetector_go/internal/C_AES"
 	taskservice "edetector_go/internal/taskservice"
-	"fmt"
 	"os"
 	"strconv"
 	"bytes"
@@ -34,7 +33,6 @@ func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	fmt.Println("send: ", send_packet)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -50,7 +48,6 @@ func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		Work:       task.GET_COLLECT_INFO_DATA,
 		Message:    "10",
 	}
-	fmt.Println("send: ", send_packet)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
