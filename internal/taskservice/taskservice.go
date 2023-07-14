@@ -107,16 +107,11 @@ func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, 
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		Finish_task(client, "ChangeDetectMode")
+		Change_task_status(taskid, 3)
+		// RequestToUser(taskid)
 	}
 }
 
-func Finish_task(clientid string, tasktype string) {
-	taskID := Find_task_id(clientid, tasktype)
-	Change_task_status(taskID, 3)
-	Change_task_timestamp(clientid, tasktype)
-	// RequestToUser(taskID)
-}
 
 // func Stop() {
 // 	ctx.Done()
