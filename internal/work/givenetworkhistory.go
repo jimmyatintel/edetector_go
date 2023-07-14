@@ -7,7 +7,6 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
-	"strconv"
 
 	"encoding/json"
 	"fmt"
@@ -84,43 +83,9 @@ func ChangeNetwork2json(p packet.Packet) []elasticquery.Request_data {
 	lines := strings.Split(p.GetMessage(), "\n")
 	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
-		values := strings.Split(line, "|")
-		pid, err := strconv.Atoi(values[0])
-		if err != nil {
-			fmt.Println("Error converting PID to int:", err)
-			return nil
-		}
-		timestamp, err := strconv.Atoi(values[2])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		processtime, err := strconv.Atoi(values[3])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		inorout, err := strconv.Atoi(values[4])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		port, err := strconv.Atoi(values[5])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		if len(values) == 6 {
-			data := NetworkJson{
-				PID:               pid,
-				Address:           values[1],
-				Timestamp:         timestamp,
-				ProcessTime:       processtime,
-				ConnectionINorOUT: inorout != 0,
-				AgentPort:         port,
-			}
-			dataSlice = append(dataSlice, elasticquery.Request_data(data))
-		}
+		data := NetworkJson{}
+		To_json(line, data)
+		dataSlice = append(dataSlice, elasticquery.Request_data(data))
 	}
 	jsonData, err := json.Marshal(dataSlice)
 	if err != nil {
