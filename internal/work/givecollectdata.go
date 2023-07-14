@@ -1,21 +1,21 @@
 package work
 
 import (
+	"bytes"
+	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	C_AES "edetector_go/internal/C_AES"
 	taskservice "edetector_go/internal/taskservice"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
-	"bytes"
-	"fmt"
-	"errors"
 
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"net"
 	"io/ioutil"
+	"net"
 
 	// "encoding/json"
 	// "fmt"
@@ -80,11 +80,11 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		return task.FAIL, err
 	}
 	DataLen = len
-    file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-    if err != nil {
-        return task.FAIL, err
-    }
-    file.Close()
+	file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	file.Close()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -143,8 +143,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		return task.FAIL, err
 	}
 	realLen := fileInfo.Size()
-	fmt.Println("File Size: ", realLen)
-	fmt.Println("count: ", count)
+	logger.Info("File Size: " + fmt.Sprint(realLen) + " Count: " + fmt.Sprint(count))
 	if int(realLen) < DataLen {
 		return task.FAIL, errors.New("incomplete data")
 	}

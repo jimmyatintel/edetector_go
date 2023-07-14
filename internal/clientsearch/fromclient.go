@@ -78,17 +78,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
-			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
-			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
-			if !ok {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
-				return
-			}
-			_, err = taskFunc(NewPacket, conn)
-			if err != nil {
-				logger.Error("Task Failed:", zap.Any("error", err.Error()))
-				return
-			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
 				key = NewPacket.GetRkey()
@@ -100,6 +89,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				if err != nil {
 					logger.Error("Upate online failed:", zap.Any("error", err.Error()))
 				}
+			}
+			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				return
+			}
+			_, err = taskFunc(NewPacket, conn)
+			if err != nil {
+				logger.Error("Task Failed:", zap.Any("error", err.Error()))
+				return
 			}
 		} else if reqLen > 0 {
 			Data_acache := make([]byte, 0)
@@ -136,6 +136,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				return
 			}
 			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			if NewPacket.GetTaskType() != task.GIVE_INFO && NewPacket.GetTaskType() != task.GIVE_DETECT_INFO_FIRST {
+				err = redis.Online(key)
+				if err != nil {
+					logger.Error("Upate online failed:", zap.Any("error", err.Error()))
+				}
+			}
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
@@ -145,10 +151,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Task Failed:", zap.Any("error", err.Error()))
 				return
-			}
-			err = redis.Online(key)
-			if err != nil {
-				logger.Error("Upate online failed:", zap.Any("error", err.Error()))
 			}
 		}
 	}

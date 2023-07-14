@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	// "edetector_go/internal/fflag"
+	"edetector_go/internal/fflag"
 	"edetector_go/internal/packet"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
@@ -15,21 +15,20 @@ import (
 	"go.uber.org/zap"
 )
 
-var ctx context.Context
+// var ctx context.Context
 
 var taskchans = make(map[string]chan string)
 
 func Start(ctx context.Context) {
-	// if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-		time.Sleep(20 * time.Second)
+	if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
 		fmt.Println("Task service enable.")
 		go Main(ctx)
-	// } else if err != nil{
-	// 	logger.Error("Task service error:", zap.Any("error", err.Error()))
-	// } else {
-	// 	fmt.Println("Task service disable.")
-	// 	return
-	// }
+	} else if err != nil {
+		logger.Error("Task service error:", zap.Any("error", err.Error()))
+	} else {
+		fmt.Println("Task service disable.")
+		return
+	}
 }
 
 func Main(ctx context.Context) {
@@ -50,12 +49,11 @@ func findtask(ctx context.Context) {
 	for _, task := range unhandle_task {
 		content := redis.Redis_get(task.clientid)
 		status := redis.GetStatus(content)
-		fmt.Println(status)
 		if status == 1 {
-			if task.clientid == "8beba472f3f44cabbbb44fd232171933" {
+			if task.clientid == "8beba472f3f44cabbbb44fd232171933" || task.clientid == "3e716e2d61ba910983cb456817116799" {
 				if _, ok := taskchans[task.clientid]; !ok {
 					taskchans[task.clientid] = make(chan string, 1024)
-					go taskhandler(taskchans[task.clientid], task.clientid, ctx)
+					go taskhandler(ctx, taskchans[task.clientid], task.clientid)
 				}
 				taskchans[task.clientid] <- task.taskid
 				Change_task_status(task.taskid, 1)
@@ -64,7 +62,7 @@ func findtask(ctx context.Context) {
 	}
 }
 
-func taskhandler(ch chan string, client string, ctx context.Context) {
+func taskhandler(ctx context.Context, ch chan string, client string) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -75,12 +73,13 @@ func taskhandler(ch chan string, client string, ctx context.Context) {
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
 			Change_task_status(taskid, 2)
-			handleTaskrequest(b, taskid, client)
+			task_ctx := context.WithValue(ctx, "taskid", taskid)
+			handleTaskrequest(task_ctx, b, taskid, client)
 		}
 	}
 }
 
-func handleTaskrequest(content []byte, taskid string, client string) {
+func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, client string) {
 	reqLen := len(content)
 	NewPacket := new(packet.TaskPacket)
 	err := NewPacket.NewPacket(content)
@@ -95,6 +94,7 @@ func handleTaskrequest(content []byte, taskid string, client string) {
 	}
 	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
 	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
+	// taskFunc, ok := work_from_api.WorkapiMap[task_ctx, NewPacket.GetUserTaskType()]
 	if !ok {
 		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()))
 		return
@@ -115,6 +115,6 @@ func Finish_task(clientid string, tasktype string) {
 	Change_task_timestamp(clientid, tasktype)
 }
 
-func Stop() {
-	ctx.Done()
-}
+// func Stop() {
+// 	ctx.Done()
+// }
