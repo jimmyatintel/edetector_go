@@ -1,6 +1,7 @@
 package workfromapi
 
 import (
+	"context"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
@@ -9,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func ChangeDetectMode(p packet.UserPacket) (task.TaskResult, error) {
+func ChangeDetectMode(task_ctx context.Context, p packet.UserPacket) (task.TaskResult, error) {
 	logger.Info("ChangeDetectMode: ", zap.Any("message", p.GetMessage()))
 	err := clientsearchsend.SendUserTCPtoClient(p, task.UPDATE_DETECT_MODE, p.GetMessage())
 	if err != nil {

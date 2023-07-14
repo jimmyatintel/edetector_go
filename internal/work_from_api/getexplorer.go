@@ -1,7 +1,8 @@
 package workfromapi
 
 import (
-	"edetector_go/internal/clientsearch/send"
+	"context"
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
@@ -9,11 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func StartGetExplorer(p packet.UserPacket) (task.TaskResult, error) {
+func StartGetExplorer(task_ctx context.Context, p packet.UserPacket) (task.TaskResult, error) {
 	logger.Info("ExplorerInfo: ", zap.Any("message", p.GetMessage()))
 	err := clientsearchsend.SendUserTCPtoClient(p, task.EXPLORER_INFO, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
-    return task.SUCCESS, nil
+	return task.SUCCESS, nil
 }
