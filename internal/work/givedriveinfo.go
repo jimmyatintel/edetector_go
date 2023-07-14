@@ -37,7 +37,7 @@ func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
 			msg := drive + "|" + driveInfo + "|Explorer|ScheduleName|0|2048"
-			err = taskservice.AddTask2db(p.GetRkey(), task.START_GET_EXPLORER, msg)
+			err = taskservice.AddTask(p.GetRkey(), task.START_GET_EXPLORER, msg)
 			if err != nil {
 				return task.FAIL, err
 			}

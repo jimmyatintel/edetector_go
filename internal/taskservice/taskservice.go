@@ -97,27 +97,21 @@ func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, 
 	}
 	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
 	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
-	// taskFunc, ok := work_from_api.WorkapiMap[task_ctx, NewPacket.GetUserTaskType()]
 	if !ok {
 		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()))
 		return
 	}
-	_, err = taskFunc(NewPacket)
+	_, err = taskFunc(task_ctx, NewPacket)
 	if err != nil {
 		logger.Error("Task Failed:", zap.Any("error", err.Error()))
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		Finish_task(client, "ChangeDetectMode")
+		Change_task_status(taskid, 3)
+		// RequestToUser(taskid)
 	}
 }
 
-func Finish_task(clientid string, tasktype string) {
-	taskID := Find_task_id(clientid, tasktype)
-	Change_task_status(taskID, 3)
-	Change_task_timestamp(clientid, tasktype)
-	// RequestToUser(taskID)
-}
 
 // func Stop() {
 // 	ctx.Done()

@@ -43,8 +43,20 @@ func Select_task_id(clientid string, tasktype string) string {
 	err := row.Scan(&taskID)
 	if err != nil {
 		logger.Error(err.Error())
-	}
-	return taskID
+		return ""
+    }
+    return taskID
+}
+
+func Get_task_info(taskid string) (string, string) {
+    var clientid, tasktype string
+    row := mariadb.DB.QueryRow("SELECT client_id, type FROM task WHERE taskid = ?", taskid)
+    err := row.Scan(&clientid, &tasktype)
+    if err != nil {
+        logger.Error(err.Error())
+		return "", ""
+    }
+    return clientid, tasktype
 }
 
 func Update_task_status(taskid string, status int) {
