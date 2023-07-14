@@ -46,8 +46,8 @@ func servershutdown() {
 	redis.Redis_close()
 }
 func serverinit() {
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
+	fflag.Connect_GB()
+	if fflag.GB == nil {
 		fmt.Println("Error loading feature flag")
 		return
 	}
@@ -56,11 +56,11 @@ func serverinit() {
 		fmt.Println("Error loading config file")
 		return
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+	if fflag.GB.Feature("logger_enable").On {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"))
 		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("WORKER_LOG_FILE"))
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+	if fflag.GB.Feature("redis_enable").On {
 		if db := redis.Redis_init(); db == nil {
 			logger.Error("Error connecting to redis")
 		}
@@ -70,11 +70,11 @@ func serverinit() {
 		logger.Error("Error connecting to mariadb: " + err.Error())
 
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+	if fflag.GB.Feature("rabbit_enable").On {
 		rabbitmq.Rabbit_init()
 		fmt.Println("rabbit is enabled.")
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+	if fflag.GB.Feature("elastic_enable").On {
 		err := elastic.SetElkClient()
 		if err != nil {
 			logger.Error("Error connecting to elastic: " + err.Error())

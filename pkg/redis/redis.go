@@ -13,10 +13,7 @@ import (
 var RedisClient *redis.Client
 
 func checkflag() bool {
-	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
-		return true
-	}
-	return false
+	return fflag.GB.Feature("redis_enable").On
 }
 func Redis_init() *redis.Client {
 	RedisClient = redis.NewClient(&redis.Options{
@@ -40,7 +37,7 @@ func Redis_close() {
 	RedisClient.Close()
 }
 
-func Redis_set(key string, value string) error{
+func Redis_set(key string, value string) error {
 	if !checkflag() {
 		return nil
 	}

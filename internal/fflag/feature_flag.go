@@ -1,39 +1,43 @@
 package fflag
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 
-	flagsmith "github.com/Flagsmith/flagsmith-go-client"
-	"github.com/Unleash/unleash-client-go/v3"
+	growthbook "github.com/growthbook/growthbook-golang"
 )
 
-type metricsInterface struct {
+// Features API response
+type GrowthBookApiResp struct {
+	Features json.RawMessage
+	Status   int
 }
 
-// Initialise the Flagsmith client
-var FFLAG *flagsmith.Client
+var GB *growthbook.GrowthBook
 
-func init_from_gitlab() {
-	err := unleash.Initialize(
-		unleash.WithUrl("https://git.chainsecurity.local/api/v4/feature_flags/unleash/63"),
-		unleash.WithInstanceId("FxiPv5wmNedeSiao1Hh2"),
-		unleash.WithAppName("Testing"), // Set to the running environment of your application
-		unleash.WithListener(&metricsInterface{}),
-	)
+func GetFeatureMap() []byte {
+	// Fetch features JSON from api
+	resp, err := http.Get("https://cdn.growthbook.io/api/features/sdk-Mnq4fT9aYWX1ecP")
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	if unleash.IsEnabled("debug_mode") {
-		fmt.Println("debug_mode is enabled")
-	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	// Just return the features map from the API response
+	apiResp := &GrowthBookApiResp{}
+	_ = json.Unmarshal(body, apiResp)
+	fmt.Println(apiResp.Features)
+	return apiResp.Features
 }
 
-func Get_fflag() {
-	config := flagsmith.DefaultConfig()
-	client := flagsmith.NewClient("ser.dVQq8WxV2w3iGGbz8DCnHQ", config)
-	FFLAG = client
-	isEnabled, _ := FFLAG.FeatureEnabled("always_true")
-	if !isEnabled {
-		fmt.Println("Connection to Flagsmith failed")
-	}
+func Connect_GB() {
+	featureMap := GetFeatureMap()
+	features := growthbook.ParseFeatureMap(featureMap)
+
+	context := growthbook.NewContext().
+		WithFeatures(features)
+	GB = growthbook.New(context)
 }

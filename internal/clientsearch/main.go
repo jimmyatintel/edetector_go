@@ -28,7 +28,7 @@ var Task_enable bool
 
 func Connect_init() int {
 	var err error
-	if Tcp_enable, err = fflag.FFLAG.FeatureEnabled("client_tcp"); Tcp_enable && err == nil {
+	if fflag.GB.Feature("client_tcp").On {
 		logger.Info("tcp is enabled")
 		Client_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
@@ -41,7 +41,7 @@ func Connect_init() int {
 			return 1
 		}
 	}
-	if Udp_enable, err = fflag.FFLAG.FeatureEnabled("client_udp"); Udp_enable && err == nil {
+	if fflag.GB.Feature("client_udp").On {
 		logger.Info("udp is enabled")
 		Client_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
