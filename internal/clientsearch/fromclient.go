@@ -87,7 +87,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if NewPacket.GetTaskType() != task.GIVE_INFO && NewPacket.GetTaskType() != task.GIVE_DETECT_INFO_FIRST {
 				err = redis.Online(key)
 				if err != nil {
-					logger.Error("Upate online failed:", zap.Any("error", err.Error()))
+					logger.Error("Update online failed:", zap.Any("error", err.Error()))
 				}
 			}
 			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)

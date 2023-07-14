@@ -16,6 +16,8 @@ import (
 )
 
 // var ctx context.Context
+type taskIDKey string
+const TaskIDKey taskIDKey = "taskid"
 
 var taskchans = make(map[string]chan string)
 
@@ -73,7 +75,8 @@ func taskhandler(ctx context.Context, ch chan string, client string) {
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
 			Change_task_status(taskid, 2)
-			task_ctx := context.WithValue(ctx, "taskid", taskid)
+			// RequestToUser(taskid)
+			task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
 			handleTaskrequest(task_ctx, b, taskid, client)
 		}
 	}
@@ -105,7 +108,7 @@ func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, 
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		Change_task_status(taskid, 3)
+		Finish_task(client, "ChangeDetectMode")
 	}
 }
 
@@ -113,6 +116,7 @@ func Finish_task(clientid string, tasktype string) {
 	taskID := Find_task_id(clientid, tasktype)
 	Change_task_status(taskID, 3)
 	Change_task_timestamp(clientid, tasktype)
+	// RequestToUser(taskID)
 }
 
 // func Stop() {
