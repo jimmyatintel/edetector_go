@@ -62,6 +62,8 @@ func Update_task_timestamp(clientid string, tasktype string) {
 		col = "collect_finish_time"
 	} else if tasktype == "StartGetDrive" {
 		col = "file_finish_time"
+	} else {
+		return
 	}
 	qu := "update client_task_status set " + col +" = CURRENT_TIMESTAMP where client_id = ?"
 	_, err := mariadb.DB.Exec(qu, clientid)
