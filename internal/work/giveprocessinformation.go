@@ -7,10 +7,6 @@ import (
 	"edetector_go/pkg/logger"
 	"net"
 
-	"encoding/json"
-	"fmt"
-	"strings"
-
 	"go.uber.org/zap"
 )
 
@@ -68,25 +64,25 @@ func GiveProcessInfoEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func ChangeProcessInfo2Json(p packet.Packet) {
-	lines := strings.Split(p.GetMessage(), "\n")
-	var dataSlice []ProcessInfoJson
-	for _, line := range lines {
-		values := strings.Split(line, "|")
-		if len(values) == 4 {
-			data := ProcessInfoJson{
-				PID:         values[0],
-				ProcessTime: values[1],
-				Path:        values[2],
-				CommandLine: values[3],
-			}
+	// lines := strings.Split(p.GetMessage(), "\n")
+	// var dataSlice []ProcessInfoJson
+	// for _, line := range lines {
+	// 	values := strings.Split(line, "|")
+	// 	if len(values) == 4 {
+	// 		data := ProcessInfoJson{
+	// 			PID:         values[0],
+	// 			ProcessTime: values[1],
+	// 			Path:        values[2],
+	// 			CommandLine: values[3],
+	// 		}
 
-			dataSlice = append(dataSlice, data)
-		}
-	}
-	jsonData, err := json.Marshal(dataSlice)
-	if err != nil {
-		fmt.Println("Error converting to JSON:", err)
-		return
-	}
-	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
+	// 		dataSlice = append(dataSlice, data)
+	// 	}
+	// }
+	// jsonData, err := json.Marshal(dataSlice)
+	// if err != nil {
+	// 	fmt.Println("Error converting to JSON:", err)
+	// 	return
+	// }
+	// logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
 }

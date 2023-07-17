@@ -77,8 +77,8 @@ func init() {
 	}
 }
 
-func To_json(mes string, st interface{}) interface{} {
-	v := reflect.ValueOf(st)
+func To_json(mes string, st interface{}) {
+	v := reflect.Indirect(reflect.ValueOf(st))
 	line := mes
 	values := strings.Split(line, "|")
 	for i := 0; i < v.NumField(); i++ {
@@ -89,16 +89,15 @@ func To_json(mes string, st interface{}) interface{} {
 			if err != nil {
 				break
 			}
-			field.SetInt(int64(value))
+			field.Set(reflect.ValueOf(value))
 		case reflect.String:
-			field.SetString(values[i])
+			field.Set(reflect.ValueOf(values[i]))
 		case reflect.Bool:
 			value, err := strconv.ParseBool(values[i])
 			if err != nil {
 				break
 			}
-			field.SetBool(value)
+			field.Set(reflect.ValueOf(value))
 		}
 	}
-	return st
 }

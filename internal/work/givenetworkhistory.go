@@ -63,9 +63,9 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	// Data := ChangeNetwork2json(p)
-	// template := elasticquery.New_source(p.GetRkey(), "Networkdata")
-	// elasticquery.Send_to_elastic("ed_network_history", template, Data)
+	Data := ChangeNetwork2json(p)
+	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
+	elasticquery.Send_to_elastic("ed_network_history", template, Data)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -83,8 +83,11 @@ func ChangeNetwork2json(p packet.Packet) []elasticquery.Request_data {
 	lines := strings.Split(p.GetMessage(), "\n")
 	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
 		data := NetworkJson{}
-		To_json(line, data)
+		To_json(line, &data)
 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
 	}
 	jsonData, err := json.Marshal(dataSlice)
