@@ -6,7 +6,10 @@ import (
 	"edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
+	"math"
 	"net"
+	"strconv"
 
 	"go.uber.org/zap"
 )
@@ -134,6 +137,13 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	progress, err_ := strconv.Atoi(p.GetMessage())
+	if err_ != nil {
+		return task.FAIL, err
+	}
+	progress = int(math.Min(float64(progress * 2), 99))
+	query.Update_progress(progress, p.GetRkey(), "StartScan")
+	taskservice.RequestToUser(p.GetRkey())
 	return task.SUCCESS, nil
 }
 

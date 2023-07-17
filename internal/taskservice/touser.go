@@ -26,7 +26,7 @@ func RequestToUser(id string) {
 	}
 	// Create an HTTP request
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://192.168.200.161:5000/agent", bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "http://192.168.200.161:5000/updateTask", bytes.NewBuffer(payload))
 	if err != nil {
 		logger.Error("Error creating HTTP request: ", zap.Any("error", err.Error()))
 		return

@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
 	fflag "edetector_go/internal/fflag"
+	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -48,10 +49,12 @@ func servershutdown() {
 	if err != nil {
 		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
 	}
+	taskservice.RequestToUser("3e716e2d61ba910983cb456817116799")
 	err = redis.Offline("8beba472f3f44cabbbb44fd232171933") //! temp version
 	if err != nil {
 		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
 	}
+	taskservice.RequestToUser("8beba472f3f44cabbbb44fd232171933")
 	redis.Redis_close()
 }
 func serverinit() {

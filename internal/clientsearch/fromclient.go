@@ -6,6 +6,7 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"edetector_go/internal/taskservice"
 
 	// fflag "edetector_go/internal/fflag"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
@@ -23,7 +24,6 @@ import (
 	"net"
 	// "encoding/binary"
 )
-
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
@@ -48,7 +48,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		reqLen, err := conn.Read(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
-				if key != "null"{
+				if key != "null" {
 					err = redis.Offline(key)
 					if err != nil {
 						logger.Error("Update offline error:", zap.Any("error", err.Error()))
@@ -83,11 +83,13 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				key = NewPacket.GetRkey()
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
-			}
-			if NewPacket.GetTaskType() != task.GIVE_INFO && NewPacket.GetTaskType() != task.GIVE_DETECT_INFO_FIRST {
+			} else if key != "null"{
 				err = redis.Online(key)
 				if err != nil {
 					logger.Error("Update online failed:", zap.Any("error", err.Error()))
+				}
+				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST{
+					taskservice.RequestToUser(key)
 				}
 			}
 			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
@@ -108,7 +110,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				reqLen, err := conn.Read(buf)
 				if err != nil {
 					if err.Error() == "EOF" {
-						if key != "null"{
+						if key != "null" {
 							redis.Offline(key)
 						}
 						logger.Info(string(key) + " " + string(port) + " Connection close")

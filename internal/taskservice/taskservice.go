@@ -75,7 +75,7 @@ func taskhandler(ctx context.Context, ch chan string, client string) {
 			message := redis.Redis_get(taskid)
 			b := []byte(message)
 			Change_task_status(taskid, 2)
-			// RequestToUser(taskid)
+			RequestToUser(client)
 			task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
 			handleTaskrequest(task_ctx, b, taskid, client)
 		}
@@ -108,7 +108,7 @@ func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, 
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
 		Change_task_status(taskid, 3)
-		// RequestToUser(taskid)
+		RequestToUser(client)
 	}
 }
 

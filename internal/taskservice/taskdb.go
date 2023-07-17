@@ -77,7 +77,7 @@ func Finish_task(clientid string, tasktype string) {
 	taskID := Find_task_id(clientid, tasktype)
 	Change_task_status(taskID, 3)
 	Change_task_timestamp(clientid, tasktype)
-	// RequestToUser(taskID)
+	RequestToUser(clientid)
 }
 
 func Find_task_id(clientid string, tasktype string) string {

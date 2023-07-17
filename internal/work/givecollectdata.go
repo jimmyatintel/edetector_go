@@ -7,10 +7,13 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/pkg/mariadb/query"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
+	"strings"
 
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
@@ -70,6 +73,21 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if err != nil {
 		return task.FAIL, err
 	}
+	parts := strings.Split(p.GetMessage(), "/")
+	if len(parts) != 2 {
+		return task.FAIL, errors.New("invalid progress format")
+	}
+	numerator, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return task.FAIL, err
+	}
+	denominator, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return task.FAIL, err
+	}
+	progress := int(math.Min((float64(numerator) / float64(denominator) * 100), 99))
+	query.Update_progress(progress, p.GetRkey(), "StartCollect")
+	taskservice.RequestToUser(p.GetRkey())
 	return task.SUCCESS, nil
 }
 
