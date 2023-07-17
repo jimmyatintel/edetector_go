@@ -6,11 +6,11 @@ import (
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"fmt"
 	"net"
+	"strings"
 
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -63,7 +63,7 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	Data := ChangeNetwork2json(p)
+	Data := ChangeNetworkToJson(p)
 	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
 	elasticquery.Send_to_elastic("ed_network_history", template, Data)
 	var send_packet = packet.WorkPacket{
@@ -79,7 +79,7 @@ func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func ChangeNetwork2json(p packet.Packet) []elasticquery.Request_data {
+func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
 	lines := strings.Split(p.GetMessage(), "\n")
 	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
