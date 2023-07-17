@@ -29,7 +29,7 @@ func SetElkClient() error {
 }
 
 func createIndex(name string) {
-	if flagcheck() == false {
+	if !flagcheck() {
 		return
 	}
 	req := esapi.IndicesCreateRequest{
@@ -44,7 +44,7 @@ func createIndex(name string) {
 }
 
 func IndexRequest(name string, body string) {
-	if flagcheck() == false {
+	if !flagcheck() {
 		return
 	}
 	req := esapi.IndexRequest{
@@ -56,11 +56,11 @@ func IndexRequest(name string, body string) {
 		panic(err)
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	logger.Debug(res.String())
 }
 
 func searchRequest(name string, body string) {
-	if flagcheck() == false {
+	if !flagcheck() {
 		return
 	}
 	req := esapi.SearchRequest{
@@ -74,4 +74,3 @@ func searchRequest(name string, body string) {
 	defer res.Body.Close()
 	logger.Info(res.String())
 }
-

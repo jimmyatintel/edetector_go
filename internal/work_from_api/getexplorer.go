@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func ChangeDetectMode(task_ctx context.Context, p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("ChangeDetectMode: ", zap.Any("message", p.GetMessage()))
-	err := clientsearchsend.SendUserTCPtoClient(p, task.UPDATE_DETECT_MODE, p.GetMessage())
+func StartGetExplorer(task_ctx context.Context, p packet.UserPacket) (task.TaskResult, error) {
+	logger.Info("ExplorerInfo: ", zap.Any("message", p.GetMessage()))
+	err := clientsearchsend.SendUserTCPtoClient(p, task.EXPLORER_INFO, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -4,25 +4,35 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"net"
-
-	"go.uber.org/zap"
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
+
+	// "strconv"
+
+	"go.uber.org/zap"
+	// "encoding/json"
+	// "fmt"
+	// "strings"
 )
 
-type ProcessJson struct {
-	PID                 string `json:"pid"`
-	Parent_PID          string `json:"parent_pid"`
-	ProcessName         string `json:"process_name"`
-	ProcessTime         string `json:"process_time"`
-	ParentName          string `json:"parent_name"`
-	ParentTime          string `json:"parent_time"`
+type ProcessDetectJson struct {
+	PID         int    `json:"pid"`
+	Parent_PID  int    `json:"parent_pid"`
+	ProcessName string `json:"process_name"`
+	ProcessTime int    `json:"process_time"`
+	ParentName  string `json:"parent_name"`
+	ParentTime  int    `json:"parent_time"`
 }
 
-func GiveProcessHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func (n ProcessDetectJson) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -37,7 +47,7 @@ func GiveProcessHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	return task.SUCCESS, nil
 }
 
-func GiveProcessHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -52,9 +62,11 @@ func GiveProcessHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.T
 	return task.SUCCESS, nil
 }
 
-func GiveProcessHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	ChangeProcess2Json(p)
+	Data := ChangeProcessToJson(p)
+	template := elasticquery.New_source(p.GetRkey(), "Processdata")
+	elasticquery.Send_to_elastic("ed_process_history", template, Data)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -68,28 +80,22 @@ func GiveProcessHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func ChangeProcess2Json(p packet.Packet) {
+func ChangeProcessToJson(p packet.Packet) []elasticquery.Request_data {
 	lines := strings.Split(p.GetMessage(), "\n")
-	var dataSlice []ProcessJson
+	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
-		values := strings.Split(line, "|")
-		if len(values) == 6 {
-			data := ProcessJson{
-				PID:                values[0],
-				Parent_PID:         values[1],
-				ProcessName:        values[2],
-				ProcessTime:        values[3],
-				ParentName:         values[4],
-				ParentTime:         values[5],
-			}
-
-			dataSlice = append(dataSlice, data)
+		if len(line) == 0 {
+			continue
 		}
+		data := ProcessDetectJson{}
+		To_json(line, &data)
+		dataSlice = append(dataSlice, elasticquery.Request_data(data))
 	}
 	jsonData, err := json.Marshal(dataSlice)
 	if err != nil {
 		fmt.Println("Error converting to JSON:", err)
-		return
+		return nil
 	}
 	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
+	return dataSlice
 }

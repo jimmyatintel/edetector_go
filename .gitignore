@@ -1,2 +1,4 @@
 config/app.env
 log_file.log
+cmd/db.db
+log_history

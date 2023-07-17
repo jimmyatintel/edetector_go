@@ -6,9 +6,7 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/internal/taskchannel"
-	"fmt"
 
-	"errors"
 	"net"
 )
 
@@ -27,62 +25,14 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string, port string) error{
-	fmt.Println("port", port)
-	// var send_packet = packet.WorkPacket{
-	// 	MacAddress: p.GetMacAddress(),
-	// 	IpAddress:  p.GetipAddress(),
-	// 	Work:       workType,
-	// 	Message:    msg, // "0|0"
-	// }
-	if port == "worker" {
-		var send_packet = packet.WorkPacket{
-			MacAddress: p.GetMacAddress(),
-			IpAddress:  p.GetipAddress(),
-			Work:       workType,
-			Message:    msg,
-		}
-		task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
-		task_chan <- &send_packet
-		return nil
-	} else if port == "detect" {
-		var send_packet = packet.DataPacket{
-			MacAddress: p.GetMacAddress(),
-			IpAddress:  p.GetipAddress(),
-			Work:       workType,
-			Message:    msg,
-		}
-		fmt.Println("detect!!")
-		task_chan := taskchannel.Task_detect_channel[p.GetRkey()]
-		task_chan <- &send_packet
-		return nil
+func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error{
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       workType,
+		Message:    msg,
 	}
-	return errors.New("invalid port")
+	task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
+	task_chan <- &send_packet
+	return nil
 }
-
-// func SendDetectTCPtoClient(p packet.Packet, workType task.TaskType, msg string, port string) error{
-// 	fmt.Println("port", port)
-
-// 	if port == "worker" {
-// 		var send_packet = packet.WorkPacket{
-// 			MacAddress: p.GetMacAddress(),
-// 			IpAddress:  p.GetipAddress(),
-// 			Work:       workType,
-// 			Message:    msg,
-// 		}
-// 		task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
-// 		task_chan <- send_packet.Fluent()
-// 		return nil
-// 	} else if port == "detect" {
-// 		var send_packet = packet.DataPacket{
-// 			MacAddress: p.GetMacAddress(),
-// 			IpAddress:  p.GetipAddress(),
-// 			Work:       workType,
-// 			Message:    msg,
-// 		}
-// 		task_chan := taskchannel.Task_detect_channel[p.GetRkey()]
-// 		task_chan <- send_packet.Fluent()
-// 		return nil
-// 	}
-// 	return errors.New("invalid port")
-// }

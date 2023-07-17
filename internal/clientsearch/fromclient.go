@@ -6,15 +6,16 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"edetector_go/internal/taskservice"
 
 	// fflag "edetector_go/internal/fflag"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
 	work "edetector_go/internal/work"
-	work_from_api "edetector_go/internal/work_from_api"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -24,24 +25,17 @@ import (
 	// "encoding/binary"
 )
 
-var Key *string
-
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
 	buf := make([]byte, 2048)
-	Key = new(string)
-	*Key = "null"
-	defer func() {
-		Key = nil
-	}()
+	key := "null"
 	if task_chan != nil {
 		go func() {
 			for {
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
-					fmt.Println(len(data))
-					fmt.Println(port + " port get task msg: " + string(data))
+					fmt.Println("get task msg: " + string(data))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {
 						logger.Error("Send failed:", zap.Any("error", err.Error()))
@@ -52,11 +46,15 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	}
 	for {
 		reqLen, err := conn.Read(buf)
-		// buf, err := ioutil.ReadAll(conn)
-		// reqLen := len(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
-				logger.Debug("Connection close")
+				if key != "null" {
+					err = redis.Offline(key)
+					if err != nil {
+						logger.Error("Update offline error:", zap.Any("error", err.Error()))
+					}
+				}
+				logger.Debug(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
 				logger.Error("Error reading:", zap.Any("error", err.Error()))
@@ -65,8 +63,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-
-		if reqLen <= 1024 && Key != nil {
+		if reqLen <= 1024 {
 			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
@@ -77,36 +74,46 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
-				return
-			}
-			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
-			// logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
-			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
-			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()), zap.Any("error", err.Error()))
 				return
 			}
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
+				key = NewPacket.GetRkey()
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
 				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
+			} else if key != "null"{
+				err = redis.Online(key)
+				if err != nil {
+					logger.Error("Update online failed:", zap.Any("error", err.Error()))
+				}
+				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST{
+					taskservice.RequestToUser(key)
+				}
 			}
-			// if NewPacket.GetTaskType() == task.GIVE_DETECT_PORT_INFO {
-			// if port == "detect"{
-			// 	// wait for key to join the packet
-			// 	taskchannel.Task_detect_channel[NewPacket.GetRkey()] = task_chan
-			// 	fmt.Println("set detect key-channel mapping: " + NewPacket.GetRkey())
-			// }
-		} else if reqLen > 0 && Key != nil && *Key == "null" {
+			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				return
+			}
+			_, err = taskFunc(NewPacket, conn)
+			if err != nil {
+				logger.Error("Task Failed:", zap.Any("error", err.Error()))
+				return
+			}
+		} else if reqLen > 0 {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
 					if err.Error() == "EOF" {
-						logger.Debug("Connection close")
+						if key != "null" {
+							redis.Offline(key)
+						}
+						logger.Info(string(key) + " " + string(port) + " Connection close")
 						return
 					} else {
 						logger.Error("Error reading:", zap.Any("error", err.Error()))
@@ -121,75 +128,36 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
-				logger.Info("Receive TCP from client", zap.Any("function", NewPacket.GetTaskType()))
 				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
 				return
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76 : 76+nullIndex])))
+				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
-			fmt.Println("task type: ", NewPacket.GetTaskType(), port)
-			_, err = work.WorkMap[NewPacket.GetTaskType()](NewPacket, Key, conn)
-			if err != nil {
+			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
+			if NewPacket.GetTaskType() != task.GIVE_INFO && NewPacket.GetTaskType() != task.GIVE_DETECT_INFO_FIRST {
+				err = redis.Online(key)
+				if err != nil {
+					logger.Error("Upate online failed:", zap.Any("error", err.Error()))
+				}
+			}
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
 				return
 			}
+			_, err = taskFunc(NewPacket, conn)
+			if err != nil {
+				logger.Error("Task Failed:", zap.Any("error", err.Error()))
+				return
+			}
 		}
 	}
 }
 
-func handleTaskrequest(conn net.Conn) {
-	defer conn.Close()
-	buf := make([]byte, 2048)
-	Key = new(string)
-	*Key = "null"
-	defer func() {
-		Key = nil
-	}()
-
-	for {
-		reqLen, err := conn.Read(buf)
-		if err != nil {
-			if err.Error() == "EOF" {
-				logger.Debug("Connection close")
-				return
-			} else {
-				logger.Error("Error reading:", zap.Any("error", err.Error()))
-				return
-			}
-		}
-		if reqLen <= 1024 {
-			content := buf[:reqLen]
-			NewPacket := new(packet.TaskPacket)
-			err = NewPacket.NewPacket(content)
-			if err != nil {
-				logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
-				return
-			}
-			if NewPacket.GetUserTaskType() == "Undefine" {
-				nullIndex := bytes.IndexByte(content[76:100], 0)
-				logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76 : 76+nullIndex])))
-				return
-			}
-			logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
-			_, err = work_from_api.WorkapiMap[NewPacket.GetUserTaskType()](NewPacket, Key, conn)
-			if err != nil {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()), zap.Any("error", err.Error()))
-				NewPacket.Respond(conn, false, err.Error())
-				return
-			}
-			NewPacket.Respond(conn, true, "Success")
-
-		} else {
-			logger.Error("Task packet is longer than 1024")
-			return
-		}
-	}
-}
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	fmt.Println(string(buf))
-
 }

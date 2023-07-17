@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
 	fflag "edetector_go/internal/fflag"
+	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -16,6 +17,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func Main() {
@@ -27,6 +30,7 @@ func Main() {
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
+	// taskservice.Stop()
 	fmt.Println("Server is shutting down...")
 	servershutdown()
 	select {
@@ -41,6 +45,16 @@ func Main() {
 }
 func servershutdown() {
 	// rabbitmq.Connection_close()
+	err := redis.Offline("3e716e2d61ba910983cb456817116799") //! temp version
+	if err != nil {
+		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+	}
+	taskservice.RequestToUser("3e716e2d61ba910983cb456817116799")
+	err = redis.Offline("8beba472f3f44cabbbb44fd232171933") //! temp version
+	if err != nil {
+		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+	}
+	taskservice.RequestToUser("8beba472f3f44cabbbb44fd232171933")
 	redis.Redis_close()
 }
 func serverinit() {

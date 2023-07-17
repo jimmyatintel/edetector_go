@@ -4,9 +4,10 @@ import (
 	"context"
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
-	logger "edetector_go/pkg/logger"
-	taskchannel "edetector_go/internal/taskchannel"
 	packet "edetector_go/internal/packet"
+	taskchannel "edetector_go/internal/taskchannel"
+	taskservice "edetector_go/internal/taskservice"
+	logger "edetector_go/pkg/logger"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -54,14 +55,6 @@ func Connect_init() int {
 			return 1
 		}
 	}
-	if Task_enable, err = fflag.FFLAG.FeatureEnabled("task_server_enable"); Task_enable && err == nil {
-		logger.Info("task server is enabled")
-		Task_server_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_TASK_PORT"))
-		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
-		}
-	}
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
@@ -74,13 +67,13 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				c <- err.Error()
 			}
 			new_task_chan := make(chan packet.Packet)
+			fmt.Println("new worker connect")
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
 	c <- "TCP Server is nil"
 }
 func Conn_TCP_detect_start(c chan string, ctx context.Context) {
-	taskchannel.Task_detect_channel = make(map[string](chan packet.Packet))
 	if Client_detect_TCP_Server != nil {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
@@ -89,8 +82,7 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 				c <- err.Error()
 			}
 			// fmt.Println("new conn")
-			new_task_chan := make(chan packet.Packet)
-			go handleTCPRequest(conn, new_task_chan, "detect")
+			go handleTCPRequest(conn, nil, "detect")
 		}
 	}
 	c <- "TCP Server is nil"
@@ -109,19 +101,20 @@ func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 	c <- "UDP Server is nil"
 	return
 }
-func Conn_task_server_start(c chan string, task_channel map[string](chan string), ctx context.Context) {
-	if Task_server_TCP_Server != nil {
-		for {
-			conn, err := Task_server_TCP_Server.Accept()
-			if err != nil {
-				// fmt.Println("Error accepting: ", err.Error())
-				c <- err.Error()
-			}
-			go handleTaskrequest(conn)
-		}
-	}
-	c <- "Task Server is nil"
-}
+
+// func Conn_task_server_start(c chan string, task_channel map[string](chan string), ctx context.Context) {
+// 	if Task_server_TCP_Server != nil {
+// 		for {
+// 			conn, err := Task_server_TCP_Server.Accept()
+// 			if err != nil {
+// 				// fmt.Println("Error accepting: ", err.Error())
+// 				c <- err.Error()
+// 			}
+// 			go handleTaskrequest(conn)
+// 		}
+// 	}
+// 	c <- "Task Server is nil"
+// }
 
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	wg := new(sync.WaitGroup)
@@ -130,14 +123,15 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	TCP_CHANNEL := make(chan string)
 	TCP_DETECT_CHANNEL := make(chan string)
 	UDP_CHANNEL := make(chan string)
-	Task_map_channel := make(map[string](chan string))
-	TASK_CHANNEL := make(chan string)
+	// Task_map_channel := make(map[string](chan string))
+	// TASK_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
-	go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
+	go taskservice.Start(ctx)
+	// go Conn_task_server_start(TASK_CHANNEL, Task_map_channel, ctx)
 	// go Conn_command_start()
 	rt := 0
 	if Tcp_enable {
@@ -190,9 +184,4 @@ func Main(ctx context.Context, Connection_close_chan chan<- int) {
 		os.Exit(1)
 	}
 	Connect_start(ctx, Connection_close_chan)
-
-	// if Connect_start() == 1 {
-	// 	logger.Error("Start Connection error")
-	// 	os.Exit(1)
-	// }
-} 
+}

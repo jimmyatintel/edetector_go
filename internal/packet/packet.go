@@ -5,12 +5,14 @@ import (
 	"errors"
 	// "fmt"
 
+	// "fmt"
+
 	// "github.com/google/uuid"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
-	"strings"
 	"encoding/json"
 	"net"
+	"strings"
 )
 
 type Packet interface {
@@ -144,7 +146,6 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-
 	err:= json.Unmarshal(data, p)
 	if err != nil {
 		return err

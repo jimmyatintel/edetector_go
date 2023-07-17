@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
+	"edetector_go/pkg/logger"
 	"fmt"
 
 	"github.com/redis/go-redis/v9"
@@ -28,6 +29,7 @@ func Redis_init() *redis.Client {
 		fmt.Println("Error connecting to redis")
 		return nil
 	}
+	fmt.Println("redis is enabled.")
 	return RedisClient
 }
 
@@ -38,17 +40,21 @@ func Redis_close() {
 	RedisClient.Close()
 }
 
-func Redis_set(key string, value string) {
+func Redis_set(key string, value string) error{
 	if !checkflag() {
-		return
+		return nil
 	}
-	RedisClient.Set(context.Background(), key, value, 0)
+	return RedisClient.Set(context.Background(), key, value, 0).Err()
 }
 
 func Redis_get(key string) string {
 	if !checkflag() {
 		return ""
 	}
-	val, _ := RedisClient.Get(context.Background(), key).Result()
+	val, err := RedisClient.Get(context.Background(), key).Result()
+	if err != nil {
+		logger.Error("Error getting value from redis" + err.Error())
+		return ""
+	}
 	return val
 }

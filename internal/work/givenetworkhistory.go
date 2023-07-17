@@ -6,12 +6,11 @@ import (
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"fmt"
 	"net"
-	"strconv"
+	"strings"
 
 	"encoding/json"
-	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 )
@@ -31,7 +30,7 @@ func (n NetworkJson) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
-func GiveNetworkHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -46,7 +45,7 @@ func GiveNetworkHistory(p packet.Packet, Key *string, conn net.Conn) (task.TaskR
 	return task.SUCCESS, nil
 }
 
-func GiveNetworkHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -62,11 +61,11 @@ func GiveNetworkHistoryData(p packet.Packet, Key *string, conn net.Conn) (task.T
 	return task.SUCCESS, nil
 }
 
-func GiveNetworkHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.TaskResult, error) {
+func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	Data := change2json(p)
+	Data := ChangeNetworkToJson(p)
 	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
-	elasticquery.Send_to_elastic(template, Data)
+	elasticquery.Send_to_elastic("ed_network_history", template, Data)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -80,48 +79,16 @@ func GiveNetworkHistoryEnd(p packet.Packet, Key *string, conn net.Conn) (task.Ta
 	return task.SUCCESS, nil
 }
 
-func change2json(p packet.Packet) []elasticquery.Request_data {
+func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
 	lines := strings.Split(p.GetMessage(), "\n")
 	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
-		values := strings.Split(line, "|")
-		pid, err := strconv.Atoi(values[0])
-		if err != nil {
-			fmt.Println("Error converting PID to int:", err)
-			return nil
+		if len(line) == 0 {
+			continue
 		}
-		timestamp, err := strconv.Atoi(values[2])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		processtime, err := strconv.Atoi(values[3])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		inorout, err := strconv.Atoi(values[4])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		port, err := strconv.Atoi(values[5])
-		if err != nil {
-			fmt.Println("Error converting timestamp to int:", err)
-			return nil
-		}
-		if len(values) == 6 {
-			data := NetworkJson{
-				PID:               pid,
-				Address:           values[1],
-				Timestamp:         timestamp,
-				ProcessTime:       processtime,
-				ConnectionINorOUT: inorout != 0,
-				AgentPort:         port,
-			}
-
-			dataSlice = append(dataSlice, elasticquery.Request_data(data))
-		}
+		data := NetworkJson{}
+		To_json(line, &data)
+		dataSlice = append(dataSlice, elasticquery.Request_data(data))
 	}
 	jsonData, err := json.Marshal(dataSlice)
 	if err != nil {
