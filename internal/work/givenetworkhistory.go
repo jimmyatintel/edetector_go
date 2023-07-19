@@ -15,8 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var Data_acache []byte
-
 type NetworkJson struct {
 	PID               int    `json:"pid"`
 	Address           string `json:"address"`
@@ -63,9 +61,9 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	Data := ChangeNetworkToJson(p)
-	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
-	elasticquery.Send_to_elastic("ed_network_history", template, Data)
+	// Data := ChangeNetworkToJson(p)
+	// template := elasticquery.New_source(p.GetRkey(), "Networkdata")
+	// elasticquery.Send_to_elastic("ed_network_history", template, Data)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

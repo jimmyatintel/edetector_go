@@ -16,8 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// var ctx context.Context
-
 type TaskRequest struct {
 	TaskID string `json:"taskID"`
 }

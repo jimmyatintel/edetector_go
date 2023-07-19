@@ -53,6 +53,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Debug(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
+				fmt.Println(string(port) + " " + string(key))
 				logger.Error("Error reading:", zap.Any("error", err.Error()))
 				return
 			}
@@ -66,7 +67,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			var NewPacket = new(packet.WorkPacket)
 			err := NewPacket.NewPacket(decrypt_buf, buf)
 			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
@@ -127,7 +128,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
 			}
 			if NewPacket.GetTaskType() == "Undefine" {

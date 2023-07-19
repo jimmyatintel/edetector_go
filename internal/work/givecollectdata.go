@@ -25,8 +25,8 @@ import (
 	"go.uber.org/zap"
 )
 
-var DataLen int //! TODO:use mapping
-var FileName = "db.db"
+var dataLenMap map[string]int
+var fileName = "db.db"
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("ImportStartup: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -94,8 +94,8 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if err != nil {
 		return task.FAIL, err
 	}
-	DataLen = len
-	file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	dataLenMap[p.GetRkey()] = len
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -120,7 +120,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
 
-	file, err := os.OpenFile(FileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -148,19 +148,19 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	data, err := os.ReadFile(FileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		return task.FAIL, err
 	}
-	fileInfo, err := os.Stat(FileName)
+	fileInfo, err := os.Stat(fileName)
 	if err != nil {
 		return task.FAIL, err
 	}
 	realLen := fileInfo.Size()
-	if int(realLen) < DataLen {
+	if int(realLen) < dataLenMap[p.GetRkey()] {
 		return task.FAIL, errors.New("incomplete data")
 	}
-	err = os.WriteFile(FileName, data[:DataLen], 0644)
+	err = os.WriteFile(fileName, data[:dataLenMap[p.GetRkey()]], 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
