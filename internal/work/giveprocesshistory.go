@@ -33,7 +33,7 @@ func (n ProcessDetectJson) Elastical() ([]byte, error) {
 }
 
 func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -48,7 +48,7 @@ func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessHistoryData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveProcessHistoryData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -63,7 +63,7 @@ func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 }
 
 func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	Data := ChangeProcessToJson(p)
 	template := elasticquery.New_source(p.GetRkey(), "Processdata")
 	elasticquery.Send_to_elastic("ed_process_history", template, Data)

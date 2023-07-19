@@ -9,7 +9,6 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/mariadb/query"
 	"errors"
-	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -17,7 +16,6 @@ import (
 
 	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"io/ioutil"
 	"net"
 
 	// "encoding/json"
@@ -27,12 +25,11 @@ import (
 	"go.uber.org/zap"
 )
 
-var DataLen int
+var DataLen int //! TODO:use mapping
 var FileName = "db.db"
-var count = 0
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("ImportStartup: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("ImportStartup: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -47,7 +44,7 @@ func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("CollectInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("CollectInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -62,7 +59,7 @@ func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -87,12 +84,12 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	}
 	progress := int(math.Min((float64(numerator) / float64(denominator) * 100), 99))
 	query.Update_progress(progress, p.GetRkey(), "StartCollect")
-	taskservice.RequestToUser(p.GetRkey())
+	go taskservice.RequestToUser(p.GetRkey())
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	len, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
@@ -117,7 +114,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
@@ -146,13 +143,12 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	count = count + 1
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetMessage()))
-	data, err := ioutil.ReadFile(FileName)
+	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	data, err := os.ReadFile(FileName)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -161,11 +157,10 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		return task.FAIL, err
 	}
 	realLen := fileInfo.Size()
-	logger.Info("File Size: " + fmt.Sprint(realLen) + " Count: " + fmt.Sprint(count))
 	if int(realLen) < DataLen {
 		return task.FAIL, errors.New("incomplete data")
 	}
-	err = ioutil.WriteFile(FileName, data[:DataLen], 0644)
+	err = os.WriteFile(FileName, data[:DataLen], 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -184,7 +179,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataError: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveCollectDataError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

@@ -31,7 +31,7 @@ func (n NetworkJson) Elastical() ([]byte, error) {
 }
 
 func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -46,7 +46,7 @@ func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -62,7 +62,7 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 }
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	Data := ChangeNetworkToJson(p)
 	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
 	elasticquery.Send_to_elastic("ed_network_history", template, Data)

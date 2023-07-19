@@ -66,7 +66,7 @@ type ScanJson struct {
 }
 
 func Process(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Process: ", zap.Any("message", p.GetMessage()))
+	logger.Info("Process: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -81,7 +81,7 @@ func Process(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GetScanInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GetScanInfoData: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GetScanInfoData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -96,7 +96,7 @@ func GetScanInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveProcessData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -111,7 +111,7 @@ func GiveProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveProcessDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveProcessDataEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveProcessDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -126,7 +126,7 @@ func GiveProcessDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanProgress: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveScanProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -141,14 +141,14 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err_ != nil {
 		return task.FAIL, err
 	}
-	progress = int(math.Min(float64(progress * 2), 99))
+	progress = int(math.Min(float64(progress*2), 99))
 	query.Update_progress(progress, p.GetRkey(), "StartScan")
-	taskservice.RequestToUser(p.GetRkey())
+	go taskservice.RequestToUser(p.GetRkey())
 	return task.SUCCESS, nil
 }
 
 func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanDataInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveScanDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -163,7 +163,7 @@ func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScanData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveScanData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -178,7 +178,7 @@ func GiveScanData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScanDataOver: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveScanDataOver: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -193,7 +193,7 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScanDataEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveScanDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

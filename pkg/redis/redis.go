@@ -53,7 +53,7 @@ func Redis_get(key string) string {
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis" + err.Error())
+		logger.Error("Error getting value from redis " + err.Error())
 		return ""
 	}
 	return val

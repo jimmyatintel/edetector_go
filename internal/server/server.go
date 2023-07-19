@@ -45,16 +45,14 @@ func Main() {
 }
 func servershutdown() {
 	// rabbitmq.Connection_close()
-	err := redis.Offline("3e716e2d61ba910983cb456817116799") //! temp version
-	if err != nil {
-		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+	for _, client := range Client.Clientlist {
+		err := redis.Offline(client)
+		if err != nil {
+			logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+		}
+		logger.Info("offline ", zap.Any("message", client))
+		taskservice.RequestToUser(client)
 	}
-	taskservice.RequestToUser("3e716e2d61ba910983cb456817116799")
-	err = redis.Offline("8beba472f3f44cabbbb44fd232171933") //! temp version
-	if err != nil {
-		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
-	}
-	taskservice.RequestToUser("8beba472f3f44cabbbb44fd232171933")
 	redis.Redis_close()
 }
 func serverinit() {

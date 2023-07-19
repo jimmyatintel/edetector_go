@@ -18,7 +18,7 @@ type ProcessInfoJson struct {
 }
 
 func GiveProcessInformation(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveProcessinformation: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveProcessinformation: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -33,7 +33,7 @@ func GiveProcessInformation(p packet.Packet, conn net.Conn) (task.TaskResult, er
 }
 
 func GiveProcessInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessInfoData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveProcessInfoData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -48,7 +48,7 @@ func GiveProcessInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveProcessInfoEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveProcessInfoEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveProcessInfoEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	// ChangeProcessInfo2Json(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

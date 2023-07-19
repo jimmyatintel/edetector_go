@@ -4,15 +4,10 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
-
-	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+
 	"net"
 	"strings"
-
-	// "encoding/json"
-	// "fmt"
 
 	"go.uber.org/zap"
 )
@@ -31,7 +26,7 @@ type ExplorerJson struct {
 }
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
+	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
@@ -48,7 +43,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -63,7 +58,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -74,12 +69,12 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	taskservice.Finish_task(p.GetRkey(), "StartGetDrive")
+	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
 
 func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

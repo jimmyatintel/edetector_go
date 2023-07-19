@@ -21,7 +21,6 @@ func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
 		// handshake
 		task.GIVE_INFO:              GiveInfo,
-		task.GIVE_DETECT_PORT_INFO:  GiveDetectPortInfo,
 		task.GIVE_DETECT_INFO_FIRST: GiveDetectInfoFirst,
 		task.GIVE_DETECT_INFO:       GiveDetectInfo,
 

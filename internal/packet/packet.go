@@ -3,11 +3,7 @@ package packet
 import (
 	"bytes"
 	"errors"
-	// "fmt"
 
-	// "fmt"
-
-	// "github.com/google/uuid"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
@@ -53,16 +49,16 @@ type DataPacket struct {
 }
 type TaskPacket struct {
 	// Packet is a struct that contains the packet data
-	Key      string              `json:"key"`
-	Work     task.UserTaskType   `json:"work"`
-	User     string              `json:"user"`
-	Message  string              `json:"message"`
-	Data     []byte              `json:"data"`
+	Key     string            `json:"key"`
+	Work    task.UserTaskType `json:"work"`
+	User    string            `json:"user"`
+	Message string            `json:"message"`
+	Data    []byte            `json:"data"`
 }
 type AckPacket struct {
 	// Packet is a struct that contains the packet data
-	IsSuccess  bool     `json:"isSuccess"`
-	Message    string   `json:"message"`
+	IsSuccess bool   `json:"isSuccess"`
+	Message   string `json:"message"`
 }
 
 // var Uuid uuid.UUID
@@ -146,7 +142,7 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	return nil
 }
 func (p *TaskPacket) NewPacket(data []byte) error {
-	err:= json.Unmarshal(data, p)
+	err := json.Unmarshal(data, p)
 	if err != nil {
 		return err
 	}
@@ -156,9 +152,9 @@ func (p *TaskPacket) NewPacket(data []byte) error {
 	return nil
 }
 func (p *TaskPacket) Respond(conn net.Conn, isSuccess bool, message string) error {
-	res := AckPacket {
+	res := AckPacket{
 		IsSuccess: isSuccess,
-		Message: message,
+		Message:   message,
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {

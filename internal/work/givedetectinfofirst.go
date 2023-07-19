@@ -13,7 +13,7 @@ import (
 
 func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// front process back netowork
-	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -29,6 +29,6 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	return task.SUCCESS, nil
 }

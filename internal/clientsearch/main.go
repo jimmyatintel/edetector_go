@@ -6,7 +6,7 @@ import (
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
-	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
 	"fmt"
 
