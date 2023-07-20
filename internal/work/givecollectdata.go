@@ -7,25 +7,24 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"errors"
 	"math"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
-	// elasticquery "edetector_go/pkg/elastic/query"
-	"edetector_go/pkg/logger"
 	"net"
-
-	// "encoding/json"
-	// "fmt"
-	// "strings"
 
 	"go.uber.org/zap"
 )
 
-var dataLenMap map[string]int
+var collectMu sync.Mutex
+var collectTotalMap = make(map[string]int)
+var collectCountMap = make(map[string]int)
+var collectProgressMap = make(map[string]int)
 var fileName = "db.db"
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -51,6 +50,10 @@ func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		Work:       task.GET_COLLECT_INFO_DATA,
 		Message:    "10",
 	}
+	collectMu.Lock()
+	collectProgressMap[p.GetRkey()] = 0
+	collectMu.Unlock()
+	go collectProgress(p.GetRkey())
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -70,6 +73,8 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// update progress
 	parts := strings.Split(p.GetMessage(), "/")
 	if len(parts) != 2 {
 		return task.FAIL, errors.New("invalid progress format")
@@ -82,9 +87,9 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if err != nil {
 		return task.FAIL, err
 	}
-	progress := int(math.Min((float64(numerator) / float64(denominator) * 100), 99))
-	query.Update_progress(progress, p.GetRkey(), "StartCollect")
-	go taskservice.RequestToUser(p.GetRkey())
+	collectMu.Lock()
+	collectProgressMap[p.GetRkey()] = int(math.Min((float64(numerator) / float64(denominator) * 20), 20))
+	collectMu.Unlock()
 	return task.SUCCESS, nil
 }
 
@@ -94,7 +99,8 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if err != nil {
 		return task.FAIL, err
 	}
-	dataLenMap[p.GetRkey()] = len
+	collectCountMap[p.GetRkey()] = 0
+	collectTotalMap[p.GetRkey()] = len
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -143,6 +149,12 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// update progress
+	collectCountMap[p.GetRkey()] += 1
+	collectMu.Lock()
+	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
+	collectMu.Unlock()
 	return task.SUCCESS, nil
 }
 
@@ -157,10 +169,10 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		return task.FAIL, err
 	}
 	realLen := fileInfo.Size()
-	if int(realLen) < dataLenMap[p.GetRkey()] {
+	if int(realLen) < collectTotalMap[p.GetRkey()] {
 		return task.FAIL, errors.New("incomplete data")
 	}
-	err = os.WriteFile(fileName, data[:dataLenMap[p.GetRkey()]], 0644)
+	err = os.WriteFile(fileName, data[:collectTotalMap[p.GetRkey()]], 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -191,4 +203,18 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
+}
+
+func collectProgress(clientid string) {
+	for {
+		collectMu.Lock()
+		if collectProgressMap[clientid] >= 100 {
+			break
+		}
+		rowsAffected := query.Update_progress(collectProgressMap[clientid], clientid, "StartCollect")
+		collectMu.Unlock()
+		if rowsAffected != 0 {
+			go taskservice.RequestToUser(clientid)
+		}
+	}
 }
