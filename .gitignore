@@ -4,4 +4,4 @@ cmd/db.db
 log_history
 dbWorking
 dbUnstage
-dbStage
+dbStaged
