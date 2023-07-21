@@ -12,6 +12,7 @@ import (
 	"errors"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,7 +26,17 @@ var collectMu sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
-var fileName = "db.db"
+var currentDir = ""
+var workingPath = "../dbWorking"
+var unstagePath = "../dbUnstage"
+
+func init() {
+	curDir, err := os.Getwd()
+	if err != nil {
+		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
+	}
+	currentDir = curDir
+}
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("ImportStartup: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -63,16 +74,6 @@ func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
 
 	// update progress
 	parts := strings.Split(p.GetMessage(), "/")
@@ -90,22 +91,39 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectMu.Lock()
 	collectProgressMap[p.GetRkey()] = int(math.Min((float64(numerator) / float64(denominator) * 20), 20))
 	collectMu.Unlock()
+
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+
+	// init collect info
 	len, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
 	collectCountMap[p.GetRkey()] = 0
 	collectTotalMap[p.GetRkey()] = len
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+
+	// Create or truncate the db file
+	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
 	file.Close()
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -126,7 +144,9 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
 
-	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	// write file
+	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -139,6 +159,13 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	file.Close()
+
+	// update progress
+	collectCountMap[p.GetRkey()] += 1
+	collectMu.Lock()
+	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
+	collectMu.Unlock()
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -149,22 +176,19 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-
-	// update progress
-	collectCountMap[p.GetRkey()] += 1
-	collectMu.Lock()
-	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
-	collectMu.Unlock()
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	data, err := os.ReadFile(fileName)
+
+	// truncate data
+	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
 	}
-	fileInfo, err := os.Stat(fileName)
+	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -172,10 +196,19 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if int(realLen) < collectTotalMap[p.GetRkey()] {
 		return task.FAIL, errors.New("incomplete data")
 	}
-	err = os.WriteFile(fileName, data[:collectTotalMap[p.GetRkey()]], 0644)
+	err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// move to dbUnstage
+	srcPath := filepath.Join(currentDir, workingPath)
+	dstPath := filepath.Join(currentDir, unstagePath, p.GetRkey())
+	err = os.Rename(srcPath, dstPath)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
