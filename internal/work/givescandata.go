@@ -30,7 +30,7 @@ type ProcessScanJson struct {
 
 type ScanInfoJson struct {
 	PID        int    `json:"pid"`
-	FineName   string `json:"file_name"`
+	FileName   string `json:"file_name"`
 	FilePath   string `json:"file_path"`
 	FileHash   string `json:"file_hash"`
 	Isinjected int    `json:"is_injected"`
