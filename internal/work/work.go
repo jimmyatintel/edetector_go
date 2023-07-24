@@ -3,6 +3,7 @@ package work
 import (
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"reflect"
 	"strconv"
 	"strings"
@@ -71,24 +72,9 @@ func init() {
 	}
 }
 
-// func RawDataToJson(msg string, st interface{}) []elasticquery.Request_data {
-// 	lines := strings.Split(msg, "\n")
-// 	var dataSlice []elasticquery.Request_data
-// 	for _, line := range lines {
-// 		if len(line) == 0 {
-// 			continue
-// 		}
-// 		data := st
-// 		To_json(line, &data)
-// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-// 	}
-// 	logger.Info("ChangeProcessToJson", zap.Any("message", dataSlice))
-// 	return dataSlice
-// }
-
-func To_json(mes string, st interface{}) {
-	v := reflect.Indirect(reflect.ValueOf(st))
-	line := mes
+func To_json(uuid string, agentID string, mes string, data elasticquery.Request_data) {
+	v := reflect.Indirect(reflect.ValueOf(data))
+	line := uuid + "|" + agentID + "|" + mes
 	values := strings.Split(line, "|")
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
@@ -109,4 +95,5 @@ func To_json(mes string, st interface{}) {
 			field.Set(reflect.ValueOf(value))
 		}
 	}
+	elasticquery.Send_to_details_elastic("network_history", data)
 }

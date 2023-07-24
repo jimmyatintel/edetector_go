@@ -61,20 +61,18 @@ func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {
 		// main index
 		values := strings.Split(line, "|")
-		elasticID := uuid.NewString()
-		template := elasticquery.New_main(elasticID, "network_history", values[1], values[2], "network_record", values[5]) //! ask frontend
+		uuid := uuid.NewString()
+		template := elasticquery.New_main(uuid, "network_history", values[1], values[2], "network_record", values[5]) //! ask frontend
 		elasticquery.Send_to_main_elastic("main", template)
-		// table index
+		// details index
 		// data := ProcessDetectJson{}
-		// To_json(line, &data)
-		// elasticquery.Send_to_elastic("network_history", data)
-		// Data := RawDataToJson(p.GetMessage(), ProcessDetectJson{})
-		// template := elasticquery.New_source(p.GetRkey(), "Processdata")
-		// elasticquery.Send_to_elastic("ed_process_history", template, Data)
+		To_json(uuid, p.GetRkey(), line, &ProcessDetectJson{})
+		// elasticquery.Send_to_details_elastic("network_history", data)
 	}
 
 	var send_packet = packet.WorkPacket{
