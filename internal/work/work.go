@@ -7,15 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	// "edetector_go/internal/work_functions"
 	"net"
 )
 
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
-
-type Request_data interface {
-	Elastical() ([]byte, error)
-}
 
 func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
@@ -75,6 +70,21 @@ func init() {
 		task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
 	}
 }
+
+// func RawDataToJson(msg string, st interface{}) []elasticquery.Request_data {
+// 	lines := strings.Split(msg, "\n")
+// 	var dataSlice []elasticquery.Request_data
+// 	for _, line := range lines {
+// 		if len(line) == 0 {
+// 			continue
+// 		}
+// 		data := st
+// 		To_json(line, &data)
+// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
+// 	}
+// 	logger.Info("ChangeProcessToJson", zap.Any("message", dataSlice))
+// 	return dataSlice
+// }
 
 func To_json(mes string, st interface{}) {
 	v := reflect.Indirect(reflect.ValueOf(st))

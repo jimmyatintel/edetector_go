@@ -7,19 +7,16 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"encoding/json"
-	"fmt"
 	"net"
 	"strings"
 
-	// "strconv"
-
+	"github.com/google/uuid"
 	"go.uber.org/zap"
-	// "encoding/json"
-	// "fmt"
-	// "strings"
 )
 
 type ProcessDetectJson struct {
+	UUID        string `json:"uuid"`
+	AgentID     string `json:"agent_id"`
 	PID         int    `json:"pid"`
 	Parent_PID  int    `json:"parent_pid"`
 	ProcessName string `json:"process_name"`
@@ -64,9 +61,22 @@ func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	// Data := ChangeProcessToJson(p)
-	// template := elasticquery.New_source(p.GetRkey(), "Processdata")
-	// elasticquery.Send_to_elastic("ed_process_history", template, Data)
+	lines := strings.Split(p.GetMessage(), "\n")
+	for _, line := range lines {
+		// main index
+		values := strings.Split(line, "|")
+		elasticID := uuid.NewString()
+		template := elasticquery.New_main(elasticID, "network_history", values[1], values[2], "network_record", values[5]) //! ask frontend
+		elasticquery.Send_to_main_elastic("main", template)
+		// table index
+		// data := ProcessDetectJson{}
+		// To_json(line, &data)
+		// elasticquery.Send_to_elastic("network_history", data)
+		// Data := RawDataToJson(p.GetMessage(), ProcessDetectJson{})
+		// template := elasticquery.New_source(p.GetRkey(), "Processdata")
+		// elasticquery.Send_to_elastic("ed_process_history", template, Data)
+	}
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -80,22 +90,17 @@ func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func ChangeProcessToJson(p packet.Packet) []elasticquery.Request_data {
-	lines := strings.Split(p.GetMessage(), "\n")
-	var dataSlice []elasticquery.Request_data
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-		data := ProcessDetectJson{}
-		To_json(line, &data)
-		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-	}
-	jsonData, err := json.Marshal(dataSlice)
-	if err != nil {
-		fmt.Println("Error converting to JSON:", err)
-		return nil
-	}
-	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
-	return dataSlice
-}
+// func ChangeProcessToJson(p packet.Packet) []elasticquery.Request_data {
+// 	lines := strings.Split(p.GetMessage(), "\n")
+// 	var dataSlice []elasticquery.Request_data
+// 	for _, line := range lines {
+// 		if len(line) == 0 {
+// 			continue
+// 		}
+// 		data := ProcessDetectJson{}
+// 		To_json(line, &data)
+// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
+// 	}
+// 	logger.Info("ChangeProcessToJson", zap.Any("message", dataSlice))
+// 	return dataSlice
+// }

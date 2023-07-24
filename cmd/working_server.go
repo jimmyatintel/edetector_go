@@ -1,10 +1,11 @@
 package main
 
 import (
-	server "edetector_go/internal/server"
+	"edetector_go/internal/parsedb"
+	// server "edetector_go/internal/server"
 )
 
-
 func main() {
-	server.Main()
+	// server.Main()
+	parsedb.Main()
 }

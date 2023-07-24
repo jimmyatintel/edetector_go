@@ -117,7 +117,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectTotalMap[p.GetRkey()] = len
 
 	// Create or truncate the db file
-	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -145,7 +145,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	decrypt_buf = decrypt_buf[100:]
 
 	// write file
-	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -183,7 +183,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
 	// truncate data
-	path := filepath.Join(currentDir, workingPath, p.GetRkey())
+	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -203,7 +203,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 
 	// move to dbUnstage
 	srcPath := filepath.Join(currentDir, workingPath)
-	dstPath := filepath.Join(currentDir, unstagePath, p.GetRkey())
+	dstPath := filepath.Join(currentDir, unstagePath, (p.GetRkey() + ".db"))
 	err = os.Rename(srcPath, dstPath)
 	if err != nil {
 		return task.FAIL, err

@@ -4,11 +4,8 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"fmt"
 	"net"
-	"strings"
 
 	"encoding/json"
 
@@ -77,22 +74,22 @@ func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
-	lines := strings.Split(p.GetMessage(), "\n")
-	var dataSlice []elasticquery.Request_data
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-		data := NetworkJson{}
-		To_json(line, &data)
-		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-	}
-	jsonData, err := json.Marshal(dataSlice)
-	if err != nil {
-		fmt.Println("Error converting to JSON:", err)
-		return nil
-	}
-	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
-	return dataSlice
-}
+// func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
+// 	lines := strings.Split(p.GetMessage(), "\n")
+// 	var dataSlice []elasticquery.Request_data
+// 	for _, line := range lines {
+// 		if len(line) == 0 {
+// 			continue
+// 		}
+// 		data := NetworkJson{}
+// 		To_json(line, &data)
+// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
+// 	}
+// 	jsonData, err := json.Marshal(dataSlice)
+// 	if err != nil {
+// 		logger.Error("Error converting to JSON:", zap.Any("error", err))
+// 		return nil
+// 	}
+// 	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
+// 	return dataSlice
+// }
