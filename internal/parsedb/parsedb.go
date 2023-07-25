@@ -16,7 +16,7 @@ import (
 )
 
 var currentDir = ""
-var unstagePath = "../dbUnstage"
+var unstagePath = "../../dbUnstage"
 
 func init() {
 	curDir, err := os.Getwd()
@@ -28,49 +28,47 @@ func init() {
 
 func Main() {
 	dir := filepath.Join(currentDir, unstagePath)
-	for {
-		dbFiles, err := getDBFiles(dir)
+	// for {
+	dbFiles, err := getDBFiles(dir)
+	if err != nil {
+		logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
+		return
+	}
+	// loop all db files
+	for _, dbFile := range dbFiles {
+		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
-			logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
+			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
+			continue
+		}
+		logger.Info("Open db file: ", zap.Any("message", dbFile))
+		tableNames, err := getTableNames(db)
+		if err != nil {
+			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
 			return
 		}
-		// loop all db files
-		for _, dbFile := range dbFiles {
-			db, err := sql.Open("sqlite3", dbFile)
+		// loop all tables in the db file
+		for _, tableName := range tableNames {
+			rows, err := db.Query("SELECT * FROM " + tableName)
 			if err != nil {
-				logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
-				continue
+				logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
+				return
 			}
-			logger.Info("Open db file: ", zap.Any("message", dbFile))
-			// tableNames, err := getTableNames(db)
-			// if err != nil {
-			// 	logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
-			// 	return
-			// }
-			var tableNames []string
-			tableNames = append(tableNames, "ARPCache")
-			// loop all tables in the db file
-			for _, tableName := range tableNames {
-				rows, err := db.Query("SELECT * FROM " + tableName)
-				if err != nil {
-					logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
-					return
-				}
-				logger.Info("Handling table: ", zap.Any("message", tableName))
-				strData, err := rowsToString(rows)
-				if err != nil {
-					logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
-					return
-				}
-				err = sendCollectToElastic(dbFile, strData, tableName)
-				if err != nil {
-					logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
-					return
-				}
-				rows.Close()
+			logger.Info("Handling table: ", zap.Any("message", tableName))
+			strData, err := rowsToString(rows)
+			if err != nil {
+				logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
+				return
 			}
-			db.Close()
+			err = sendCollectToElastic(dbFile, strData, tableName)
+			if err != nil {
+				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
+				return
+			}
+			rows.Close()
 		}
+		db.Close()
+		// }
 	}
 }
 
@@ -152,36 +150,74 @@ func rowsToString(rows *sql.Rows) (string, error) {
 
 func sendCollectToElastic(dbFile string, rawData string, tableName string) error {
 	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
-	agent := path[len(path)-1]
-
+	agent := path[len(path) - 1]
 	lines := strings.Split(rawData, "\n")
-	tableFunc, ok := dbMap[tableName]
-	if !ok {
-		err := errors.New("table not found: " + tableName)
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		values := strings.Split(line, "|")
+		tableFunc, ok := dbMap[tableName]
+		if !ok {
+			err := errors.New("table not found: " + tableName)
+			return err
+		}
+		err := tableFunc(agent, line, values)
+		if err != nil {
+			return err
+		}		
+	}
+	return nil
+}
+
+func AppResourceUsageMonitorTable(agent string, line string, values []string) error {
+	uuid := uuid.NewString()
+	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+	if err != nil {
 		return err
 	}
-	err := tableFunc(agent, lines)
+	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func ARPCacheTable(agent string, lines []string) error {
-	for _, line := range lines {
-		values := strings.Split(line, "|")
-		if len(values) != 4 {
-			continue
-		}
-		uuid := uuid.NewString()
-		err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
-		if err != nil {
-			return err
-		}
-		err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
-		if err != nil {
-			return err
-		}
+func ARPCacheTable(agent string, line string, values []string) error {
+	uuid := uuid.NewString()
+	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+	if err != nil {
+		return err
+	}
+	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func BaseServiceTable(agent string, line string, values []string) error {
+	uuid := uuid.NewString()
+	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+	if err != nil {
+		return err
+	}
+	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ChromeBookmarksTable(agent string, line string, values []string) error {
+	uuid := uuid.NewString()
+	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+	if err != nil {
+		return err
+	}
+	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
+	if err != nil {
+		return err
 	}
 	return nil
 }
