@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
-	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/rabbitmq"
 	"errors"
 	"fmt"
 	"os"
@@ -42,12 +42,9 @@ func init() {
 		logger.InitLogger(config.Viper.GetString("DB_LOG_FILE"))
 		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("DB_LOG_FILE"))
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
-		fmt.Println("elastic is enabled.")
+	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+		rabbitmq.Rabbit_init()
+		fmt.Println("rabbit is enabled.")
 	}
 }
 
@@ -74,6 +71,7 @@ func Main() {
 		// }
 		var tableNames []string
 		tableNames = append(tableNames, "ARPCache")
+		tableNames = append(tableNames, "ChromeDownload")
 		// loop all tables in the db file
 		for _, tableName := range tableNames {
 			rows, err := db.Query("SELECT * FROM " + tableName)
@@ -184,12 +182,18 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 			continue
 		}
 		values := strings.Split(line, "|")
-		tableFunc, ok := dbMap[tableName]
-		if !ok {
-			err := errors.New("table not found: " + tableName)
-			return err
+		err := errors.New("")
+		details := "ed_" + strings.ToLower(tableName)
+		switch tableName {
+		case "AppResourceUsageMonitor":
+			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
+		case "ARPCache":
+			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
+		case "ChromeDownload":
+			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
+		default:
+			logger.Error("Unknown table name: ", zap.Any("message", tableName))
 		}
-		err := tableFunc(agent, line, values)
 		if err != nil {
 			return err
 		}
@@ -197,52 +201,13 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 	return nil
 }
 
-func AppResourceUsageMonitorTable(agent string, line string, values []string) error {
+func toElastic(details string, agent string, line string, item string, date string, ttype string, etc string, st elasticquery.Request_data) error {
 	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, item, date, ttype, etc)
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ARPCacheTable(agent string, line string, values []string) error {
-	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
-	if err != nil {
-		return err
-	}
-	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func BaseServiceTable(agent string, line string, values []string) error {
-	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
-	if err != nil {
-		return err
-	}
-	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ChromeBookmarksTable(agent string, line string, values []string) error {
-	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
-	if err != nil {
-		return err
-	}
-	err = elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
+	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st)
 	if err != nil {
 		return err
 	}

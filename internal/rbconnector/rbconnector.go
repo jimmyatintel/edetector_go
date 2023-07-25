@@ -28,6 +28,7 @@ var mid_bulkdata []string
 var mid_bulkaction []string
 
 func init() {
+	mid_mutex = &sync.Mutex{}
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		fmt.Println("Error loading feature flag")
@@ -112,9 +113,10 @@ func mid_speed() {
 	}
 }
 func count_timer() {
+	fmt.Println("count_timer")
 	last_send := time.Now()
 	for {
-		if time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second || len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+		if (time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second && len(mid_bulkaction) > 0) || len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
 			mid_mutex.Lock()
 			last_send = time.Now()
 			err := elastic.BulkIndexRequest(mid_bulkaction, mid_bulkdata)

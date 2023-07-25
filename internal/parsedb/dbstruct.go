@@ -397,3 +397,59 @@ func (n FirefoxBookmarks) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
+type FirefoxCache struct {
+	UUID            string `json:"uuid"`
+	Agent           string `json:"agent"`
+	ID              int    `json:"id"`
+	URL             string `json:"url"`
+	ServerResponse  string `json:"server_response"`
+	ServerName      string `json:"server_name"`
+	CacheControl    string `json:"cache_control"`
+	ContentEncoding string `json:"content_encoding"`
+	ContentLength   int    `json:"content_length"`
+	ContentType     string `json:"content_type"`
+	FetchCount      int    `json:"fetch_count"`
+	LastFetched     int    `json:"last_fetched"`
+	LastModified    int    `json:"last_modified"`
+	Frequency       int    `json:"frequency"`
+	Expiration      int    `json:"expiration"`
+}
+
+func (n FirefoxCache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type FirefoxCookies struct {
+	UUID         string `json:"uuid"`
+	Agent        string `json:"agent"`
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	Value        string `json:"value"`
+	Host         string `json:"host"`
+	Path         string `json:"path"`
+	LastAccessed int    `json:"lastaccessed"`
+	CreationTime int    `json:"creationtime"`
+}
+
+func (n FirefoxCookies) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type FirefoxHistory struct {
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	URL           string `json:"url"`
+	Title         string `json:"title"`
+	FromURL       string `json:"from_url"`
+	RevHost       string `json:"rev_host"`
+	GUID          string `json:"guid"`
+	Description   string `json:"description"`
+	PreviewImgURL string `json:"preview_image_url"`
+	VisitCount    int    `json:"visit_count"`
+	VisitDate     int    `json:"visit_date"`
+	LastVisitDate int    `json:"last_visit_date"`
+}
+
+func (n FirefoxHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}

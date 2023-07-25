@@ -1,13 +1,13 @@
 package parsedb
 
-var dbMap map[string]func(agent string, line string, values []string) error
+// var dbMap map[string]func(agent string, line string, values []string) error
 
-func init() {
-	dbMap = map[string]func(agent string, line string, values []string) error {
-		"AppResourceUsageMonitor" : AppResourceUsageMonitorTable,
-		"ARPCache": ARPCacheTable,
-		"BaseService": BaseServiceTable,
-		"ChromeBookmarks": ChromeBookmarksTable,
+// func init() {
+// 	dbMap = map[string]func(agent string, line string, values []string) error {
+// 		"AppResourceUsageMonitor" : AppResourceUsageMonitorTable,
+// 		"ARPCache": ARPCacheTable,
+// 		"BaseService": BaseServiceTable,
+// 		"ChromeBookmarks": ChromeBookmarksTable,
 		// "ChromeCache": ChromeCacheTable,
 		// "ChromeDownload": ChromeDownloadTable,
 		// "ChromeHistory": ChromeHistoryTable,
@@ -23,5 +23,5 @@ func init() {
 		// "EventSecurity": EventSecurityTable,
 		// "EventSystem": EventSystemTable,
 		// "FirefoxBookmarks": FirefoxBookmarksTable,
-	}
-}
+// 	}
+// }
