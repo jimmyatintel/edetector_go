@@ -5,7 +5,6 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
-	"encoding/json"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -61,38 +60,27 @@ func IndexRequest(name string, body string) error {
 	logger.Debug("Index request: ", zap.Any("message", res.String()))
 	return nil
 }
-func BulkIndexRequest(name string, body string) {
+func BulkIndexRequest(index string, action []string, work []string) error {
 	if !flagcheck() {
-		return
+		return nil
+	}
+	var buf strings.Builder
+	for i, doc := range action {
+		buf.WriteString(doc)
+		buf.WriteByte('\n')
+		buf.WriteString(work[i])
+		buf.WriteByte('\n')
 	}
 	res, err := es.Bulk(
-		context.Background(),
-		es.Bulk.WithIndex("_index_name"), // Use the appropriate index name
-		es.Bulk.WithBody(strings.NewReader(formatBulkInsert(documents))),
+		strings.NewReader(buf.String()),
+		es.Bulk.WithContext(context.Background()),
 	)
-	req := esapi.BulkRequest{
-		Index: name,
-		Body:  strings.NewReader(body),
-	}
-	res, err := req.Do(context.Background(), es)
-	if err != nil {
-		panic(err)
-	}
 	defer res.Body.Close()
 	logger.Debug(res.String())
-}
-func formatBulkInsert(documents []map[string]interface{}) string {
-	var buf strings.Builder
-
-	for _, doc := range documents {
-		action := map[string]interface{}{
-			doc["index"].(string): doc["_id"].(string),
-		}
-		_ = json.NewEncoder(&buf).Encode(action)
-		_ = json.NewEncoder(&buf).Encode(doc)
+	if err != nil {
+		return err
 	}
-
-	return buf.String()
+	return nil
 }
 func searchRequest(name string, body string) {
 	if !flagcheck() {
