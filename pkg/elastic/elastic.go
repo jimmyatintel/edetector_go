@@ -61,7 +61,7 @@ func IndexRequest(name string, body string) error {
 	logger.Debug("Index request: ", zap.Any("message", res.String()))
 	return nil
 }
-func BulkIndexRequest(index string, action []string, work []string) error {
+func BulkIndexRequest(action []string, work []string) error {
 	if !flagcheck() {
 		return nil
 	}

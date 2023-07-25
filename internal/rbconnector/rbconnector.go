@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -20,6 +21,11 @@ type Message struct {
 	Index string `json:"index"`
 	Data  string `json:"data"`
 }
+
+var mid_mutex *sync.Mutex
+
+var mid_bulkdata []string
+var mid_bulkaction []string
 
 func init() {
 	fflag.Get_fflag()
@@ -91,9 +97,7 @@ func mid_speed() {
 		return
 	}
 	fmt.Println("CONNECT TO mid SPEED QUEUE")
-	last_send := time.Now()
-	var bulkdata []string
-	var bulkaction []string
+	go count_timer()
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -101,20 +105,29 @@ func mid_speed() {
 			logger.Error(err.Error())
 			continue
 		}
-		bulkdata = append(bulkdata, m.Data)
-		bulkaction = append(bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
-		if time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second || len(bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+		mid_mutex.Lock()
+		mid_bulkdata = append(mid_bulkdata, m.Data)
+		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
+		mid_mutex.Unlock()
+	}
+}
+func count_timer() {
+	last_send := time.Now()
+	for {
+		if time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second || len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+			mid_mutex.Lock()
 			last_send = time.Now()
-			err = elastic.BulkIndexRequest(m.Index, bulkaction, bulkdata)
+			err := elastic.BulkIndexRequest(mid_bulkaction, mid_bulkdata)
+			mid_mutex.Unlock()
 			if err != nil {
 				logger.Error(err.Error())
 				continue
 			}
-			bulkdata = nil
-			bulkaction = nil
+			mid_bulkdata = nil
+			mid_bulkaction = nil
 		}
+		time.Sleep(3 * time.Second)
 	}
-
 }
 func low_speed() {
 	msgs, err := rabbitmq.Consume("ed_low")
@@ -137,7 +150,7 @@ func low_speed() {
 		bulkaction = append(bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		if time.Since(last_send) > time.Duration(config.Viper.GetInt("LOW_TUNNEL_TIME"))*time.Second || len(bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
 			last_send = time.Now()
-			err = elastic.BulkIndexRequest(m.Index, bulkaction, bulkdata)
+			err = elastic.BulkIndexRequest(bulkaction, bulkdata)
 			if err != nil {
 				logger.Error(err.Error())
 				continue
