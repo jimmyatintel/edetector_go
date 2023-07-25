@@ -2,24 +2,20 @@ package parsedb
 
 import (
 	"database/sql"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 )
 
 var currentDir = ""
 var unstagePath = "../dbUnstage"
-
-type JSONData []byte
-
-func (j JSONData) Elastical() ([]byte, error) {
-	return j, nil
-}
 
 func init() {
 	curDir, err := os.Getwd()
@@ -31,51 +27,47 @@ func init() {
 
 func Main() {
 	dir := filepath.Join(currentDir, unstagePath)
-	// for { // infinite loop
-	dbFiles, err := getDBFiles(dir)
-	if err != nil {
-		logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
-		return
-	}
-	// loop all db files
-	for _, dbFile := range dbFiles {
-		db, err := sql.Open("sqlite3", dbFile)
+	for { // infinite loop
+		dbFiles, err := getDBFiles(dir)
 		if err != nil {
-			logger.Error("Error opening database file: ", zap.Any("error", dbFile+" err: "+err.Error()))
-			continue
-		}
-		logger.Info("Open db file: ", zap.Any("message", dbFile))
-		// tableNames, err := getTableNames(db)
-		// if err != nil {
-		// 	logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
-		// 	return
-		// }
-		tableName := "ARPCache"
-		// loop all tables in the db file
-		// for _, tableName := range tableNames {
-		rows, err := db.Query("SELECT * FROM " + tableName)
-		if err != nil {
-			logger.Error("Error executing query: ", zap.Any("error", err.Error()))
+			logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
 			return
 		}
-		logger.Info("Executing query: ", zap.Any("message", tableName))
-		rawData, err := rowsToString(rows)
-		if err != nil {
-			logger.Error("Error converting to JSON: ", zap.Any("error", err.Error()))
-			return
+		// loop all db files
+		for _, dbFile := range dbFiles {
+			db, err := sql.Open("sqlite3", dbFile)
+			if err != nil {
+				logger.Error("Error opening database file: ", zap.Any("error", dbFile+" err: "+err.Error()))
+				continue
+			}
+			logger.Info("Open db file: ", zap.Any("message", dbFile))
+			// tableNames, err := getTableNames(db)
+			// if err != nil {
+			// 	logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
+			// 	return
+			// }
+			tableName := "ARPCache"
+			// loop all tables in the db file
+			// for _, tableName := range tableNames {
+			rows, err := db.Query("SELECT * FROM " + tableName)
+			if err != nil {
+				logger.Error("Error executing query: ", zap.Any("error", err.Error()))
+				return
+			}
+			logger.Info("Executing query: ", zap.Any("message", tableName))
+			rawData, err := rowsToString(rows)
+			if err != nil {
+				logger.Error("Error converting to JSON: ", zap.Any("error", err.Error()))
+				return
+			}
+			sendCollectToElastic(dbFile, rawData)
+			fmt.Println(rawData)
+
+			rows.Close()
+			// }
+			db.Close()
 		}
-		fmt.Println(rawData)
-		// Data := changeARPCacheToJson(rawData)
-		// logger.Info("Data: ", zap.Any("message", Data))
-		// slice := strings.Split((strings.Split(dbFile, ".db")[0]), "/")
-		// agentID := slice[len(slice)-1]
-		// template := elasticquery.New_source(agentID, "ARPCache")
-		// elasticquery.Send_to_elastic("ed_process_history", template, Data)
-		rows.Close()
-		// }
-		db.Close()
 	}
-	// }
 }
 
 func getDBFiles(dir string) ([]string, error) {
@@ -137,41 +129,19 @@ func rowsToString(rows *sql.Rows) (string, error) {
 	return builder.String(), nil
 }
 
-// func changeARPCacheToJson(msg string) []elasticquery.Request_data {
-// 	lines := strings.Split(msg, "\n")
-// 	var dataSlice []elasticquery.Request_data
-// 	for _, line := range lines {
-// 		if len(line) == 0 {
-// 			continue
-// 		}
-// 		data := ARPCache{}
-// 		work.To_json(line, &data)
-// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-// 	}
-// 	logger.Info("ChangeProcessToJson", zap.Any("message", dataSlice))
-// 	return dataSlice
-// }
+func sendCollectToElastic(dbFile string, rawData string) {
+	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
+	agent := path[len(path)-1]
+	fmt.Println("agent: " + agent)
+	lines := strings.Split(rawData, "\n")
+	for _, line := range lines {
+		values := strings.Split(line, "|")
+		if len(values) != 4 {
+			continue
+		}
+		uuid := uuid.NewString()
+		elasticquery.SendToMainElastic(uuid, "ed_main", agent, values[1], "-1", "volatile", values[2])
+		elasticquery.SendToDetailsElastic(uuid, "ed_arpcache", agent, line, &ARPCache{})
+	}
+}
 
-// func getTableNames(db *sql.DB) ([]string, error) {
-// 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	var tableNames []string
-// 	for rows.Next() {
-// 		var tableName string
-// 		if err := rows.Scan(&tableName); err != nil {
-
-// 			return nil, err
-// 		}
-// 		tableNames = append(tableNames, tableName)
-// 	}
-
-// 	if err := rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return tableNames, nil
-// }

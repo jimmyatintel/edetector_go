@@ -3,10 +3,6 @@ package work
 import (
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	elasticquery "edetector_go/pkg/elastic/query"
-	"reflect"
-	"strconv"
-	"strings"
 
 	"net"
 )
@@ -70,30 +66,4 @@ func init() {
 		task.GIVE_SCAN_DATA_OVER:   GiveScanDataOver,
 		task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
 	}
-}
-
-func To_json(uuid string, agentID string, mes string, data elasticquery.Request_data) {
-	v := reflect.Indirect(reflect.ValueOf(data))
-	line := uuid + "|" + agentID + "|" + mes
-	values := strings.Split(line, "|")
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Field(i)
-		switch field.Kind() {
-		case reflect.Int:
-			value, err := strconv.Atoi(values[i])
-			if err != nil {
-				break
-			}
-			field.Set(reflect.ValueOf(value))
-		case reflect.String:
-			field.Set(reflect.ValueOf(values[i]))
-		case reflect.Bool:
-			value, err := strconv.ParseBool(values[i])
-			if err != nil {
-				break
-			}
-			field.Set(reflect.ValueOf(value))
-		}
-	}
-	elasticquery.Send_to_details_elastic("network_history", data)
 }
