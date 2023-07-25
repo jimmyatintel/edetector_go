@@ -57,6 +57,7 @@ func IndexRequest(name string, body string) error {
 		return err
 	}
 	defer res.Body.Close()
+	logger.Debug("Index content: ", zap.Any("message", body))
 	logger.Debug("Index request: ", zap.Any("message", res.String()))
 	return nil
 }
@@ -76,7 +77,7 @@ func BulkIndexRequest(index string, action []string, work []string) error {
 		es.Bulk.WithContext(context.Background()),
 	)
 	defer res.Body.Close()
-	logger.Debug(res.String())
+	logger.Debug("Bulk Index request: ", zap.Any("message", res.String()))
 	if err != nil {
 		return err
 	}

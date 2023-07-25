@@ -76,7 +76,7 @@ func Consume(queue string) (<-chan amqp.Delivery, error) {
 	}
 	return channel.Consume(
 		queue,
-		"ed_connetcor",
+		"",
 		true,
 		false,
 		false,

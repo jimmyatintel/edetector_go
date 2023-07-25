@@ -1,7 +1,9 @@
 package elasticquery
 
 import (
-	"edetector_go/pkg/elastic"
+	"edetector_go/internal/rbconnector"
+	"edetector_go/pkg/rabbitmq"
+	"encoding/json"
 	"reflect"
 	"strconv"
 	"strings"
@@ -21,7 +23,16 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	if err != nil {
 		return err
 	}
-	err = elastic.IndexRequest(index, string(request))
+	var msg = rbconnector.Message{
+		Index: "ed_main",
+		Data:  string(request),
+	}
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	err = rabbitmq.Publish("ed_mid", msgBytes)
+	// err = elastic.IndexRequest(index, string(request))
 	if err != nil {
 		return err
 	}
@@ -37,7 +48,16 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if err != nil {
 		return err
 	}
-	err = elastic.IndexRequest(index, string(request))
+	var msg = rbconnector.Message{
+		Index: index,
+		Data:  string(request),
+	}
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	err = rabbitmq.Publish("ed_mid", msgBytes)
+	// err = elastic.IndexRequest(index, string(request))
 	if err != nil {
 		return err
 	}

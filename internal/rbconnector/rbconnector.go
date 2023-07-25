@@ -1,6 +1,7 @@
 package rbconnector
 
 import (
+	"context"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/elastic"
@@ -9,10 +10,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-type message struct {
+type Message struct {
 	Index string `json:"index"`
 	Data  string `json:"data"`
 }
@@ -29,18 +33,29 @@ func init() {
 		fmt.Println("Error loading config file")
 		return
 	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
+		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("CONNECTOR_LOG_FILE"))
+	}
 }
 
 func Start() {
 	// rbconnector.Start()
+	Quit := make(chan os.Signal, 1)
+	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()
 	rabbitmq.Declare("ed_low")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
+	elastic.SetElkClient()
 	go low_speed()
 	go mid_speed()
 	go high_speed()
+	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
+	<-Quit
+	cancel()
 }
+
 func high_speed() {
 	msgs, err := rabbitmq.Consume("ed_high")
 	if err != nil {
@@ -50,7 +65,7 @@ func high_speed() {
 	fmt.Println("CONNECT TO high SPEED QUEUE")
 	for msg := range msgs {
 		log.Printf("Received a message: %s", msg.Body)
-		var m message
+		var m Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())
@@ -75,7 +90,7 @@ func mid_speed() {
 	var bulkdata []string
 	var bulkaction []string
 	for msg := range msgs {
-		var m message
+		var m Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())
@@ -107,7 +122,7 @@ func low_speed() {
 	var bulkdata []string
 	var bulkaction []string
 	for msg := range msgs {
-		var m message
+		var m Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())

@@ -42,11 +42,13 @@ func Main() {
 			continue
 		}
 		logger.Info("Open db file: ", zap.Any("message", dbFile))
-		tableNames, err := getTableNames(db)
-		if err != nil {
-			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
-			return
-		}
+		// tableNames, err := getTableNames(db)
+		// if err != nil {
+		// 	logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
+		// 	return
+		// }
+		var tableNames []string
+		tableNames = append(tableNames, "ARPCache")
 		// loop all tables in the db file
 		for _, tableName := range tableNames {
 			rows, err := db.Query("SELECT * FROM " + tableName)
@@ -150,7 +152,7 @@ func rowsToString(rows *sql.Rows) (string, error) {
 
 func sendCollectToElastic(dbFile string, rawData string, tableName string) error {
 	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
-	agent := path[len(path) - 1]
+	agent := path[len(path)-1]
 	lines := strings.Split(rawData, "\n")
 	for _, line := range lines {
 		if len(line) == 0 {
@@ -165,7 +167,7 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 		err := tableFunc(agent, line, values)
 		if err != nil {
 			return err
-		}		
+		}
 	}
 	return nil
 }
