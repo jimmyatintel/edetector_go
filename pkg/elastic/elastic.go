@@ -60,7 +60,28 @@ func IndexRequest(name string, body string) error {
 	logger.Debug("Index request: ", zap.Any("message", res.String()))
 	return nil
 }
-
+func BulkIndexRequest(index string, action []string, work []string) error {
+	if !flagcheck() {
+		return nil
+	}
+	var buf strings.Builder
+	for i, doc := range action {
+		buf.WriteString(doc)
+		buf.WriteByte('\n')
+		buf.WriteString(work[i])
+		buf.WriteByte('\n')
+	}
+	res, err := es.Bulk(
+		strings.NewReader(buf.String()),
+		es.Bulk.WithContext(context.Background()),
+	)
+	defer res.Body.Close()
+	logger.Debug(res.String())
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func searchRequest(name string, body string) {
 	if !flagcheck() {
 		return
