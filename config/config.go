@@ -13,7 +13,7 @@ func LoadConfig() *viper.Viper {
 	vp := viper.New()
 	vp.SetConfigName("app")
 	vp.SetConfigType("env")
-	vp.AddConfigPath("../config")
+	vp.AddConfigPath("../../config")
 	vp.AutomaticEnv()
 	if err := vp.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", vp.ConfigFileUsed())

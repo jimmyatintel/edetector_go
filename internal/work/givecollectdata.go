@@ -27,8 +27,8 @@ var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
 var currentDir = ""
-var workingPath = "../dbWorking"
-var unstagePath = "../dbUnstage"
+var workingPath = "../../dbWorking"
+var unstagePath = "../../dbUnstage"
 
 func init() {
 	curDir, err := os.Getwd()

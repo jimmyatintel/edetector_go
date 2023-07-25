@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
+	"edetector_go/internal/parsedb"
 	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
@@ -117,6 +118,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
 	go taskservice.Start(ctx)
+	go parsedb.Main()
 	rt := 0
 	if Tcp_enable {
 		select {

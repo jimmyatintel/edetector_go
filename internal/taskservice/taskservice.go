@@ -54,7 +54,7 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 }
 
 func handleTaskrequest(ctx context.Context, taskid string) {
-	logger.Info("Task is handling: " + taskid)
+	logger.Info("Handling task: " + taskid)
 	// task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
 	message := redis.Redis_get(taskid)
 	content := []byte(message)
