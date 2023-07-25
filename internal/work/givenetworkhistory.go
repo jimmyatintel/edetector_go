@@ -58,9 +58,11 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+
 	// Data := ChangeNetworkToJson(p)
 	// template := elasticquery.New_source(p.GetRkey(), "Networkdata")
 	// elasticquery.Send_to_elastic("ed_network_history", template, Data)
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -73,23 +75,3 @@ func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	}
 	return task.SUCCESS, nil
 }
-
-// func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
-// 	lines := strings.Split(p.GetMessage(), "\n")
-// 	var dataSlice []elasticquery.Request_data
-// 	for _, line := range lines {
-// 		if len(line) == 0 {
-// 			continue
-// 		}
-// 		data := NetworkJson{}
-// 		To_json(line, &data)
-// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-// 	}
-// 	jsonData, err := json.Marshal(dataSlice)
-// 	if err != nil {
-// 		logger.Error("Error converting to JSON:", zap.Any("error", err))
-// 		return nil
-// 	}
-// 	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
-// 	return dataSlice
-// }

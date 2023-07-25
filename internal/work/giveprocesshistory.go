@@ -4,13 +4,10 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"encoding/json"
 	"net"
-	"strings"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -62,18 +59,17 @@ func GiveProcessHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
-	lines := strings.Split(p.GetMessage(), "\n")
-	for _, line := range lines {
-		// main index
-		values := strings.Split(line, "|")
-		uuid := uuid.NewString()
-		template := elasticquery.New_main(uuid, "network_history", values[1], values[2], "network_record", values[5]) //! ask frontend
-		elasticquery.Send_to_main_elastic("main", template)
-		// details index
-		// data := ProcessDetectJson{}
-		To_json(uuid, p.GetRkey(), line, &ProcessDetectJson{})
-		// elasticquery.Send_to_details_elastic("network_history", data)
-	}
+	// send to elasticsearch
+	// lines := strings.Split(p.GetMessage(), "\n")
+	// for _, line := range lines {
+	// 	values := strings.Split(line, "|")
+	// 	if len(values) != 6 {
+	// 		continue
+	// 	}
+	// 	uuid := uuid.NewString()
+	// 	elasticquery.SendToMainElastic(uuid, "ed_main", p.GetRkey(), values[1], values[2], "network_record", values[5]) //! ask frontend
+	// 	// elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &ProcessDetectJson{})
+	// }
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -87,18 +83,3 @@ func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	}
 	return task.SUCCESS, nil
 }
-
-// func ChangeProcessToJson(p packet.Packet) []elasticquery.Request_data {
-// 	lines := strings.Split(p.GetMessage(), "\n")
-// 	var dataSlice []elasticquery.Request_data
-// 	for _, line := range lines {
-// 		if len(line) == 0 {
-// 			continue
-// 		}
-// 		data := ProcessDetectJson{}
-// 		To_json(line, &data)
-// 		dataSlice = append(dataSlice, elasticquery.Request_data(data))
-// 	}
-// 	logger.Info("ChangeProcessToJson", zap.Any("message", dataSlice))
-// 	return dataSlice
-// }

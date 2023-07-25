@@ -10,6 +10,7 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v6"
 	"github.com/elastic/go-elasticsearch/v6/esapi"
+	"go.uber.org/zap"
 )
 
 var es *elasticsearch.Client
@@ -44,9 +45,9 @@ func createIndex(name string) {
 	logger.Info(res.String())
 }
 
-func IndexRequest(name string, body string) {
+func IndexRequest(name string, body string) error {
 	if !flagcheck() {
-		return
+		return nil
 	}
 	req := esapi.IndexRequest{
 		Index: name,
@@ -54,10 +55,11 @@ func IndexRequest(name string, body string) {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer res.Body.Close()
-	logger.Debug(res.String())
+	logger.Debug("Index request: ", zap.Any("message", res.String()))
+	return nil
 }
 func BulkIndexRequest(name string, body string) {
 	if !flagcheck() {
