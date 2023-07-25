@@ -3,10 +3,17 @@ package rbconnector
 import (
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/rabbitmq"
+	"encoding/json"
 	"fmt"
 	"log"
 )
+
+type message struct {
+	Index string `json:"index"`
+	Data  string `json:"data"`
+}
 
 func init() {
 	// rbconnector.init()
@@ -41,6 +48,11 @@ func high_speed() {
 	fmt.Println("CONNECT TO high SPEED QUEUE")
 	for msg := range msgs {
 		log.Printf("Received a message: %s", msg.Body)
+		var m message
+		err := json.Unmarshal(msg.Body, &m)
+		if err != nil {
+			elastic.IndexRequest(m.Index, m.Data)
+		}
 	}
 }
 func mid_speed() {

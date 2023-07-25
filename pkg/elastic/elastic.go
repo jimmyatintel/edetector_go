@@ -5,6 +5,7 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
+	"encoding/json"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -58,7 +59,39 @@ func IndexRequest(name string, body string) {
 	defer res.Body.Close()
 	logger.Debug(res.String())
 }
+func BulkIndexRequest(name string, body string) {
+	if !flagcheck() {
+		return
+	}
+	res, err := es.Bulk(
+		context.Background(),
+		es.Bulk.WithIndex("_index_name"), // Use the appropriate index name
+		es.Bulk.WithBody(strings.NewReader(formatBulkInsert(documents))),
+	)
+	req := esapi.BulkRequest{
+		Index: name,
+		Body:  strings.NewReader(body),
+	}
+	res, err := req.Do(context.Background(), es)
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+	logger.Debug(res.String())
+}
+func formatBulkInsert(documents []map[string]interface{}) string {
+	var buf strings.Builder
 
+	for _, doc := range documents {
+		action := map[string]interface{}{
+			doc["index"].(string): doc["_id"].(string),
+		}
+		_ = json.NewEncoder(&buf).Encode(action)
+		_ = json.NewEncoder(&buf).Encode(doc)
+	}
+
+	return buf.String()
+}
 func searchRequest(name string, body string) {
 	if !flagcheck() {
 		return
