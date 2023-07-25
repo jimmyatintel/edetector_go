@@ -22,7 +22,6 @@ type Message struct {
 }
 
 func init() {
-	// rbconnector.init()
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		fmt.Println("Error loading feature flag")
@@ -37,6 +36,13 @@ func init() {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
 		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("CONNECTOR_LOG_FILE"))
 	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		err := elastic.SetElkClient()
+		if err != nil {
+			logger.Error("Error connecting to elastic: " + err.Error())
+		}
+		fmt.Println("elastic is enabled.")
+	}
 }
 
 func Start() {
@@ -47,7 +53,6 @@ func Start() {
 	rabbitmq.Declare("ed_low")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
-	elastic.SetElkClient()
 	go low_speed()
 	go mid_speed()
 	go high_speed()

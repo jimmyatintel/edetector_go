@@ -2,6 +2,9 @@ package parsedb
 
 import (
 	"database/sql"
+	"edetector_go/config"
+	"edetector_go/internal/fflag"
+	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"errors"
@@ -24,6 +27,28 @@ func init() {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
 	}
 	currentDir = curDir
+
+	fflag.Get_fflag()
+	if fflag.FFLAG == nil {
+		fmt.Println("Error loading feature flag")
+		return
+	}
+	vp := config.LoadConfig()
+	if vp == nil {
+		fmt.Println("Error loading config file")
+		return
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+		logger.InitLogger(config.Viper.GetString("DB_LOG_FILE"))
+		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("DB_LOG_FILE"))
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		err := elastic.SetElkClient()
+		if err != nil {
+			logger.Error("Error connecting to elastic: " + err.Error())
+		}
+		fmt.Println("elastic is enabled.")
+	}
 }
 
 func Main() {
