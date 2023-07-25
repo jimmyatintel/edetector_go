@@ -70,7 +70,20 @@ func Publish(queue string, body []byte) error {
 		},
 	)
 }
-
+func Consume(queue string) (<-chan amqp.Delivery, error) {
+	if channel == nil {
+		return nil, errors.New("failed to consume message: channel is nil")
+	}
+	return channel.Consume(
+		queue,
+		"ed_connetcor",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+}
 func Connection_close() {
 	if Connection != nil {
 		Connection.Close()
