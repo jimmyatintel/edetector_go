@@ -70,25 +70,25 @@ func Main() {
 		tableNames = append(tableNames, "ChromeDownload")
 		if err != nil {
 			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
-			return
+			continue
 		}
 		// loop all tables in the db file
 		for _, tableName := range tableNames {
 			rows, err := db.Query("SELECT * FROM " + tableName)
 			if err != nil {
 				logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
-				return
+				continue
 			}
 			logger.Info("Handling table: ", zap.Any("message", tableName))
 			strData, err := rowsToString(rows)
 			if err != nil {
 				logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
-				return
+				continue
 			}
 			err = sendCollectToElastic(dbFile, strData, tableName)
 			if err != nil {
 				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
-				return
+				continue
 			}
 			rows.Close()
 		}
@@ -174,6 +174,9 @@ func rowsToString(rows *sql.Rows) (string, error) {
 }
 
 func sendCollectToElastic(dbFile string, rawData string, tableName string) error {
+	if tableName == "sqlite_sequence" {
+		return nil
+	}
 	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 	agent := path[len(path)-1]
 	lines := strings.Split(rawData, "#newline#")
@@ -265,11 +268,9 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 			err = toElastic(details, agent, line, values[0], values[6], "document", values[2], &UserProfiles{})
 		case "WindowsActivity":
 			err = toElastic(details, agent, line, values[1], values[15], "document", values[3], &WindowsActivity{})
-		case "sqlite_sequence":
-			logger.Info("skip sqlite_sequence")
-			err = nil
 		default:
 			logger.Error("Unknown table name: ", zap.Any("message", tableName))
+			err = nil
 		}
 		if err != nil {
 			return err
