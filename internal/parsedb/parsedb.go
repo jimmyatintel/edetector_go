@@ -93,8 +93,8 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-		// }
 	}
+	// }
 }
 
 func getDBFiles(dir string) ([]string, error) {

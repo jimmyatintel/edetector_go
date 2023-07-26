@@ -114,6 +114,7 @@ func mid_speed() {
 		mid_mutex.Unlock()
 	}
 }
+
 func count_timer() {
 	// fmt.Println("count_timer")
 	last_send := time.Now()
@@ -133,6 +134,7 @@ func count_timer() {
 		time.Sleep(3 * time.Second)
 	}
 }
+
 func low_speed() {
 	msgs, err := rabbitmq.Consume("ed_low")
 	if err != nil {
