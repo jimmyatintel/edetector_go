@@ -1,1 +1,0 @@
-{"level":"debug","ts":"2023-07-26T13:42:11.193+0800","msg":"Using config file:","config":"/home/peggy/edetector_go/config/app.env","func":"config.LoadConfig","file":"/home/peggy/edetector_go/config/config.go","line":20}

@@ -39,8 +39,8 @@ func init() {
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("DB_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("DB_LOG_FILE")))
+		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()

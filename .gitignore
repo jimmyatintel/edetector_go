@@ -1,6 +1,4 @@
-config/app.env
 *.log
-cmd/db.db
 log_history
 dbWorking
 dbUnstage
