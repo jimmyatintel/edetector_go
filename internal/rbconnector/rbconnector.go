@@ -29,7 +29,7 @@ var mid_mutex *sync.Mutex
 var mid_bulkdata []string
 var mid_bulkaction []string
 
-func init() {
+func connector_init() {
 	mid_mutex = &sync.Mutex{}
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -55,7 +55,7 @@ func init() {
 }
 
 func Start() {
-	// rbconnector.Start()
+	connector_init()
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()

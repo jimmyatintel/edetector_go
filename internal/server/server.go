@@ -20,7 +20,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func init() {
+func server_init() {
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Error("Error loading feature flag")
@@ -58,6 +58,7 @@ func init() {
 }
 
 func Main() {
+	server_init()
 	Quit := make(chan os.Signal, 1)
 	Connection_close := make(chan int, 1)
 	ctx, cancel := context.WithCancel(context.Background())

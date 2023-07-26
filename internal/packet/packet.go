@@ -61,12 +61,6 @@ type AckPacket struct {
 	Message   string `json:"message"`
 }
 
-// var Uuid uuid.UUID
-
-func init() {
-	// Uuid = uuid.New()
-}
-
 func CheckIsWork(p Packet) WorkPacket {
 	var NewPacket = p.(*WorkPacket)
 	return *NewPacket

@@ -7,7 +7,6 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,7 +20,7 @@ import (
 var currentDir = ""
 var unstagePath = "../../dbUnstage"
 
-func init() {
+func parser_init() {
 	curDir, err := os.Getwd()
 	if err != nil {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
@@ -49,6 +48,7 @@ func init() {
 }
 
 func Main() {
+	parser_init()
 	dir := filepath.Join(currentDir, unstagePath)
 	// for {
 	dbFiles, err := getDBFiles(dir)
@@ -64,10 +64,10 @@ func Main() {
 			continue
 		}
 		logger.Info("Open db file: ", zap.Any("message", dbFile))
-		// tableNames, err := getTableNames(db)
-		var tableNames []string
-		tableNames = append(tableNames, "ARPCache")
-		tableNames = append(tableNames, "ChromeDownload")
+		tableNames, err := getTableNames(db)
+		// var tableNames []string
+		// tableNames = append(tableNames, "ARPCache")
+		// tableNames = append(tableNames, "ChromeDownload")
 		if err != nil {
 			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
 			continue
@@ -185,7 +185,7 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 			continue
 		}
 		values := strings.Split(line, "|")
-		err := errors.New("")
+		var err error
 		details := "ed_" + strings.ToLower(tableName)
 		switch tableName {
 		case "AppResourceUsageMonitor":
