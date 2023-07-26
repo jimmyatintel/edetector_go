@@ -13,7 +13,6 @@ import (
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
-	"fmt"
 	"net"
 
 	"go.uber.org/zap"
@@ -31,10 +30,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
-					fmt.Println("get task msg: " + string(data))
+					logger.Info("get task msg: ", zap.Any("message", string(data)))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {
-						logger.Error("Send failed:", zap.Any("error", err.Error()))
+						logger.Error("send failed:", zap.Any("error", err.Error()))
 					}
 				}
 			}
@@ -53,8 +52,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Debug(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
-				fmt.Println(string(port) + " " + string(key))
-				logger.Error("Error reading:", zap.Any("error", err.Error()))
+				logger.Error("Error reading:", zap.Any("error", string(key)+err.Error()))
 				return
 			}
 		}
@@ -82,7 +80,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				key = NewPacket.GetRkey()
 				Clientlist = append(Clientlist, key)
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
-				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
+				logger.Info("set worker key-channel mapping: ", zap.Any("message", NewPacket.GetRkey()))
 			} else if key != "null" {
 				err = redis.Online(key)
 				if err != nil {
@@ -160,5 +158,5 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 }
 
 func handleUDPRequest(addr net.Addr, buf []byte) {
-	fmt.Println("udp:", string(buf))
+	logger.Info("udp")
 }

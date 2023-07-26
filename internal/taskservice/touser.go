@@ -5,7 +5,6 @@ import (
 	"context"
 	"edetector_go/pkg/logger"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -55,7 +54,7 @@ func RequestToUser(id string) {
 	defer response.Body.Close()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
-		fmt.Println("Request failed with status code:", response.StatusCode)
+		logger.Error("Request failed with status code:", zap.Any("error", response.StatusCode))
 		return
 	}
 }

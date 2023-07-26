@@ -9,13 +9,13 @@ type Request_data interface {
 }
 
 type mainSource struct {
-	UUID  string `json:"UUID"`
-	Index string `json:"Index"`
-	Agent string `json:"Agent"`
-	Item  string `json:"Item"`
-	Date  string `json:"Date"`
-	Type  string `json:"Type"`
-	Etc   string `json:"Etc"`
+	UUID  string `json:"uuid"`
+	Index string `json:"index"`
+	Agent string `json:"agent"`
+	Item  string `json:"item"`
+	Date  string `json:"date"`
+	Type  string `json:"type"`
+	Etc   string `json:"etc"`
 }
 
 func (s *mainSource) Elastical() ([]byte, error) {

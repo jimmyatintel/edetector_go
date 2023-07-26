@@ -12,7 +12,6 @@ import (
 	"edetector_go/pkg/rabbitmq"
 
 	"edetector_go/pkg/redis"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,17 +23,17 @@ import (
 func init() {
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		fmt.Println("Error loading feature flag")
+		logger.Error("Error loading feature flag")
 		return
 	}
 	vp := config.LoadConfig()
 	if vp == nil {
-		fmt.Println("Error loading config file")
+		logger.Error("Error loading config file")
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"))
-		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("WORKER_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {
@@ -47,14 +46,14 @@ func init() {
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
-		fmt.Println("rabbit is enabled.")
+		logger.Info("rabbit is enabled.")
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		err := elastic.SetElkClient()
 		if err != nil {
 			logger.Error("Error connecting to elastic: " + err.Error())
 		}
-		fmt.Println("elastic is enabled.")
+		logger.Info("elastic is enabled.")
 	}
 }
 
@@ -67,7 +66,7 @@ func Main() {
 	<-Quit
 	cancel()
 	// taskservice.Stop()
-	fmt.Println("Server is shutting down...")
+	logger.Info("Server is shutting down...")
 	servershutdown()
 	select {
 	case <-Connection_close:
@@ -75,8 +74,7 @@ func Main() {
 	case <-time.After(5 * time.Second):
 		logger.Info("Connection close fail, force shutdown after 5 seconds")
 	}
-	fmt.Println("Server shutdown complete.")
-
+	logger.Info("Server shutdown complete")
 	defer cancel()
 }
 func servershutdown() {
@@ -91,4 +89,3 @@ func servershutdown() {
 	}
 	redis.Redis_close()
 }
-

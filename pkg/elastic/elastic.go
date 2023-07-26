@@ -76,11 +76,11 @@ func BulkIndexRequest(action []string, work []string) error {
 		strings.NewReader(buf.String()),
 		es.Bulk.WithContext(context.Background()),
 	)
-	defer res.Body.Close()
-	logger.Debug("Bulk Index request: ", zap.Any("message", res.String()))
 	if err != nil {
 		return err
 	}
+	defer res.Body.Close()
+	logger.Debug("Bulk Index request: ", zap.Any("message", res.String()))
 	return nil
 }
 func searchRequest(name string, body string) {

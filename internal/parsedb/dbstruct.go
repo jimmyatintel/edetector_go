@@ -153,6 +153,8 @@ func (n ChromeHistory) Elastical() ([]byte, error) {
 }
 
 type ChromeKeywordSearch struct {
+	UUID  string `json:"uuid"`
+	Agent string `json:"agent"`
 	Term  string `json:"term"`
 	Title string `json:"title"`
 	URL   string `json:"url"`
@@ -451,5 +453,342 @@ type FirefoxHistory struct {
 }
 
 func (n FirefoxHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type IEHistory struct {
+	UUID            string `json:"uuid"`
+	Agent           string `json:"agent"`
+	URL             string `json:"url"`
+	Title           string `json:"title"`
+	ExpiresTime     int    `json:"expirestime"`
+	LastUpdatedTime int    `json:"lastupdatedtime"`
+	VisitedTime     int    `json:"visitedtime"`
+}
+
+func (n IEHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type InstalledSoftware struct {
+	UUID                      string `json:"uuid"`
+	Agent                     string `json:"agent"`
+	DisplayName               string `json:"displayname"`
+	RegistryName              string `json:"registryname"`
+	DisplayVersion            string `json:"displayversion"`
+	InstallDate               int    `json:"installdate"`
+	InstalledFor              string `json:"installedfor"`
+	InstallLocation           string `json:"installlocation"`
+	Publisher                 string `json:"publisher"`
+	UninstallString           string `json:"uninstallstring"`
+	ModifyPath                string `json:"modifypath"`
+	Comments                  string `json:"comments"`
+	URLInfoAbout              string `json:"urlinfoabout"`
+	URLUpdateInfo             string `json:"urlupdateinfo"`
+	HelpLink                  string `json:"helplink"`
+	InstallSource             string `json:"installsource"`
+	ReleaseType               string `json:"releasetype"`
+	DisplayIcon               string `json:"displayicon"`
+	EstimatedSize             int    `json:"estimatedsize"`
+	RegistryTime              int    `json:"registrytime"`
+	InstallFolderCreatedTime  int    `json:"installfoldercreatedtime"`
+	InstallFolderModifiedTime int    `json:"installfoldermodifiedtime"`
+}
+
+func (n InstalledSoftware) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type JumpList struct {
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	FullPath      string `json:"fullpath"`
+	ApplicationID string `json:"application_id"`
+	ComputerName  string `json:"computer_name"`
+	FileSize      int    `json:"filesize"`
+	EntryID       int    `json:"entry_id"`
+	RecordTime    int    `json:"recordtime"`
+	CreateTime    int    `json:"createtime"`
+	AccessTime    int    `json:"accesstime"`
+	ModifiedTime  int    `json:"modifiedtime"`
+}
+
+func (n JumpList) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type MUICache struct {
+	UUID            string `json:"uuid"`
+	Agent           string `json:"agent"`
+	ApplicationPath string `json:"applicationpath"`
+	ApplicationName string `json:"applicationname"`
+}
+
+func (n MUICache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type Network struct {
+	UUID           string `json:"uuid"`
+	Agent          string `json:"agent"`
+	ProcessID      int    `json:"processid"`
+	ProcessName    string `json:"processname"`
+	LocalAddress   string `json:"localaddress"`
+	LocalPort      int    `json:"localport"`
+	RemoteAddress  string `json:"remoteaddress"`
+	RemotePort     int    `json:"remoteport"`
+	State          string `json:"state"`
+	RemoteHostname string `json:"remotehostname"`
+	Protocol       string `json:"protocol"`
+}
+
+func (n Network) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type NetworkDataUsageMonitor struct {
+	UUID               string `json:"uuid"`
+	Agent              string `json:"agent"`
+	RecordID           int    `json:"record_id"`
+	AppName            string `json:"app_name"`
+	AppID              int    `json:"app_id"`
+	UserName           string `json:"user_name"`
+	UserSID            string `json:"user_sid"`
+	BytesSent          int    `json:"bytes_sent"`
+	BytesReceived      int    `json:"bytes_recvd"`
+	NetworkAdapter     string `json:"network_adapter"`
+	NetworkAdapterGUID string `json:"network_adapter_guid"`
+	InterfaceLUID      string `json:"interfaceluid"`
+	Timestamp          int    `json:"timestamp"`
+}
+
+func (n NetworkDataUsageMonitor) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type NetworkResources struct {
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	ResourcesName string `json:"resourcesname"`
+	ResourcesType string `json:"resourcestype"`
+	Comment       string `json:"comment"`
+	LocalPath     string `json:"localpath"`
+	Provider      string `json:"provider"`
+	Scope         string `json:"scope"`
+	DisplayType   string `json:"displaytype"`
+	Usage         string `json:"usage"`
+	IPAddress     string `json:"ipaddress"`
+}
+
+func (n NetworkResources) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type OpenedFiles struct {
+	UUID        string `json:"uuid"`
+	Agent       string `json:"agent"`
+	ProcessID   int    `json:"processid"`
+	ProcessName string `json:"processname"`
+	Type        string `json:"type"`
+	ObjectName  string `json:"objectname"`
+}
+
+func (n OpenedFiles) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type Prefetch struct {
+	UUID               string `json:"uuid"`
+	Agent              string `json:"agent"`
+	FileName           string `json:"filename"`
+	ProcessName        string `json:"processname"`
+	LastRunTime        int    `json:"lastruntime"`
+	ProcessPath        string `json:"processpath"`
+	RunCount           int    `json:"runcount"`
+	FileSize           int    `json:"filesize"`
+	FolderCreatedTime  int    `json:"foldercreatedtime"`
+	FolderModifiedTime int    `json:"foldermodifiedtime"`
+}
+
+func (n Prefetch) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type Process struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	PID               int    `json:"pid"`
+	ProcessName       string `json:"process_name"`
+	ParentPID         int    `json:"parent_pid"`
+	ProcessCreateTime int    `json:"processcreatetime"`
+	ProcessPath       string `json:"process_path"`
+	ProcessCommand    string `json:"process_command"`
+	UserName          string `json:"user_name"`
+	DigitalSignature  string `json:"digitalsignature"`
+	ProductName       string `json:"productname"`
+	FileVersion       string `json:"fileversion"`
+	FileDescription   string `json:"filedescription"`
+	CompanyName       string `json:"companyname"`
+	Priority          string `json:"priority"`
+}
+
+func (n Process) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type Service struct {
+	UUID         string `json:"uuid"`
+	Agent        string `json:"agent"`
+	Name         string `json:"name"`
+	Caption      string `json:"caption"`
+	Description  string `json:"description"`
+	DisplayName  string `json:"displayname"`
+	ErrorControl string `json:"errorcontrol"`
+	PathName     string `json:"pathname"`
+	ProcessID    int    `json:"processid"`
+	ServiceType  string `json:"servicetype"`
+	Started      string `json:"started"`
+	StartMode    string `json:"startmode"`
+	StartName    string `json:"startname"`
+	State        string `json:"state"`
+	Status       string `json:"status"`
+	SystemName   string `json:"systemname"`
+}
+
+func (n Service) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type Shortcuts struct {
+	UUID             string `json:"uuid"`
+	Agent            string `json:"agent"`
+	ShortcutName     string `json:"shortcutname"`
+	LinkPath         string `json:"linkpath"`
+	LinkTo           string `json:"linkto"`
+	Arguments        string `json:"arguments"`
+	Description      string `json:"description"`
+	WorkingDirectory string `json:"workingdirectory"`
+	IconLocation     string `json:"iconlocation"`
+	BrokenShortcut   bool   `json:"brokenshortcut"`
+	Hotkey           string `json:"hotkey"`
+	ShowCmd          string `json:"showcmd"`
+	ModifyTime       int    `json:"modifytime"`
+}
+
+func (n Shortcuts) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type StartRun struct {
+	UUID        string `json:"uuid"`
+	Agent       string `json:"agent"`
+	Name        string `json:"name"`
+	Command     string `json:"command"`
+	User        string `json:"user"`
+	Location    string `json:"location"`
+	Caption     string `json:"caption"`
+	Description string `json:"description"`
+	UserSID     string `json:"usersid"`
+}
+
+func (n StartRun) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type TaskSchedule struct {
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	Name          string `json:"name"`
+	Path          string `json:"path"`
+	Command       string `json:"command"`
+	LastRunTime   int    `json:"lastruntime"`
+	NextRunTime   int    `json:"nextruntime"`
+	StartBoundary int    `json:"startboundary"`
+	EndBoundary   int    `json:"endboundary"`
+}
+
+func (n TaskSchedule) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type USBdevices struct {
+	UUID                           string `json:"uuid"`
+	Agent                          string `json:"agent"`
+	DeviceInstanceID               string `json:"device_instance_id"`
+	DeviceDescription              string `json:"device_description"`
+	HardwareIDs                    string `json:"hardware_ids"`
+	BusReportedDeviceDescription   string `json:"bus_reported_device_description"`
+	DeviceManufacturer             string `json:"device_manufacturer"`
+	DeviceFriendlyName             string `json:"device_friendly_name"`
+	DeviceLocationInfo             string `json:"device_location_info"`
+	DeviceSecurityDescriptorString string `json:"device_security_descriptor_string"`
+	ContainerID                    string `json:"containerid"`
+	DeviceDisplayCategory          string `json:"device_display_category"`
+	DeviceLetter                   string `json:"device_letter"`
+	Enumerator                     string `json:"enumerator"`
+	InstallDate                    int    `json:"install_date"`
+	FirstInstallDate               int    `json:"first_install_date"`
+	LastArrivalDate                int    `json:"last_arrival_date"`
+	LastRemovalDate                int    `json:"last_removal_date"`
+}
+
+func (n USBdevices) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type UserAssist struct {
+	UUID             string `json:"uuid"`
+	Agent            string `json:"agent"`
+	Name             string `json:"name"`
+	ClassID          string `json:"classid"`
+	OfTimesExecuted  int    `json:"of_times_executed"`
+	FocusCount       int    `json:"focus_count"`
+	FocusTimeSeconds int    `json:"focus_time(s)"`
+	ModifiedTime     int    `json:"modifiedtime"`
+}
+
+func (n UserAssist) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type UserProfiles struct {
+	UUID               string `json:"uuid"`
+	Agent              string `json:"agent"`
+	Username           string `json:"username"`
+	ProfilePath        string `json:"profilepath"`
+	UserSID            string `json:"usersid"`
+	RegistryLoaded     bool   `json:"registryloaded"`
+	FolderCreatedTime  int    `json:"foldercreatedtime"`
+	FolderModifiedTime int    `json:"foldermodifiedtime"`
+	LastLoginTime      int    `json:"lastlogontime"`
+	PrivilegeLevel     string `json:"privileglevel"`
+}
+
+func (n UserProfiles) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type WindowsActivity struct {
+	UUID                 string `json:"uuid"`
+	Agent                string `json:"agent"`
+	UserName             string `json:"user_name"`
+	AppID                string `json:"app_id"`
+	AppActivityID        string `json:"app_activity_id"`
+	ActivityType         string `json:"activity_type"`
+	ActivityStatus       string `json:"activity_status"`
+	Tag                  string `json:"tag"`
+	Group                string `json:"group"`
+	Priority             int    `json:"priority"`
+	IsLocalOnly          bool   `json:"is_local_only"`
+	ETag                 int    `json:"etag"`
+	CreatedInCloud       int    `json:"created_in_cloud"`
+	LastModifiedTime     int    `json:"last_modified_time"`
+	ExpirationTime       int    `json:"expiration_time"`
+	StartTime            int    `json:"start_time"`
+	EndTime              int    `json:"end_time"`
+	LastModifiedOnClient int    `json:"last_modified_on_client"`
+}
+
+func (n WindowsActivity) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

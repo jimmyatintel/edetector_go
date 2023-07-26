@@ -5,11 +5,9 @@ import (
 	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
-	"edetector_go/internal/parsedb"
 	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
-	"fmt"
 
 	"go.uber.org/zap"
 
@@ -68,7 +66,6 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				c <- err.Error()
 			}
 			new_task_chan := make(chan packet.Packet)
-			fmt.Println("new worker connect")
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
 	}
@@ -118,12 +115,11 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
 	go taskservice.Start(ctx)
-	go parsedb.Main()
 	rt := 0
 	if Tcp_enable {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Get quit signal")
+			logger.Info("Get quit signal")
 			Connection_close(Connection_close_chan)
 		case ErrTCP := <-TCP_CHANNEL:
 			logger.Error("Error TCP listening:", zap.Any("error", ErrTCP))
@@ -136,7 +132,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	} else if Udp_enable {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Get quit signal")
+			logger.Info("Get quit signal")
 			Connection_close(Connection_close_chan)
 		case ErrUDP := <-UDP_CHANNEL:
 			logger.Error("Error UDP listening:", zap.Any("error", ErrUDP))
@@ -146,7 +142,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	} else {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Get quit signal")
+			logger.Info("Get quit signal")
 			Connection_close(Connection_close_chan)
 		}
 	}

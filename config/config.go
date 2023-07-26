@@ -1,9 +1,10 @@
 package config
 
 import (
-	"fmt"
+	"edetector_go/pkg/logger"
 
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 var Viper *viper.Viper
@@ -16,11 +17,11 @@ func LoadConfig() *viper.Viper {
 	vp.AddConfigPath("../../config")
 	vp.AutomaticEnv()
 	if err := vp.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", vp.ConfigFileUsed())
+		logger.Debug("Using config file:", zap.Any("config", vp.ConfigFileUsed()))
 		Viper = vp
 		return vp
 	} else {
-		fmt.Println("Error loading config file:", err)
+		logger.Error("Error loading config file:", zap.Any("error", err))
 		return nil
 	}
 }

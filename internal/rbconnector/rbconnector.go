@@ -15,6 +15,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type Message struct {
@@ -31,24 +33,24 @@ func init() {
 	mid_mutex = &sync.Mutex{}
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		fmt.Println("Error loading feature flag")
+		logger.Error("Error loading feature flag")
 		return
 	}
 	vp := config.LoadConfig()
 	if vp == nil {
-		fmt.Println("Error loading config file")
+		logger.Error("Error loading config file")
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
-		fmt.Println("logger is enabled please check all out info in log file: ", config.Viper.GetString("CONNECTOR_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		err := elastic.SetElkClient()
 		if err != nil {
 			logger.Error("Error connecting to elastic: " + err.Error())
 		}
-		fmt.Println("elastic is enabled.")
+		logger.Info("elastic is enabled.")
 	}
 }
 
@@ -71,10 +73,10 @@ func Start() {
 func high_speed() {
 	msgs, err := rabbitmq.Consume("ed_high")
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("High speed consumer error: " + err.Error())
 		return
 	}
-	fmt.Println("CONNECT TO high SPEED QUEUE")
+	logger.Info("Connected to high speed queue")
 	for msg := range msgs {
 		log.Printf("Received a message: %s", msg.Body)
 		var m Message
@@ -94,10 +96,10 @@ func high_speed() {
 func mid_speed() {
 	msgs, err := rabbitmq.Consume("ed_mid")
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Mid speed consumer error: " + err.Error())
 		return
 	}
-	fmt.Println("CONNECT TO mid SPEED QUEUE")
+	logger.Info("Connected to mid speed queue")
 	go count_timer()
 	for msg := range msgs {
 		var m Message
@@ -113,7 +115,7 @@ func mid_speed() {
 	}
 }
 func count_timer() {
-	fmt.Println("count_timer")
+	// fmt.Println("count_timer")
 	last_send := time.Now()
 	for {
 		if (time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second && len(mid_bulkaction) > 0) || len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
@@ -134,10 +136,10 @@ func count_timer() {
 func low_speed() {
 	msgs, err := rabbitmq.Consume("ed_low")
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Low speed consumer error: " + err.Error())
 		return
 	}
-	fmt.Println("CONNECT TO LOW SPEED QUEUE")
+	logger.Info("Connected to low speed queue")
 	last_send := time.Now()
 	var bulkdata []string
 	var bulkaction []string

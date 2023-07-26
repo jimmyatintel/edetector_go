@@ -3,8 +3,11 @@ package taskservice
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
+	"os"
 
+	"edetector_go/config"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	work_from_api "edetector_go/internal/work_from_api"
@@ -26,6 +29,9 @@ type TaskResponse struct {
 }
 
 func Start(ctx context.Context) {
+	gin.SetMode(gin.ReleaseMode)
+	f, _ := os.Create(config.Viper.GetString("GIN_LOG_FILE"))
+	gin.DefaultWriter = io.MultiWriter(f)
 	router := gin.Default()
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowAllOrigins = true
@@ -36,7 +42,7 @@ func Start(ctx context.Context) {
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
-	router.Run(":5000")
+	router.Run(":5055")
 }
 
 func ReceiveTask(c *gin.Context, ctx context.Context) {

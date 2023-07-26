@@ -1,7 +1,5 @@
 config/app.env
-log_db_file.log
-log_conn_file.log
-log_file.log
+*.log
 cmd/db.db
 log_history
 dbWorking
