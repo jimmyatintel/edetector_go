@@ -116,8 +116,8 @@ type ChromeDownload struct {
 	Guid             string `json:"guid"`
 	CurrentPath      string `json:"current_path"`
 	TargetPath       string `json:"target_path"`
-	ReceivedBytes    int    `json:"received_bytes"`
-	TotalBytes       int    `json:"total_bytes"`
+	ReceivedBytes    int64  `json:"received_bytes"`
+	TotalBytes       int64  `json:"total_bytes"`
 	StartTime        int    `json:"start_time"`
 	EndTime          int    `json:"end_time"`
 	LastAccessTime   int    `json:"last_access_time"`

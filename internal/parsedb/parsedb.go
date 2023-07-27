@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -17,8 +18,9 @@ import (
 	"go.uber.org/zap"
 )
 
-var currentDir = ""
-var unstagePath = "../../dbUnstage"
+var currentDir string
+var unstagePath string
+var stagedPath string
 
 func parser_init() {
 	curDir, err := os.Getwd()
@@ -26,6 +28,10 @@ func parser_init() {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
 	}
 	currentDir = curDir
+	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
+	stagedPath = filepath.Join(currentDir, "../../dbStaged")
+	CheckDir(unstagePath)
+	CheckDir(stagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -47,11 +53,21 @@ func parser_init() {
 	}
 }
 
+func CheckDir(path string) {
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			logger.Error("error creating working dir:", zap.Any("error", err.Error()))
+		}
+		logger.Info("create dir:", zap.Any("message", path))
+	}
+}
+
 func Main() {
 	parser_init()
-	dir := filepath.Join(currentDir, unstagePath)
 	// for {
-	dbFiles, err := getDBFiles(dir)
+	dbFiles, err := getDBFiles(unstagePath)
 	if err != nil {
 		logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
 		return
@@ -67,7 +83,6 @@ func Main() {
 		tableNames, err := getTableNames(db)
 		// var tableNames []string
 		// tableNames = append(tableNames, "ARPCache")
-		// tableNames = append(tableNames, "ChromeDownload")
 		if err != nil {
 			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
 			continue
@@ -80,7 +95,7 @@ func Main() {
 				continue
 			}
 			logger.Info("Handling table: ", zap.Any("message", tableName))
-			strData, err := rowsToString(rows)
+			strData, err := rowsToString(rows, tableName)
 			if err != nil {
 				logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
 				continue
@@ -137,7 +152,7 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	return tableNames, nil
 }
 
-func rowsToString(rows *sql.Rows) (string, error) {
+func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 	var builder strings.Builder
 	columns, err := rows.Columns()
 	if err != nil {
@@ -163,7 +178,8 @@ func rowsToString(rows *sql.Rows) (string, error) {
 				rowData[i] = fmt.Sprintf("%v", v)
 			}
 		}
-		line := strings.Join(rowData, "|")
+		line := strings.Join(rowData, "||")
+		line = strings.ReplaceAll(line, "<nil>", "-1")
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -180,28 +196,30 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 	agent := path[len(path)-1]
 	lines := strings.Split(rawData, "#newline#")
+	outerLoop:
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
 		}
-		values := strings.Split(line, "|")
+		values := strings.Split(line, "||")
 		var err error
 		details := "ed_" + strings.ToLower(tableName)
 		switch tableName {
-		case "AppResourceUsageMonitor":
-			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
-		case "ARPCache":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
-		case "BaseService":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &BaseService{})
-		case "ChromeBookmarks":
-			err = toElastic(details, agent, line, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
-		case "ChromeCache":
-			err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
-		case "ChromeDownload":
-			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
-		case "ChromeHistory":
-			err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
+		// case "AppResourceUsageMonitor":
+		// 	err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
+		// case "ARPCache":
+		// 	err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
+		// case "BaseService":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &BaseService{})
+		// case "ChromeBookmarks":
+		// 	err = toElastic(details, agent, line, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
+		// case "ChromeCache":
+		// 	err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
+		// case "ChromeDownload":
+		// 	err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
+		// case "ChromeHistory":
+		// 	err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
+
 		case "ChromeKeywordSearch":
 			err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
 		case "ChromeLogin":
@@ -224,53 +242,53 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 			err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSecurity{})
 		case "EventSystem":
 			err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSystem{})
-		case "FirefoxBookmarks":
-			err = toElastic(details, agent, line, values[8], values[5], "website_bookmark", values[3], &FirefoxBookmarks{})
-		case "FirefoxCache":
-			err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &FirefoxCache{})
-		case "FirefoxCookies":
-			err = toElastic(details, agent, line, values[1], values[5], "cookie_cache", values[3], &FirefoxCookies{})
-		case "FirefoxHistory":
-			err = toElastic(details, agent, line, values[0], values[9], "website_bookmark", values[1], &FirefoxHistory{})
-		case "IEHistory":
-			err = toElastic(details, agent, line, values[0], values[4], "website_bookmark", values[1], &IEHistory{})
-		case "InstalledSoftware":
-			err = toElastic(details, agent, line, values[0], values[17], "network_record", values[6], &InstalledSoftware{})
-		case "JumpList":
-			err = toElastic(details, agent, line, values[0], values[5], "software", values[1], &JumpList{})
-		case "MUICache":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &MUICache{})
-		case "Network":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[4], &Network{})
-		case "NetworkDataUsageMonitor":
-			err = toElastic(details, agent, line, values[1], values[10], "software", values[5], &NetworkDataUsageMonitor{})
-		case "NetworkResources":
-			err = toElastic(details, agent, line, values[0], "-1", "network_record", values[8], &NetworkResources{})
-		case "OpenedFiles":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[0], &OpenedFiles{})
-		case "Prefetch":
-			err = toElastic(details, agent, line, values[1], values[2], "software", values[3], &Prefetch{})
-		case "Process":
-			err = toElastic(details, agent, line, values[1], values[3], "volatile", values[4], &Process{})
-		case "Service":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &Service{})
-		case "Shortcuts":
-			err = toElastic(details, agent, line, values[0], values[10], "document", values[2], &Shortcuts{})
-		case "StartRun":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &StartRun{})
-		case "TaskSchedule":
-			err = toElastic(details, agent, line, values[0], values[3], "software", values[1], &TaskSchedule{})
-		case "USBdevices":
-			err = toElastic(details, agent, line, values[1], values[14], "usb", values[10], &USBdevices{})
-		case "UserAssist":
-			err = toElastic(details, agent, line, values[0], values[5], "software", values[2], &UserAssist{})
-		case "UserProfiles":
-			err = toElastic(details, agent, line, values[0], values[6], "document", values[2], &UserProfiles{})
-		case "WindowsActivity":
-			err = toElastic(details, agent, line, values[1], values[15], "document", values[3], &WindowsActivity{})
+		// case "FirefoxBookmarks":
+		// 	err = toElastic(details, agent, line, values[8], values[5], "website_bookmark", values[3], &FirefoxBookmarks{})
+		// case "FirefoxCache":
+		// 	err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &FirefoxCache{})
+		// case "FirefoxCookies":
+		// 	err = toElastic(details, agent, line, values[1], values[5], "cookie_cache", values[3], &FirefoxCookies{})
+		// case "FirefoxHistory":
+		// 	err = toElastic(details, agent, line, values[0], values[9], "website_bookmark", values[1], &FirefoxHistory{})
+		// case "IEHistory":
+		// 	err = toElastic(details, agent, line, values[0], values[4], "website_bookmark", values[1], &IEHistory{})
+		// case "InstalledSoftware":
+		// 	err = toElastic(details, agent, line, values[0], values[17], "network_record", values[6], &InstalledSoftware{})
+		// case "JumpList":
+		// 	err = toElastic(details, agent, line, values[0], values[5], "software", values[1], &JumpList{})
+		// case "MUICache":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &MUICache{})
+		// case "Network":
+		// 	err = toElastic(details, agent, line, values[1], "-1", "volatile", values[4], &Network{})
+		// case "NetworkDataUsageMonitor":
+		// 	err = toElastic(details, agent, line, values[1], values[10], "software", values[5], &NetworkDataUsageMonitor{})
+		// case "NetworkResources":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "network_record", values[8], &NetworkResources{})
+		// case "OpenedFiles":
+		// 	err = toElastic(details, agent, line, values[1], "-1", "volatile", values[0], &OpenedFiles{})
+		// case "Prefetch":
+		// 	err = toElastic(details, agent, line, values[1], values[2], "software", values[3], &Prefetch{})
+		// case "Process":
+		// 	err = toElastic(details, agent, line, values[1], values[3], "volatile", values[4], &Process{})
+		// case "Service":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &Service{})
+		// case "Shortcuts":
+		// 	err = toElastic(details, agent, line, values[0], values[10], "document", values[2], &Shortcuts{})
+		// case "StartRun":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &StartRun{})
+		// case "TaskSchedule":
+		// 	err = toElastic(details, agent, line, values[0], values[3], "software", values[1], &TaskSchedule{})
+		// case "USBdevices":
+		// 	err = toElastic(details, agent, line, values[1], values[14], "usb", values[10], &USBdevices{})
+		// case "UserAssist":
+		// 	err = toElastic(details, agent, line, values[0], values[5], "software", values[2], &UserAssist{})
+		// case "UserProfiles":
+		// 	err = toElastic(details, agent, line, values[0], values[6], "document", values[2], &UserProfiles{})
+		// case "WindowsActivity":
+		// 	err = toElastic(details, agent, line, values[1], values[15], "document", values[3], &WindowsActivity{})
 		default:
 			logger.Error("Unknown table name: ", zap.Any("message", tableName))
-			err = nil
+			break outerLoop
 		}
 		if err != nil {
 			return err
@@ -281,7 +299,12 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 
 func toElastic(details string, agent string, line string, item string, date string, ttype string, etc string, st elasticquery.Request_data) error {
 	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(uuid, details, agent, item, date, ttype, etc)
+	int_date, err := strconv.Atoi(date)
+	if err != nil {
+		logger.Error("Invalid date: ", zap.Any("message", date))
+		int_date = -1
+	}
+	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc)
 	if err != nil {
 		return err
 	}

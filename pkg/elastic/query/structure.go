@@ -13,7 +13,7 @@ type mainSource struct {
 	Index string `json:"index"`
 	Agent string `json:"agent"`
 	Item  string `json:"item"`
-	Date  string `json:"date"`
+	Date  int    `json:"date"`
 	Type  string `json:"type"`
 	Etc   string `json:"etc"`
 }

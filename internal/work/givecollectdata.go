@@ -5,11 +5,13 @@ import (
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
+	"edetector_go/internal/parsedb"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"errors"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -26,16 +28,22 @@ var collectMu sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
-var currentDir = ""
-var workingPath = "../../dbWorking"
-var unstagePath = "../../dbUnstage"
+var currentDir string
+var workingPath string
+var unstagePath string
 
 func init() {
+	fmt.Println("hihihi")
 	curDir, err := os.Getwd()
 	if err != nil {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
 	}
 	currentDir = curDir
+
+	workingPath = filepath.Join(currentDir, "../../dbWorking")
+	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
+	parsedb.CheckDir(workingPath)
+	parsedb.CheckDir(unstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -117,7 +125,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectTotalMap[p.GetRkey()] = len
 
 	// Create or truncate the db file
-	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -145,7 +153,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	decrypt_buf = decrypt_buf[100:]
 
 	// write file
-	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -183,7 +191,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
 	// truncate data
-	path := filepath.Join(currentDir, workingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -202,9 +210,8 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	}
 
 	// move to dbUnstage
-	srcPath := filepath.Join(currentDir, workingPath)
-	dstPath := filepath.Join(currentDir, unstagePath, (p.GetRkey() + ".db"))
-	err = os.Rename(srcPath, dstPath)
+	dstPath := filepath.Join(unstagePath, (p.GetRkey() + ".db"))
+	err = os.Rename(workingPath, dstPath)
 	if err != nil {
 		return task.FAIL, err
 	}

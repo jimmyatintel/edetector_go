@@ -61,6 +61,7 @@ func IndexRequest(name string, body string) error {
 	logger.Debug("Index request: ", zap.Any("message", res.String()))
 	return nil
 }
+
 func BulkIndexRequest(action []string, work []string) error {
 	if !flagcheck() {
 		return nil
@@ -80,9 +81,21 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
-	logger.Debug("Bulk Index request: ", zap.Any("message", res.String()))
+	ind := strings.Index(res.String(), "error")
+	if ind != -1 {
+		output := ""
+		if ind + 1 > len(res.String()) {
+			output = res.String()[ind:]
+		} else {
+			output = res.String()[ind:ind+300]
+		}
+		logger.Info("error: ", zap.Any("message", output))
+	} else {
+		logger.Info("sucess")
+	}
 	return nil
 }
+
 func searchRequest(name string, body string) {
 	if !flagcheck() {
 		return
