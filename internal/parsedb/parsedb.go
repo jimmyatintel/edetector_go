@@ -205,43 +205,44 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 		var err error
 		details := "ed_" + strings.ToLower(tableName)
 		switch tableName {
-		// case "AppResourceUsageMonitor":
-		// 	err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
-		// case "ARPCache":
-		// 	err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
-		// case "BaseService":
-		// 	err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &BaseService{})
-		// case "ChromeBookmarks":
-		// 	err = toElastic(details, agent, line, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
-		// case "ChromeCache":
-		// 	err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
-		// case "ChromeDownload":
-		// 	err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
-		// case "ChromeHistory":
-		// 	err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
+		case "AppResourceUsageMonitor":
+			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
+		case "ARPCache":
+			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
+		case "BaseService":
+			err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &BaseService{})
+		case "ChromeBookmarks":
+			err = toElastic(details, agent, line, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
+		case "ChromeCache":
+			err = toElastic(details, agent, line, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
+		case "ChromeDownload":
+			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
+		case "ChromeHistory":
+			err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
 
-		case "ChromeKeywordSearch":
-			err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
-		case "ChromeLogin":
-			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{})
-		case "DNSInfo":
-			err = toElastic(details, agent, line, values[9], "-1", "software", values[6], &DNSInfo{})
-		case "EdgeBookmarks":
-			err = toElastic(details, agent, line, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
-		case "EdgeCache":
-			err = toElastic(details, agent, line, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
-		case "EdgeCookies":
-			err = toElastic(details, agent, line, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
-		case "EdgeHistory":
-			err = toElastic(details, agent, line, values[1], values[5], "website_bookmark", values[2], &EdgeHistory{})
-		case "EdgeLogin":
-			err = toElastic(details, agent, line, values[1], values[7], "website_bookmark", values[4], &EdgeLogin{})
-		case "EventApplication":
-			err = toElastic(details, agent, line, values[3], values[9], "software", values[17], &EventApplication{})
-		case "EventSecurity":
-			err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSecurity{})
-		case "EventSystem":
-			err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSystem{})
+		// case "ChromeKeywordSearch":
+		// 	err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
+		// case "ChromeLogin":
+		// 	err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{})
+		// case "DNSInfo":
+		// 	err = toElastic(details, agent, line, values[9], "-1", "software", values[6], &DNSInfo{})
+		// case "EdgeBookmarks":
+		// 	err = toElastic(details, agent, line, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
+		// case "EdgeCache":
+		// 	err = toElastic(details, agent, line, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
+		// case "EdgeCookies":
+		// 	err = toElastic(details, agent, line, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
+		// case "EdgeHistory":
+		// 	err = toElastic(details, agent, line, values[1], values[5], "website_bookmark", values[2], &EdgeHistory{})
+		// case "EdgeLogin":
+		// 	err = toElastic(details, agent, line, values[1], values[7], "website_bookmark", values[4], &EdgeLogin{})
+		// case "EventApplication":
+		// 	err = toElastic(details, agent, line, values[3], values[9], "software", values[17], &EventApplication{})
+		// case "EventSecurity":
+		// 	err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSecurity{})
+		// case "EventSystem":
+		// 	err = toElastic(details, agent, line, values[3], values[9], "usb", values[17], &EventSystem{})
+
 		// case "FirefoxBookmarks":
 		// 	err = toElastic(details, agent, line, values[8], values[5], "website_bookmark", values[3], &FirefoxBookmarks{})
 		// case "FirefoxCache":

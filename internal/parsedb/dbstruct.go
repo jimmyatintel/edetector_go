@@ -10,10 +10,10 @@ type AppResourceUsageMonitor struct {
 	App_id                       int    `json:"app_id"`
 	User_name                    string `json:"user_name"`
 	User_sid                     string `json:"user_sid"`
-	Foregroundcycletime          int    `json:"foregroundcycletime"`
-	Backgroundcycletime          int    `json:"backgroundcycletime"`
-	Facetime                     int    `json:"facetime"`
-	Foregroundbytesread          int    `json:"foregroundbytesread"`
+	Foregroundcycletime          int64  `json:"foregroundcycletime"`
+	Backgroundcycletime          int64  `json:"backgroundcycletime"`
+	Facetime                     int64  `json:"facetime"`
+	Foregroundbytesread          int64  `json:"foregroundbytesread"`
 	Foregroundbyteswritten       int    `json:"foregroundbyteswritten"`
 	Foregroundnumreadoperations  int    `json:"foregroundnumreadoperations"`
 	Foregroundnumwriteoperations int    `json:"foregroundnumwriteoperations"`
@@ -299,7 +299,7 @@ type EventApplication struct {
 	EventRecordID                int    `json:"eventrecordid"`
 	ProviderName                 string `json:"providername"`
 	ProviderGUID                 string `json:"providerguid"`
-	EventID                      int    `json:"eventid"`
+	EventID                      int64  `json:"eventid"`
 	Version                      int    `json:"version"`
 	Level                        string `json:"level"`
 	Keywords                     string `json:"keywords"`
@@ -326,7 +326,7 @@ type EventSecurity struct {
 	EventRecordID                int    `json:"eventrecordid"`
 	ProviderName                 string `json:"providername"`
 	ProviderGUID                 string `json:"providerguid"`
-	EventID                      int    `json:"eventid"`
+	EventID                      int64  `json:"eventid"`
 	Version                      int    `json:"version"`
 	Level                        string `json:"level"`
 	Keywords                     string `json:"keywords"`
@@ -353,7 +353,7 @@ type EventSystem struct {
 	EventRecordID                int    `json:"eventrecordid"`
 	ProviderName                 string `json:"providername"`
 	ProviderGUID                 string `json:"providerguid"`
-	EventID                      int    `json:"eventid"`
+	EventID                      int64  `json:"eventid"`
 	Version                      int    `json:"version"`
 	Level                        string `json:"level"`
 	Keywords                     string `json:"keywords"`
