@@ -136,7 +136,6 @@ func getTableNames(db *sql.DB) ([]string, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var tableNames []string
 	for rows.Next() {
 		var tableName string
@@ -145,11 +144,9 @@ func getTableNames(db *sql.DB) ([]string, error) {
 		}
 		tableNames = append(tableNames, tableName)
 	}
-
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-
 	return tableNames, nil
 }
 
@@ -180,7 +177,7 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 			}
 		}
 		line := strings.Join(rowData, "||")
-		line = strings.ReplaceAll(line, "<nil>", "-1")
+		line = strings.ReplaceAll(line, "<nil>", "0")
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
