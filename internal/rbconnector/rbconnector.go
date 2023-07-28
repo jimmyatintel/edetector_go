@@ -130,8 +130,9 @@ func count_timer() {
 			}
 			mid_bulkdata = nil
 			mid_bulkaction = nil
+			time.Sleep(10 * time.Second)
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 }
 

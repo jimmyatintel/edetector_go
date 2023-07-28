@@ -43,6 +43,7 @@ func parser_init() {
 		logger.Error("Error loading config file")
 		return
 	}
+	logger.Info("Check & Create DB dir")
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
@@ -66,50 +67,50 @@ func CheckDir(path string) {
 
 func Main() {
 	parser_init()
-	// for {
-	dbFiles, err := getDBFiles(unstagePath)
-	if err != nil {
-		logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
-		return
-	}
-	// loop all db files
-	for _, dbFile := range dbFiles {
-		db, err := sql.Open("sqlite3", dbFile)
+	for {
+		dbFiles, err := getDBFiles(unstagePath)
 		if err != nil {
-			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
-			continue
+			logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
+			return
 		}
-		logger.Info("Open db file: ", zap.Any("message", dbFile))
-		tableNames, err := getTableNames(db)
-		// var tableNames []string
-		// tableNames = append(tableNames, "ARPCache")
-		if err != nil {
-			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
-			continue
-		}
-		// loop all tables in the db file
-		for _, tableName := range tableNames {
-			rows, err := db.Query("SELECT * FROM " + tableName)
+		// loop all db files
+		for _, dbFile := range dbFiles {
+			db, err := sql.Open("sqlite3", dbFile)
 			if err != nil {
-				logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
+				logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
 				continue
 			}
-			logger.Info("Handling table: ", zap.Any("message", tableName))
-			strData, err := rowsToString(rows, tableName)
+			logger.Info("Open db file: ", zap.Any("message", dbFile))
+			tableNames, err := getTableNames(db)
+			// var tableNames []string
+			// tableNames = append(tableNames, "ARPCache")
 			if err != nil {
-				logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
+				logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = sendCollectToElastic(dbFile, strData, tableName)
-			if err != nil {
-				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
-				continue
+			// loop all tables in the db file
+			for _, tableName := range tableNames {
+				rows, err := db.Query("SELECT * FROM " + tableName)
+				if err != nil {
+					logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
+					continue
+				}
+				logger.Info("Handling table: ", zap.Any("message", tableName))
+				strData, err := rowsToString(rows, tableName)
+				if err != nil {
+					logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
+					continue
+				}
+				err = sendCollectToElastic(dbFile, strData, tableName)
+				if err != nil {
+					logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
+					continue
+				}
+				rows.Close()
 			}
-			rows.Close()
+			db.Close()
 		}
-		db.Close()
 	}
-	// }
 }
 
 func getDBFiles(dir string) ([]string, error) {
@@ -196,7 +197,7 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 	agent := path[len(path)-1]
 	lines := strings.Split(rawData, "#newline#")
-	outerLoop:
+outerLoop:
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
@@ -205,8 +206,8 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 		var err error
 		details := "ed_" + strings.ToLower(tableName)
 		switch tableName {
-		case "AppResourceUsageMonitor":
-			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
+		// case "AppResourceUsageMonitor":
+		// 	err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
 		case "ARPCache":
 			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
 		case "BaseService":
@@ -219,19 +220,18 @@ func sendCollectToElastic(dbFile string, rawData string, tableName string) error
 			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
 		case "ChromeHistory":
 			err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
-
-		// case "ChromeKeywordSearch":
-		// 	err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
-		// case "ChromeLogin":
-		// 	err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{})
-		// case "DNSInfo":
-		// 	err = toElastic(details, agent, line, values[9], "-1", "software", values[6], &DNSInfo{})
-		// case "EdgeBookmarks":
-		// 	err = toElastic(details, agent, line, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
-		// case "EdgeCache":
-		// 	err = toElastic(details, agent, line, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
-		// case "EdgeCookies":
-		// 	err = toElastic(details, agent, line, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
+		case "ChromeKeywordSearch":
+			err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
+		case "ChromeLogin":
+			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{})
+		case "DNSInfo":
+			err = toElastic(details, agent, line, values[9], "-1", "software", values[6], &DNSInfo{})
+		case "EdgeBookmarks":
+			err = toElastic(details, agent, line, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
+		case "EdgeCache":
+			err = toElastic(details, agent, line, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
+		case "EdgeCookies":
+			err = toElastic(details, agent, line, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
 		// case "EdgeHistory":
 		// 	err = toElastic(details, agent, line, values[1], values[5], "website_bookmark", values[2], &EdgeHistory{})
 		// case "EdgeLogin":

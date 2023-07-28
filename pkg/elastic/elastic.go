@@ -81,6 +81,7 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
+	logger.Info("len:", zap.Any("message", len(action)))
 	index := 0
 	for {
 		ind := strings.Index(res.String()[index:], "error")
@@ -93,7 +94,7 @@ func BulkIndexRequest(action []string, work []string) error {
 		} else {
 			output = res.String()[index : index+300]
 		}
-		logger.Info("error: ", zap.Any("message", output))
+		logger.Info("res: ", zap.Any("message", output))
 		index += ind + 1
 	}
 	return nil
