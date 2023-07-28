@@ -14,7 +14,7 @@ type AppResourceUsageMonitor struct {
 	Backgroundcycletime          int64  `json:"backgroundcycletime"`
 	Facetime                     int64  `json:"facetime"`
 	Foregroundbytesread          int64  `json:"foregroundbytesread"`
-	Foregroundbyteswritten       int    `json:"foregroundbyteswritten"`
+	Foregroundbyteswritten       int64  `json:"foregroundbyteswritten"`
 	Foregroundnumreadoperations  int    `json:"foregroundnumreadoperations"`
 	Foregroundnumwriteoperations int    `json:"foregroundnumwriteoperations"`
 	Foregroundnumberofflushes    int    `json:"foregroundnumberofflushes"`
@@ -703,7 +703,7 @@ type TaskSchedule struct {
 	Command       string `json:"command"`
 	LastRunTime   int    `json:"lastruntime"`
 	NextRunTime   int    `json:"nextruntime"`
-	StartBoundary int    `json:"startboundary"`
+	StartBoundary int64  `json:"startboundary"`
 	EndBoundary   int    `json:"endboundary"`
 }
 
