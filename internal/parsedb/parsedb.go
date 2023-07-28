@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
@@ -67,14 +68,12 @@ func CheckDir(path string) {
 
 func Main() {
 	parser_init()
-	// for {
-	dbFiles, err := getDBFiles(unstagePath)
-	if err != nil {
-		logger.Error("Error getting database files: ", zap.Any("error", err.Error()))
-		return
-	}
-	// loop all db files
-	for _, dbFile := range dbFiles {
+	for {
+		dbFile, err := getOldestFile(unstagePath)
+		if err != nil {
+			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
+			continue
+		}
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
@@ -110,24 +109,28 @@ func Main() {
 		}
 		db.Close()
 	}
-	// }
 }
 
-func getDBFiles(dir string) ([]string, error) {
-	var dbFiles []string
+func getOldestFile(dir string) (string, error) {
+	var oldestFile string
+	var oldestTime time.Time
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if !info.IsDir() && filepath.Ext(path) == ".db" {
-			dbFiles = append(dbFiles, path)
+			modTime := info.ModTime()
+			if oldestTime.IsZero() || modTime.Before(oldestTime) {
+				oldestTime = modTime
+				oldestFile = path
+			}
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return dbFiles, nil
+	return oldestFile, nil
 }
 
 func getTableNames(db *sql.DB) ([]string, error) {
