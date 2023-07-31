@@ -34,7 +34,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	if index == "ed_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
-		err = rabbitmq.Publish("ed_low", msgBytes)
+		err = rabbitmq.Publish("ed_mid", msgBytes)
 	}
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if index == "ed_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
-		err = rabbitmq.Publish("ed_low", msgBytes)
+		err = rabbitmq.Publish("ed_mid", msgBytes)
 	}
 	if err != nil {
 		return err

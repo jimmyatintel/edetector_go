@@ -34,6 +34,7 @@ var low_bulkaction []string
 
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
+	low_mutex = &sync.Mutex{}
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Error("Error loading feature flag")

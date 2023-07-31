@@ -70,10 +70,17 @@ func Main() {
 	parser_init()
 	for {
 		dbFile, err := getOldestFile(unstagePath)
-		if err != nil {
+		if dbFile == "" {
+			logger.Info("No file to parse")
+			time.Sleep(30 * time.Second)
+			continue
+		} else if err != nil {
 			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
+			time.Sleep(30 * time.Second)
 			continue
 		}
+		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
+		agent := path[len(path)-1]
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
@@ -81,8 +88,6 @@ func Main() {
 		}
 		logger.Info("Open db file: ", zap.Any("message", dbFile))
 		tableNames, err := getTableNames(db)
-		// var tableNames []string
-		// tableNames = append(tableNames, "ARPCache")
 		if err != nil {
 			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
 			continue
@@ -100,7 +105,7 @@ func Main() {
 				logger.Error("Error converting to string: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = sendCollectToElastic(dbFile, strData, tableName)
+			err = sendCollectToElastic(dbFile, strData, tableName, agent)
 			if err != nil {
 				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
 				continue
@@ -108,6 +113,10 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
+		err = os.Rename(filepath.Join(dbFile), filepath.Join(stagedPath, agent+".db"))
+		if err != nil {
+			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		}
 	}
 }
 
@@ -181,6 +190,8 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 		}
 		line := strings.Join(rowData, "||")
 		line = strings.ReplaceAll(line, "<nil>", "0")
+		line = strings.ReplaceAll(line, "|| ", "||0")
+		line = strings.ReplaceAll(line, " ||", "0||")
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -190,12 +201,10 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 	return builder.String(), nil
 }
 
-func sendCollectToElastic(dbFile string, rawData string, tableName string) error {
+func sendCollectToElastic(dbFile string, rawData string, tableName string, agent string) error {
 	if tableName == "sqlite_sequence" {
 		return nil
 	}
-	path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
-	agent := path[len(path)-1]
 	lines := strings.Split(rawData, "#newline#")
 outerLoop:
 	for _, line := range lines {
