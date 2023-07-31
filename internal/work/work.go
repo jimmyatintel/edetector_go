@@ -9,27 +9,6 @@ import (
 
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
 
-type ProcessJson struct {
-	ProcessName       string `json:"processName"`
-	ProcessConnectIP  string `json:"processConnectIP"`
-	DynamicCommand    string `json:"dynamicCommand"`
-	ProcessMD5        string `json:"processMD5"`
-	ProcessPath       string `json:"processPath"`
-	ParentProcessId   int    `json:"parentProcessId"`
-	ParentProcessName string `json:"parentProcessName"`
-	ParentProcessPath string `json:"parentProcessPath"`
-	DigitalSign       string `json:"digitalSign"`
-	ImportOtherDLL    bool   `json:"importOtherDLL"`
-	ProcessId         int    `json:"processId"`
-	RiskLevel         int    `json:"riskLevel"`
-	InjectActive      int    `json:"injectActive"`
-	ProcessBeInjected string `json:"processBeInjected"`
-	Boot              int    `json:"boot"`
-	Hook              string `json:"hook"`
-	Hide              string `json:"hide"`
-	Mode              string `json:"mode"`
-}
-
 func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
 		// handshake

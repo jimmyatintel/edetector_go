@@ -31,7 +31,7 @@ func RequestToUser(id string) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	req, err := http.NewRequest("POST", "http://127.0.0.1:5050/updateTask", bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "http://angel.ed.de:5050/updateTask", bytes.NewBuffer(payload))
 	if err != nil {
 		logger.Error("Error creating HTTP request: ", zap.Any("error", err.Error()))
 		return

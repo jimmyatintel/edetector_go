@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProcessInfoJson struct {
-	PID         string `json:"pid"`
-	ProcessTime string `json:"process_time"`
-	Path        string `json:"path"`
-	CommandLine string `json:"command_line"`
-}
+// type ProcessInfoJson struct {
+// 	PID         string `json:"pid"`
+// 	ProcessTime string `json:"process_time"`
+// 	Path        string `json:"path"`
+// 	CommandLine string `json:"command_line"`
+// }
 
 func GiveProcessInformation(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessinformation: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -49,7 +49,6 @@ func GiveProcessInfoData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveProcessInfoEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveProcessInfoEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	// ChangeProcessInfo2Json(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

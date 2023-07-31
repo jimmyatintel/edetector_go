@@ -116,9 +116,6 @@ func mid_speed() {
 		mid_bulkdata = append(mid_bulkdata, m.Data)
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
-		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
-			time.Sleep(3 * time.Second)
-		}
 	}
 }
 
@@ -151,8 +148,8 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 	fmt.Println("Counting timer started")
 	last_send := time.Now()
 	for {
+		mutex.Lock()
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
-			mutex.Lock()
 			fmt.Println("bulk insert")
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
@@ -162,8 +159,8 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			*bulkdata = nil
 			*bulkaction = nil
 			last_send = time.Now()
-			mutex.Unlock()
 		}
-		time.Sleep(5 * time.Microsecond)
+		mutex.Unlock()
+		time.Sleep(5 * time.Second)
 	}
 }

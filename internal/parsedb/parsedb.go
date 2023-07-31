@@ -218,9 +218,9 @@ outerLoop:
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
 		case "ARPCache":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[2], &ARPCache{})
+			err = toElastic(details, agent, line, values[1], "0", "volatile", values[2], &ARPCache{})
 		case "BaseService":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &BaseService{})
+			err = toElastic(details, agent, line, values[0], "0", "software", values[5], &BaseService{})
 		case "ChromeBookmarks":
 			err = toElastic(details, agent, line, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
 		case "ChromeCache":
@@ -230,11 +230,11 @@ outerLoop:
 		case "ChromeHistory":
 			err = toElastic(details, agent, line, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
 		case "ChromeKeywordSearch":
-			err = toElastic(details, agent, line, values[0], "-1", "website_bookmark", "", &ChromeKeywordSearch{})
+			err = toElastic(details, agent, line, values[0], "0", "website_bookmark", "", &ChromeKeywordSearch{})
 		case "ChromeLogin":
 			err = toElastic(details, agent, line, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{})
 		case "DNSInfo":
-			err = toElastic(details, agent, line, values[9], "-1", "software", values[6], &DNSInfo{})
+			err = toElastic(details, agent, line, values[9], "0", "software", values[6], &DNSInfo{})
 		case "EdgeBookmarks":
 			err = toElastic(details, agent, line, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
 		case "EdgeCache":
@@ -266,25 +266,25 @@ outerLoop:
 		case "JumpList":
 			err = toElastic(details, agent, line, values[0], values[5], "software", values[1], &JumpList{})
 		case "MUICache":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &MUICache{})
+			err = toElastic(details, agent, line, values[0], "0", "software", values[1], &MUICache{})
 		case "Network":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[4], &Network{})
+			err = toElastic(details, agent, line, values[1], "0", "volatile", values[4], &Network{})
 		case "NetworkDataUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[10], "software", values[5], &NetworkDataUsageMonitor{})
 		case "NetworkResources":
-			err = toElastic(details, agent, line, values[0], "-1", "network_record", values[8], &NetworkResources{})
+			err = toElastic(details, agent, line, values[0], "0", "network_record", values[8], &NetworkResources{})
 		case "OpenedFiles":
-			err = toElastic(details, agent, line, values[1], "-1", "volatile", values[0], &OpenedFiles{})
+			err = toElastic(details, agent, line, values[1], "0", "volatile", values[0], &OpenedFiles{})
 		case "Prefetch":
 			err = toElastic(details, agent, line, values[1], values[2], "software", values[3], &Prefetch{})
 		case "Process":
 			err = toElastic(details, agent, line, values[1], values[3], "volatile", values[4], &Process{})
 		case "Service":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[5], &Service{})
+			err = toElastic(details, agent, line, values[0], "0", "software", values[5], &Service{})
 		case "Shortcuts":
 			err = toElastic(details, agent, line, values[0], values[10], "document", values[2], &Shortcuts{})
 		case "StartRun":
-			err = toElastic(details, agent, line, values[0], "-1", "software", values[1], &StartRun{})
+			err = toElastic(details, agent, line, values[0], "0", "software", values[1], &StartRun{})
 		case "TaskSchedule":
 			err = toElastic(details, agent, line, values[0], values[3], "software", values[1], &TaskSchedule{})
 		case "USBdevices":

@@ -2,11 +2,14 @@ package elasticquery
 
 import (
 	"edetector_go/internal/rbconnector"
+	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"go.uber.org/zap"
 )
 
 func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string) error {
@@ -31,6 +34,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	if err != nil {
 		return err
 	}
+	logger.Info("ed_main", zap.Any("message", string(msgBytes)))
 	if index == "ed_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
@@ -59,6 +63,7 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if err != nil {
 		return err
 	}
+	logger.Info("ed_memory", zap.Any("message", string(msgBytes)))
 	if index == "ed_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
