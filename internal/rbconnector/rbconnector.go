@@ -104,7 +104,7 @@ func mid_speed() {
 		return
 	}
 	logger.Info("Connected to mid speed queue")
-	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), mid_bulkaction, mid_bulkdata, mid_mutex)
+	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -129,7 +129,7 @@ func low_speed() {
 		return
 	}
 	logger.Info("Connected to low speed queue")
-	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), low_bulkaction, low_bulkdata, low_mutex)
+	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -147,18 +147,20 @@ func low_speed() {
 	}
 }
 
-func count_timer(tunnel_time int, size int, bulkaction []string, bulkdata []string, mutex *sync.Mutex) {
+func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]string, mutex *sync.Mutex) {
+	fmt.Println("Counting timer started")
 	last_send := time.Now()
 	for {
-		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(bulkaction) > 0) || len(bulkaction) > size {
+		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
 			mutex.Lock()
-			err := elastic.BulkIndexRequest(bulkaction, bulkdata)
+			fmt.Println("bulk insert")
+			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error(err.Error())
 				continue
 			}
-			bulkdata = nil
-			bulkaction = nil
+			*bulkdata = nil
+			*bulkaction = nil
 			last_send = time.Now()
 			mutex.Unlock()
 		}
