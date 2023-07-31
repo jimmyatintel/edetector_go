@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -25,9 +26,12 @@ type Message struct {
 }
 
 var mid_mutex *sync.Mutex
-
 var mid_bulkdata []string
 var mid_bulkaction []string
+
+var low_mutex *sync.Mutex
+var low_bulkdata []string
+var low_bulkaction []string
 
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
@@ -100,7 +104,17 @@ func mid_speed() {
 		return
 	}
 	logger.Info("Connected to mid speed queue")
-	go count_timer()
+	tunnel_time, err := strconv.Atoi(os.Getenv("MID_TUNNEL_TIME"))
+	if err != nil {
+		logger.Error("mid tunnel time error")
+		return
+	}
+	tunnel_size, err := strconv.Atoi(os.Getenv("MID_TUNNEL_SIZE"))
+	if err != nil {
+		logger.Error("mid tunnel size error")
+		return
+	}
+	go count_timer(tunnel_time, tunnel_size, &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -112,28 +126,9 @@ func mid_speed() {
 		mid_bulkdata = append(mid_bulkdata, m.Data)
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
-	}
-}
-
-func count_timer() {
-	// fmt.Println("count_timer")
-	last_send := time.Now()
-	for {
-		
-		if (time.Since(last_send) > time.Duration(os.Getenv("MID_TUNNEL_TIME"))*time.Second && len(mid_bulkaction) > 0) || len(mid_bulkaction) > os.Getenv("MID_TUNNEL_SIZE") {
-			mid_mutex.Lock()
-			last_send = time.Now()
-			err := elastic.BulkIndexRequest(mid_bulkaction, mid_bulkdata)
-			mid_mutex.Unlock()
-			if err != nil {
-				logger.Error(err.Error())
-				continue
-			}
-			mid_bulkdata = nil
-			mid_bulkaction = nil
-			time.Sleep(10 * time.Second)
+		for len(mid_bulkaction) > tunnel_size {
+			time.Sleep(3 * time.Second)
 		}
-		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -144,9 +139,17 @@ func low_speed() {
 		return
 	}
 	logger.Info("Connected to low speed queue")
-	last_send := time.Now()
-	var bulkdata []string
-	var bulkaction []string
+	tunnel_time, err := strconv.Atoi(os.Getenv("LOW_TUNNEL_TIME"))
+	if err != nil {
+		logger.Error("low tunnel time error")
+		return
+	}
+	tunnel_size, _ := strconv.Atoi(os.Getenv("LOQ_TUNNEL_SIZE"))
+	if err != nil {
+		logger.Error("low tunnel size error")
+		return
+	}
+	go count_timer(tunnel_time, tunnel_size, &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -154,18 +157,33 @@ func low_speed() {
 			logger.Error(err.Error())
 			continue
 		}
-		bulkdata = append(bulkdata, m.Data)
-		bulkaction = append(bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
-		if time.Since(last_send) > time.Duration(os.Getenv("LOW_TUNNEL_TIME"))*time.Second || len(bulkaction) > os.Getenv("LOW_TUNNEL_SIZE") {
-			last_send = time.Now()
-			err = elastic.BulkIndexRequest(bulkaction, bulkdata)
+		low_mutex.Lock()
+		low_bulkdata = append(low_bulkdata, m.Data)
+		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
+		low_mutex.Unlock()
+		for len(low_bulkaction) > tunnel_size {
+			time.Sleep(3 * time.Second)
+		}
+	}
+}
+
+func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]string, mutex *sync.Mutex) {
+	fmt.Println("Counting timer started")
+	last_send := time.Now()
+	for {
+		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
+			mutex.Lock()
+			fmt.Println("bulk insert")
+			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error(err.Error())
 				continue
 			}
-			bulkdata = nil
-			bulkaction = nil
+			*bulkdata = nil
+			*bulkaction = nil
+			last_send = time.Now()
+			mutex.Unlock()
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(5 * time.Microsecond)
 	}
 }
