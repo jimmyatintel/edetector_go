@@ -2,9 +2,9 @@ package elastic
 
 import (
 	"context"
-	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
+	"os"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -23,7 +23,7 @@ func flagcheck() bool {
 func SetElkClient() error {
 	var err error
 	cfg := elasticsearch.Config{
-		Addresses: []string{"http://" + config.Viper.GetString("ELASTIC_HOST") + ":" + config.Viper.GetString("ELASTIC_PORT")},
+		Addresses: []string{"http://" + os.Getenv("ELASTIC_HOST") + ":" + os.Getenv("ELASTIC_PORT")},
 	}
 	es, err = elasticsearch.NewClient(cfg)
 	return err

@@ -1,8 +1,8 @@
 package rabbitmq
 
 import (
-	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"os"
 
 	"errors"
 
@@ -34,10 +34,10 @@ var channel *amqp.Channel
 func Rabbit_init() {
 	// ...
 	var err error
-	hostname := config.Viper.GetString("RABBITMQ_IP")
-	port := config.Viper.GetString("RABBITMQ_PORT")
-	username := config.Viper.GetString("RABBITMQ_USERNAME")
-	password := config.Viper.GetString("RABBITMQ_PASSWORD")
+	hostname := os.Getenv("RABBITMQ_IP")
+	port := os.Getenv("RABBITMQ_PORT")
+	username := os.Getenv("RABBITMQ_USERNAME")
+	password := os.Getenv("RABBITMQ_PASSWORD")
 	Url := "amqp://" + username + ":" + password + "@" + hostname + ":" + port + "/"
 	Connection, err = NewRabbitMQ(Url)
 	if err != nil {

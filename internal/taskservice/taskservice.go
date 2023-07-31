@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"edetector_go/config"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	work_from_api "edetector_go/internal/work_from_api"
@@ -30,7 +29,7 @@ type TaskResponse struct {
 
 func Start(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
-	f, _ := os.Create(config.Viper.GetString("GIN_LOG_FILE"))
+	f, _ := os.Create(os.Getenv("GIN_LOG_FILE"))
 	gin.DefaultWriter = io.MultiWriter(f)
 	router := gin.Default()
 	corsConfig := cors.DefaultConfig()

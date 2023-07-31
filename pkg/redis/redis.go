@@ -2,11 +2,13 @@ package redis
 
 import (
 	"context"
-	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
+	"os"
+	"strconv"
 
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 var RedisClient *redis.Client
@@ -17,13 +19,19 @@ func checkflag() bool {
 	}
 	return false
 }
+
 func Redis_init() *redis.Client {
+	redis_db, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		logger.Error("REDIS_DB is not set", zap.Any("error", err))
+		redis_db = 0
+	}
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     config.Viper.GetString("REDIS_HOST") + ":" + config.Viper.GetString("REDIS_PORT"),
-		Password: config.Viper.GetString("REDIS_PASSWORD"),
-		DB:       config.Viper.GetInt("REDIS_DB"),
+		Addr:     os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       redis_db,
 	})
-	_, err := RedisClient.Ping(context.Background()).Result()
+	_, err = RedisClient.Ping(context.Background()).Result()
 	if err != nil {
 		logger.Error("Error connecting to redis")
 		return nil

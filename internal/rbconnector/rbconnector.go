@@ -42,8 +42,8 @@ func connector_init() {
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
+		logger.InitLogger(os.Getenv("CONNECTOR_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", os.Getenv("CONNECTOR_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		err := elastic.SetElkClient()
@@ -119,7 +119,8 @@ func count_timer() {
 	// fmt.Println("count_timer")
 	last_send := time.Now()
 	for {
-		if (time.Since(last_send) > time.Duration(config.Viper.GetInt("MID_TUNNEL_TIME"))*time.Second && len(mid_bulkaction) > 0) || len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+		
+		if (time.Since(last_send) > time.Duration(os.Getenv("MID_TUNNEL_TIME"))*time.Second && len(mid_bulkaction) > 0) || len(mid_bulkaction) > os.Getenv("MID_TUNNEL_SIZE") {
 			mid_mutex.Lock()
 			last_send = time.Now()
 			err := elastic.BulkIndexRequest(mid_bulkaction, mid_bulkdata)
@@ -155,7 +156,7 @@ func low_speed() {
 		}
 		bulkdata = append(bulkdata, m.Data)
 		bulkaction = append(bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
-		if time.Since(last_send) > time.Duration(config.Viper.GetInt("LOW_TUNNEL_TIME"))*time.Second || len(bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
+		if time.Since(last_send) > time.Duration(os.Getenv("LOW_TUNNEL_TIME"))*time.Second || len(bulkaction) > os.Getenv("LOW_TUNNEL_SIZE") {
 			last_send = time.Now()
 			err = elastic.BulkIndexRequest(bulkaction, bulkdata)
 			if err != nil {
