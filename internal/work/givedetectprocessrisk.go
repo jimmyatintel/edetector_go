@@ -38,6 +38,8 @@ import (
 // }
 
 type Memory struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	ProcessConnectIP  string `json:"processConnectIP"`
