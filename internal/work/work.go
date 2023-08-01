@@ -54,6 +54,7 @@ func init() {
 		task.GIVE_COLLECT_DATA:       GiveCollectData,
 		task.GIVE_COLLECT_DATA_END:   GiveCollectDataEnd,
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
+
 		// scan
 		// task.GET_PROCESS_INFO:            GetProcessInfo,
 		task.GET_SCAN_INFO_DATA:    GetScanInfoData,
@@ -65,5 +66,10 @@ func init() {
 		task.GIVE_SCAN_DATA_INFO:   GiveScanDataInfo,
 		task.GIVE_SCAN_DATA_OVER:   GiveScanDataOver,
 		task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
+
+		// new scan
+		task.GIVE_SCAN_INFO: GiveScanInfo,
+		task.GIVE_SCAN:      GiveScan,
+		task.GIVE_SCAN_END:  GiveScanEnd,
 	}
 }

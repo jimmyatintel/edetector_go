@@ -13,8 +13,8 @@ const (
 	UNDEFINE               TaskType = "Undefine"
 
 	// check connect & ack
-	CHECK_CONNECT          TaskType = "CheckConnect"
-	DATA_RIGHT                TaskType = "DataRight"
+	CHECK_CONNECT TaskType = "CheckConnect"
+	DATA_RIGHT    TaskType = "DataRight"
 
 	// process history
 	GET_PROCESS_HISTORY_INFO  TaskType = "GetProcessHistoryInfo"
@@ -41,50 +41,56 @@ const (
 	GIVE_NETWORK_HISTORY_END  TaskType = "GiveNetworkHistoryEnd"
 
 	// detect
-	UPDATE_DETECT_MODE        TaskType = "UpdateDetectMode"
+	UPDATE_DETECT_MODE TaskType = "UpdateDetectMode"
 
 	// scan
-	GET_SCAN_INFO_DATA        TaskType = "GetScanInfoData"
-	GET_PROCESS_INFO          TaskType = "GetProcessInfo"
-	PROCESS                   TaskType = "Process"
-	GIVE_PROCESS_DATA         TaskType = "GiveProcessData"
-	GIVE_PROCESS_DATA_END     TaskType = "GiveProcessDataEnd"
-	SCAN_PROGRESS             TaskType = "ScanProgress"
-	GIVE_SCAN_PROGRESS        TaskType = "GiveScanProgress"
-	GIVE_SCAN_DATA            TaskType = "GiveScanData"
-	GIVE_SCAN_DATA_INFO       TaskType = "GiveScanDataInfo"
-	GIVE_SCAN_DATA_OVER       TaskType = "GiveScanDataOver"
-	GIVE_SCAN_DATA_END        TaskType = "GiveScanDataEnd"
+	GET_SCAN_INFO_DATA    TaskType = "GetScanInfoData"
+	GET_PROCESS_INFO      TaskType = "GetProcessInfo"
+	PROCESS               TaskType = "Process"
+	GIVE_PROCESS_DATA     TaskType = "GiveProcessData"
+	GIVE_PROCESS_DATA_END TaskType = "GiveProcessDataEnd"
+	SCAN_PROGRESS         TaskType = "ScanProgress"
+	GIVE_SCAN_PROGRESS    TaskType = "GiveScanProgress"
+	GIVE_SCAN_DATA        TaskType = "GiveScanData"
+	GIVE_SCAN_DATA_INFO   TaskType = "GiveScanDataInfo"
+	GIVE_SCAN_DATA_OVER   TaskType = "GiveScanDataOver"
+	GIVE_SCAN_DATA_END    TaskType = "GiveScanDataEnd"
+
+	// new scan
+	GET_SCAN       TaskType = "GetScan"
+	GIVE_SCAN_INFO TaskType = "GiveScanInfo"
+	GIVE_SCAN      TaskType = "GiveScan"
+	GIVE_SCAN_END  TaskType = "GiveScanEnd"
 
 	// collection
-	IMPORT_STARTUP            TaskType = "ImportStartup"
-	GET_COLLECT_INFO          TaskType = "GetCollectInfo"
-	COLLECT_INFO              TaskType = "CollectInfo"
-	GET_COLLECT_INFO_DATA     TaskType = "GetCollectInfoData"
-	GIVE_COLLECT_PROGRESS     TaskType = "GiveCollectProgress"
-	GIVE_COLLECT_DATA_INFO    TaskType = "GiveCollectDataInfo"
-	GIVE_COLLECT_DATA         TaskType = "GiveCollectData"
-	GIVE_COLLECT_DATA_END     TaskType = "GiveCollectDataEnd"
-	GIVE_COLLECT_DATA_ERROR   TaskType = "GiveCollectDataError"
-	
+	IMPORT_STARTUP          TaskType = "ImportStartup"
+	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
+	COLLECT_INFO            TaskType = "CollectInfo"
+	GET_COLLECT_INFO_DATA   TaskType = "GetCollectInfoData"
+	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
+	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
+	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
+	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
+	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+
 	// drive
-	GET_DRIVE                 TaskType = "GetDrive" 
-	GIVE_DRIVE_INFO           TaskType = "GiveDriveInfo"
-	EXPLORER_INFO             TaskType = "ExplorerInfo"
-	EXPLORER                  TaskType = "Explorer"
-	TRANSPORT_EXPLORER        TaskType = "TransportExplorer"
-	GIVE_EXPLORER_DATA        TaskType = "GiveExplorerData"
-	GIVE_EXPLORER_END         TaskType = "GiveExplorerEnd"
-	GIVE_EXPLORER_ERROR       TaskType = "GiveExplorerError"
+	GET_DRIVE           TaskType = "GetDrive"
+	GIVE_DRIVE_INFO     TaskType = "GiveDriveInfo"
+	EXPLORER_INFO       TaskType = "ExplorerInfo"
+	EXPLORER            TaskType = "Explorer"
+	TRANSPORT_EXPLORER  TaskType = "TransportExplorer"
+	GIVE_EXPLORER_DATA  TaskType = "GiveExplorerData"
+	GIVE_EXPLORER_END   TaskType = "GiveExplorerEnd"
+	GIVE_EXPLORER_ERROR TaskType = "GiveExplorerError"
 
 	// task from API
-	CHANGE_DETECT_MODE        UserTaskType = "ChangeDetectMode"
-	START_SCAN                UserTaskType = "StartScan"
-	START_GET_DRIVE           UserTaskType = "StartGetDrive"
-	START_GET_EXPLORER        UserTaskType = "StartGetExplorer"
-	START_COLLECTION          UserTaskType = "StartCollect"
-	USER_TRANSPORT_EXPLORER   UserTaskType = "TransportExplorer"
-	USER_UNDEFINE             UserTaskType = "Undefine"
+	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
+	START_SCAN              UserTaskType = "StartScan"
+	START_GET_DRIVE         UserTaskType = "StartGetDrive"
+	START_GET_EXPLORER      UserTaskType = "StartGetExplorer"
+	START_COLLECTION        UserTaskType = "StartCollect"
+	USER_TRANSPORT_EXPLORER UserTaskType = "TransportExplorer"
+	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
 var Worklist = []TaskType{GIVE_INFO, GIVE_DETECT_PORT_INFO, OPEN_CHECK_THREAD, GIVE_DETECT_INFO_FIRST, GIVE_DETECT_INFO, UPDATE_DETECT_MODE, CHECK_CONNECT,
@@ -93,6 +99,6 @@ var Worklist = []TaskType{GIVE_INFO, GIVE_DETECT_PORT_INFO, OPEN_CHECK_THREAD, G
 	GIVE_DETECT_PROCESS_OVER, GIVE_DETECT_PROCESS_END, GET_SCAN_INFO_DATA, GIVE_SCAN_PROGRESS, GIVE_SCAN_DATA, GIVE_SCAN_DATA_INFO,
 	GIVE_SCAN_DATA_OVER, GIVE_SCAN_DATA_END, GIVE_COLLECT_PROGRESS, GIVE_COLLECT_DATA_INFO, GIVE_COLLECT_DATA, GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR, GET_DRIVE, GIVE_DRIVE_INFO, GET_PROCESS_INFO, PROCESS, GIVE_PROCESS_DATA, GIVE_PROCESS_DATA_END,
-	GIVE_EXPLORER_DATA, GIVE_EXPLORER_END, EXPLORER, IMPORT_STARTUP, GET_COLLECT_INFO_DATA, COLLECT_INFO}
+	GIVE_EXPLORER_DATA, GIVE_EXPLORER_END, EXPLORER, IMPORT_STARTUP, GET_COLLECT_INFO_DATA, COLLECT_INFO, GET_SCAN, GIVE_SCAN_INFO, GIVE_SCAN, GIVE_SCAN_END}
 
 var UserWorklist = []UserTaskType{CHANGE_DETECT_MODE, START_SCAN, START_GET_DRIVE, START_COLLECTION, START_GET_EXPLORER}
