@@ -505,7 +505,7 @@ type JumpList struct {
 	FullPath      string `json:"fullpath"`
 	ApplicationID string `json:"application_id"`
 	ComputerName  string `json:"computer_name"`
-	FileSize      int    `json:"filesize"`
+	FileSize      int64  `json:"filesize"`
 	EntryID       int    `json:"entry_id"`
 	RecordTime    int    `json:"recordtime"`
 	CreateTime    int    `json:"createtime"`
@@ -605,7 +605,7 @@ type Prefetch struct {
 	LastRunTime        int    `json:"lastruntime"`
 	ProcessPath        string `json:"processpath"`
 	RunCount           int    `json:"runcount"`
-	FileSize           int    `json:"filesize"`
+	FileSize           int64  `json:"filesize"`
 	FolderCreatedTime  int    `json:"foldercreatedtime"`
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
 }

@@ -66,7 +66,7 @@ func BulkIndexRequest(action []string, work []string) error {
 	if !flagcheck() {
 		return nil
 	}
-	logger.Info("Bulk Index request: ", zap.Any("message", action))
+	// logger.Info("Bulk Index request: ", zap.Any("message", action))
 	var buf strings.Builder
 	for i, doc := range action {
 		buf.WriteString(doc)
@@ -96,7 +96,7 @@ func BulkIndexRequest(action []string, work []string) error {
 			output = res.String()[index : index+300]
 		}
 		logger.Info("res: ", zap.Any("message", output))
-		index += ind + 1
+		index = ind + 1
 	}
 	return nil
 }

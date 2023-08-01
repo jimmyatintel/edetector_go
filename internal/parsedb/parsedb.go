@@ -188,10 +188,10 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 				rowData[i] = fmt.Sprintf("%v", v)
 			}
 		}
-		line := strings.Join(rowData, "||")
+		line := strings.Join(rowData, "@|@")
 		line = strings.ReplaceAll(line, "<nil>", "0")
-		line = strings.ReplaceAll(line, "|| ", "||0")
-		line = strings.ReplaceAll(line, " ||", "0||")
+		line = strings.ReplaceAll(line, "@|@ ", "@|@0")
+		line = strings.ReplaceAll(line, " @|@", "0@|@")
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -211,7 +211,7 @@ outerLoop:
 		if len(line) == 0 {
 			continue
 		}
-		values := strings.Split(line, "||")
+		values := strings.Split(line, "@|@")
 		var err error
 		details := "ed_" + strings.ToLower(tableName)
 		switch tableName {
