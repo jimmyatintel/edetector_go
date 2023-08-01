@@ -48,13 +48,13 @@ type Memory struct {
 	ParentProcessName string `json:"parentProcessName"`
 	ParentProcessPath string `json:"parentProcessPath"`
 	DigitalSign       string `json:"digitalSign"`
-	ImportOtherDLL    bool   `json:"importOtherDLL"`
 	ProcessId         int    `json:"processId"`
 	RiskLevel         int    `json:"riskLevel"`
 	InjectActive      string `json:"injectActive"`
 	ProcessBeInjected int    `json:"processBeInjected"`
 	Boot              string `json:"boot"`
 	Hook              string `json:"hook"`
+	ImportOtherDLL    bool   `json:"importOtherDLL"`
 	Hide              string `json:"hide"`
 	Mode              string `json:"mode"`
 }
@@ -89,16 +89,11 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		}
 		//! tmp version
 		values := strings.Split(line, "|")
-
-		line = values[4] + "||" + values[2] + "||detecting||cmd||" + values[6] + "||" +
-			values[5] + "||" + values[7] + "||parentName||" + values[9] + "||" + values[14] +
-			"||0||" + values[0] + "||1||0,0||0||0,0||null||" + values[13] + "," + values[12] + "||detect"
-		// logger.Info("new format", zap.Any("message", line))
-		values = strings.Split(line, "||")
+		line = values[4] + "@|@" + values[2] + "@|@detecting@|@cmd@|@" + values[6] + "@|@" + values[5] + "@|@" + values[7] + "@|@parentName@|@" + values[9] + "@|@" + values[14] + "@|@" + values[0] + "@|@1@|@0,0@|@0@|@0,0@|@null@|@0@|@" + values[13] + "," + values[12] + "@|@detect"
+		values = strings.Split(line, "@|@")
 		//! tmp version
-
 		uuid := uuid.NewString()
-		int_date, err := strconv.Atoi(values[1])
+		int_date, err := strconv.Atoi(values[2])
 		if err != nil {
 			logger.Error("Invalid date: ", zap.Any("message", values[1]))
 			int_date = 0

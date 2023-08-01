@@ -4,24 +4,27 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
+	"strings"
 
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-type NetworkJson struct {
+type MemoryNetwork struct {
 	PID               int    `json:"pid"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
-	ProcessTime       int    `json:"process_time"`
-	ConnectionINorOUT bool   `json:"connection_inorout"`
-	AgentPort         int    `json:"agent_port"`
+	ProcessCreateTime int    `json:"processCreateTime"`
+	ConnectionINorOUT bool   `json:"connectionInOrOut"`
+	AgentPort         int    `json:"agentPort"`
 }
 
-func (n NetworkJson) Elastical() ([]byte, error) {
+func (n MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -59,9 +62,17 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
-	// Data := ChangeNetworkToJson(p)
-	// template := elasticquery.New_source(p.GetRkey(), "Networkdata")
-	// elasticquery.Send_to_elastic("ed_network_history", template, Data)
+	// send to elasticsearch
+	lines := strings.Split(p.GetMessage(), "\n")
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		line = strings.ReplaceAll(line, "|", "@|@")
+		uuid := uuid.NewString()
+		// elasticquery.SendToMainElastic(uuid, "ed_memory_network", p.GetRkey(), values[0], int_date, "memory", values[12])
+		elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{})
+	}
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
