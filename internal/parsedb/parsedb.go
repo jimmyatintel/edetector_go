@@ -313,11 +313,11 @@ func toElastic(details string, agent string, line string, item string, date stri
 		// logger.Error("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
-	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc)
+	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st)
+	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low")
 	if err != nil {
 		return err
 	}

@@ -1,10 +1,12 @@
 package elastic
 
 import (
+	"bytes"
 	"context"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
+	"encoding/json"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -66,7 +68,6 @@ func BulkIndexRequest(action []string, work []string) error {
 	if !flagcheck() {
 		return nil
 	}
-	// logger.Info("Bulk Index request: ", zap.Any("message", action))
 	var buf strings.Builder
 	for i, doc := range action {
 		buf.WriteString(doc)
@@ -101,28 +102,48 @@ func BulkIndexRequest(action []string, work []string) error {
 	return nil
 }
 
-func updateRequest(index string, body string) {
-	if !flagcheck() {
-		return
+func BulkUpdateDocuments(index string, docIDs []string) {
+	var buf bytes.Buffer
+	for _, docID := range docIDs {
+		action := map[string]interface{}{
+			"update": map[string]interface{}{
+				"_index": index,
+				"_id":    docID,
+				"_type":  "_doc",
+			},
+		}
+		source, err := json.Marshal(action)
+		if err != nil {
+			logger.Info("Failed to marshal", zap.Any("message", err.Error()))
+		}
+		buf.Write(source)
+		buf.WriteByte('\n')
+		updateData := map[string]interface{}{
+			"doc": map[string]interface{}{
+				"processConnectIP": "detected",
+			},
+		}
+		docUpdateData, err := json.Marshal(updateData)
+		if err != nil {
+			logger.Info("Failed to marshal", zap.Any("message", err.Error()))
+		}
+		buf.Write(docUpdateData)
+		buf.WriteByte('\n')
 	}
-	updateReq := esapi.UpdateRequest{
-		Index: index,
-		Body:  strings.NewReader(body),
-	}
-	res, err := updateReq.Do(context.Background(), es)
+	res, err := es.Bulk(
+		strings.NewReader(buf.String()),
+		es.Bulk.WithContext(context.Background()),
+	)
 	if err != nil {
-		logger.Error("Error executing update request: %s", zap.Any("error", err.Error()))
+		logger.Info("Failed to marshal", zap.Any("message", err.Error()))
 	}
 	defer res.Body.Close()
-	if res.IsError() {
-		logger.Error("Error response: ", zap.Any("message", res.Status()))
-	}
-	logger.Info(res.String())
+	logger.Info("Bulk update: ", zap.Any("message", res.String()))
 }
 
-func searchRequest(index string, body string) {
+func SearchRequest(index string, body string) string {
 	if !flagcheck() {
-		return
+		return ""
 	}
 	req := esapi.SearchRequest{
 		Index: []string{index},
@@ -133,5 +154,16 @@ func searchRequest(index string, body string) {
 		panic(err)
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	// logger.Info(res.String())
+	var result map[string]interface{}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
+		return ""
+	}
+	var docID string
+	hits := result["hits"].(map[string]interface{})["hits"].([]interface{})
+	for _, hit := range hits {
+		docID = hit.(map[string]interface{})["_id"].(string)
+	}
+	return docID
 }

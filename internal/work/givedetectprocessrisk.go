@@ -100,8 +100,9 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 			logger.Error("Invalid date: ", zap.Any("message", values[1]))
 			int_date = 0
 		}
-		elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", values[12])
-		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &Memory{})
+		logger.Info("memory info", zap.Any("message", line))
+		elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", values[12], "ed_high")
+		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &Memory{}, "ed_high")
 	}
 
 	var send_packet = packet.WorkPacket{

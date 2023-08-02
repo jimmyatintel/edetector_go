@@ -7,7 +7,6 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"net"
-	"strconv"
 	"strings"
 
 	"encoding/json"
@@ -88,20 +87,9 @@ func NetworkElastic(p packet.Packet) {
 		line = strings.ReplaceAll(line, "|", "@|@")
 		uuid := uuid.NewString()
 		values := strings.Split(line, "@|@")
-		key := values[0] + "," + values[1]
+		key := values[0] + "," + values[2]
 		networkSet[key] = struct{}{}
-		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network", p.GetRkey(), line, &MemoryNetwork{})
+		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
 	}
-	for key := range networkSet {
-		values := strings.Split(key, ",")
-		pid, err := strconv.Atoi(values[0])
-		if err != nil {
-            continue
-        }
-		time, err := strconv.Atoi(values[1])
-		if err!= nil {
-			continue
-        }
-		elasticquery.UpdateNetworkInfo(pid, time)
-	}
+	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }
