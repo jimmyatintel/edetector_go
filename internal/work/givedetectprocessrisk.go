@@ -90,18 +90,18 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 			continue
 		}
 		//! tmp version
-		values := strings.Split(line, "|")
-		line = values[4] + "@|@" + values[2] + "@|@detecting@|@cmd@|@" + values[6] + "@|@" + values[5] + "@|@" + values[7] + "@|@parentName@|@" + values[9] + "@|@" + values[14] + "@|@" + values[0] + "@|@1@|@0,0@|@0@|@0,0@|@null@|@0@|@" + values[13] + "," + values[12] + "@|@detect"
-		values = strings.Split(line, "@|@")
+		original := strings.Split(line, "|")
+		line = original[4] + "@|@" + original[2] + "@|@detecting@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@1@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
+		values := strings.Split(line, "@|@")
 		//! tmp version
 		uuid := uuid.NewString()
-		int_date, err := strconv.Atoi(values[2])
+		int_date, err := strconv.Atoi(values[1])
 		if err != nil {
 			logger.Error("Invalid date: ", zap.Any("message", values[1]))
 			int_date = 0
 		}
-		elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", values[12])
-		elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &Memory{})
+		elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", values[12])
+		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &Memory{})
 	}
 
 	var send_packet = packet.WorkPacket{

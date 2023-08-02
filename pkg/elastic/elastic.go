@@ -101,12 +101,31 @@ func BulkIndexRequest(action []string, work []string) error {
 	return nil
 }
 
-func searchRequest(name string, body string) {
+func updateRequest(index string, body string) {
+	if !flagcheck() {
+		return
+	}
+	updateReq := esapi.UpdateRequest{
+		Index: index,
+		Body:  strings.NewReader(body),
+	}
+	res, err := updateReq.Do(context.Background(), es)
+	if err != nil {
+		logger.Error("Error executing update request: %s", zap.Any("error", err.Error()))
+	}
+	defer res.Body.Close()
+	if res.IsError() {
+		logger.Error("Error response: ", zap.Any("message", res.Status()))
+	}
+	logger.Info(res.String())
+}
+
+func searchRequest(index string, body string) {
 	if !flagcheck() {
 		return
 	}
 	req := esapi.SearchRequest{
-		Index: []string{name},
+		Index: []string{index},
 		Body:  strings.NewReader(body),
 	}
 	res, err := req.Do(context.Background(), es)

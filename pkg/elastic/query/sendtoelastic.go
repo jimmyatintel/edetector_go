@@ -24,15 +24,14 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_main",
+		Index: "ed_de_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	// logger.Info("ed_main", zap.Any("message", string(msgBytes)))
-	if index == "ed_memory" {
+	if index == "ed_de_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
 		err = rabbitmq.Publish("ed_low", msgBytes)
@@ -60,8 +59,7 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if err != nil {
 		return err
 	}
-	// logger.Info("ed_memory", zap.Any("message", string(msgBytes)))
-	if index == "ed_memory" {
+	if index == "ed_de_memory" {
 		err = rabbitmq.Publish("ed_mid", msgBytes)
 	} else {
 		err = rabbitmq.Publish("ed_low", msgBytes)
