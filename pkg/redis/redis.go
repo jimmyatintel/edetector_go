@@ -3,7 +3,6 @@ package redis
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
 
 	"github.com/redis/go-redis/v9"
@@ -12,10 +11,10 @@ import (
 var RedisClient *redis.Client
 
 func checkflag() bool {
-	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
-		return true
-	}
-	return false
+	// if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+	return true
+	// }
+	// return false
 }
 func Redis_init() *redis.Client {
 	RedisClient = redis.NewClient(&redis.Options{

@@ -16,6 +16,8 @@ import (
 )
 
 type MemoryNetwork struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
 	PID               int    `json:"pid"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
@@ -51,7 +53,7 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	//todo
+	go NetworkElastic(p)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -61,19 +63,7 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
-	// send to elasticsearch
-	lines := strings.Split(p.GetMessage(), "\n")
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-		line = strings.ReplaceAll(line, "|", "@|@")
-		uuid := uuid.NewString()
-		// elasticquery.SendToMainElastic(uuid, "ed_memory_network", p.GetRkey(), values[0], int_date, "memory", values[12])
-		elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{})
-	}
-
+	go NetworkElastic(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -85,4 +75,21 @@ func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
+}
+
+func NetworkElastic(p packet.Packet) {
+	networkSet := make(map[string]struct{})
+	lines := strings.Split(p.GetMessage(), "\n")
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		line = strings.ReplaceAll(line, "|", "@|@")
+		uuid := uuid.NewString()
+		values := strings.Split(line, "@|@")
+		key := values[0] + "," + values[2]
+		networkSet[key] = struct{}{}
+		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+	}
+	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }

@@ -3,7 +3,6 @@ package parsedb
 import (
 	"database/sql"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
@@ -34,25 +33,25 @@ func parser_init() {
 	CheckDir(unstagePath)
 	CheckDir(stagedPath)
 
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
-	}
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Error("Error loading feature flag")
+	// 	return
+	// }
 	vp := config.LoadConfig()
 	if vp == nil {
 		logger.Error("Error loading config file")
 		return
 	}
 	logger.Info("Check & Create DB dir")
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
-	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
-		rabbitmq.Rabbit_init()
-		logger.Info("rabbit is enabled.")
-	}
+	// if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+	logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
+	logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
+	// }
+	// if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+	rabbitmq.Rabbit_init()
+	logger.Info("rabbit is enabled.")
+	// }
 }
 
 func CheckDir(path string) {
@@ -213,7 +212,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := "ed_" + strings.ToLower(tableName)
+		details := "ed_de_" + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
@@ -313,11 +312,11 @@ func toElastic(details string, agent string, line string, item string, date stri
 		// logger.Error("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
-	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc)
+	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st)
+	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low")
 	if err != nil {
 		return err
 	}

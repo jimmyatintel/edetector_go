@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string) error {
+func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string, priority string) error {
 	template := mainSource{
 		UUID:  uuid,
 		Index: index,
@@ -24,26 +24,21 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_main",
+		Index: "ed_de_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	// logger.Info("ed_main", zap.Any("message", string(msgBytes)))
-	if index == "ed_memory" {
-		err = rabbitmq.Publish("ed_mid", msgBytes)
-	} else {
-		err = rabbitmq.Publish("ed_low", msgBytes)
-	}
+	err = rabbitmq.Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data) error {
+func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string) error {
 	template, err := stringToStruct(uuid, agentID, mes, data)
 	if err != nil {
 		return err
@@ -60,12 +55,7 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if err != nil {
 		return err
 	}
-	// logger.Info("ed_memory", zap.Any("message", string(msgBytes)))
-	if index == "ed_memory" {
-		err = rabbitmq.Publish("ed_mid", msgBytes)
-	} else {
-		err = rabbitmq.Publish("ed_low", msgBytes)
-	}
+	err = rabbitmq.Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
