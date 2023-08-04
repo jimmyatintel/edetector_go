@@ -11,6 +11,7 @@ import (
 )
 
 func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
+fail_count := 0
 outerLoop:
 	for {
 		var docs []string
@@ -34,6 +35,11 @@ outerLoop:
 			if doc == "" {
 				logger.Info("waiting 60s for updating process: ", zap.Any("message", pid+" "+createTime))
 				time.Sleep(60 * time.Second)
+				fail_count += 1
+				if fail_count >= 3 {
+                    logger.Error("fail to update process: ", zap.Any("message", pid+" "+createTime))
+                    break outerLoop
+                }
 				continue outerLoop
 			}
 		}
