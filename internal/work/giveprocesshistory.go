@@ -2,29 +2,32 @@ package work
 
 import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/memory"
 	"edetector_go/internal/packet"
+	risklevel "edetector_go/internal/risklevel"
 	"edetector_go/internal/task"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"encoding/json"
 	"net"
+	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-type ProcessDetectJson struct {
-	UUID        string `json:"uuid"`
-	AgentID     string `json:"agent_id"`
-	PID         int    `json:"pid"`
-	Parent_PID  int    `json:"parent_pid"`
-	ProcessName string `json:"process_name"`
-	ProcessTime int    `json:"process_time"`
-	ParentName  string `json:"parent_name"`
-	ParentTime  int    `json:"parent_time"`
-}
+// type ProcessDetectJson struct {
+// 	0 PID         int    `json:"pid"`
+// 	1 Parent_PID  int    `json:"parent_pid"`
+// 	2 ProcessName string `json:"process_name"`
+// 	3 ProcessTime int    `json:"process_time"`
+// 	4 ParentName  string `json:"parent_name"`
+// 	5 ParentTime  int    `json:"parent_time"`
+// }
 
-func (n ProcessDetectJson) Elastical() ([]byte, error) {
-	return json.Marshal(n)
-}
+// func (n ProcessDetectJson) Elastical() ([]byte, error) {
+// 	return json.Marshal(n)
+// }
 
 func GiveProcessHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveProcessHistory: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -60,16 +63,42 @@ func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	logger.Debug("GiveProcessHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
 	// send to elasticsearch
-	// lines := strings.Split(p.GetMessage(), "\n")
-	// for _, line := range lines {
-	// 	values := strings.Split(line, "|")
-	// 	if len(values) != 6 {
-	// 		continue
-	// 	}
-	// 	uuid := uuid.NewString()
-	// 	elasticquery.SendToMainElastic(uuid, "ed_main", p.GetRkey(), values[1], values[2], "network_record", values[5]) //! ask frontend
-	// 	// elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &ProcessDetectJson{})
-	// }
+	lines := strings.Split(p.GetMessage(), "\n")
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		//! tmp version
+		original := strings.Split(line, "|")
+		int_date, err := strconv.Atoi(original[3])
+		if err != nil {
+			logger.Error("Invalid date: ", zap.Any("message", original[3]))
+			original[3] = "0"
+			int_date = 0
+		}
+		line = original[2] + "@|@" + original[3] + "@|@detecting@|@cmd@|@md5@|@path@|@" + original[1] + "@|@" + original[4] + "@|@parentPath@|@sign@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@0,0@|@detect"
+		values := strings.Split(line, "@|@")
+		//! tmp version
+		uuid := uuid.NewString()
+		m_tmp := memory.Memory{}
+		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
+		if err != nil {
+			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
+		}
+		m_tmp.RiskLevel, err = risklevel.Getriskscore(m_tmp)
+		if err != nil {
+			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
+		}
+		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
+		err = elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
+		if err != nil {
+			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+		}
+		err = elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &m_tmp, "ed_high")
+		if err != nil {
+			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+		}
+	}
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

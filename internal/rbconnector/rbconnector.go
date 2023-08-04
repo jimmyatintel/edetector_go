@@ -26,15 +26,16 @@ type Message struct {
 }
 
 var mid_mutex *sync.Mutex
+var low_mutex *sync.Mutex
+
 var mid_bulkdata []string
 var mid_bulkaction []string
-
-var low_mutex *sync.Mutex
 var low_bulkdata []string
 var low_bulkaction []string
 
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
+	low_mutex = &sync.Mutex{}
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Error("Error loading feature flag")
@@ -56,6 +57,7 @@ func connector_init() {
 		}
 		logger.Info("elastic is enabled.")
 	}
+	fmt.Println("hihi213")
 }
 
 func Start() {
@@ -66,6 +68,7 @@ func Start() {
 	rabbitmq.Declare("ed_low")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
+	fmt.Println("123")
 	go low_speed()
 	go mid_speed()
 	go high_speed()
@@ -104,17 +107,7 @@ func mid_speed() {
 		return
 	}
 	logger.Info("Connected to mid speed queue")
-	tunnel_time, err := strconv.Atoi(os.Getenv("MID_TUNNEL_TIME"))
-	if err != nil {
-		logger.Error("mid tunnel time error")
-		return
-	}
-	tunnel_size, err := strconv.Atoi(os.Getenv("MID_TUNNEL_SIZE"))
-	if err != nil {
-		logger.Error("mid tunnel size error")
-		return
-	}
-	go count_timer(tunnel_time, tunnel_size, &mid_bulkaction, &mid_bulkdata, mid_mutex)
+	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -126,8 +119,8 @@ func mid_speed() {
 		mid_bulkdata = append(mid_bulkdata, m.Data)
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
-		for len(mid_bulkaction) > tunnel_size {
-			time.Sleep(3 * time.Second)
+		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
@@ -139,17 +132,7 @@ func low_speed() {
 		return
 	}
 	logger.Info("Connected to low speed queue")
-	tunnel_time, err := strconv.Atoi(os.Getenv("LOW_TUNNEL_TIME"))
-	if err != nil {
-		logger.Error("low tunnel time error")
-		return
-	}
-	tunnel_size, _ := strconv.Atoi(os.Getenv("LOQ_TUNNEL_SIZE"))
-	if err != nil {
-		logger.Error("low tunnel size error")
-		return
-	}
-	go count_timer(tunnel_time, tunnel_size, &low_bulkaction, &low_bulkdata, low_mutex)
+	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
 		var m Message
 		err := json.Unmarshal(msg.Body, &m)
@@ -161,19 +144,18 @@ func low_speed() {
 		low_bulkdata = append(low_bulkdata, m.Data)
 		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		low_mutex.Unlock()
-		for len(low_bulkaction) > tunnel_size {
-			time.Sleep(3 * time.Second)
+		for len(low_bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
 func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]string, mutex *sync.Mutex) {
-	fmt.Println("Counting timer started")
+	logger.Info("Counting timer started")
 	last_send := time.Now()
 	for {
+		mutex.Lock()
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
-			mutex.Lock()
-			fmt.Println("bulk insert")
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error(err.Error())
@@ -182,8 +164,8 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			*bulkdata = nil
 			*bulkaction = nil
 			last_send = time.Now()
-			mutex.Unlock()
 		}
-		time.Sleep(5 * time.Microsecond)
+		mutex.Unlock()
+		time.Sleep(3 * time.Second)
 	}
 }

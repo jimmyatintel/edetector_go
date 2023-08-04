@@ -11,7 +11,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"errors"
-	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -33,7 +32,6 @@ var workingPath string
 var unstagePath string
 
 func init() {
-	fmt.Println("hihihi")
 	curDir, err := os.Getwd()
 	if err != nil {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))

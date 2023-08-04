@@ -32,6 +32,7 @@ func RequestToUser(id string) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
+
 	host := os.Getenv("WS_HOST")
 	port := os.Getenv("WS_PORT")
 	req, err := http.NewRequest("POST", "http://"+host+":"+port+"/updateTask", bytes.NewBuffer(payload))

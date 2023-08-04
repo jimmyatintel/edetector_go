@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string) error {
+func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string, priority string) error {
 	template := mainSource{
 		UUID:  uuid,
 		Index: index,
@@ -31,16 +31,15 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.Publish("ed_mid", msgBytes)
-	// err = elastic.IndexRequest(index, string(request))
+	err = rabbitmq.Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data) error {
-	template, err := stringToStruct(uuid, agentID, mes, data)
+func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string) error {
+	template, err := StringToStruct(uuid, agentID, mes, data)
 	if err != nil {
 		return err
 	}
@@ -56,18 +55,17 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.Publish("ed_mid", msgBytes)
-	// err = elastic.IndexRequest(index, string(request))
+	err = rabbitmq.Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func stringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
+func StringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(data))
-	line := uuid + "||" + agentID + "||" + mes
-	values := strings.Split(line, "||")
+	line := uuid + "@|@" + agentID + "@|@" + mes
+	values := strings.Split(line, "@|@")
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {

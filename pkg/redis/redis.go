@@ -36,7 +36,7 @@ func Redis_init() *redis.Client {
 		logger.Error("Error connecting to redis")
 		return nil
 	}
-	logger.Error("redis is enabled")
+	logger.Info("redis is enabled")
 	return RedisClient
 }
 
