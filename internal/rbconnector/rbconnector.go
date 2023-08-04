@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -46,8 +47,8 @@ func connector_init() {
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
+		logger.InitLogger(os.Getenv("CONNECTOR_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", os.Getenv("CONNECTOR_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		err := elastic.SetElkClient()

@@ -2,7 +2,6 @@ package clientsearch
 
 import (
 	"context"
-	config "edetector_go/config"
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
@@ -30,12 +29,12 @@ func Connect_init() int {
 	var err error
 	if Tcp_enable, err = fflag.FFLAG.FeatureEnabled("client_tcp"); Tcp_enable && err == nil {
 		logger.Info("tcp is enabled")
-		Client_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
+		Client_TCP_Server, err = net.Listen(os.Getenv("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+os.Getenv("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
 			logger.Error("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
-		Client_detect_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
+		Client_detect_TCP_Server, err = net.Listen(os.Getenv("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+os.Getenv("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
 			logger.Error("Error listening:", zap.Any("error", err.Error()))
 			return 1
@@ -43,12 +42,12 @@ func Connect_init() int {
 	}
 	if Udp_enable, err = fflag.FFLAG.FeatureEnabled("client_udp"); Udp_enable && err == nil {
 		logger.Info("udp is enabled")
-		Client_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
+		Client_UDP_Server, err = net.ListenPacket(os.Getenv("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+os.Getenv("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
 			logger.Error("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
-		Client_detect_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
+		Client_detect_UDP_Server, err = net.ListenPacket(os.Getenv("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+os.Getenv("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
 			logger.Error("Error listening:", zap.Any("error", err.Error()))
 			return 1
