@@ -238,7 +238,7 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScanDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveScanDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
