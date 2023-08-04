@@ -3,6 +3,7 @@ package rbconnector
 import (
 	"context"
 	"edetector_go/config"
+	"edetector_go/internal/fflag"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
@@ -34,27 +35,27 @@ var low_bulkaction []string
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
 	low_mutex = &sync.Mutex{}
-	// fflag.Get_fflag()
-	// if fflag.FFLAG == nil {
-	// 	logger.Error("Error loading feature flag")
-	// 	return
-	// }
+	fflag.Get_fflag()
+	if fflag.FFLAG == nil {
+		logger.Error("Error loading feature flag")
+		return
+	}
 	vp := config.LoadConfig()
 	if vp == nil {
 		logger.Error("Error loading config file")
 		return
 	}
-	// if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-	logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
-	logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
-	// }
-	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-	err := elastic.SetElkClient()
-	if err != nil {
-		logger.Error("Error connecting to elastic: " + err.Error())
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
 	}
-	logger.Info("elastic is enabled.")
-	// }
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		err := elastic.SetElkClient()
+		if err != nil {
+			logger.Error("Error connecting to elastic: " + err.Error())
+		}
+		logger.Info("elastic is enabled.")
+	}
 	fmt.Println("hihi213")
 }
 

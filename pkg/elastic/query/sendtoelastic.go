@@ -24,7 +24,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_de_main",
+		Index: "ed_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
@@ -39,7 +39,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 }
 
 func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string) error {
-	template, err := stringToStruct(uuid, agentID, mes, data)
+	template, err := StringToStruct(uuid, agentID, mes, data)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	return nil
 }
 
-func stringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
+func StringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(data))
 	line := uuid + "@|@" + agentID + "@|@" + mes
 	values := strings.Split(line, "@|@")

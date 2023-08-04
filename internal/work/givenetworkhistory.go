@@ -87,9 +87,12 @@ func NetworkElastic(p packet.Packet) {
 		line = strings.ReplaceAll(line, "|", "@|@")
 		uuid := uuid.NewString()
 		values := strings.Split(line, "@|@")
-		key := values[0] + "," + values[2]
+		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		if err != nil {
+			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+        }
 	}
 	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }

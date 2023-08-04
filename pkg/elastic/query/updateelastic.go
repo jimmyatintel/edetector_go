@@ -29,16 +29,15 @@ outerLoop:
 					}
 				}
 			}`, agent, pid, createTime)
-			logger.Info("network info", zap.Any("message", agent+" "+pid+" "+createTime))
-			doc := elastic.SearchRequest("ed_de_memory", query)
+			doc := elastic.SearchRequest("ed_memory", query)
 			docs = append(docs, doc)
 			if doc == "" {
-				logger.Info("waiting for 10 seconds for process info")
-				time.Sleep(10 * time.Second)
+				logger.Info("waiting 60s for updating process: ", zap.Any("message", pid+" "+createTime))
+				time.Sleep(60 * time.Second)
 				continue outerLoop
 			}
 		}
-		logger.Info("docs", zap.Any("docs", docs))
-		elastic.BulkUpdateDocuments("ed_de_memory", docs)
+		elastic.BulkUpdateDocuments("ed_memory", docs)
+		break
 	}
 }

@@ -1,11 +1,11 @@
 package risklevel
 
 import (
-	"edetector_go/internal/work"
+	"edetector_go/internal/memory"
 	"strings"
 )
 
-func Getriskscore(info work.Memory) (int, error) {
+func Getriskscore(info memory.Memory) (int, error) {
 	score := 0
 	if info.ProcessBeInjected == 2 {
 		if _, ok := HighRiskMap[info.ProcessName]; ok {
@@ -54,10 +54,11 @@ func Getriskscore(info work.Memory) (int, error) {
 	if info.DigitalSign == "null" && info.ProcessBeInjected == 0 && info.Hook == "null" {
 		score = 0
 	}
-	return score, nil
+	level := scoretoLevel(score)
+	return level, nil
 }
 
-func ScoretoLevel(score int) int {
+func scoretoLevel(score int) int {
 	if score >= 150 {
 		return 3
 	} else if score > 90 {

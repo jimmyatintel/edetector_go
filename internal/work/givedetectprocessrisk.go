@@ -2,11 +2,12 @@ package work
 
 import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
+	risklevel "edetector_go/internal/risklevel"
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"encoding/json"
 	"net"
 	"strconv"
 	"strings"
@@ -37,34 +38,6 @@ import (
 //18 	NetStr            string `json:"net_str"`
 // }
 
-type Memory struct {
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	ProcessName       string `json:"processName"`
-	ProcessCreateTime int    `json:"processCreateTime"`
-	ProcessConnectIP  string `json:"processConnectIP"`
-	DynamicCommand    string `json:"dynamicCommand"`
-	ProcessMD5        string `json:"processMD5"`
-	ProcessPath       string `json:"processPath"`
-	ParentProcessId   int    `json:"parentProcessId"`
-	ParentProcessName string `json:"parentProcessName"`
-	ParentProcessPath string `json:"parentProcessPath"`
-	DigitalSign       string `json:"digitalSign"`
-	ProcessId         int    `json:"processId"`
-	RiskLevel         int    `json:"riskLevel"`
-	InjectActive      string `json:"injectActive"`
-	ProcessBeInjected int    `json:"processBeInjected"`
-	Boot              string `json:"boot"`
-	Hook              string `json:"hook"`
-	ImportOtherDLL    bool   `json:"importOtherDLL"`
-	Hide              string `json:"hide"`
-	Mode              string `json:"mode"`
-}
-
-func (n Memory) Elastical() ([]byte, error) {
-	return json.Marshal(n)
-}
-
 func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectProcessRisk: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
@@ -91,18 +64,35 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		}
 		//! tmp version
 		original := strings.Split(line, "|")
-		line = original[4] + "@|@" + original[2] + "@|@detecting@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@1@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
+		int_date, err := strconv.Atoi(original[2])
+		if err != nil {
+			logger.Error("Invalid date: ", zap.Any("message", original[2]))
+			original[2] = "0"
+			int_date = 0
+		}
+		line = original[4] + "@|@" + original[2] + "@|@detecting@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
 		values := strings.Split(line, "@|@")
 		//! tmp version
 		uuid := uuid.NewString()
-		int_date, err := strconv.Atoi(values[1])
+		m_tmp := memory.Memory{}
+		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
 		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", values[1]))
-			int_date = 0
+			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
-		logger.Info("memory info", zap.Any("message", line))
-		elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", values[12], "ed_high")
-		elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &Memory{}, "ed_high")
+		m_tmp.RiskLevel, err = risklevel.Getriskscore(m_tmp)
+		if err != nil {
+			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
+		}
+		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
+		// logger.Info("Risk level", zap.Any("message", strconv.Itoa(m_tmp.RiskLevel)))
+		err = elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
+		if err != nil {
+			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+		}
+		err = elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &m_tmp, "ed_high")
+		if err != nil {
+			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+		}
 	}
 
 	var send_packet = packet.WorkPacket{
