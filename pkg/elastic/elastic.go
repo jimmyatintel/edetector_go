@@ -120,7 +120,7 @@ func BulkUpdateDocuments(index string, docIDs []string) {
 		buf.WriteByte('\n')
 		updateData := map[string]interface{}{
 			"doc": map[string]interface{}{
-				"processConnectIP": "detected",
+				"processConnectIP": "true",
 			},
 		}
 		docUpdateData, err := json.Marshal(updateData)
