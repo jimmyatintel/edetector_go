@@ -224,7 +224,6 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
-	taskservice.Finish_task(p.GetRkey(), "StartCollect")
 	return task.SUCCESS, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
@@ -117,6 +118,7 @@ func Main() {
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
+		taskservice.Finish_task(agent, "StartCollect")
 	}
 }
 
