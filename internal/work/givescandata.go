@@ -19,31 +19,31 @@ import (
 	"go.uber.org/zap"
 )
 
-type ProcessScanJson struct {
-	PID         int    `json:"pid"`
-	Parent_PID  int    `json:"parent_pid"`
-	ProcessName string `json:"process_name"`
-	ProcessTime int    `json:"process_time"`
-	ParentName  string `json:"parent_name"`
-	ParentTime  int    `json:"parent_time"`
-	FilePath    string `json:"file_path"`
-	UserName    string `json:"user_name"`
-	IsPacked    bool   `json:"is_packeted"`
-	CommandLine string `json:"command_line"`
-	IsHide      bool   `json:"is_hide"`
-}
+// type ProcessScanJson struct {
+// 	PID         int    `json:"pid"`
+// 	Parent_PID  int    `json:"parent_pid"`
+// 	ProcessName string `json:"process_name"`
+// 	ProcessTime int    `json:"process_time"`
+// 	ParentName  string `json:"parent_name"`
+// 	ParentTime  int    `json:"parent_time"`
+// 	FilePath    string `json:"file_path"`
+// 	UserName    string `json:"user_name"`
+// 	IsPacked    bool   `json:"is_packeted"`
+// 	CommandLine string `json:"command_line"`
+// 	IsHide      bool   `json:"is_hide"`
+// }
 
-type ScanInfoJson struct {
-	PID        int    `json:"pid"`
-	FileName   string `json:"file_name"`
-	FilePath   string `json:"file_path"`
-	FileHash   string `json:"file_hash"`
-	Isinjected int    `json:"is_injected"`
-	Mode       string `json:"mode"`
-	Count      int    `json:"count"`
-	AllCount   int    `json:"all_count"`
-	IsStartRun bool   `json:"is_start_run"`
-}
+// type ScanInfoJson struct {
+// 	PID        int    `json:"pid"`
+// 	FileName   string `json:"file_name"`
+// 	FilePath   string `json:"file_path"`
+// 	FileHash   string `json:"file_hash"`
+// 	Isinjected int    `json:"is_injected"`
+// 	Mode       string `json:"mode"`
+// 	Count      int    `json:"count"`
+// 	AllCount   int    `json:"all_count"`
+// 	IsStartRun bool   `json:"is_start_run"`
+// }
 
 // type ScanOverJson struct {
 // 	0 PID               int    `json:"pid"`
