@@ -2,6 +2,8 @@ package elasticquery
 
 import (
 	"edetector_go/internal/rbconnector"
+	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"reflect"
@@ -10,14 +12,24 @@ import (
 )
 
 func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string, priority string) error {
+	agentIP := query.GetMachineIP(agent)
+	if agentIP == "" {
+		logger.Error("Error getting machine ip")
+	}
+	agentName := query.GetMachineName(agent)
+	if agentName == "" {
+		logger.Error("Error getting machine name")
+	}
 	template := mainSource{
-		UUID:  uuid,
-		Index: index,
-		Agent: agent,
-		Item:  item,
-		Date:  date,
-		Type:  ttype,
-		Etc:   etc,
+		UUID:      uuid,
+		Index:     index,
+		Agent:     agent,
+		AgentIP:   agentIP,
+		AgentName: agentName,
+		Item:      item,
+		Date:      date,
+		Type:      ttype,
+		Etc:       etc,
 	}
 	request, err := template.Elastical()
 	if err != nil {
