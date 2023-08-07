@@ -30,8 +30,8 @@ func parser_init() {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
 	}
 	currentDir = curDir
-	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
-	stagedPath = filepath.Join(currentDir, "../../dbStaged")
+	unstagePath = filepath.Join(currentDir, "dbUnstage")
+	stagedPath = filepath.Join(currentDir, "dbStaged")
 	CheckDir(unstagePath)
 	CheckDir(stagedPath)
 
@@ -47,8 +47,8 @@ func parser_init() {
 	}
 	logger.Info("Check & Create DB dir")
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
+		logger.InitLogger(os.Getenv("PARSER_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", os.Getenv("PARSER_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
