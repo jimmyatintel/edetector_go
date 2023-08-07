@@ -18,7 +18,7 @@ import (
 type MemoryNetwork struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
-	PID               int    `json:"pid"`
+	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
 	ProcessCreateTime int    `json:"processCreateTime"`
@@ -92,7 +92,7 @@ func NetworkElastic(p packet.Packet) {
 		err := elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-        }
+		}
 	}
 	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }
