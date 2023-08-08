@@ -1,4 +1,4 @@
-package parsedb
+package dbparser
 
 import "encoding/json"
 

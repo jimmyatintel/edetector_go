@@ -85,11 +85,11 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		}
 		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
 		// logger.Info("Risk level", zap.Any("message", strconv.Itoa(m_tmp.RiskLevel)))
-		err = elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
+		err = elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &m_tmp, "ed_high")
+		err = elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &m_tmp, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

@@ -36,7 +36,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_main",
+		Index: "ed_de_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
@@ -74,9 +74,37 @@ func SendToDetailsElastic(uuid string, index string, agentID string, mes string,
 	return nil
 }
 
+func SendToRelationElastic(template Request_data, priority string) error {
+	request, err := template.Elastical()
+	if err != nil {
+		return err
+	}
+	var msg = rbconnector.Message{
+		Index: "ed_de_explorer_relation",
+		Data:  string(request),
+	}
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	err = rabbitmq.Publish(priority, msgBytes)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func StringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
+	agentIP := query.GetMachineIP(agentID)
+	if agentIP == "" {
+		logger.Error("Error getting machine ip")
+	}
+	agentName := query.GetMachineName(agentID)
+	if agentName == "" {
+		logger.Error("Error getting machine name")
+	}
 	v := reflect.Indirect(reflect.ValueOf(data))
-	line := uuid + "@|@" + agentID + "@|@" + mes
+	line := uuid + "@|@" + agentID + "@|@" + agentIP + "@|@" + agentName + "@|@" + mes
 	values := strings.Split(line, "@|@")
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)

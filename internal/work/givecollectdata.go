@@ -4,8 +4,8 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/dbparser"
 	packet "edetector_go/internal/packet"
-	"edetector_go/internal/parsedb"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
@@ -40,8 +40,8 @@ func init() {
 
 	workingPath = filepath.Join(currentDir, "../../dbWorking")
 	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
-	parsedb.CheckDir(workingPath)
-	parsedb.CheckDir(unstagePath)
+	dbparser.CheckDir(workingPath)
+	dbparser.CheckDir(unstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {

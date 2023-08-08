@@ -1,4 +1,4 @@
-package parsedb
+package dbparser
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 	"os"
@@ -44,6 +45,9 @@ func parser_init() {
 	if vp == nil {
 		logger.Error("Error loading config file")
 		return
+	}
+	if err := mariadb.Connect_init(); err != nil {
+		logger.Error("Error connecting to mariadb: " + err.Error())
 	}
 	logger.Info("Check & Create DB dir")
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
@@ -215,7 +219,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := "ed_" + strings.ToLower(tableName) //! developing
+		details := "ed_de" + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})

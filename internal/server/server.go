@@ -42,7 +42,6 @@ func server_init() {
 	}
 	if err := mariadb.Connect_init(); err != nil {
 		logger.Error("Error connecting to mariadb: " + err.Error())
-
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()

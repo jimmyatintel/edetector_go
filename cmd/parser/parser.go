@@ -1,9 +1,9 @@
 package main
 
 import (
-	"edetector_go/internal/parsedb"
+	"edetector_go/internal/dbparser"
 )
 
 func main() {
-	parsedb.Main()
+	dbparser.Main()
 }
