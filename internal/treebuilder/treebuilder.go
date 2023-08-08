@@ -76,27 +76,6 @@ func init() {
 }
 
 func Main() {
-	// testing
-	test := "8beba472f3f44cabbbb44fd232171933"
-	work.Finished <- test
-	work.ExplorerTotalMap[test] = 15
-	work.DetailsMap[test] = "" +
-		"0|$MFT|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|285736960|0\n" +
-		"1|$MFTMirr|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|4096|0\n" +
-		"2|$LogFile|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|67108864|0\n" +
-		"3|$Volume|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|0|0\n" +
-		"4|$AttrDef|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2560|0\n" +
-		"5|.|5|0|2|2019/12/07 17:03:44|2023/07/04 17:02:35|2023/07/10 13:21:26|2023/07/04 17:02:35|0|0\n" +
-		"6|$Bitmap|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|1638336|0\n" +
-		"7|$Boot|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|8192|0\n" +
-		"8|$BadClus|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|0|0\n" +
-		"9|$Secure|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|0|0\n" +
-		"10|$UpCase|5|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|131072|0\n" +
-		"11|$Extend|5|0|2|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|0|0\n" +
-		"12|$Quota|11|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/06/27 11:28:23|0|0\n" +
-		"13|$ObjId|11|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/07/06 16:15:26|2023/06/27 11:28:23|0|0\n" +
-		"14|$Reparse|11|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/07/10 10:01:07|2023/06/27 11:28:23|0|0\n"
-
 	for {
 		var rootInd int
 		agent := <-work.Finished
@@ -161,12 +140,12 @@ func Main() {
 			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + strconv.FormatInt(create_time, 10) + "@|@" + strconv.FormatInt(write_time, 10) + "@|@" + strconv.FormatInt(access_time, 10) + "@|@" + strconv.FormatInt(entry_modified_time, 10) + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
 
-			err = elasticquery.SendToMainElastic(uuid, "ed_de_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_high")
+			err = elasticquery.SendToMainElastic(uuid, "ed_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_high")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_high")
+			err = elasticquery.SendToDetailsElastic(uuid, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_high")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
