@@ -1,4 +1,4 @@
-package parsedb
+package dbparser
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 	"os"
@@ -45,14 +46,18 @@ func parser_init() {
 		logger.Error("Error loading config file")
 		return
 	}
-	logger.Info("Check & Create DB dir")
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(os.Getenv("PARSER_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", os.Getenv("PARSER_LOG_FILE")))
+
+	if err := mariadb.Connect_init(); err != nil {
+		logger.Error("Error connecting to mariadb: " + err.Error())
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
 		logger.Info("rabbit is enabled.")
+	}
+	logger.Info("Check & Create DB dir")
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
 	}
 }
 

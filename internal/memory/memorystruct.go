@@ -5,6 +5,8 @@ import "encoding/json"
 type Memory struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
+	AgentIP            string `json:"agentIP"`
+	AgentName          string `json:"agentName"`
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	ProcessConnectIP  string `json:"processConnectIP"`

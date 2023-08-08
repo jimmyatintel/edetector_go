@@ -17,22 +17,12 @@ import (
 )
 
 var driveMu sync.Mutex
-var explorerTotalMap = make(map[string]int)
+var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 
-type ExplorerJson struct {
-	Ind               int    `json:"ind"`
-	FileName          string `json:"file_name"`
-	Parent_Ind        int    `json:"parent_ind"`
-	IsDeleted         bool   `json:"isDeleted"`
-	IsDirectory       bool   `json:"isDirectory"`
-	CreateTime        int    `json:"create_time"`
-	WriteTime         int    `json:"write_time"`
-	AccessTime        int    `json:"access_time"`
-	EntryModifiedTime int    `json:"entry_modified_time"`
-	Datalen           int    `json:"data_len"`
-}
+var DetailsMap = make(map[string](string))
+var Finished = make(chan string, 1000)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -41,7 +31,8 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	explorerTotalMap[p.GetRkey()] = total
+
+	ExplorerTotalMap[p.GetRkey()] = total
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -58,6 +49,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	DetailsMap[p.GetRkey()] += p.GetMessage()
 
 	// update progress
 	parts := strings.Split(p.GetMessage(), "|")
@@ -68,7 +60,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	explorerCountMap[key] = count
 	driveMu.Lock()
-	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(explorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
 	driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
@@ -86,6 +78,8 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	Finished <- p.GetRkey()
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -117,7 +111,7 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 
 func driveProgress(clientid string) {
 	for {
-		driveMu.Lock()		
+		driveMu.Lock()
 		if driveProgressMap[clientid] >= 100 {
 			break
 		}
@@ -126,6 +120,6 @@ func driveProgress(clientid string) {
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(clientid)
 		}
-		
+
 	}
 }
