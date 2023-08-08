@@ -161,12 +161,12 @@ func Main() {
 			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + strconv.FormatInt(create_time, 10) + "@|@" + strconv.FormatInt(write_time, 10) + "@|@" + strconv.FormatInt(access_time, 10) + "@|@" + strconv.FormatInt(entry_modified_time, 10) + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
 
-			err = elasticquery.SendToMainElastic(uuid, "ed_de_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_high")
+			err = elasticquery.SendToMainElastic(uuid, "ed_de_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_mid")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_high")
+			err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_mid")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
