@@ -12,8 +12,8 @@ type mainSource struct {
 	UUID      string `json:"uuid"`
 	Index     string `json:"index"`
 	Agent     string `json:"agent"`
-	AgentIP   string `json:"agent_ip"`
-	AgentName string `json:"agent_name"`
+	AgentIP   string `json:"agentIP"`
+	AgentName string `json:"agentName"`
 	Item      string `json:"item"`
 	Date      int    `json:"date"`
 	Type      string `json:"type"`

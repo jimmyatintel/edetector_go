@@ -30,7 +30,7 @@ outerLoop:
 					}
 				}
 			}`, agent, pid, createTime)
-			doc := elastic.SearchRequest("ed_de_memory", query)
+			doc := elastic.SearchRequest("ed_memory", query)
 			docs = append(docs, doc)
 			if doc == "" {
 				logger.Info("waiting 60s for updating process: ", zap.Any("message", pid+" "+createTime))
@@ -43,7 +43,7 @@ outerLoop:
 				continue outerLoop
 			}
 		}
-		elastic.BulkUpdateDocuments("ed_de_memory", docs)
+		elastic.BulkUpdateDocuments("ed_memory", docs)
 		break
 	}
 }

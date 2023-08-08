@@ -18,6 +18,8 @@ import (
 type MemoryNetwork struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
+	AgentIP            string `json:"agentIP"`
+	AgentName          string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
@@ -89,7 +91,7 @@ func NetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "@|@")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

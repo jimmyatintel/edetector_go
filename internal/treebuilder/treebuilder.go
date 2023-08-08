@@ -136,31 +136,31 @@ func Main() {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			// err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_high")
-			// if err != nil {
-			// 	logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-			// }
+			err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_high")
+			if err != nil {
+				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			}
 		}
 		fmt.Println("send to elastic(main & details) & record the relation")
 		// send to elastic(relation)
-		// for _, relation := range work.ParentMap[agent] {
-		// 	var isRoot bool
-		// 	if len(relation.Child) > 0 && relation.UUID == relation.Child[0] {
-		// 		isRoot = true
-		// 	} else {
-		// 		isRoot = false
-		// 	}
-		// 	data := ExplorerRelation{
-		// 		Agent:  agent,
-		// 		IsRoot: isRoot,
-		// 		Parent: relation.UUID,
-		// 		Child:  relation.Child,
-		// 	}
-		// 	err := elasticquery.SendToRelationElastic(data, "ed_high")
-		// 	if err != nil {
-		// 		logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
-		// 	}
-		// }
+		for _, relation := range work.ParentMap[agent] {
+			var isRoot bool
+			if len(relation.Child) > 0 && relation.UUID == relation.Child[0] {
+				isRoot = true
+			} else {
+				isRoot = false
+			}
+			data := ExplorerRelation{
+				Agent:  agent,
+				IsRoot: isRoot,
+				Parent: relation.UUID,
+				Child:  relation.Child,
+			}
+			err := elasticquery.SendToRelationElastic(data, "ed_high")
+			if err != nil {
+				logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
+			}
+		}
 		fmt.Println("send to elastic(relation)")
 		// clear
 		work.ParentMap[agent] = nil

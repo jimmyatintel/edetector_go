@@ -219,7 +219,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := "ed_de" + strings.ToLower(tableName) //! developing
+		details := "ed_" + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
