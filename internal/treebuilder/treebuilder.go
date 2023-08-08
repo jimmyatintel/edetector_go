@@ -37,7 +37,7 @@ type ExplorerDetails struct {
 	FileName          string `json:"fileName"`
 	IsDeleted         bool   `json:"isDeleted"`
 	IsDirectory       bool   `json:"isDirectory"`
-	CreateTime        int   `json:"createTime"`
+	CreateTime        int    `json:"createTime"`
 	WriteTime         int    `json:"writeTime"`
 	AccessTime        int    `json:"accessTime"`
 	EntryModifiedTime int    `json:"entryModifiedTime"`
@@ -76,9 +76,11 @@ func init() {
 }
 
 func Main() {
+	logger.Info("Starting tree builder...")
 	for {
 		var rootInd int
 		agent := <-work.Finished
+		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
 		// init the uuid of explorer
 		var relations []Relation
 		for i := 0; i < work.ExplorerTotalMap[agent]; i++ {
@@ -140,12 +142,12 @@ func Main() {
 			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + strconv.FormatInt(create_time, 10) + "@|@" + strconv.FormatInt(write_time, 10) + "@|@" + strconv.FormatInt(access_time, 10) + "@|@" + strconv.FormatInt(entry_modified_time, 10) + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
 
-			err = elasticquery.SendToMainElastic(uuid, "ed_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_high")
+			err = elasticquery.SendToMainElastic(uuid, "ed_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(uuid, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_high")
+			err = elasticquery.SendToDetailsElastic(uuid, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
@@ -166,7 +168,7 @@ func Main() {
 				Parent: relation.UUID,
 				Child:  relation.Child,
 			}
-			err := elasticquery.SendToRelationElastic(data, "ed_high")
+			err := elasticquery.SendToRelationElastic(data, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
 			}
