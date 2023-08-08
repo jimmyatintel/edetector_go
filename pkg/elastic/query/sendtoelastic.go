@@ -80,7 +80,7 @@ func SendToRelationElastic(template Request_data, priority string) error {
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_de_explorer_relation",
+		Index: "ed_explorer_relation",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
