@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -36,7 +37,7 @@ type ExplorerDetails struct {
 	FileName          string `json:"fileName"`
 	IsDeleted         bool   `json:"isDeleted"`
 	IsDirectory       bool   `json:"isDirectory"`
-	CreateTime        bool   `json:"createTime"`
+	CreateTime        int   `json:"createTime"`
 	WriteTime         int    `json:"writeTime"`
 	AccessTime        int    `json:"accessTime"`
 	EntryModifiedTime int    `json:"entryModifiedTime"`
@@ -135,15 +136,32 @@ func Main() {
 				ParentMap[agent][parent].Child = append(ParentMap[agent][parent].Child, uuid)
 			}
 			//! tmp version: new explorer struct
-			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
+			layout := "2006/01/02 15:04:05"
+			t, err := time.Parse(layout, original[5])
+			if err != nil {
+				logger.Error("Error parsing time", zap.Any("error", err))
+			}
+			create_time := t.Unix()
+			t, err = time.Parse(layout, original[6])
+			if err != nil {
+				logger.Error("Error parsing time", zap.Any("error", err))
+			}
+			write_time := t.Unix()
+			t, err = time.Parse(layout, original[7])
+			if err != nil {
+				logger.Error("Error parsing time", zap.Any("error", err))
+			}
+			access_time := t.Unix()
+			t, err = time.Parse(layout, original[8])
+			if err != nil {
+				logger.Error("Error parsing time", zap.Any("error", err))
+			}
+			entry_modified_time := t.Unix()
+
+			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + strconv.FormatInt(create_time, 10) + "@|@" + strconv.FormatInt(write_time, 10) + "@|@" + strconv.FormatInt(access_time, 10) + "@|@" + strconv.FormatInt(entry_modified_time, 10) + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
 
-			int_date, err := strconv.Atoi(values[3])
-			if err != nil {
-				logger.Error("Invalid date: ", zap.Any("message", values[3]))
-				int_date = 0
-			}
-			err = elasticquery.SendToMainElastic(uuid, "ed_de_explorer", agent, values[0], int_date, "file_table", "path(todo)", "ed_high")
+			err = elasticquery.SendToMainElastic(uuid, "ed_de_explorer", agent, values[0], int(create_time), "file_table", "path(todo)", "ed_high")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
