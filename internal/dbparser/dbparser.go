@@ -31,8 +31,8 @@ func parser_init() {
 		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
 	}
 	currentDir = curDir
-	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
-	stagedPath = filepath.Join(currentDir, "../../dbStaged")
+	unstagePath = filepath.Join(currentDir, "dbUnstage")
+	stagedPath = filepath.Join(currentDir, "dbStaged")
 	CheckDir(unstagePath)
 	CheckDir(stagedPath)
 

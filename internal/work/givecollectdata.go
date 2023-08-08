@@ -38,8 +38,8 @@ func init() {
 	}
 	currentDir = curDir
 
-	workingPath = filepath.Join(currentDir, "../../dbWorking")
-	unstagePath = filepath.Join(currentDir, "../../dbUnstage")
+	workingPath = filepath.Join(currentDir, "dbWorking")
+	unstagePath = filepath.Join(currentDir, "dbUnstage")
 	dbparser.CheckDir(workingPath)
 	dbparser.CheckDir(unstagePath)
 }
