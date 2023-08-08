@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +34,7 @@ type ExplorerDetails struct {
 	AgentIP           string `json:"agentIP"`
 	AgentName         string `json:"agentName"`
 	FileName          string `json:"fileName"`
-	IsDeleted         int    `json:"isDeleted"`
+	IsDeleted         bool   `json:"isDeleted"`
 	IsDirectory       bool   `json:"isDirectory"`
 	CreateTime        bool   `json:"createTime"`
 	WriteTime         int    `json:"writeTime"`
@@ -44,6 +45,13 @@ type ExplorerDetails struct {
 
 func (n ExplorerDetails) Elastical() ([]byte, error) {
 	return json.Marshal(n)
+}
+
+var ParentMap = make(map[string]([]Relation))
+
+type Relation struct {
+	UUID  string
+	Child []string
 }
 
 func init() {
@@ -89,17 +97,17 @@ func Main() {
 		"14|$Reparse|11|0|0|2023/06/27 11:28:23|2023/06/27 11:28:23|2023/07/10 10:01:07|2023/06/27 11:28:23|0|0\n"
 
 	for {
+		var rootInd int
 		agent := <-work.Finished
 		// init the uuid of explorer
-		var relations []work.Relation
+		var relations []Relation
 		for i := 0; i < work.ExplorerTotalMap[agent]; i++ {
-			uuid := strconv.Itoa(i)
-			relations = append(relations, work.Relation{
-				UUID:  uuid,
+			relations = append(relations, Relation{
+				UUID:  uuid.NewString(),
 				Child: []string{},
 			})
 		}
-		work.ParentMap[agent] = relations
+		ParentMap[agent] = relations
 
 		// send to elastic(main & details) & record the relation
 		fmt_content := work.DetailsMap[agent]
@@ -119,9 +127,13 @@ func Main() {
 				logger.Error("Error converting parent to int")
 				continue
 			}
-			uuid := work.ParentMap[agent][child].UUID
+			uuid := ParentMap[agent][child].UUID
 			fmt.Println(i, ": ", uuid)
-			work.ParentMap[agent][parent].Child = append(work.ParentMap[agent][parent].Child, uuid)
+			if parent == child {
+				rootInd = i
+			} else {
+				ParentMap[agent][parent].Child = append(ParentMap[agent][parent].Child, uuid)
+			}
 			//! tmp version: new explorer struct
 			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
@@ -139,13 +151,14 @@ func Main() {
 			err = elasticquery.SendToDetailsElastic(uuid, "ed_de_explorer", agent, line, &ExplorerDetails{}, "ed_high")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+				continue
 			}
 		}
 		fmt.Println("send to elastic(main & details) & record the relation")
 		// send to elastic(relation)
-		for _, relation := range work.ParentMap[agent] {
+		for i, relation := range ParentMap[agent] {
 			var isRoot bool
-			if len(relation.Child) > 0 && relation.UUID == relation.Child[0] {
+			if rootInd == i {
 				isRoot = true
 			} else {
 				isRoot = false
@@ -163,7 +176,7 @@ func Main() {
 		}
 		fmt.Println("send to elastic(relation)")
 		// clear
-		work.ParentMap[agent] = nil
+		ParentMap[agent] = nil
 		work.DetailsMap[agent] = ""
 	}
 }

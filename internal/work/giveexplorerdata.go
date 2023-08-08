@@ -21,14 +21,8 @@ var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 
-var ParentMap = make(map[string]([]Relation))
 var DetailsMap = make(map[string](string))
 var Finished = make(chan string, 1000)
-
-type Relation struct {
-	UUID  string
-	Child []string
-}
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
