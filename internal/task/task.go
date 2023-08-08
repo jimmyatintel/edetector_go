@@ -6,9 +6,6 @@ import (
 // "go.uber.org/zap"
 )
 
-func init() {
-}
-
 func GetTaskType(work string) TaskType {
 	for _, v := range Worklist {
 		if v == TaskType(work) {

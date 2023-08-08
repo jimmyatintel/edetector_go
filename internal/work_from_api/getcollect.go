@@ -1,7 +1,6 @@
 package workfromapi
 
 import (
-	"context"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
@@ -10,8 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func StartCollect(task_ctx context.Context, p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartCollect: ", zap.Any("message", p.GetMessage()))
+func StartCollect(p packet.UserPacket) (task.TaskResult, error) {
+	logger.Info("StartCollect: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_COLLECT_INFO, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

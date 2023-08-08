@@ -3,91 +3,71 @@ package taskservice
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"io"
+	"net/http"
+	"os"
 
-	"edetector_go/internal/fflag"
+	"edetector_go/config"
 	"edetector_go/internal/packet"
+	"edetector_go/internal/task"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/redis"
-	"time"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-// var ctx context.Context
-type taskIDKey string
-const TaskIDKey taskIDKey = "taskid"
+type TaskRequest struct {
+	TaskID string `json:"taskID"`
+}
 
-var taskchans = make(map[string]chan string)
+type TaskResponse struct {
+	IsSuccess bool   `json:"isSuccess"`
+	Message   string `json:"message"`
+}
 
 func Start(ctx context.Context) {
-	if enable, err := fflag.FFLAG.FeatureEnabled("taskservice_enable"); enable && err == nil {
-		fmt.Println("Task service enable.")
-		go Main(ctx)
-	} else if err != nil {
-		logger.Error("Task service error:", zap.Any("error", err.Error()))
-	} else {
-		fmt.Println("Task service disable.")
+	gin.SetMode(gin.ReleaseMode)
+	f, _ := os.Create(config.Viper.GetString("GIN_LOG_FILE"))
+	gin.DefaultWriter = io.MultiWriter(f)
+	router := gin.Default()
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	corsConfig.AllowHeaders = []string{"Content-Type", "Accept", "Content-Length", "Authorization", "Origin", "X-Requested-With"}
+	router.RedirectFixedPath = true
+	router.Use(cors.New(corsConfig))
+	router.POST("/sendTask", func(c *gin.Context) {
+		ReceiveTask(c, ctx)
+	})
+	router.Run(":5055")
+}
+
+func ReceiveTask(c *gin.Context, ctx context.Context) {
+	var req TaskRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("Invalid request format", zap.Any("error", err.Error()))
 		return
 	}
-}
-
-func Main(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("Task service is shutting down...")
-			return
-		default:
-			findtask(ctx)
-			time.Sleep(5 * time.Second)
-		}
+	handleTaskrequest(ctx, req.TaskID)
+	res := TaskResponse{
+		IsSuccess: true,
+		Message:   "Success",
 	}
+	c.JSON(http.StatusOK, res)
 }
 
-func findtask(ctx context.Context) {
-	unhandle_task := loadallunhandletask()
-	for _, task := range unhandle_task {
-		content := redis.Redis_get(task.clientid)
-		status := redis.GetStatus(content)
-		if status == 1 {
-			if task.clientid == "8beba472f3f44cabbbb44fd232171933" || task.clientid == "3e716e2d61ba910983cb456817116799" {
-				if _, ok := taskchans[task.clientid]; !ok {
-					taskchans[task.clientid] = make(chan string, 1024)
-					go taskhandler(ctx, taskchans[task.clientid], task.clientid)
-				}
-				taskchans[task.clientid] <- task.taskid
-				Change_task_status(task.taskid, 1)
-			}
-		}
-	}
-}
-
-func taskhandler(ctx context.Context, ch chan string, client string) {
-	for {
-		select {
-		case <-ctx.Done():
-			fmt.Println("Task handler for " + client + " is shutting down...")
-			return
-		case taskid := <-ch:
-			logger.Info("Task handler for " + client + " is handling task " + taskid)
-			message := redis.Redis_get(taskid)
-			b := []byte(message)
-			Change_task_status(taskid, 2)
-			RequestToUser(client)
-			task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
-			handleTaskrequest(task_ctx, b, taskid, client)
-		}
-	}
-}
-
-func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, client string) {
-	reqLen := len(content)
+func handleTaskrequest(ctx context.Context, taskid string) {
+	logger.Info("Handling task: " + taskid)
+	// task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
+	message := redis.Redis_get(taskid)
+	content := []byte(message)
 	NewPacket := new(packet.TaskPacket)
 	err := NewPacket.NewPacket(content)
 	if err != nil {
-		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", len(content)))
 		return
 	}
 	if NewPacket.GetUserTaskType() == "Undefine" {
@@ -95,24 +75,19 @@ func handleTaskrequest(task_ctx context.Context, content []byte, taskid string, 
 		logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
 		return
 	}
-	logger.Info("Receive task from user", zap.Any("function", NewPacket.GetUserTaskType()))
+	logger.Info("Task " + taskid + " " + string(NewPacket.GetUserTaskType()) + " is handling...")
 	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
 	if !ok {
 		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()))
 		return
 	}
-	_, err = taskFunc(task_ctx, NewPacket)
+	_, err = taskFunc(NewPacket)
 	if err != nil {
-		logger.Error("Task Failed:", zap.Any("error", err.Error()))
+		logger.Error(string(NewPacket.GetUserTaskType())+" task failed:", zap.Any("error", err.Error()))
+		Failed_task(NewPacket.GetRkey(), task.UserTaskTypeMap[NewPacket.GetUserTaskType()])
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		Change_task_status(taskid, 3)
-		RequestToUser(client)
+		Finish_task(NewPacket.GetRkey(), "ChangeDetectMode")
 	}
 }
-
-
-// func Stop() {
-// 	ctx.Done()
-// }

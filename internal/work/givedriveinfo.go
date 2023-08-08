@@ -4,21 +4,15 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
-
-	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"net"
 
-	// "encoding/json"
-	// "fmt"
-	"strings"
+	"net"
 
 	"go.uber.org/zap"
 )
 
 func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -29,19 +23,6 @@ func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-
-	drives := strings.Split(p.GetMessage(), "|")
-	for _, d := range drives {
-		parts := strings.Split(d, "-")
-		if len(parts) == 2 {
-			drive := parts[0]
-			driveInfo := strings.Split(parts[1], ",")[0]
-			msg := drive + "|" + driveInfo + "|Explorer|ScheduleName|0|2048"
-			err = taskservice.AddTask(p.GetRkey(), task.START_GET_EXPLORER, msg)
-			if err != nil {
-				return task.FAIL, err
-			}
-		}
-	}
+	go HandleExpolorer(p)
 	return task.SUCCESS, nil
 }

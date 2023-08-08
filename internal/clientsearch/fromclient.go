@@ -1,14 +1,11 @@
 package clientsearch
 
 import (
-	// "context"
-	// config "edetector_go/config"
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
 	"edetector_go/internal/taskservice"
 
-	// fflag "edetector_go/internal/fflag"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
@@ -16,14 +13,12 @@ import (
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
-	"fmt"
+	"net"
 
 	"go.uber.org/zap"
-
-	// "io/ioutil"
-	"net"
-	// "encoding/binary"
 )
+
+var Clientlist []string
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
@@ -35,10 +30,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
-					fmt.Println("get task msg: " + string(data))
+					logger.Info("get task msg: ", zap.Any("message", string(data)))
 					err := clientsearchsend.SendTCPtoClient(data, conn)
 					if err != nil {
-						logger.Error("Send failed:", zap.Any("error", err.Error()))
+						logger.Error("send failed:", zap.Any("error", err.Error()))
 					}
 				}
 			}
@@ -57,19 +52,20 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Debug(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
-				logger.Error("Error reading:", zap.Any("error", err.Error()))
+				logger.Error("Error reading:", zap.Any("error", string(key)+err.Error()))
 				return
 			}
 		}
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
+		// fmt.Println("len: ", reqLen)
+		// fmt.Println("decrypt buf: ", string(decrypt_buf))
 		if reqLen <= 1024 {
-			// fmt.Println(string(decrypt_buf))
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
 			err := NewPacket.NewPacket(decrypt_buf, buf)
 			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
@@ -78,21 +74,22 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
 				return
 			}
+			// fmt.Println("Get task: ", NewPacket.GetTaskType())
 			if NewPacket.GetTaskType() == task.GIVE_INFO {
 				// wait for key to join the packet
 				key = NewPacket.GetRkey()
+				Clientlist = append(Clientlist, key)
 				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
-				fmt.Println("set worker key-channel mapping: " + NewPacket.GetRkey())
-			} else if key != "null"{
+				logger.Info("set worker key-channel mapping: ", zap.Any("message", NewPacket.GetRkey()))
+			} else if key != "null" {
 				err = redis.Online(key)
 				if err != nil {
 					logger.Error("Update online failed:", zap.Any("error", err.Error()))
 				}
-				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST{
-					taskservice.RequestToUser(key)
+				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
+					go taskservice.RequestToUser(key)
 				}
 			}
-			// fmt.Println("task type: ", NewPacket.GetTaskType(), port)
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
 				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
@@ -100,7 +97,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
-				logger.Error("Task Failed:", zap.Any("error", err.Error()))
+				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
+				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
 				return
 			}
 		} else if reqLen > 0 {
@@ -128,7 +126,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			var NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()), zap.Any("len", reqLen))
+				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
@@ -151,7 +149,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
-				logger.Error("Task Failed:", zap.Any("error", err.Error()))
+				logger.Error(string(NewPacket.GetTaskType())+" task failed:", zap.Any("error", err.Error()))
+				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
 				return
 			}
 		}
@@ -159,5 +158,5 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 }
 
 func handleUDPRequest(addr net.Addr, buf []byte) {
-	fmt.Println(string(buf))
+	logger.Info("udp")
 }

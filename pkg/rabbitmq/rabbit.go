@@ -65,12 +65,25 @@ func Publish(queue string, body []byte) error {
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: "text/plain",
+			ContentType: "application/json",
 			Body:        body,
 		},
 	)
 }
-
+func Consume(queue string) (<-chan amqp.Delivery, error) {
+	if channel == nil {
+		return nil, errors.New("failed to consume message: channel is nil")
+	}
+	return channel.Consume(
+		queue,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+}
 func Connection_close() {
 	if Connection != nil {
 		Connection.Close()

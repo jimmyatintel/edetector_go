@@ -1,10 +1,11 @@
 package fflag
 
 import (
-	"fmt"
+	"edetector_go/pkg/logger"
 
 	flagsmith "github.com/Flagsmith/flagsmith-go-client"
 	"github.com/Unleash/unleash-client-go/v3"
+	"go.uber.org/zap"
 )
 
 type metricsInterface struct {
@@ -21,10 +22,10 @@ func init_from_gitlab() {
 		unleash.WithListener(&metricsInterface{}),
 	)
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Error init from github", zap.Any("error", err.Error()))
 	}
 	if unleash.IsEnabled("debug_mode") {
-		fmt.Println("debug_mode is enabled")
+		logger.Info("debug_mode is enabled")
 	}
 }
 
@@ -34,6 +35,6 @@ func Get_fflag() {
 	FFLAG = client
 	isEnabled, _ := FFLAG.FeatureEnabled("always_true")
 	if !isEnabled {
-		fmt.Println("Connection to Flagsmith failed")
+		logger.Error("Connection to Flagsmith failed")
 	}
 }

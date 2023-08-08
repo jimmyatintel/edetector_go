@@ -10,10 +10,6 @@ import (
 	"net"
 )
 
-func init() {
-
-}
-
 func SendTCPtoClient(data []byte, conn net.Conn) error {
 	encrypt_buf := make([]byte, len(data))
 	// logger.Info("Send TCP to client", zap.Any("len", len(data)))

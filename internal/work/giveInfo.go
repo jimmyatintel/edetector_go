@@ -15,7 +15,7 @@ import (
 )
 
 func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the first packet: insert user info
-	logger.Info("GiveInfo: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	np := packet.CheckIsWork(p)
 	ClientInfo := client.PacketClientInfo(np)
 	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") { // assign a new key(uuid)
@@ -33,10 +33,5 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	if err != nil {
 		return task.FAIL, err
 	}
-	return task.SUCCESS, nil
-}
-
-func GiveDetectPortInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectPortInfo: ", zap.Any("message", p.GetMessage()))
 	return task.SUCCESS, nil
 }

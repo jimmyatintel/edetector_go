@@ -37,7 +37,7 @@ func Load_stored_task(taskid string, client_id string, status int) [][]string {
 	return result
 }
 
-func Select_task_id(clientid string, tasktype string) string {
+func Get_task_id(clientid string, tasktype string) string {
 	var taskID string
 	row := mariadb.DB.QueryRow("SELECT task_id FROM task WHERE client_id = ? AND type = ? AND status = ?", clientid, tasktype, 2)
 	err := row.Scan(&taskID)
@@ -46,17 +46,6 @@ func Select_task_id(clientid string, tasktype string) string {
 		return ""
 	}
 	return taskID
-}
-
-func Get_task_info(taskid string) (string, string) {
-	var clientid, tasktype string
-	row := mariadb.DB.QueryRow("SELECT client_id, type FROM task WHERE task_id = ?", taskid)
-	err := row.Scan(&clientid, &tasktype)
-	if err != nil {
-		logger.Error(err.Error())
-		return "", ""
-	}
-	return clientid, tasktype
 }
 
 func Update_task_status(taskid string, status int) {

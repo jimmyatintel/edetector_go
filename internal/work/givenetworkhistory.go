@@ -6,32 +6,34 @@ import (
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
-	"fmt"
 	"net"
 	"strings"
 
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-var Data_acache []byte
-
-type NetworkJson struct {
-	PID               int    `json:"pid"`
+type MemoryNetwork struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP            string `json:"agentIP"`
+	AgentName          string `json:"agentName"`
+	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
-	ProcessTime       int    `json:"process_time"`
-	ConnectionINorOUT bool   `json:"connection_inorout"`
-	AgentPort         int    `json:"agent_port"`
+	ProcessCreateTime int    `json:"processCreateTime"`
+	ConnectionINorOUT bool   `json:"connectionInOrOut"`
+	AgentPort         int    `json:"agentPort"`
 }
 
-func (n NetworkJson) Elastical() ([]byte, error) {
+func (n MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
 func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -46,14 +48,14 @@ func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	//todo
+	go NetworkElastic(p)
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -62,10 +64,8 @@ func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, er
 }
 
 func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetMessage()))
-	Data := ChangeNetworkToJson(p)
-	template := elasticquery.New_source(p.GetRkey(), "Networkdata")
-	elasticquery.Send_to_elastic("ed_network_history", template, Data)
+	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	go NetworkElastic(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -79,22 +79,22 @@ func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	return task.SUCCESS, nil
 }
 
-func ChangeNetworkToJson(p packet.Packet) []elasticquery.Request_data {
+func NetworkElastic(p packet.Packet) {
+	networkSet := make(map[string]struct{})
 	lines := strings.Split(p.GetMessage(), "\n")
-	var dataSlice []elasticquery.Request_data
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
 		}
-		data := NetworkJson{}
-		To_json(line, &data)
-		dataSlice = append(dataSlice, elasticquery.Request_data(data))
+		line = strings.ReplaceAll(line, "|", "@|@")
+		uuid := uuid.NewString()
+		values := strings.Split(line, "@|@")
+		key := values[0] + "," + values[3]
+		networkSet[key] = struct{}{}
+		err := elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		if err != nil {
+			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+		}
 	}
-	jsonData, err := json.Marshal(dataSlice)
-	if err != nil {
-		fmt.Println("Error converting to JSON:", err)
-		return nil
-	}
-	logger.Debug("Json format: ", zap.Any("json", string(jsonData)))
-	return dataSlice
+	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }

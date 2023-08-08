@@ -1,4 +1,6 @@
-config/app.env
-log_file.log
-cmd/db.db
+*.log
 log_history
+dbWorking
+dbUnstage
+dbStaged
+out.txt

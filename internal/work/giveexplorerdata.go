@@ -5,34 +5,34 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
-
-	// elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
+	"strconv"
+
 	"net"
 	"strings"
-
-	// "encoding/json"
-	// "fmt"
+	"sync"
 
 	"go.uber.org/zap"
 )
 
-type ExplorerJson struct {
-	Ind               int    `json:"ind"`
-	FileName          string `json:"file_name"`
-	Parent_Ind        int    `json:"parent_ind"`
-	IsDeleted         bool   `json:"isDeleted"`
-	IsDirectory       bool   `json:"isDirectory"`
-	CreateTime        int    `json:"create_time"`
-	WriteTime         int    `json:"write_time"`
-	AccessTime        int    `json:"access_time"`
-	EntryModifiedTime int    `json:"entry_modified_time"`
-	Datalen           int    `json:"data_len"`
-}
+var driveMu sync.Mutex
+var ExplorerTotalMap = make(map[string]int)
+var explorerCountMap = make(map[string]int)
+var driveProgressMap = make(map[string]int)
+
+var DetailsMap = make(map[string](string))
+var Finished = make(chan string, 1000)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Explorer: ", zap.Any("message", p.GetMessage()))
+	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
+	total, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return task.FAIL, err
+	}
+
+	ExplorerTotalMap[p.GetRkey()] = total
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -40,7 +40,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		Work:       task.TRANSPORT_EXPLORER,
 		Message:    msg,
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -48,14 +48,28 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetMessage()))
+	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	DetailsMap[p.GetRkey()] += p.GetMessage()
+
+	// update progress
+	parts := strings.Split(p.GetMessage(), "|")
+	count, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return task.FAIL, err
+	}
+	key := p.GetRkey()
+	explorerCountMap[key] = count
+	driveMu.Lock()
+	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	driveMu.Unlock()
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -63,7 +77,9 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	Finished <- p.GetRkey()
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -74,12 +90,12 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	taskservice.Finish_task(p.GetRkey(), "StartGetDrive")
+	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
 
 func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetMessage()))
+	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -91,4 +107,19 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
+}
+
+func driveProgress(clientid string) {
+	for {
+		driveMu.Lock()
+		if driveProgressMap[clientid] >= 100 {
+			break
+		}
+		rowsAffected := query.Update_progress(driveProgressMap[clientid], clientid, "StartGetDrive")
+		driveMu.Unlock()
+		if rowsAffected != 0 {
+			go taskservice.RequestToUser(clientid)
+		}
+
+	}
 }

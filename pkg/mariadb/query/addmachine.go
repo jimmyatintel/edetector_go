@@ -5,6 +5,9 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/method"
+	"edetector_go/pkg/redis"
+
+	"go.uber.org/zap"
 )
 
 func Checkindex(KeyNum string, ip string, mac string) {
@@ -46,5 +49,16 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	)
 	if err != nil {
 		logger.Error(err.Error())
+	}
+	_, err = method.Exec(
+		"INSERT INTO client_setting (client_id, networkreport, processreport) VALUE (?,0,0) ON DUPLICATE KEY UPDATE client_id = ?",
+		ClientInfo.KeyNum, ClientInfo.KeyNum,
+	)
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	err = redis.Online(ClientInfo.KeyNum)
+	if err != nil {
+		logger.Error("Update online failed:", zap.Any("error", err.Error()))
 	}
 }
