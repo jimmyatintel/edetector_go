@@ -36,7 +36,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_de_main",
+		Index: "ed_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
