@@ -57,8 +57,8 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	if err != nil {
 		logger.Error(err.Error())
 	}
-	err = redis.Offline(ClientInfo.KeyNum)
+	err = redis.Online(ClientInfo.KeyNum)
 	if err != nil {
-		logger.Error("Update offline failed:", zap.Any("error", err.Error()))
+		logger.Error("Update online failed:", zap.Any("error", err.Error()))
 	}
 }
