@@ -1,6 +1,6 @@
 *.log
+*.txt
 log_history
 dbWorking
 dbUnstage
 dbStaged
-out.txt
