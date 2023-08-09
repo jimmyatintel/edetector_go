@@ -7,6 +7,7 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"os"
 	"strconv"
 
 	"net"
@@ -17,22 +18,12 @@ import (
 )
 
 var driveMu sync.Mutex
-var explorerTotalMap = make(map[string]int)
+var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 
-type ExplorerJson struct {
-	Ind               int    `json:"ind"`
-	FileName          string `json:"file_name"`
-	Parent_Ind        int    `json:"parent_ind"`
-	IsDeleted         bool   `json:"isDeleted"`
-	IsDirectory       bool   `json:"isDirectory"`
-	CreateTime        int    `json:"create_time"`
-	WriteTime         int    `json:"write_time"`
-	AccessTime        int    `json:"access_time"`
-	EntryModifiedTime int    `json:"entry_modified_time"`
-	Datalen           int    `json:"data_len"`
-}
+var DetailsMap = make(map[string](string))
+var Finished = make(chan string)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -41,7 +32,8 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	explorerTotalMap[p.GetRkey()] = total
+
+	ExplorerTotalMap[p.GetRkey()] = total
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -59,16 +51,41 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
+	key := p.GetRkey()
+	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
+	var realData string
+	if lastNewlineInd >= 0 {
+		realData = p.GetMessage()[:lastNewlineInd+1]
+	} else {
+		logger.Error("Invalid GiveExplorerData")
+	}
+
+	DetailsMap[key] += realData
+	// write file
+	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	_, err = file.Seek(0, 2)
+	if err != nil {
+		return task.FAIL, err
+	}
+	messageBytes := []byte(realData)
+	_, err = file.Write(messageBytes)
+	if err != nil {
+		return task.FAIL, err
+	}
+	file.Close()
+
 	// update progress
 	parts := strings.Split(p.GetMessage(), "|")
 	count, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return task.FAIL, err
 	}
-	key := p.GetRkey()
 	explorerCountMap[key] = count
 	driveMu.Lock()
-	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(explorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
 	driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
@@ -96,6 +113,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	Finished <- p.GetRkey()
 	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
@@ -117,7 +135,7 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 
 func driveProgress(clientid string) {
 	for {
-		driveMu.Lock()		
+		driveMu.Lock()
 		if driveProgressMap[clientid] >= 100 {
 			break
 		}
@@ -126,6 +144,6 @@ func driveProgress(clientid string) {
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(clientid)
 		}
-		
+
 	}
 }

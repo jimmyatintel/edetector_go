@@ -1,5 +1,6 @@
 *.log
 *.txt
+*.env
 log_history
 dbWorking
 dbUnstage

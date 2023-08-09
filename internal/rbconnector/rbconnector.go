@@ -56,7 +56,6 @@ func connector_init() {
 		}
 		logger.Info("elastic is enabled.")
 	}
-	fmt.Println("hihi213")
 }
 
 func Start() {
@@ -67,7 +66,6 @@ func Start() {
 	rabbitmq.Declare("ed_low")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
-	fmt.Println("123")
 	go low_speed()
 	go mid_speed()
 	go high_speed()

@@ -18,6 +18,8 @@ import (
 type MemoryNetwork struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
+	AgentIP            string `json:"agentIP"`
+	AgentName          string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
