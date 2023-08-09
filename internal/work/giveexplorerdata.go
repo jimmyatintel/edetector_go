@@ -7,6 +7,7 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"os"
 	"strconv"
 
 	"net"
@@ -50,6 +51,22 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	DetailsMap[p.GetRkey()] += p.GetMessage()
+
+	// write file
+	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	_, err = file.Seek(0, 2)
+	if err != nil {
+		return task.FAIL, err
+	}
+	messageBytes := []byte(p.GetMessage())
+	_, err = file.Write(messageBytes)
+	if err != nil {
+		return task.FAIL, err
+	}
+	file.Close()
 
 	// update progress
 	parts := strings.Split(p.GetMessage(), "|")

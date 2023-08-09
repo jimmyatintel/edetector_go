@@ -80,6 +80,7 @@ func Main() {
 	for {
 		var rootInd int
 		agent := <-work.Finished
+		fmt_content := work.DetailsMap[agent]
 		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
 		// init the uuid of explorer
 		var relations []Relation
@@ -92,13 +93,12 @@ func Main() {
 		ParentMap[agent] = relations
 
 		// send to elastic(main & details) & record the relation
-		fmt_content := work.DetailsMap[agent]
 		lines := strings.Split(fmt_content, "\n")
 		for i, line := range lines {
-			if len(line) == 0 {
+			original := strings.Split(line, "|")
+			if len(original) < 2 { //! tmp version
 				continue
 			}
-			original := strings.Split(line, "|")
 			parent, err := strconv.Atoi(original[2])
 			if err != nil {
 				logger.Error("Error converting parent to int")
@@ -109,7 +109,12 @@ func Main() {
 				logger.Error("Error converting parent to int")
 				continue
 			}
-			uuid := ParentMap[agent][child].UUID
+			var uuid string
+			if child <= work.ExplorerTotalMap[agent] {
+				uuid = ParentMap[agent][child].UUID
+			} else {
+				logger.Error("Short length")
+			}
 			logger.Debug("uuid", zap.Any("message", fmt.Sprintf("%d: %s", i, uuid)))
 			if parent == child {
 				rootInd = i
