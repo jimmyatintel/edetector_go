@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"net"
 
@@ -171,7 +172,9 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	collectMu.Lock()
 	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
 	collectMu.Unlock()
-
+	if collectProgressMap[p.GetRkey()] >= 99 {
+		go tmpEnd(p, conn)
+	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -188,31 +191,31 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
-	// truncate data
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return task.FAIL, err
-	}
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return task.FAIL, err
-	}
-	realLen := fileInfo.Size()
-	if int(realLen) < collectTotalMap[p.GetRkey()] {
-		return task.FAIL, errors.New("incomplete data")
-	}
-	err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
-	if err != nil {
-		return task.FAIL, err
-	}
+	// // truncate data
+	// path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
+	// data, err := os.ReadFile(path)
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
+	// fileInfo, err := os.Stat(path)
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
+	// realLen := fileInfo.Size()
+	// if int(realLen) < collectTotalMap[p.GetRkey()] {
+	// 	return task.FAIL, errors.New("incomplete data")
+	// }
+	// err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
 
-	// move to dbUnstage
-	dstPath := filepath.Join(unstagePath, (p.GetRkey() + ".db"))
-	err = os.Rename(workingPath, dstPath)
-	if err != nil {
-		return task.FAIL, err
-	}
+	// // move to dbUnstage
+	// dstPath := filepath.Join(unstagePath, (p.GetRkey() + ".db"))
+	// err = os.Rename(workingPath, dstPath)
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -220,7 +223,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -253,5 +256,36 @@ func collectProgress(clientid string) {
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(clientid)
 		}
+	}
+}
+
+func tmpEnd(p packet.Packet, conn net.Conn) { //!tmp version
+	time.Sleep(30 * time.Second)
+	logger.Info("Collect tmp End version: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+
+	// truncate data
+	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		logger.Error("Read file error")
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		logger.Error("Stat file error")
+	}
+	realLen := fileInfo.Size()
+	if int(realLen) < collectTotalMap[p.GetRkey()] {
+		logger.Error("Incomplete data")
+	}
+	err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
+	if err != nil {
+		logger.Error("Write file error")
+	}
+
+	// move to dbUnstage
+	dstPath := filepath.Join(unstagePath, (p.GetRkey() + ".db"))
+	err = os.Rename(workingPath, dstPath)
+	if err != nil {
+		logger.Error("Move failed")
 	}
 }
