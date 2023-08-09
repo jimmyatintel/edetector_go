@@ -1,10 +1,7 @@
 package config
 
 import (
-	"edetector_go/pkg/logger"
-
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 var Viper *viper.Viper
