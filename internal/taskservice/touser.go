@@ -3,8 +3,10 @@ package taskservice
 import (
 	"bytes"
 	"context"
+	"edetector_go/config"
 	"edetector_go/pkg/logger"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -31,7 +33,10 @@ func RequestToUser(id string) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
-	req, err := http.NewRequest("POST", "http://angel.ed.de:5050/updateTask", bytes.NewBuffer(payload))
+	ip := config.Viper.GetString("WS_HOST")
+	port := config.Viper.GetString("WS_PORT")
+	path := fmt.Sprintf("http://%s:%s/updateTask", ip, port)
+	req, err := http.NewRequest("POST", path, bytes.NewBuffer(payload))
 	if err != nil {
 		logger.Error("Error creating HTTP request: ", zap.Any("error", err.Error()))
 		return
