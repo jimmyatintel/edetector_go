@@ -23,7 +23,7 @@ var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 
 var DetailsMap = make(map[string](string))
-var Finished = make(chan string, 1000)
+var Finished = make(chan string)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -103,8 +103,6 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	Finished <- p.GetRkey()
-
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -115,6 +113,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	Finished <- p.GetRkey()
 	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
