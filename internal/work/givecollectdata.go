@@ -172,7 +172,13 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	collectMu.Lock()
 	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
 	collectMu.Unlock()
-	if collectProgressMap[p.GetRkey()] >= 99 {
+	//! tmp version
+	quotient := collectTotalMap[p.GetRkey()] / 65436
+	remainder := collectTotalMap[p.GetRkey()] % 65436
+	if remainder != 0 {
+		quotient++
+	}
+	if collectCountMap[p.GetRkey()] == quotient {
 		go tmpEnd(p, conn)
 	}
 	var send_packet = packet.WorkPacket{
@@ -260,7 +266,7 @@ func collectProgress(clientid string) {
 }
 
 func tmpEnd(p packet.Packet, conn net.Conn) { //!tmp version
-	time.Sleep(30 * time.Second)
+	time.Sleep(10 * time.Second)
 	logger.Info("Collect tmp End version: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
 	// truncate data
@@ -268,18 +274,22 @@ func tmpEnd(p packet.Packet, conn net.Conn) { //!tmp version
 	data, err := os.ReadFile(path)
 	if err != nil {
 		logger.Error("Read file error")
+		return
 	}
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		logger.Error("Stat file error")
+		return
 	}
 	realLen := fileInfo.Size()
 	if int(realLen) < collectTotalMap[p.GetRkey()] {
 		logger.Error("Incomplete data")
+		return
 	}
 	err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
 	if err != nil {
 		logger.Error("Write file error")
+		return
 	}
 
 	// move to dbUnstage
@@ -287,5 +297,6 @@ func tmpEnd(p packet.Packet, conn net.Conn) { //!tmp version
 	err = os.Rename(workingPath, dstPath)
 	if err != nil {
 		logger.Error("Move failed")
+		return
 	}
 }
