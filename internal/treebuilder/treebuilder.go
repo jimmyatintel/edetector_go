@@ -110,7 +110,7 @@ func Main() {
 				continue
 			}
 			uuid := ParentMap[agent][child].UUID
-			fmt.Println(i, ": ", uuid)
+			logger.Debug("uuid", zap.Any("message", fmt.Sprintf("%d: %s", i, uuid)))
 			if parent == child {
 				rootInd = i
 			} else {
