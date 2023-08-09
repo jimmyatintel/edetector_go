@@ -154,7 +154,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				return
 			}
 		} else {
-			logger.Error("Invalid packet:", zap.Any("message", decrypt_buf))
+			logger.Error("Invalid packet(short):", zap.Any("message", decrypt_buf))
 		}
 	}
 }
