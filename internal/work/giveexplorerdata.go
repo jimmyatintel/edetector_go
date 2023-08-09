@@ -50,8 +50,17 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	DetailsMap[p.GetRkey()] += p.GetMessage()
 
+	key := p.GetRkey()
+	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
+	var realData string
+	if lastNewlineInd >= 0 {
+		realData = p.GetMessage()[:lastNewlineInd+1]
+	} else {
+		logger.Error("Invalid GiveExplorerData")
+	}
+
+	DetailsMap[key] += realData
 	// write file
 	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
@@ -61,7 +70,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	messageBytes := []byte(p.GetMessage())
+	messageBytes := []byte(realData)
 	_, err = file.Write(messageBytes)
 	if err != nil {
 		return task.FAIL, err
@@ -74,7 +83,6 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	key := p.GetRkey()
 	explorerCountMap[key] = count
 	driveMu.Lock()
 	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
