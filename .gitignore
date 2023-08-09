@@ -1,4 +1,5 @@
 *.log
+*.txt
 log_history
 dbWorking
 dbUnstage
