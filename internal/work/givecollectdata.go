@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"net"
 
@@ -27,19 +28,14 @@ var collectMu sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
-var currentDir string
-var workingPath string
-var unstagePath string
+var workingPath = "dbWorking"
+var unstagePath = "dbUnstage"
+
+// ! tmp version
+var tmpMu sync.Mutex
+var lastDataTime = time.Now()
 
 func init() {
-	curDir, err := os.Getwd()
-	if err != nil {
-		logger.Error("Error getting current dir:", zap.Any("error", err.Error()))
-	}
-	currentDir = curDir
-
-	workingPath = filepath.Join(currentDir, "dbWorking")
-	unstagePath = filepath.Join(currentDir, "dbUnstage")
 	dbparser.CheckDir(workingPath)
 	dbparser.CheckDir(unstagePath)
 }
@@ -113,7 +109,11 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
+	//! tmp version
+	tmpMu.Lock()
+	lastDataTime = time.Now()
+	tmpMu.Unlock()
+	go TmpEnd(p.GetRkey())
 	// init collect info
 	len, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -171,7 +171,10 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	collectMu.Lock()
 	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
 	collectMu.Unlock()
-
+	//! tmp version
+	tmpMu.Lock()
+	lastDataTime = time.Now()
+	tmpMu.Unlock()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -188,39 +191,13 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 
-	// truncate data
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return task.FAIL, err
-	}
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return task.FAIL, err
-	}
-	realLen := fileInfo.Size()
-	if int(realLen) < collectTotalMap[p.GetRkey()] {
-		return task.FAIL, errors.New("incomplete data")
-	}
-	err = os.WriteFile(path, data[:collectTotalMap[p.GetRkey()]], 0644)
-	if err != nil {
-		return task.FAIL, err
-	}
-
-	// move to dbUnstage
-	dstPath := filepath.Join(unstagePath, (p.GetRkey() + ".db"))
-	err = os.Rename(workingPath, dstPath)
-	if err != nil {
-		return task.FAIL, err
-	}
-
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -253,5 +230,47 @@ func collectProgress(clientid string) {
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(clientid)
 		}
+	}
+}
+
+func TmpEnd(key string) { //!tmp version
+	for {
+		tmpMu.Lock()
+		if time.Since(lastDataTime) > time.Duration(120)*time.Second {
+			tmpMu.Unlock()
+			logger.Info("Collect tmp End version: ", zap.Any("message", key))
+			// truncate data
+			path := filepath.Join(workingPath, (key + ".db"))
+			data, err := os.ReadFile(path)
+			if err != nil {
+				logger.Error("Read file error")
+				continue
+			}
+			fileInfo, err := os.Stat(path)
+			if err != nil {
+				logger.Error("Stat file error")
+				continue
+			}
+			realLen := fileInfo.Size()
+			if int(realLen) < collectTotalMap[key] {
+				logger.Error("Incomplete data")
+				continue
+			}
+			err = os.WriteFile(path, data[:collectTotalMap[key]], 0644)
+			if err != nil {
+				logger.Error("Write file error")
+				continue
+			}
+			// move to dbUnstage
+			dstPath := filepath.Join(unstagePath, (key + ".db"))
+			srcPath := filepath.Join(workingPath, (key + ".db"))
+			err = os.Rename(srcPath, dstPath)
+			if err != nil {
+				logger.Error("Move failed")
+				continue
+			}
+			return
+		}
+		tmpMu.Unlock()
 	}
 }

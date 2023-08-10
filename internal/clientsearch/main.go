@@ -7,6 +7,7 @@ import (
 	packet "edetector_go/internal/packet"
 	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/internal/taskservice"
+	"edetector_go/internal/treebuilder"
 	logger "edetector_go/pkg/logger"
 
 	"go.uber.org/zap"
@@ -115,6 +116,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
 	go taskservice.Start(ctx)
+	go treebuilder.Main()
 	rt := 0
 	if Tcp_enable {
 		select {

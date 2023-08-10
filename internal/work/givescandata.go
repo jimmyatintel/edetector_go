@@ -192,7 +192,7 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		original := strings.Split(line, "|")
 		int_date, err := strconv.Atoi(original[2])
 		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", original[2]))
+			logger.Debug("Invalid date: ", zap.Any("message", original[2]))
 			original[2] = "0"
 			int_date = 0
 		}

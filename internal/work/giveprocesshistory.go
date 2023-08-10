@@ -72,7 +72,7 @@ func GiveProcessHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		original := strings.Split(line, "|")
 		int_date, err := strconv.Atoi(original[3])
 		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", original[3]))
+			logger.Debug("Invalid date: ", zap.Any("message", original[3]))
 			original[3] = "0"
 			int_date = 0
 		}
