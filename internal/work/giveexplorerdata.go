@@ -5,8 +5,10 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/internal/treebuilder"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"os"
 	"strconv"
 
 	"net"
@@ -20,9 +22,6 @@ var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
-
-var DetailsMap = make(map[string](string))
-var Finished = make(chan string, 1000)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -49,7 +48,32 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	DetailsMap[p.GetRkey()] += p.GetMessage()
+
+	key := p.GetRkey()
+	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
+	var realData string
+	if lastNewlineInd >= 0 {
+		realData = p.GetMessage()[:lastNewlineInd+1]
+	} else {
+		logger.Error("Invalid GiveExplorerData")
+	}
+
+	treebuilder.DetailsMap[key] += realData
+	// write file
+	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	_, err = file.Seek(0, 2)
+	if err != nil {
+		return task.FAIL, err
+	}
+	messageBytes := []byte(realData)
+	_, err = file.Write(messageBytes)
+	if err != nil {
+		return task.FAIL, err
+	}
+	file.Close()
 
 	// update progress
 	parts := strings.Split(p.GetMessage(), "|")
@@ -57,7 +81,6 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	key := p.GetRkey()
 	explorerCountMap[key] = count
 	driveMu.Lock()
 	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
@@ -78,8 +101,6 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	Finished <- p.GetRkey()
-
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -90,6 +111,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	treebuilder.Finished <- p.GetRkey()
 	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
