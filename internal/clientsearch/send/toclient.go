@@ -6,6 +6,7 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/internal/taskchannel"
+	"errors"
 
 	"net"
 )
@@ -21,12 +22,16 @@ func SendTCPtoClient(data []byte, conn net.Conn) error {
 	return nil
 }
 
-func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error{
+func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error {
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       workType,
 		Message:    msg,
+	}
+	_, exists := taskchannel.Task_worker_channel[p.GetRkey()]
+	if !exists {
+		return errors.New("invalid key")
 	}
 	task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
 	task_chan <- &send_packet

@@ -5,6 +5,7 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/internal/treebuilder"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"os"
@@ -21,9 +22,6 @@ var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
-
-var DetailsMap = make(map[string](string))
-var Finished = make(chan string)
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -60,7 +58,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		logger.Error("Invalid GiveExplorerData")
 	}
 
-	DetailsMap[key] += realData
+	treebuilder.DetailsMap[key] += realData
 	// write file
 	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
@@ -113,7 +111,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	Finished <- p.GetRkey()
+	treebuilder.Finished <- p.GetRkey()
 	<-user_explorer[p.GetRkey()]
 	return task.SUCCESS, nil
 }
