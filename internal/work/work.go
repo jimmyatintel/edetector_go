@@ -65,5 +65,10 @@ func init() {
 		task.GIVE_SCAN_DATA_INFO:   GiveScanDataInfo,
 		task.GIVE_SCAN_DATA_OVER:   GiveScanDataOver,
 		task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
+
+		// new scan
+		task.GIVE_SCAN_INFO: GiveScanInfo,
+		task.GIVE_SCAN:      GiveScan,
+		task.GIVE_SCAN_END:  GiveScanEnd,
 	}
 }
