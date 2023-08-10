@@ -7,8 +7,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -48,88 +46,85 @@ func init() {
 
 func Main() {
 	logger.Info("Starting tree builder...")
-	// for {
-	var rootInd int
-	// agent := <-Finished
-	// fmt_content := DetailsMap[agent]
-	agent := "ac546d517d7a466983065ca9cb07225a"
-	fmt_content, err := os.ReadFile("explorer_test.txt")
-	if err != nil {
-		logger.Error("error reading file")
-	}
-	RelationMap[agent] = make(map[int](Relation))
-	logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
+	for {
+		var rootInd int
+		agent := <-Finished
+		fmt_content := DetailsMap[agent]
+		RelationMap[agent] = make(map[int](Relation))
+		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
 
-	// send to elastic(main & details) & record the relation
-	lines := strings.Split(string(fmt_content), "\n")
-	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
-		original := strings.Split(line, "|")
-		parent, child, err := getRelation(original)
-		if err != nil {
-			logger.Error("error getting relation: ", zap.Any("message", err))
-			continue
-		}
-		generateUUID(agent, parent)
-		generateUUID(agent, child)
-		if parent == child {
-			rootInd = parent
-		} else {
-			relation := RelationMap[agent][parent]
-			relation.Child = append(relation.Child, RelationMap[agent][child].UUID)
-		}
-		//! tmp version: new explorer struct
-		create_time, write_time, access_time, entry_modified_time, err := tmpGetTime(original)
-		if err != nil {
-			logger.Error("error parsing time: ", zap.Any("message", err))
-			continue
-		}
-		line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + create_time + "@|@" + write_time + "@|@" + access_time + "@|@" + entry_modified_time + "@|@" + original[9]
-		values := strings.Split(line, "@|@")
+		// send to elastic(main & details) & record the relation
+		lines := strings.Split(string(fmt_content), "\n")
+		for _, line := range lines {
+			if len(line) == 0 {
+				continue
+			}
+			original := strings.Split(line, "|")
+			parent, child, err := getRelation(original)
+			if err != nil {
+				logger.Error("error getting relation: ", zap.Any("message", err))
+				continue
+			}
+			generateUUID(agent, parent)
+			generateUUID(agent, child)
+			if parent == child {
+				rootInd = parent
+			} else {
+				relation := RelationMap[agent][parent]
+				relation.Child = append(relation.Child, RelationMap[agent][child].UUID)
+				RelationMap[agent][parent] = relation
+			}
+			//! tmp version: new explorer struct
+			create_time, write_time, access_time, entry_modified_time, err := tmpGetTime(original)
+			if err != nil {
+				logger.Error("error parsing time: ", zap.Any("message", err))
+				continue
+			}
+			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + create_time + "@|@" + write_time + "@|@" + access_time + "@|@" + entry_modified_time + "@|@" + original[9]
+			values := strings.Split(line, "@|@")
 
-		c_time, err := strconv.Atoi(create_time)
-		if err != nil {
-			logger.Error("error converting time")
+			c_time, err := strconv.Atoi(create_time)
+			if err != nil {
+				logger.Error("error converting time")
+			}
+			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_mid")
+			if err != nil {
+				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+				continue
+			}
+			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_mid")
+			if err != nil {
+				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+				continue
+			}
 		}
-		err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_high")
-		if err != nil {
-			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
-			continue
+		logger.Info("send to elastic(main & details) & record the relation")
+		// send to elastic(relation)
+		for id, relation := range RelationMap[agent] {
+			var isRoot bool
+			if rootInd == id {
+				isRoot = true
+			} else {
+				isRoot = false
+			}
+			data := ExplorerRelation{
+				Agent:  agent,
+				IsRoot: isRoot,
+				Parent: relation.UUID,
+				Child:  relation.Child,
+			}
+			err := elasticquery.SendToRelationElastic(data, "ed_mid")
+			if err != nil {
+				logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
+				continue
+			}
 		}
-		err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_high")
-		if err != nil {
-			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-			continue
-		}
+		logger.Info("send to elastic(relation)")
+		// clear
+		RelationMap[agent] = nil
+		DetailsMap[agent] = ""
+		logger.Info("Finish handling explorer of agent: ", zap.Any("message", agent))
 	}
-	fmt.Println("send to elastic(main & details) & record the relation")
-	// send to elastic(relation)
-	for id, relation := range RelationMap[agent] {
-		var isRoot bool
-		if rootInd == id {
-			isRoot = true
-		} else {
-			isRoot = false
-		}
-		data := ExplorerRelation{
-			Agent:  agent,
-			IsRoot: isRoot,
-			Parent: relation.UUID,
-			Child:  relation.Child,
-		}
-		err := elasticquery.SendToRelationElastic(data, "ed_high")
-		if err != nil {
-			logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
-			continue
-		}
-	}
-	fmt.Println("send to elastic(relation)")
-	// clear
-	RelationMap[agent] = nil
-	DetailsMap[agent] = ""
-	// }
 }
 
 func getRelation(original []string) (int, int, error) {
@@ -147,12 +142,12 @@ func getRelation(original []string) (int, int, error) {
 func generateUUID(agent string, ind int) {
 	_, exists := RelationMap[agent][ind]
 	if !exists {
-		RelationMap[agent][ind] = Relation{
+		relation := Relation{
 			UUID:  uuid.NewString(),
 			Child: []string{},
 		}
+		RelationMap[agent][ind] = relation
 	}
-	fmt.Printf("%d: %s\n", ind, RelationMap[agent][ind].UUID)
 }
 
 func tmpGetTime(original []string) (string, string, string, string, error) { //!tmp version
