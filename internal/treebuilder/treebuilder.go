@@ -87,12 +87,12 @@ func Main() {
 			if err != nil {
 				logger.Error("error converting time")
 			}
-			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_mid")
+			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_mid")
+			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, "ed_explorer", agent, line, &ExplorerDetails{}, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
@@ -113,7 +113,7 @@ func Main() {
 				Parent: relation.UUID,
 				Child:  relation.Child,
 			}
-			err := elasticquery.SendToRelationElastic(data, "ed_mid")
+			err := elasticquery.SendToRelationElastic(data, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
 				continue
