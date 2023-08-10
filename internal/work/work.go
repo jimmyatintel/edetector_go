@@ -20,24 +20,24 @@ func init() {
 		task.CHECK_CONNECT: CheckConnect,
 
 		// process history
-		task.GIVE_PROCESS_HISTORY:      GiveProcessHistory,
-		task.GIVE_PROCESS_HISTORY_DATA: GiveProcessHistoryData,
-		task.GIVE_PROCESS_HISTORY_END:  GiveProcessHistoryEnd,
+		// task.GIVE_PROCESS_HISTORY:      GiveProcessHistory,
+		// task.GIVE_PROCESS_HISTORY_DATA: GiveProcessHistoryData,
+		// task.GIVE_PROCESS_HISTORY_END:  GiveProcessHistoryEnd,
 
 		// process risk
-		task.GIVE_DETECT_PROCESS_RISK: GiveDetectProcessRisk,
-		task.GIVE_DETECT_PROCESS_OVER: GiveDetectProcessOver,
-		task.GIVE_DETECT_PROCESS_END:  GiveDetectProcessEnd,
+		// task.GIVE_DETECT_PROCESS_RISK: GiveDetectProcessRisk,
+		// task.GIVE_DETECT_PROCESS_OVER: GiveDetectProcessOver,
+		// task.GIVE_DETECT_PROCESS_END:  GiveDetectProcessEnd,
 
 		// process info
-		task.GIVE_PROCESS_INFORMATION: GiveProcessInformation,
-		task.GIVE_PROCESS_INFO_DATA:   GiveProcessInfoData,
-		task.GIVE_PROCESS_INFO_END:    GiveProcessInfoEnd,
+		// task.GIVE_PROCESS_INFORMATION: GiveProcessInformation,
+		// task.GIVE_PROCESS_INFO_DATA:   GiveProcessInfoData,
+		// task.GIVE_PROCESS_INFO_END:    GiveProcessInfoEnd,
 
 		// network history
-		task.GIVE_NETWORK_HISTORY:      GiveNetworkHistory,
-		task.GIVE_NETWORK_HISTORY_DATA: GiveNetworkHistoryData,
-		task.GIVE_NETWORK_HISTORY_END:  GiveNetworkHistoryEnd,
+		// task.GIVE_NETWORK_HISTORY:      GiveNetworkHistory,
+		// task.GIVE_NETWORK_HISTORY_DATA: GiveNetworkHistoryData,
+		// task.GIVE_NETWORK_HISTORY_END:  GiveNetworkHistoryEnd,
 
 		// drive
 		task.GIVE_DRIVE_INFO:     GiveDriveInfo,
@@ -56,15 +56,15 @@ func init() {
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
 		// scan
 		// task.GET_PROCESS_INFO:            GetProcessInfo,
-		task.GET_SCAN_INFO_DATA:    GetScanInfoData,
-		task.PROCESS:               Process,
-		task.GIVE_PROCESS_DATA:     GiveProcessData,
-		task.GIVE_PROCESS_DATA_END: GiveProcessDataEnd,
-		task.GIVE_SCAN_PROGRESS:    GiveScanProgress,
-		task.GIVE_SCAN_DATA:        GiveScanData,
-		task.GIVE_SCAN_DATA_INFO:   GiveScanDataInfo,
-		task.GIVE_SCAN_DATA_OVER:   GiveScanDataOver,
-		task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
+		// task.GET_SCAN_INFO_DATA:    GetScanInfoData,
+		// task.PROCESS:               Process,
+		// task.GIVE_PROCESS_DATA:     GiveProcessData,
+		// task.GIVE_PROCESS_DATA_END: GiveProcessDataEnd,
+		// task.GIVE_SCAN_PROGRESS:    GiveScanProgress,
+		// task.GIVE_SCAN_DATA:        GiveScanData,
+		// task.GIVE_SCAN_DATA_INFO:   GiveScanDataInfo,
+		// task.GIVE_SCAN_DATA_OVER:   GiveScanDataOver,
+		// task.GIVE_SCAN_DATA_END:    GiveScanDataEnd,
 
 		// new scan
 		task.GIVE_SCAN_INFO: GiveScanInfo,
