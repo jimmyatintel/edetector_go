@@ -9,7 +9,6 @@ type Memory struct {
 	AgentName          string `json:"agentName"`
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
-	ProcessConnectIP  string `json:"processConnectIP"`
 	DynamicCommand    string `json:"dynamicCommand"`
 	ProcessMD5        string `json:"processMD5"`
 	ProcessPath       string `json:"processPath"`
@@ -18,13 +17,14 @@ type Memory struct {
 	ParentProcessPath string `json:"parentProcessPath"`
 	DigitalSign       string `json:"digitalSign"`
 	ProcessId         int    `json:"processId"`
-	RiskLevel         int    `json:"riskLevel"`
 	InjectActive      string `json:"injectActive"`
 	ProcessBeInjected int    `json:"processBeInjected"`
 	Boot              string `json:"boot"`
+	Hide              string `json:"hide"`
 	Hook              string `json:"hook"`
 	ImportOtherDLL    bool   `json:"importOtherDLL"`
-	Hide              string `json:"hide"`
+	ProcessConnectIP  string `json:"processConnectIP"`
+	RiskLevel         int    `json:"riskLevel"`
 	Mode              string `json:"mode"`
 }
 

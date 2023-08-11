@@ -23,7 +23,7 @@ import (
 
 var unstagePath = "dbUnstage"
 var stagedPath = "dbStaged"
-var elasticPrefix = "ed_"
+var elasticPrefix = "james_"
 
 func parser_init() {
 	CheckDir(unstagePath)
