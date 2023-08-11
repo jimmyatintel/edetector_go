@@ -13,6 +13,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"math"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -152,7 +153,7 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		network := "false"
 		if original[18] != "null" {
 			network = "true"
-			go scanNetworkElastic(p.GetRkey(), original[18])
+			go scanNetworkElastic(original[0], original[2], p.GetRkey(), original[18])
 		}
 		line = original[4] + "@|@" + original[2] + "@|@" + network + "@|@cmd@|@" + original[6] + " @|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@" + original[17] + "@|@" + original[16] + "@|@" + original[13] + "," + original[12] + "@|@scan"
 		values := strings.Split(line, "@|@")
@@ -168,11 +169,11 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
 		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
-		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
+		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"memory", p.GetRkey(), line, &m_tmp, "ed_mid")
+		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
@@ -207,22 +208,20 @@ func GiveScanDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	return task.SUCCESS, nil
 }
 
-func scanNetworkElastic(key string, data string) {
-	// networkSet := make(map[string]struct{})
-	// lines := strings.Split(data, ";")
-	// for _, line := range lines {
-	// 	if len(line) == 0 {
-	// 		continue
-	// 	}
-	// 	line = strings.ReplaceAll(line, "|", "@|@")
-	// 	uuid := uuid.NewString()
-	// 	values := strings.Split(line, "@|@")
-	// 	key := values[0] + "," + values[3]
-	// 	networkSet[key] = struct{}{}
-	// 	err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
-	// 	if err != nil {
-	// 		logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-	// 	}
-	// }
-	// elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
+func scanNetworkElastic(id string, time string, key string, data string) {
+	lines := strings.Split(data, ";")
+	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
+		re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
+		line = re.ReplaceAllString(line, "$1:$2@|@$3:$4@|@$5@|@$6")
+		line = strings.ReplaceAll(line, ">", "")
+		line = id + "@|@" + time + "@|@" + line
+		uuid := uuid.NewString()
+		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", key, line, &memory.MemoryNetworkScan{}, "ed_high")
+		if err != nil {
+			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+		}
+	}
 }

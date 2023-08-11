@@ -55,11 +55,11 @@ type MemoryNetworkScan struct {
 	AgentIP           string `json:"agentIP"`
 	AgentName         string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
-	Address           string `json:"address"`
-	Timestamp         int    `json:"timestamp"`
 	ProcessCreateTime int    `json:"processCreateTime"`
-	ConnectionINorOUT bool   `json:"connectionInOrOut"`
-	AgentPort         int    `json:"agentPort"`
+	SrcAddress        string `json:"srcAddress"`
+	DstAddress        string `json:"dstAddress"`
+	Action            string `json:"action"`
+	Timestamp         int    `json:"timestamp"`
 }
 
 func (n MemoryNetworkScan) Elastical() ([]byte, error) {

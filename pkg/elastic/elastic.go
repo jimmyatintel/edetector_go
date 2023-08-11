@@ -160,10 +160,31 @@ func SearchRequest(index string, body string) string {
 		logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
 		return ""
 	}
-	var docID string
-	hits := result["hits"].(map[string]interface{})["hits"].([]interface{})
-	for _, hit := range hits {
-		docID = hit.(map[string]interface{})["_id"].(string)
-	}
-	return docID
+    hits, ok := result["hits"].(map[string]interface{})
+    if !ok {
+        logger.Error("Hits not found in response")
+        return ""
+    }
+    hitsArray, ok := hits["hits"].([]interface{})
+    if !ok {
+        logger.Error("Hits array not found in response")
+        return ""
+    }
+    var docID string
+    for _, hit := range hitsArray {
+        hitMap, ok := hit.(map[string]interface{})
+        if !ok {
+            logger.Error("Hit is not a map")
+            continue
+        }
+        docIDVal, ok := hitMap["_id"].(string)
+        if !ok {
+            logger.Error("Doc ID not found in hit")
+            continue
+        }
+        docID = docIDVal
+        break
+    }
+    
+    return docID
 }
