@@ -5,6 +5,8 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -112,7 +114,7 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 			"source": "ctx._source.processConnectIP = params.processConnectIP",
 			"lang": "painless",
 			"params": {
-				"processConnectIP": true
+				"processConnectIP": "true"
 			}
 		},
 		"query": {
@@ -138,24 +140,29 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 	if updateRes.IsError() {
 		responseBytes, _ := ioutil.ReadAll(updateRes.Body)
 		errorMessage := string(responseBytes)
-		logger.Error("Error updating: ", zap.Any("message", errorMessage))
+		return errors.New(errorMessage)
 	} else {
-		if updateRes.Updated > 0 {
+		var response map[string]interface{}
+		if err := json.NewDecoder(updateRes.Body).Decode(&response); err != nil {
+			return err
+		}
+		updatedCount := int(response["updated"].(float64))
+		if updatedCount > 0 {
+			logger.Info("Update detect process: ", zap.Any("message", agent+" "+id+" "+time))
+		} else {
 			createBody := fmt.Sprintf(`
 			{
 				"agent": "%s",
 				"processId": %s,
 				"processCreateTime": %s,
-				"processConnectIP": true,
+				"processConnectIP": "true",
 				"mode": "detect"
 			}`, agent, id, time)
 			err = IndexRequest(index, createBody)
 			if err != nil {
 				return err
 			}
-			logger.Info("Create a new detect process", zap.Any("message", agent+" "+id+" "+time))
-		} else {
-			logger.Info("Update detect process", zap.Any("message", agent+" "+id+" "+time))
+			logger.Info("Create a new detect process: ", zap.Any("message", agent+" "+id+" "+time))
 		}
 	}
 	return nil
