@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+
 func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string, priority string) error {
 	agentIP := query.GetMachineIP(agent)
 	if agentIP == "" {
@@ -36,7 +37,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_de_main",
+		Index: elasticPrefix+"main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
@@ -80,7 +81,7 @@ func SendToRelationElastic(template Request_data, priority string) error {
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: "ed_de_explorer_relation",
+		Index: elasticPrefix+"explorer_relation",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)

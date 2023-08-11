@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 )
 
+var elasticPrefix = "ed_"
+
 type Request_data interface {
 	Elastical() ([]byte, error)
 }

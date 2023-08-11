@@ -7,6 +7,8 @@ import (
 	"net"
 )
 
+var elasticPrefix = "ed_"
+
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
 
 func init() {

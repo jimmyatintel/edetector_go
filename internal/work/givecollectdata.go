@@ -243,12 +243,12 @@ func TmpEnd(key string) { //!tmp version
 			path := filepath.Join(workingPath, (key + ".db"))
 			data, err := os.ReadFile(path)
 			if err != nil {
-				logger.Error("Read file error")
+				logger.Error("Read file error", zap.Any("message", err.Error()))
 				continue
 			}
 			fileInfo, err := os.Stat(path)
 			if err != nil {
-				logger.Error("Stat file error")
+				logger.Error("Stat file error", zap.Any("message", err.Error()))
 				continue
 			}
 			realLen := fileInfo.Size()
@@ -258,7 +258,7 @@ func TmpEnd(key string) { //!tmp version
 			}
 			err = os.WriteFile(path, data[:collectTotalMap[key]], 0644)
 			if err != nil {
-				logger.Error("Write file error")
+				logger.Error("Write file error", zap.Any("message", err.Error()))
 				continue
 			}
 			// move to dbUnstage
@@ -266,7 +266,7 @@ func TmpEnd(key string) { //!tmp version
 			srcPath := filepath.Join(workingPath, (key + ".db"))
 			err = os.Rename(srcPath, dstPath)
 			if err != nil {
-				logger.Error("Move failed")
+				logger.Error("Move failed", zap.Any("message", err.Error()))
 				continue
 			}
 			return
