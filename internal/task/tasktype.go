@@ -16,7 +16,7 @@ const (
 	CHECK_CONNECT TaskType = "CheckConnect"
 	DATA_RIGHT    TaskType = "DataRight"
 
-	// detect
+	// new detect
 	UPDATE_DETECT_MODE  TaskType = "UpdateDetectMode"
 	GIVE_DETECT_NETWORK TaskType = "GiveDetectNetwork"
 	GIVE_DETECT_PROCESS TaskType = "GiveDetectProcess"

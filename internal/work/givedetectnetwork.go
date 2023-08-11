@@ -18,8 +18,8 @@ import (
 type MemoryNetwork struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
-	AgentIP            string `json:"agentIP"`
-	AgentName          string `json:"agentName"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
@@ -32,40 +32,9 @@ func (n MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
-func GiveNetworkHistory(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveNetworkHistory: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.GET_NETWORK_HISTORY_INFO,
-		Message:    "null",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func GiveNetworkHistoryData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	go NetworkElastic(p)
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func GiveNetworkHistoryEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	go NetworkElastic(p)
+func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// go NetworkElastic(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -91,7 +60,7 @@ func NetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "@|@")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, "ed_memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, "ed_de_memory_network_detect", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
