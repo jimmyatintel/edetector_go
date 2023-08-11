@@ -1,6 +1,7 @@
 package elasticquery
 
 import (
+	"edetector_go/config"
 	elastic "edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"fmt"
@@ -30,7 +31,7 @@ outerLoop:
 					}
 				}
 			}`, agent, pid, createTime)
-			doc := elastic.SearchRequest(elasticPrefix+"memory", query)
+			doc := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"memory", query)
 			docs = append(docs, doc)
 			if doc == "" {
 				logger.Info("waiting 60s for updating process: ", zap.Any("message", pid+" "+createTime))
@@ -43,7 +44,7 @@ outerLoop:
 				continue outerLoop
 			}
 		}
-		elastic.BulkUpdateDocuments(elasticPrefix+"memory", docs)
+		elastic.BulkUpdateDocuments(config.Viper.GetString("ELASTIC_PREFIX")+"memory", docs)
 		break
 	}
 }

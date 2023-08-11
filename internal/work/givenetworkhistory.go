@@ -1,6 +1,7 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
@@ -73,7 +74,7 @@ func detectNetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "@|@")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, elasticPrefix+"memory_network", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"memory_network", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
