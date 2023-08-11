@@ -23,6 +23,7 @@ import (
 
 var unstagePath = "dbUnstage"
 var stagedPath = "dbStaged"
+var elasticPrefix = "ed_"
 
 func parser_init() {
 	CheckDir(unstagePath)
@@ -211,7 +212,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := "ed_" + strings.ToLower(tableName) //! developing
+		details := elasticPrefix + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})

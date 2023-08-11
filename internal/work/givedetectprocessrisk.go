@@ -16,28 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// type ProcessOverJson struct {
-//0 	PID               int    `json:"pid"`
-//1 	Mode              string `json:"mode"`
-//2 	ProcessCTime      int    `json:"process_c_time"`
-//3 	ProcessTime       string `json:"process_time"`
-//4 	ProcessName       string `json:"process_name"`
-//5 	ProcessPath       string `json:"process_path"`
-//6 	ProcessHash       string `json:"process_hash"`
-//7 	Parent_PID        int    `json:"parent_pid"`
-//8 	ParentCTime       int    `json:"parent_C_time"`
-//9 	ParentPath        string `json:"parent_path"`
-//10 	InjectedHash      string `json:"injected_hash"`
-//11 	StartRun          int    `json:"start_run"`
-//12 	HideAttribute     int    `json:"hide_attribute"`
-//13 	HideProcess       int    `json:"hide_process"`
-//14 	SignerSubjectName string `json:"signer_subject_name"`
-//15 	Injection         string `json:"injection"`
-//16 	DllStr            string `json:"dll_str"`
-//17 	InlineStr         string `json:"inline_str"`
-//18 	NetStr            string `json:"net_str"`
-// }
-
 func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectProcessRisk: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
@@ -85,11 +63,11 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		}
 		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
 		// logger.Info("Risk level", zap.Any("message", strconv.Itoa(m_tmp.RiskLevel)))
-		err = elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
+		err = elasticquery.SendToMainElastic(uuid, elasticPrefix+"memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &m_tmp, "ed_high")
+		err = elasticquery.SendToDetailsElastic(uuid, elasticPrefix+"memory", p.GetRkey(), line, &m_tmp, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
