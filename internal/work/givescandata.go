@@ -19,54 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// type ProcessScanJson struct {
-// 	PID         int    `json:"pid"`
-// 	Parent_PID  int    `json:"parent_pid"`
-// 	ProcessName string `json:"process_name"`
-// 	ProcessTime int    `json:"process_time"`
-// 	ParentName  string `json:"parent_name"`
-// 	ParentTime  int    `json:"parent_time"`
-// 	FilePath    string `json:"file_path"`
-// 	UserName    string `json:"user_name"`
-// 	IsPacked    bool   `json:"is_packeted"`
-// 	CommandLine string `json:"command_line"`
-// 	IsHide      bool   `json:"is_hide"`
-// }
-
-// type ScanInfoJson struct {
-// 	PID        int    `json:"pid"`
-// 	FileName   string `json:"file_name"`
-// 	FilePath   string `json:"file_path"`
-// 	FileHash   string `json:"file_hash"`
-// 	Isinjected int    `json:"is_injected"`
-// 	Mode       string `json:"mode"`
-// 	Count      int    `json:"count"`
-// 	AllCount   int    `json:"all_count"`
-// 	IsStartRun bool   `json:"is_start_run"`
-// }
-
-// type ScanOverJson struct {
-// 	0 PID               int    `json:"pid"`
-// 	1 Mode              string `json:"mode"`
-// 	2 ProcessTime       int    `json:"process_time"`
-// 	3 DetectTime        string `json:"detect_time"`
-// 	4 ProcessName       string `json:"process_name"`
-// 	5 ProcessPath       string `json:"process_path"`
-// 	6 ProcessHash       string `json:"process_hash"`
-// 	7 Parent_PID        int    `json:"parent_pid"`
-// 	8 ParentTime        int    `json:"parent_time"`
-// 	9 ParentPath        string `json:"parent_path"`
-// 	10 InjectedHash      string `json:"injected_hash"`
-// 	11 StartRun          int    `json:"start_run"`
-// 	12 HideAttribute     int    `json:"hide_attribute"`
-// 	13 HideProcess       int    `json:"hide_process"`
-// 	14 SignerSubjectName string `json:"signer_subject_name"`
-// 	15 IsInjection       string `json:"is_injection"`
-// 	16 IsOtherdll        bool   `json:"is_other_dll"`
-// 	17 IsInlineHook      string `json:"is_inline_hook"`
-// 	18 IsNetwork         int    `json:"is_network"`
-// }
-
 func Process(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Process: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
@@ -196,9 +148,10 @@ func GiveScanDataOver(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			original[2] = "0"
 			int_date = 0
 		}
-		network := "true"
-		if original[18] == "null" {
-			network = "false"
+		network := "false"
+		if original[18] != "null" {
+			network = "true"
+			go scanNetworkElastic(p.GetRkey(), original[18])
 		}
 		line = original[4] + "@|@" + original[2] + "@|@" + network + "@|@cmd@|@" + original[6] + " @|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@" + original[17] + "@|@" + original[16] + "@|@" + original[13] + "," + original[12] + "@|@scan"
 		values := strings.Split(line, "@|@")
@@ -251,4 +204,24 @@ func GiveScanDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	taskservice.Finish_task(p.GetRkey(), "StartScan")
 	return task.SUCCESS, nil
+}
+
+func scanNetworkElastic(key string, data string) {
+	// networkSet := make(map[string]struct{})
+	// lines := strings.Split(data, ";")
+	// for _, line := range lines {
+	// 	if len(line) == 0 {
+	// 		continue
+	// 	}
+	// 	line = strings.ReplaceAll(line, "|", "@|@")
+	// 	uuid := uuid.NewString()
+	// 	values := strings.Split(line, "@|@")
+	// 	key := values[0] + "," + values[3]
+	// 	networkSet[key] = struct{}{}
+	// 	err := elasticquery.SendToDetailsElastic(uuid, elasticPrefix+"memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+	// 	if err != nil {
+	// 		logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+	// 	}
+	// }
+	// elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }

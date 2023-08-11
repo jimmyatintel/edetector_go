@@ -18,7 +18,7 @@ import (
 var RelationMap = make(map[string](map[int](Relation)))
 var DetailsMap = make(map[string](string))
 var Finished = make(chan string)
-var elasticPrefix = "ed_"
+var elasticPrefix = "peggy_"
 
 type Relation struct {
 	UUID  string
