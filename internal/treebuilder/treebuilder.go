@@ -45,7 +45,7 @@ func init() {
 }
 
 func Main() {
-	logger.Info("Starting tree builder...")
+	logger.Info("starting tree builder...")
 	for {
 		var rootInd int
 		agent := <-Finished

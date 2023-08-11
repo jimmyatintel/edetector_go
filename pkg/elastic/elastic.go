@@ -1,12 +1,12 @@
 package elastic
 
 import (
-	"bytes"
 	"context"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/pkg/logger"
-	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -31,7 +31,7 @@ func SetElkClient() error {
 	return err
 }
 
-func createIndex(name string) {
+func CreateIndex(name string) {
 	if !flagcheck() {
 		return
 	}
@@ -102,89 +102,108 @@ func BulkIndexRequest(action []string, work []string) error {
 	return nil
 }
 
-func BulkUpdateDocuments(index string, docIDs []string) {
-	var buf bytes.Buffer
-	for _, docID := range docIDs {
-		action := map[string]interface{}{
-			"update": map[string]interface{}{
-				"_index": index,
-				"_id":    docID,
-				"_type":  "_doc",
-			},
-		}
-		source, err := json.Marshal(action)
-		if err != nil {
-			logger.Info("Failed to marshal", zap.Any("message", err.Error()))
-		}
-		buf.Write(source)
-		buf.WriteByte('\n')
-		updateData := map[string]interface{}{
-			"doc": map[string]interface{}{
-				"processConnectIP": "true",
-			},
-		}
-		docUpdateData, err := json.Marshal(updateData)
-		if err != nil {
-			logger.Info("Failed to marshal", zap.Any("message", err.Error()))
-		}
-		buf.Write(docUpdateData)
-		buf.WriteByte('\n')
+func UpdateRequest(agent string, id string, time string, index string) error {
+	if !flagcheck() {
+		return nil
 	}
-	res, err := es.Bulk(
-		strings.NewReader(buf.String()),
-		es.Bulk.WithContext(context.Background()),
-	)
+	query := fmt.Sprintf(`
+	{
+		"script": {
+			"source": "ctx._source.processConnectIP = params.processConnectIP",
+			"lang": "painless",
+			"params": {
+				"processConnectIP": true
+			}
+		},
+		"query": {
+			"bool": {
+				"must": [
+					{ "term": { "agent": "%s" } },
+					{ "term": { "processId": %s } },
+					{ "term": { "processCreateTime": %s } },
+					{ "term": { "mode": "detect" } }
+				]
+			}
+		}
+	}`, agent, id, time)
+	updateReq := esapi.UpdateByQueryRequest{
+		Index: []string{index},
+		Body:  strings.NewReader(query),
+	}
+	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
-		logger.Info("Failed to marshal", zap.Any("message", err.Error()))
+		return err
 	}
-	defer res.Body.Close()
-	logger.Info("Bulk update: ", zap.Any("message", res.String()))
+	defer updateRes.Body.Close()
+	if updateRes.IsError() {
+		responseBytes, _ := ioutil.ReadAll(updateRes.Body)
+		errorMessage := string(responseBytes)
+		logger.Error("Error updating: ", zap.Any("message", errorMessage))
+	} else {
+		if updateRes.Updated > 0 {
+			createBody := fmt.Sprintf(`
+			{
+				"agent": "%s",
+				"processId": %s,
+				"processCreateTime": %s,
+				"processConnectIP": true,
+				"mode": "detect"
+			}`, agent, id, time)
+			err = IndexRequest(index, createBody)
+			if err != nil {
+				return err
+			}
+			logger.Info("Create a new detect process", zap.Any("message", agent+" "+id+" "+time))
+		} else {
+			logger.Info("Update detect process", zap.Any("message", agent+" "+id+" "+time))
+		}
+	}
+	return nil
 }
 
-func SearchRequest(index string, body string) string {
-	if !flagcheck() {
-		return ""
-	}
-	req := esapi.SearchRequest{
-		Index: []string{index},
-		Body:  strings.NewReader(body),
-	}
-	res, err := req.Do(context.Background(), es)
-	if err != nil {
-		panic(err)
-	}
-	defer res.Body.Close()
-	// logger.Info(res.String())
-	var result map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
-		return ""
-	}
-    hits, ok := result["hits"].(map[string]interface{})
-    if !ok {
-        logger.Error("Hits not found in response")
-        return ""
-    }
-    hitsArray, ok := hits["hits"].([]interface{})
-    if !ok {
-        logger.Error("Hits array not found in response")
-        return ""
-    }
-    var docID string
-    for _, hit := range hitsArray {
-        hitMap, ok := hit.(map[string]interface{})
-        if !ok {
-            logger.Error("Hit is not a map")
-            continue
-        }
-        docIDVal, ok := hitMap["_id"].(string)
-        if !ok {
-            logger.Error("Doc ID not found in hit")
-            continue
-        }
-        docID = docIDVal
-        break
-    }
-    
-    return docID
+func SearchRequest(index string, body string) {
+	// if !flagcheck() {
+	// 	return ""
+	// }
+	// req := esapi.SearchRequest{
+	// 	Index: []string{index},
+	// 	Body:  strings.NewReader(body),
+	// }
+	// res, err := req.Do(context.Background(), es)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer res.Body.Close()
+	// // logger.Info(res.String())
+	// var result map[string]interface{}
+	// if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+	// 	logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
+	// 	return ""
+	// }
+	// hits, ok := result["hits"].(map[string]interface{})
+	// if !ok {
+	//     logger.Error("Hits not found in response")
+	//     return ""
+	// }
+	// hitsArray, ok := hits["hits"].([]interface{})
+	// if !ok {
+	//     logger.Error("Hits array not found in response")
+	//     return ""
+	// }
+	// var docID string
+	// for _, hit := range hitsArray {
+	//     hitMap, ok := hit.(map[string]interface{})
+	//     if !ok {
+	//         logger.Error("Hit is not a map")
+	//         continue
+	//     }
+	//     docIDVal, ok := hitMap["_id"].(string)
+	//     if !ok {
+	//         logger.Error("Doc ID not found in hit")
+	//         continue
+	//     }
+	//     docID = docIDVal
+	//     break
+	// }
+	// return docID
 }
