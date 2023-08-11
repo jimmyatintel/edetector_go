@@ -87,12 +87,12 @@ func Main() {
 			if err != nil {
 				logger.Error("error converting time")
 			}
-			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_low")
+			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"explorer", agent, line, &ExplorerDetails{}, "ed_low")
+			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue

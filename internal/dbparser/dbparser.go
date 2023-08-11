@@ -115,6 +115,7 @@ func Main() {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
 		taskservice.Finish_task(agent, "StartCollect")
+		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }
 
@@ -211,7 +212,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := config.Viper.GetString("ELASTIC_PREFIX") + strings.ToLower(tableName) //! developing
+		details := config.Viper.GetString("ELASTIC_PREFIX") + "_" + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})

@@ -37,7 +37,7 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: config.Viper.GetString("ELASTIC_PREFIX") + "main",
+		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_main",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
@@ -81,7 +81,7 @@ func SendToRelationElastic(template Request_data, priority string) error {
 		return err
 	}
 	var msg = rbconnector.Message{
-		Index: config.Viper.GetString("ELASTIC_PREFIX") + "explorer_relation",
+		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_explorer_relation",
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
