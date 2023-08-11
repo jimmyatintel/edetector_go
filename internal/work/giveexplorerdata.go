@@ -30,13 +30,12 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-
 	ExplorerTotalMap[p.GetRkey()] = total
 	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.TRANSPORT_EXPLORER,
+		Work:       task.DATA_RIGHT,
 		Message:    msg,
 	}
 	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
