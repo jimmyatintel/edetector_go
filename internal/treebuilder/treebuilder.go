@@ -52,7 +52,7 @@ func Main() {
 		fmt_content := DetailsMap[agent]
 		RelationMap[agent] = make(map[int](Relation))
 		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
-
+		logger.Info("data len:", zap.Any("message", len(fmt_content)))
 		// send to elastic(main & details) & record the relation
 		lines := strings.Split(string(fmt_content), "\n")
 		for _, line := range lines {
