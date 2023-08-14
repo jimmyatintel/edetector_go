@@ -11,6 +11,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"errors"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -262,9 +263,9 @@ func TmpEnd(key string) { //!tmp version
 				continue
 			}
 			// move to dbUnstage
-			dstPath := filepath.Join(unstagePath, (key + ".db"))
 			srcPath := filepath.Join(workingPath, (key + ".db"))
-			err = os.Rename(srcPath, dstPath)
+			dstPath := filepath.Join(unstagePath, (key + ".db"))
+			err = moveFile(srcPath, dstPath)
 			if err != nil {
 				logger.Error("Move failed", zap.Any("message", err.Error()))
 				continue
@@ -273,4 +274,26 @@ func TmpEnd(key string) { //!tmp version
 		}
 		tmpMu.Unlock()
 	}
+}
+
+func moveFile(srcPath string, dstPath string) error {
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(srcPath)
+	if err != nil {
+		return err
+	}
+	return nil
 }

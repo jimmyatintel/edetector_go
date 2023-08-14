@@ -1,7 +1,9 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
@@ -9,28 +11,9 @@ import (
 	"net"
 	"strings"
 
-	"encoding/json"
-
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
-
-type MemoryNetwork struct {
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
-	ProcessId         int    `json:"processId"`
-	Address           string `json:"address"`
-	Timestamp         int    `json:"timestamp"`
-	ProcessCreateTime int    `json:"processCreateTime"`
-	ConnectionINorOUT bool   `json:"connectionInOrOut"`
-	AgentPort         int    `json:"agentPort"`
-}
-
-func (n MemoryNetwork) Elastical() ([]byte, error) {
-	return json.Marshal(n)
-}
 
 func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -48,7 +31,7 @@ func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	return task.SUCCESS, nil
 }
 
-func NetworkElastic(p packet.Packet) {
+func detectNetworkElastic(p packet.Packet) {
 	networkSet := make(map[string]struct{})
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {
@@ -60,7 +43,7 @@ func NetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "@|@")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, elasticPrefix+"memory_network", p.GetRkey(), line, &MemoryNetwork{}, "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

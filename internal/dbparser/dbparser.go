@@ -116,6 +116,7 @@ func Main() {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
 		taskservice.Finish_task(agent, "StartCollect")
+		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }
 
@@ -212,7 +213,7 @@ outerLoop:
 		}
 		values := strings.Split(line, "@|@")
 		var err error
-		details := elasticPrefix + strings.ToLower(tableName) //! developing
+		details := config.Viper.GetString("ELASTIC_PREFIX") + "_" + strings.ToLower(tableName) //! developing
 		switch tableName {
 		case "AppResourceUsageMonitor":
 			err = toElastic(details, agent, line, values[1], values[19], "software", values[14], &AppResourceUsageMonitor{})
@@ -309,7 +310,7 @@ func toElastic(details string, agent string, line string, item string, date stri
 	uuid := uuid.NewString()
 	int_date, err := strconv.Atoi(date)
 	if err != nil {
-		logger.Debug("Invalid date: ", zap.Any("message", date))
+		// logger.Debug("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
 	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")
