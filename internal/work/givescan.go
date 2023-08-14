@@ -50,7 +50,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			int_date = 0
 		}
 		network := "true"
-		if values[16] == "null" {
+		if values[15] == "null" {
 			network = "false"
 		}
 		lastElement := strings.LastIndex(line, "@|@")
