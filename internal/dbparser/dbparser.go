@@ -21,12 +21,12 @@ import (
 	"go.uber.org/zap"
 )
 
-var unstagePath = "dbUnstage"
-var stagedPath = "dbStaged"
+var dbUnstagePath = "dbUnstage"
+var dbStagedPath = "dbStaged"
 
 func parser_init() {
-	CheckDir(unstagePath)
-	CheckDir(stagedPath)
+	CheckDir(dbUnstagePath)
+	CheckDir(dbStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -66,7 +66,7 @@ func CheckDir(path string) {
 func Main() {
 	parser_init()
 	for {
-		dbFile, err := getOldestFile(unstagePath)
+		dbFile, err := getOldestFile(dbUnstagePath)
 		if dbFile == "" {
 			logger.Info("No file to parse")
 			time.Sleep(30 * time.Second)
@@ -110,7 +110,7 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-		err = os.Rename(filepath.Join(dbFile), filepath.Join(stagedPath, agent+".db"))
+		err = os.Rename(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
@@ -191,6 +191,7 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 		line = strings.ReplaceAll(line, "<nil>", "0")
 		line = strings.ReplaceAll(line, "@|@ ", "@|@0")
 		line = strings.ReplaceAll(line, " @|@", "0@|@")
+		line = convertTime(tablename, line)
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -309,7 +310,7 @@ func toElastic(details string, agent string, line string, item string, date stri
 	uuid := uuid.NewString()
 	int_date, err := strconv.Atoi(date)
 	if err != nil {
-		// logger.Debug("Invalid date: ", zap.Any("message", date))
+		logger.Error("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
 	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")

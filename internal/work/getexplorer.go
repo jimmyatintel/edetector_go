@@ -27,7 +27,7 @@ func HandleExpolorer(p packet.Packet) {
 		if len(parts) == 2 {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
-			msg := drive + "|" + driveInfo + "|Explorer|ScheduleName|0|2048"
+			msg := drive + "|" + driveInfo
 			driveCountMap[key] = ind
 			var user_packet = packet.TaskPacket{
 				Key:     key,

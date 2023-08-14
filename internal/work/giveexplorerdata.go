@@ -1,6 +1,7 @@
 package work
 
 import (
+	"archive/zip"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
@@ -8,7 +9,9 @@ import (
 	"edetector_go/internal/treebuilder"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"net"
@@ -22,21 +25,28 @@ var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
+var treeWorkingPath = "treeWorking"
+var treeUnstagePath = "treeUnstage"
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	path := filepath.Join(treeWorkingPath, (p.GetRkey() + ".zip"))
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return task.FAIL, err
+	}
+	file.Close()
 	parts := strings.Split(p.GetMessage(), "|")
 	total, err := strconv.Atoi(parts[0])
 	if err != nil {
 		return task.FAIL, err
 	}
 	ExplorerTotalMap[p.GetRkey()] = total
-	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
-		Message:    msg,
+		Message:    "",
 	}
 	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -47,19 +57,19 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
 	key := p.GetRkey()
-	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
-	var realData string
-	if lastNewlineInd >= 0 {
-		realData = p.GetMessage()[:lastNewlineInd+1]
-	} else {
-		logger.Error("Invalid GiveExplorerData")
-	}
+	// lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
+	// var realData string
+	// if lastNewlineInd >= 0 {
+	// 	realData = p.GetMessage()[:lastNewlineInd+1]
+	// } else {
+	// 	logger.Error("Invalid GiveExplorerData")
+	// }
+	// treebuilder.DetailsMap[key] += realData
 
-	treebuilder.DetailsMap[key] += realData
 	// write file
-	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	path := filepath.Join(treeWorkingPath, (p.GetRkey() + ".zip"))
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -67,7 +77,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	messageBytes := []byte(realData)
+	messageBytes := []byte(p.GetMessage())
 	_, err = file.Write(messageBytes)
 	if err != nil {
 		return task.FAIL, err
@@ -100,13 +110,51 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+
+	// open the zip file for reading
+	path := filepath.Join(treeWorkingPath, (p.GetRkey() + ".zip"))
+	reader, err := zip.OpenReader(path)
+	if err != nil {
+		logger.Error("Error opening zip file: ", zap.Any("message", err.Error()))
+		return task.FAIL, err
+	}
+	defer reader.Close()
+	// Extract the files from the zip archive
+	for _, file := range reader.File {
+		destPath := filepath.Join(treeUnstagePath, file.Name)
+		if !file.FileInfo().IsDir() {
+			// Create the file
+			destFile, err := os.Create(destPath)
+			if err != nil {
+				logger.Error("Error creating file:", zap.Any("error", err.Error()))
+				continue
+			}
+			defer destFile.Close()
+			// Open the file inside the zip archive
+			srcFile, err := file.Open()
+			if err != nil {
+				logger.Error("Error opening file inside zip:", zap.Any("error", err.Error()))
+				continue
+			}
+			defer srcFile.Close()
+			// Copy the contents from the source to the destination file
+			_, err = io.Copy(destFile, srcFile)
+			if err != nil {
+				logger.Error("Error copying file contents:", zap.Any("error", err.Error()))
+				continue
+			}
+		} else {
+			logger.Error("the zip file contains directory")
+		}
+	}
+
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
