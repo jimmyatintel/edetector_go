@@ -76,7 +76,6 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 		lastElement := strings.LastIndex(line, "@|@")
 		line = line[:lastElement] + "@|@" + network + "@|@riskLevel@|@scan"
-		logger.Info("scan data", zap.Any("message", line))
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
 		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
@@ -111,7 +110,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveScanEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),

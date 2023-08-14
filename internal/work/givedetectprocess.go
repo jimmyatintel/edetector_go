@@ -55,9 +55,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			network = "true"
 			logger.Debug("Update information of the detect process: ", zap.Any("message", values[9]+" "+values[1]))
 		}
-		lastElement := strings.LastIndex(line, "@|@")
-		line = line[:lastElement] + "@|@" + network + "@|@riskLevel@|@detect"
-		logger.Info("scan data", zap.Any("message", line))
+		line = line + "@|@" + network + "@|@riskLevel@|@detect"
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
 		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)

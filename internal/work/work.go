@@ -7,7 +7,6 @@ import (
 	"net"
 )
 
-var elasticPrefix = "james_"
 
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
 
