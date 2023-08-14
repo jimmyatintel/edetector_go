@@ -22,10 +22,11 @@ const (
 	GIVE_DETECT_PROCESS TaskType = "GiveDetectProcess"
 
 	// new scan
-	GET_SCAN       TaskType = "GetScan"
-	GIVE_SCAN_INFO TaskType = "GiveScanInfo"
-	GIVE_SCAN      TaskType = "GiveScan"
-	GIVE_SCAN_END  TaskType = "GiveScanEnd"
+	GET_SCAN           TaskType = "GetScan"
+	GIVE_SCAN_INFO     TaskType = "GiveScanInfo"
+	GIVE_SCAN_FRAGMENT TaskType = "GiveScanFragment"
+	GIVE_SCAN          TaskType = "GiveScan"
+	GIVE_SCAN_END      TaskType = "GiveScanEnd"
 
 	// new drive
 	GET_DRIVE           TaskType = "GetDrive"
@@ -71,6 +72,7 @@ var Worklist = []TaskType{
 	GIVE_DETECT_PROCESS,
 	GET_SCAN,
 	GIVE_SCAN_INFO,
+	GIVE_SCAN_FRAGMENT,
 	GIVE_SCAN,
 	GIVE_SCAN_END,
 	GET_DRIVE,

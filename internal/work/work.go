@@ -26,9 +26,10 @@ func init() {
 		task.GIVE_DETECT_PROCESS: GiveDetectProcess,
 
 		// new scan
-		task.GIVE_SCAN_INFO: GiveScanInfo,
-		task.GIVE_SCAN:      GiveScan,
-		task.GIVE_SCAN_END:  GiveScanEnd,
+		task.GIVE_SCAN_INFO:     GiveScanInfo,
+		task.GIVE_SCAN_FRAGMENT: GiveScanFragment,
+		task.GIVE_SCAN:          GiveScan,
+		task.GIVE_SCAN_END:      GiveScanEnd,
 
 		// drive
 		task.GIVE_DRIVE_INFO:     GiveDriveInfo,

@@ -18,9 +18,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var scanMap = make(map[string](string))
+
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	scanMap[p.GetRkey()] = ""
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -34,10 +37,28 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	return task.SUCCESS, nil
 }
 
+func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Debug("GiveScanFragment: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	scanMap[p.GetRkey()] += p.GetMessage()
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "null",
+	}
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveScan: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	scanMap[p.GetRkey()] += p.GetMessage()
 	// send to elasticsearch
-	lines := strings.Split(p.GetMessage(), "\n")
+	lines := strings.Split(scanMap[p.GetRkey()], "\n")
+	scanMap[p.GetRkey()] = ""
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
