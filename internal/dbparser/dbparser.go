@@ -309,7 +309,7 @@ func toElastic(details string, agent string, line string, item string, date stri
 	uuid := uuid.NewString()
 	int_date, err := strconv.Atoi(date)
 	if err != nil {
-		logger.Debug("Invalid date: ", zap.Any("message", date))
+		// logger.Debug("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
 	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")
