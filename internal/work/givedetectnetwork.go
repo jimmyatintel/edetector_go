@@ -17,7 +17,7 @@ import (
 
 func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveNetworkHistoryEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	// go NetworkElastic(p)
+	go detectNetworkElastic(p)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
