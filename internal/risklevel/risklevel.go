@@ -32,7 +32,7 @@ func Getriskscore(info memory.Memory) (int, error) {
 	if info.ProcessConnectIP != "false" {
 		score += 30
 	}
-	if info.ImportOtherDLL {
+	if info.ImportOtherDLL != "null" {
 		score += 60
 	}
 	if info.Hide[0] == '1' {

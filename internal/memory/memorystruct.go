@@ -21,8 +21,8 @@ type Memory struct {
 	ProcessBeInjected int    `json:"processBeInjected"`
 	Boot              string `json:"boot"`
 	Hide              string `json:"hide"`
+	ImportOtherDLL    string `json:"importOtherDLL"`
 	Hook              string `json:"hook"`
-	ImportOtherDLL    bool   `json:"importOtherDLL"`
 	ProcessConnectIP  string `json:"processConnectIP"`
 	RiskLevel         int    `json:"riskLevel"`
 	Mode              string `json:"mode"`
