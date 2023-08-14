@@ -1,6 +1,7 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/memory"
 	"edetector_go/internal/packet"
@@ -65,11 +66,11 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
 		line = strings.ReplaceAll(line, "riskLevel", strconv.Itoa(m_tmp.RiskLevel))
-		err = elasticquery.SendToMainElastic(uuid, "ed_de_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
+		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, "ed_de_memory", p.GetRkey(), line, &m_tmp, "ed_mid")
+		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
