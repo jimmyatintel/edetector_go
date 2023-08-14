@@ -7,8 +7,10 @@ import (
 	packet "edetector_go/internal/packet"
 	risklevel "edetector_go/internal/risklevel"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -49,7 +51,28 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 			original[2] = "0"
 			int_date = 0
 		}
-		line = original[4] + "@|@" + original[2] + "@|@detecting@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
+		query := fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "processId": %s } },
+						{ "term": { "processCreateTime": %s } },
+						{ "term": { "processConnectIP": "true" } },
+						{ "term": { "mode": "detect" } }
+					]
+				}
+			}
+		}`, p.GetRkey(), original[0], original[2])
+		doc := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+		var network string
+		if doc == "" {
+			network = "detecting"
+		} else {
+			network = "true"
+			logger.Debug("Update information of the detect process: ", zap.Any("message", original[0]+" "+original[2]))
+		}
+		line = original[4] + "@|@" + original[2] + "@|@" + network + "@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
 		values := strings.Split(line, "@|@")
 		//! tmp version
 		uuid := uuid.NewString()
