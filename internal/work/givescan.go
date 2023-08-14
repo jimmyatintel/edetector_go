@@ -54,7 +54,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			network = "false"
 		}
 		lastElement := strings.LastIndex(line, "@|@")
-		line = line[:lastElement] + network + "@|@riskLevel@|@scan"
+		line = line[:lastElement] + "@|@" + network + "@|@riskLevel@|@scan"
+		logger.Info("scan data", zap.Any("message", line))
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
 		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
