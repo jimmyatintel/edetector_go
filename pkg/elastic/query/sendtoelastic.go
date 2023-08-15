@@ -27,10 +27,10 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 		Agent:     agent,
 		AgentIP:   agentIP,
 		AgentName: agentName,
-		Item:      item,
-		Date:      date,
-		Type:      ttype,
-		Etc:       etc,
+		ItemMain:  item,
+		DateMain:  date,
+		TypeMain:  ttype,
+		EtcMain:   etc,
 	}
 	request, err := template.Elastical()
 	if err != nil {
@@ -51,8 +51,8 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	return nil
 }
 
-func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string) error {
-	template, err := StringToStruct(uuid, agentID, mes, data)
+func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string, item string, date int, ttype string, etc string) error {
+	template, err := StringToStruct(uuid, agentID, mes, data, item, date, ttype, etc)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func SendToRelationElastic(template Request_data, priority string) error {
 	return nil
 }
 
-func StringToStruct(uuid string, agentID string, mes string, data Request_data) (Request_data, error) {
+func StringToStruct(uuid string, agentID string, mes string, data Request_data, item string, date int, ttype string, etc string) (Request_data, error) {
 	agentIP := query.GetMachineIP(agentID)
 	if agentIP == "" {
 		logger.Error("Error getting machine ip")
@@ -105,7 +105,7 @@ func StringToStruct(uuid string, agentID string, mes string, data Request_data) 
 		logger.Error("Error getting machine name")
 	}
 	v := reflect.Indirect(reflect.ValueOf(data))
-	line := uuid + "@|@" + agentID + "@|@" + agentIP + "@|@" + agentName + "@|@" + mes
+	line := uuid + "@|@" + agentID + "@|@" + agentIP + "@|@" + agentName + "@|@" + mes + "@|@" + item + "@|@" + strconv.Itoa(date) + "@|@" + ttype + "@|@" + etc
 	values := strings.Split(line, "@|@")
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
