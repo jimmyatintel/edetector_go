@@ -63,8 +63,9 @@ func CheckDir(path string) {
 	}
 }
 
-func Main() {
+func Main(version string) {
 	parser_init()
+	logger.Info("Welcome to DB Parser", zap.Any("version", version))
 	for {
 		dbFile, err := getOldestFile(unstagePath)
 		if dbFile == "" {
