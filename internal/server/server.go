@@ -56,8 +56,9 @@ func server_init() {
 	}
 }
 
-func Main() {
+func Main(version string) {
 	server_init()
+	logger.Info("Welcome to edetector main server", zap.Any("version", version))
 	Quit := make(chan os.Signal, 1)
 	Connection_close := make(chan int, 1)
 	ctx, cancel := context.WithCancel(context.Background())

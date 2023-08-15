@@ -58,8 +58,9 @@ func connector_init() {
 	}
 }
 
-func Start() {
+func Start(version string) {
 	connector_init()
+	logger.Info("Welcome to edetector connector", zap.Any("version", version))
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()
