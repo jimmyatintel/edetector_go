@@ -58,7 +58,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		line = line + "@|@" + network + "@|@riskLevel@|@detect"
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
-		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
+		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp, "0", 0, "0", "0")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
@@ -71,7 +71,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_mid")
+		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_high", values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel))
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

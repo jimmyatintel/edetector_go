@@ -26,6 +26,10 @@ type Memory struct {
 	ProcessConnectIP  string `json:"processConnectIP"`
 	RiskLevel         int    `json:"riskLevel"`
 	Mode              string `json:"mode"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n Memory) Elastical() ([]byte, error) {
@@ -43,6 +47,10 @@ type MemoryNetworkDetect struct {
 	ProcessCreateTime int    `json:"processCreateTime"`
 	ConnectionINorOUT bool   `json:"connectionInOrOut"`
 	AgentPort         int    `json:"agentPort"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n MemoryNetworkDetect) Elastical() ([]byte, error) {
@@ -60,6 +68,10 @@ type MemoryNetworkScan struct {
 	DstAddress        string `json:"dstAddress"`
 	Action            string `json:"action"`
 	Timestamp         int    `json:"timestamp"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n MemoryNetworkScan) Elastical() ([]byte, error) {

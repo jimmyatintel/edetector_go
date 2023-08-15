@@ -117,7 +117,7 @@ func Main() {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low")
+			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", "path(todo)")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue

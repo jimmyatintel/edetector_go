@@ -43,7 +43,7 @@ func detectNetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "@|@")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_high")
+		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_high", "0", 0, "0", "0")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
