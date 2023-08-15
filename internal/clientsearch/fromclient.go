@@ -60,7 +60,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
 		// fmt.Println("len: ", reqLen)
 		// fmt.Println("decrypt buf: ", string(decrypt_buf))
-		if reqLen <= 1024 {
+		if reqLen == 1024 {
 			rabbitmq.Declare("clientsearch")
 			var NewPacket = new(packet.WorkPacket)
 			err := NewPacket.NewPacket(decrypt_buf, buf)
@@ -101,7 +101,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
 				return
 			}
-		} else if reqLen > 0 {
+		} else if reqLen > 1024 {
 			Data_acache := make([]byte, 0)
 			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
@@ -153,6 +153,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
 				return
 			}
+		} else {
+			logger.Error("Invalid packet(short):", zap.Any("message", decrypt_buf))
 		}
 	}
 }

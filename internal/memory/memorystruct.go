@@ -5,8 +5,8 @@ import "encoding/json"
 type Memory struct {
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
-	AgentIP            string `json:"agentIP"`
-	AgentName          string `json:"agentName"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	ProcessConnectIP  string `json:"processConnectIP"`
@@ -29,5 +29,39 @@ type Memory struct {
 }
 
 func (n Memory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type MemoryNetworkDetect struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
+	ProcessId         int    `json:"processId"`
+	Address           string `json:"address"`
+	Timestamp         int    `json:"timestamp"`
+	ProcessCreateTime int    `json:"processCreateTime"`
+	ConnectionINorOUT bool   `json:"connectionInOrOut"`
+	AgentPort         int    `json:"agentPort"`
+}
+
+func (n MemoryNetworkDetect) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type MemoryNetworkScan struct {
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
+	ProcessId         int    `json:"processId"`
+	ProcessCreateTime int    `json:"processCreateTime"`
+	SrcAddress        string `json:"srcAddress"`
+	DstAddress        string `json:"dstAddress"`
+	Action            string `json:"action"`
+	Timestamp         int    `json:"timestamp"`
+}
+
+func (n MemoryNetworkScan) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

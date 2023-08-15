@@ -1,13 +1,16 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
 	risklevel "edetector_go/internal/risklevel"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"fmt"
 	"net"
 	"strconv"
 	"strings"
@@ -15,28 +18,6 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
-
-// type ProcessOverJson struct {
-//0 	PID               int    `json:"pid"`
-//1 	Mode              string `json:"mode"`
-//2 	ProcessCTime      int    `json:"process_c_time"`
-//3 	ProcessTime       string `json:"process_time"`
-//4 	ProcessName       string `json:"process_name"`
-//5 	ProcessPath       string `json:"process_path"`
-//6 	ProcessHash       string `json:"process_hash"`
-//7 	Parent_PID        int    `json:"parent_pid"`
-//8 	ParentCTime       int    `json:"parent_C_time"`
-//9 	ParentPath        string `json:"parent_path"`
-//10 	InjectedHash      string `json:"injected_hash"`
-//11 	StartRun          int    `json:"start_run"`
-//12 	HideAttribute     int    `json:"hide_attribute"`
-//13 	HideProcess       int    `json:"hide_process"`
-//14 	SignerSubjectName string `json:"signer_subject_name"`
-//15 	Injection         string `json:"injection"`
-//16 	DllStr            string `json:"dll_str"`
-//17 	InlineStr         string `json:"inline_str"`
-//18 	NetStr            string `json:"net_str"`
-// }
 
 func GiveDetectProcessRisk(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectProcessRisk: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
@@ -66,11 +47,32 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		original := strings.Split(line, "|")
 		int_date, err := strconv.Atoi(original[2])
 		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", original[2]))
+			logger.Debug("Invalid date: ", zap.Any("message", original[2]))
 			original[2] = "0"
 			int_date = 0
 		}
-		line = original[4] + "@|@" + original[2] + "@|@detecting@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
+		query := fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "processId": %s } },
+						{ "term": { "processCreateTime": %s } },
+						{ "term": { "processConnectIP": "true" } },
+						{ "term": { "mode": "detect" } }
+					]
+				}
+			}
+		}`, p.GetRkey(), original[0], original[2])
+		doc := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+		var network string
+		if doc == "" {
+			network = "detecting"
+		} else {
+			network = "true"
+			logger.Debug("Update information of the detect process: ", zap.Any("message", original[0]+" "+original[2]))
+		}
+		line = original[4] + "@|@" + original[2] + "@|@" + network + "@|@cmd@|@" + original[6] + "@|@" + original[5] + "@|@" + original[7] + "@|@parentName@|@" + original[9] + "@|@" + original[14] + "@|@" + original[0] + "@|@-12345@|@0,0@|@0@|@0,0@|@null@|@0@|@" + original[13] + "," + original[12] + "@|@detect"
 		values := strings.Split(line, "@|@")
 		//! tmp version
 		uuid := uuid.NewString()
@@ -85,11 +87,11 @@ func GiveDetectProcessOver(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		}
 		line = strings.ReplaceAll(line, "-12345", strconv.Itoa(m_tmp.RiskLevel))
 		// logger.Info("Risk level", zap.Any("message", strconv.Itoa(m_tmp.RiskLevel)))
-		err = elasticquery.SendToMainElastic(uuid, "ed_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
+		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_high")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, "ed_memory", p.GetRkey(), line, &m_tmp, "ed_high")
+		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
