@@ -24,8 +24,4 @@ func LoadConfig() *viper.Viper {
 		logger.Error("Error loading config file:", zap.Any("error", err))
 		return nil
 	}
-	// vp := viper.New()
-	// vp.AutomaticEnv()
-	// Viper = vp
-	// return vp
 }
