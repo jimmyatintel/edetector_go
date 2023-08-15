@@ -2,11 +2,14 @@ package treebuilder
 
 import (
 	"edetector_go/config"
+	"edetector_go/internal/checkdir"
+	"edetector_go/internal/dbparser"
 	"edetector_go/internal/fflag"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -16,8 +19,9 @@ import (
 )
 
 var RelationMap = make(map[string](map[int](Relation)))
-var DetailsMap = make(map[string](string))
 var Finished = make(chan string)
+var fileUnstagePath = "fileUnstage"
+var fileStagedPath = "fileStaged"
 
 type Relation struct {
 	UUID  string
@@ -25,6 +29,9 @@ type Relation struct {
 }
 
 func init() {
+	checkdir.CheckDir(fileUnstagePath)
+	checkdir.CheckDir(fileStagedPath)
+
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Error("Error loading feature flag")
@@ -34,6 +41,10 @@ func init() {
 	if vp == nil {
 		logger.Error("Error loading config file")
 		return
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+		logger.InitLogger(config.Viper.GetString("BUILDER_LOG_FILE"))
+		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("BUILDER_LOG_FILE")))
 	}
 	if err := mariadb.Connect_init(); err != nil {
 		logger.Error("Error connecting to mariadb: " + err.Error())
@@ -48,13 +59,27 @@ func Main() {
 	logger.Info("starting tree builder...")
 	for {
 		var rootInd int
-		agent := <-Finished
-		fmt_content := DetailsMap[agent]
+		explorerFile, err := dbparser.GetOldestFile(fileUnstagePath)
+		if explorerFile == "" {
+			logger.Info("No file to parse")
+			time.Sleep(30 * time.Second)
+			continue
+		} else if err != nil {
+			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
+		agent := strings.Split(path[len(path)-1], "-")[0]
+		explorerContent, err := os.ReadFile(explorerFile)
+		if err != nil {
+			logger.Error("Read file error", zap.Any("message", err.Error()))
+			continue
+		}
 		RelationMap[agent] = make(map[int](Relation))
 		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
-		logger.Info("data len:", zap.Any("message", len(fmt_content)))
 		// send to elastic(main & details) & record the relation
-		lines := strings.Split(string(fmt_content), "\n")
+		lines := strings.Split(string(explorerContent), "\n")
 		for _, line := range lines {
 			if len(line) == 0 {
 				continue
@@ -122,7 +147,11 @@ func Main() {
 		logger.Info("send to elastic(relation)")
 		// clear
 		RelationMap[agent] = nil
-		DetailsMap[agent] = ""
+		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
+		err = os.Rename(explorerFile, dstPath)
+		if err != nil {
+			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		}
 		logger.Info("Finish handling explorer of agent: ", zap.Any("message", agent))
 	}
 }

@@ -6,5 +6,6 @@ log_history
 dbWorking
 dbUnstage
 dbStaged
-treeWorking
-treeUnstage
+fileWorking
+fileUnstage
+fileStaged

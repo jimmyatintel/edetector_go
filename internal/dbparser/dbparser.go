@@ -3,6 +3,7 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/config"
+	"edetector_go/internal/checkdir"
 	"edetector_go/internal/fflag"
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
@@ -24,9 +25,9 @@ import (
 var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
 
-func parser_init() {
-	CheckDir(dbUnstagePath)
-	CheckDir(dbStagedPath)
+func init() {
+	checkdir.CheckDir(dbUnstagePath)
+	checkdir.CheckDir(dbStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -52,21 +53,9 @@ func parser_init() {
 	}
 }
 
-func CheckDir(path string) {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		err := os.Mkdir(path, 0755)
-		if err != nil {
-			logger.Error("error creating working dir:", zap.Any("error", err.Error()))
-		}
-		logger.Info("create dir:", zap.Any("message", path))
-	}
-}
-
 func Main() {
-	parser_init()
 	for {
-		dbFile, err := getOldestFile(dbUnstagePath)
+		dbFile, err := GetOldestFile(dbUnstagePath)
 		if dbFile == "" {
 			logger.Info("No file to parse")
 			time.Sleep(30 * time.Second)
@@ -119,7 +108,7 @@ func Main() {
 	}
 }
 
-func getOldestFile(dir string) (string, error) {
+func GetOldestFile(dir string) (string, error) {
 	var oldestFile string
 	var oldestTime time.Time
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
