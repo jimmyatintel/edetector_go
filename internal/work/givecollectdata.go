@@ -238,6 +238,7 @@ func TmpEnd(key string) { //!tmp version
 	for {
 		tmpMu.Lock()
 		if time.Since(lastDataTime) > time.Duration(120)*time.Second {
+			lastDataTime = time.Now()
 			tmpMu.Unlock()
 			logger.Info("Collect tmp End version: ", zap.Any("message", key))
 			// truncate data

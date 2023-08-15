@@ -316,7 +316,7 @@ func toElastic(details string, agent string, line string, item string, date stri
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low")
+	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low", item, int_date, ttype, etc)
 	if err != nil {
 		return err
 	}

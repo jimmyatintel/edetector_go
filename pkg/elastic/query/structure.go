@@ -14,10 +14,10 @@ type mainSource struct {
 	Agent     string `json:"agent"`
 	AgentIP   string `json:"agentIP"`
 	AgentName string `json:"agentName"`
-	Item      string `json:"item"`
-	Date      int    `json:"date"`
-	Type      string `json:"type"`
-	Etc       string `json:"etc"`
+	ItemMain  string `json:"item_main"`
+	DateMain  int    `json:"date_main"`
+	TypeMain  string `json:"type_main"`
+	EtcMain   string `json:"etc_main"`
 }
 
 func (s *mainSource) Elastical() ([]byte, error) {
