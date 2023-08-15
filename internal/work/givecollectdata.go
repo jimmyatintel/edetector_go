@@ -3,8 +3,8 @@ package work
 import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/checkdir"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/dbparser"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
@@ -37,8 +37,8 @@ var tmpMu sync.Mutex
 var lastDataTime = time.Now()
 
 func init() {
-	dbparser.CheckDir(dbWorkingPath)
-	dbparser.CheckDir(dbUstagePath)
+	checkdir.CheckDir(dbWorkingPath)
+	checkdir.CheckDir(dbUstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -146,12 +146,11 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// write file
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-
-	// write file
 	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
