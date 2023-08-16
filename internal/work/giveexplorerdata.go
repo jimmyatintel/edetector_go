@@ -2,13 +2,14 @@ package work
 
 import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
-	"edetector_go/internal/treebuilder"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	"os"
+	"errors"
+	"path/filepath"
 	"strconv"
 
 	"net"
@@ -20,26 +21,46 @@ import (
 
 var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
+
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
+var diskMap = make(map[string]string)
+var fileWorkingPath = "fileWorking"
+var fileUnstagePath = "fileUnstage"
+
+func init() {
+	file.CheckDir(fileWorkingPath)
+	file.CheckDir(fileUnstagePath)
+}
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	total, err := strconv.Atoi(parts[0])
-	if err != nil {
+	if len(parts) == 4 {
+		total, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return task.FAIL, err
+		}
+		ExplorerTotalMap[key] = total
+		diskMap[key] = parts[2]
+		// create or truncate the db file
+		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
+		err = file.CreateFile(path)
+		if err != nil {
+			return task.FAIL, err
+		}
+	} else {
+		err := errors.New("invalid msg format")
 		return task.FAIL, err
 	}
-
-	ExplorerTotalMap[p.GetRkey()] = total
-	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.TRANSPORT_EXPLORER,
-		Message:    msg,
+		Work:       task.DATA_RIGHT,
+		Message:    "",
 	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -47,33 +68,14 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
 	key := p.GetRkey()
-	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
-	var realData string
-	if lastNewlineInd >= 0 {
-		realData = p.GetMessage()[:lastNewlineInd+1]
-	} else {
-		logger.Error("Invalid GiveExplorerData")
-	}
+	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 
-	treebuilder.DetailsMap[key] += realData
-	// write file
-	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
+	err := file.WriteFile(path, []byte(p.GetMessage()))
 	if err != nil {
 		return task.FAIL, err
 	}
-	_, err = file.Seek(0, 2)
-	if err != nil {
-		return task.FAIL, err
-	}
-	messageBytes := []byte(realData)
-	_, err = file.Write(messageBytes)
-	if err != nil {
-		return task.FAIL, err
-	}
-	file.Close()
 
 	// update progress
 	parts := strings.Split(p.GetMessage(), "|")
@@ -100,19 +102,24 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	err := file.TruncateFile(path, ExplorerTotalMap[key])
+	if err != nil {
+		return task.FAIL, err
+	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
-	treebuilder.Finished <- p.GetRkey()
-	<-user_explorer[p.GetRkey()]
+	<-user_explorer[key]
 	return task.SUCCESS, nil
 }
 

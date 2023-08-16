@@ -4,7 +4,7 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/dbparser"
+	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
@@ -29,16 +29,16 @@ var collectMu sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
-var workingPath = "dbWorking"
-var unstagePath = "dbUnstage"
+var dbWorkingPath = "dbWorking"
+var dbUstagePath = "dbUnstage"
 
 // ! tmp version
 var tmpMu sync.Mutex
 var lastDataTime = time.Now()
 
 func init() {
-	dbparser.CheckDir(workingPath)
-	dbparser.CheckDir(unstagePath)
+	file.CheckDir(dbWorkingPath)
+	file.CheckDir(dbUstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -123,14 +123,12 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectCountMap[p.GetRkey()] = 0
 	collectTotalMap[p.GetRkey()] = len
 
-	// Create or truncate the db file
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	// create or truncate the db file
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
+	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
 	}
-	file.Close()
-
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -146,27 +144,16 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// write file
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-
-	// write file
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
+	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
-	_, err = file.Seek(0, 2)
-	if err != nil {
-		return task.FAIL, err
-	}
-	_, err = file.Write(decrypt_buf)
-	if err != nil {
-		return task.FAIL, err
-	}
-	file.Close()
-
 	// update progress
 	collectCountMap[p.GetRkey()] += 1
 	collectMu.Lock()
@@ -242,30 +229,14 @@ func TmpEnd(key string) { //!tmp version
 			tmpMu.Unlock()
 			logger.Info("Collect tmp End version: ", zap.Any("message", key))
 			// truncate data
-			path := filepath.Join(workingPath, (key + ".db"))
-			data, err := os.ReadFile(path)
+			path := filepath.Join(dbWorkingPath, (key + ".db"))
+			err := file.TruncateFile(path, collectTotalMap[key])
 			if err != nil {
-				logger.Error("Read file error", zap.Any("message", err.Error()))
-				continue
-			}
-			fileInfo, err := os.Stat(path)
-			if err != nil {
-				logger.Error("Stat file error", zap.Any("message", err.Error()))
-				continue
-			}
-			realLen := fileInfo.Size()
-			if int(realLen) < collectTotalMap[key] {
-				logger.Error("Incomplete data")
-				continue
-			}
-			err = os.WriteFile(path, data[:collectTotalMap[key]], 0644)
-			if err != nil {
-				logger.Error("Write file error", zap.Any("message", err.Error()))
-				continue
+				logger.Error("Error truncating file: ", zap.Any("error", err.Error()))
 			}
 			// move to dbUnstage
-			srcPath := filepath.Join(workingPath, (key + ".db"))
-			dstPath := filepath.Join(unstagePath, (key + ".db"))
+			srcPath := filepath.Join(dbWorkingPath, (key + ".db"))
+			dstPath := filepath.Join(dbUstagePath, (key + ".db"))
 			err = moveFile(srcPath, dstPath)
 			if err != nil {
 				logger.Error("Move failed", zap.Any("message", err.Error()))
