@@ -2,9 +2,8 @@ package treebuilder
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/checkdir"
-	"edetector_go/internal/dbparser"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/file"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -29,8 +28,8 @@ type Relation struct {
 }
 
 func init() {
-	checkdir.CheckDir(fileUnstagePath)
-	checkdir.CheckDir(fileStagedPath)
+	file.CheckDir(fileUnstagePath)
+	file.CheckDir(fileStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -56,19 +55,9 @@ func init() {
 }
 
 func Main() {
-	logger.Info("starting tree builder...")
 	for {
 		var rootInd int
-		explorerFile, err := dbparser.GetOldestFile(fileUnstagePath)
-		if explorerFile == "" {
-			logger.Info("No file to parse")
-			time.Sleep(30 * time.Second)
-			continue
-		} else if err != nil {
-			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
-			time.Sleep(30 * time.Second)
-			continue
-		}
+		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
 		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
 		agent := strings.Split(path[len(path)-1], "-")[0]
 		explorerContent, err := os.ReadFile(explorerFile)
@@ -77,7 +66,7 @@ func Main() {
 			continue
 		}
 		RelationMap[agent] = make(map[int](Relation))
-		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
+		logger.Info("Open txt file: ", zap.Any("message", explorerFile))
 		// send to elastic(main & details) & record the relation
 		lines := strings.Split(string(explorerContent), "\n")
 		for _, line := range lines {
@@ -152,7 +141,7 @@ func Main() {
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
-		logger.Info("Finish handling explorer of agent: ", zap.Any("message", agent))
+		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }
 

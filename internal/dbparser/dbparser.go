@@ -3,8 +3,8 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/config"
-	"edetector_go/internal/checkdir"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/file"
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
@@ -26,8 +25,8 @@ var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
 
 func init() {
-	checkdir.CheckDir(dbUnstagePath)
-	checkdir.CheckDir(dbStagedPath)
+	file.CheckDir(dbUnstagePath)
+	file.CheckDir(dbStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -55,16 +54,7 @@ func init() {
 
 func Main() {
 	for {
-		dbFile, err := GetOldestFile(dbUnstagePath)
-		if dbFile == "" {
-			logger.Info("No file to parse")
-			time.Sleep(30 * time.Second)
-			continue
-		} else if err != nil {
-			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
-			time.Sleep(30 * time.Second)
-			continue
-		}
+		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
 		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 		agent := path[len(path)-1]
 		db, err := sql.Open("sqlite3", dbFile)
@@ -106,28 +96,6 @@ func Main() {
 		taskservice.Finish_task(agent, "StartCollect")
 		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
-}
-
-func GetOldestFile(dir string) (string, error) {
-	var oldestFile string
-	var oldestTime time.Time
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && filepath.Ext(path) == ".db" {
-			modTime := info.ModTime()
-			if oldestTime.IsZero() || modTime.Before(oldestTime) {
-				oldestTime = modTime
-				oldestFile = path
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-	return oldestFile, nil
 }
 
 func getTableNames(db *sql.DB) ([]string, error) {
