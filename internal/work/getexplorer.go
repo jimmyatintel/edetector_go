@@ -43,6 +43,7 @@ func HandleExpolorer(p packet.Packet) {
 			logger.Info("Next round")
 		}
 	}
+	logger.Info("Finish all drives: ", zap.Any("message", key))
 	taskservice.Finish_task(key, "StartGetDrive")
 }
 
