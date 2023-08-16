@@ -1,14 +1,20 @@
 package work
 
 import (
+	"archive/zip"
+	"bytes"
+	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/checkdir"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
-	"edetector_go/internal/treebuilder"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"errors"
+	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"net"
@@ -20,26 +26,45 @@ import (
 
 var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
-var explorerCountMap = make(map[string]int)
+
+// var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
+var diskMap = make(map[string]string)
+var fileWorkingPath = "fileWorking"
+var fileUnstagePath = "fileUnstage"
+
+func init() {
+	checkdir.CheckDir(fileWorkingPath)
+	checkdir.CheckDir(fileUnstagePath)
+}
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("Explorer: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	total, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return task.FAIL, err
+	if len(parts) == 4 {
+		total, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return task.FAIL, err
+		}
+		ExplorerTotalMap[key] = total
+		diskMap[key] = parts[2]
+		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+		file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+		if err != nil {
+			return task.FAIL, err
+		}
+		file.Close()
+	} else {
+		return task.FAIL, nil
 	}
-
-	ExplorerTotalMap[p.GetRkey()] = total
-	msg := parts[1] + "|" + parts[2] + "|" + parts[3] + "|" + parts[4]
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.TRANSPORT_EXPLORER,
-		Message:    msg,
+		Work:       task.DATA_RIGHT,
+		Message:    "",
 	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -47,20 +72,15 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveExplorerData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
 	key := p.GetRkey()
-	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
-	var realData string
-	if lastNewlineInd >= 0 {
-		realData = p.GetMessage()[:lastNewlineInd+1]
-	} else {
-		logger.Error("Invalid GiveExplorerData")
-	}
-
-	treebuilder.DetailsMap[key] += realData
+	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// write file
-	file, err := os.OpenFile("explorer.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -68,23 +88,22 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	messageBytes := []byte(realData)
-	_, err = file.Write(messageBytes)
+	_, err = file.Write(decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
 	file.Close()
 
-	// update progress
-	parts := strings.Split(p.GetMessage(), "|")
-	count, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return task.FAIL, err
-	}
-	explorerCountMap[key] = count
-	driveMu.Lock()
-	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
-	driveMu.Unlock()
+	// // update progress
+	// parts := strings.Split(p.GetMessage(), "|")
+	// count, err := strconv.Atoi(parts[0])
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
+	// explorerCountMap[key] = count
+	// driveMu.Lock()
+	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	// driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -100,19 +119,27 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	err := truncateFile(key)
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = unzipFile(key)
+	if err != nil {
+		return task.FAIL, err
+	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
-	treebuilder.Finished <- p.GetRkey()
-	<-user_explorer[p.GetRkey()]
+	<-user_explorer[key]
 	return task.SUCCESS, nil
 }
 
@@ -144,4 +171,63 @@ func driveProgress(clientid string) {
 		}
 
 	}
+}
+
+func truncateFile(key string) error {
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	realLen := fileInfo.Size()
+	if int(realLen) < ExplorerTotalMap[key] {
+		err = errors.New("incomplete data")
+		return err
+	}
+	err = os.WriteFile(path, data[:ExplorerTotalMap[key]], 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func unzipFile(key string) error {
+	// open the zip file for reading
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	reader, err := zip.OpenReader(path)
+	if err != nil {
+		return err
+	}
+	// extract the files from the zip archive
+	for _, file := range reader.File {
+		if !file.FileInfo().IsDir() {
+			destFile, err := os.Create(filepath.Join(fileUnstagePath, key+"-"+diskMap[key]+".txt"))
+			if err != nil {
+				return err
+			}
+			srcFile, err := file.Open()
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(destFile, srcFile)
+			if err != nil {
+				return err
+			}
+			destFile.Close()
+			srcFile.Close()
+		} else {
+			err = errors.New("the zip file contains a directory")
+			return err
+		}
+	}
+	reader.Close()
+	// err = os.Remove(path)
+	// if err != nil {
+	// 	return err
+	// }
+	return nil
 }

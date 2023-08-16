@@ -3,6 +3,7 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/config"
+	"edetector_go/internal/checkdir"
 	"edetector_go/internal/fflag"
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
@@ -21,12 +22,12 @@ import (
 	"go.uber.org/zap"
 )
 
-var unstagePath = "dbUnstage"
-var stagedPath = "dbStaged"
+var dbUnstagePath = "dbUnstage"
+var dbStagedPath = "dbStaged"
 
-func parser_init() {
-	CheckDir(unstagePath)
-	CheckDir(stagedPath)
+func init() {
+	checkdir.CheckDir(dbUnstagePath)
+	checkdir.CheckDir(dbStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -52,21 +53,9 @@ func parser_init() {
 	}
 }
 
-func CheckDir(path string) {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		err := os.Mkdir(path, 0755)
-		if err != nil {
-			logger.Error("error creating working dir:", zap.Any("error", err.Error()))
-		}
-		logger.Info("create dir:", zap.Any("message", path))
-	}
-}
-
 func Main() {
-	parser_init()
 	for {
-		dbFile, err := getOldestFile(unstagePath)
+		dbFile, err := GetOldestFile(dbUnstagePath)
 		if dbFile == "" {
 			logger.Info("No file to parse")
 			time.Sleep(30 * time.Second)
@@ -110,7 +99,7 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-		err = os.Rename(filepath.Join(dbFile), filepath.Join(stagedPath, agent+".db"))
+		err = os.Rename(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
@@ -119,7 +108,7 @@ func Main() {
 	}
 }
 
-func getOldestFile(dir string) (string, error) {
+func GetOldestFile(dir string) (string, error) {
 	var oldestFile string
 	var oldestTime time.Time
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -191,6 +180,7 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 		line = strings.ReplaceAll(line, "<nil>", "0")
 		line = strings.ReplaceAll(line, "@|@ ", "@|@0")
 		line = strings.ReplaceAll(line, " @|@", "0@|@")
+		line = convertTime(tablename, line)
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -309,7 +299,7 @@ func toElastic(details string, agent string, line string, item string, date stri
 	uuid := uuid.NewString()
 	int_date, err := strconv.Atoi(date)
 	if err != nil {
-		// logger.Debug("Invalid date: ", zap.Any("message", date))
+		logger.Error("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
 	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")

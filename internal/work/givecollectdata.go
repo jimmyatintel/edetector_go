@@ -3,8 +3,8 @@ package work
 import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/checkdir"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/dbparser"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
@@ -29,16 +29,16 @@ var collectMu sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
-var workingPath = "dbWorking"
-var unstagePath = "dbUnstage"
+var dbWorkingPath = "dbWorking"
+var dbUstagePath = "dbUnstage"
 
 // ! tmp version
 var tmpMu sync.Mutex
 var lastDataTime = time.Now()
 
 func init() {
-	dbparser.CheckDir(workingPath)
-	dbparser.CheckDir(unstagePath)
+	checkdir.CheckDir(dbWorkingPath)
+	checkdir.CheckDir(dbUstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -124,7 +124,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectTotalMap[p.GetRkey()] = len
 
 	// Create or truncate the db file
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -146,13 +146,12 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// write file
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-
-	// write file
-	path := filepath.Join(workingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return task.FAIL, err
@@ -242,7 +241,7 @@ func TmpEnd(key string) { //!tmp version
 			tmpMu.Unlock()
 			logger.Info("Collect tmp End version: ", zap.Any("message", key))
 			// truncate data
-			path := filepath.Join(workingPath, (key + ".db"))
+			path := filepath.Join(dbWorkingPath, (key + ".db"))
 			data, err := os.ReadFile(path)
 			if err != nil {
 				logger.Error("Read file error", zap.Any("message", err.Error()))
@@ -264,8 +263,8 @@ func TmpEnd(key string) { //!tmp version
 				continue
 			}
 			// move to dbUnstage
-			srcPath := filepath.Join(workingPath, (key + ".db"))
-			dstPath := filepath.Join(unstagePath, (key + ".db"))
+			srcPath := filepath.Join(dbWorkingPath, (key + ".db"))
+			dstPath := filepath.Join(dbUstagePath, (key + ".db"))
 			err = moveFile(srcPath, dstPath)
 			if err != nil {
 				logger.Error("Move failed", zap.Any("message", err.Error()))
