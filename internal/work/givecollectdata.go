@@ -3,8 +3,8 @@ package work
 import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
-	"edetector_go/internal/checkdir"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
@@ -37,8 +37,8 @@ var tmpMu sync.Mutex
 var lastDataTime = time.Now()
 
 func init() {
-	checkdir.CheckDir(dbWorkingPath)
-	checkdir.CheckDir(dbUstagePath)
+	file.CheckDir(dbWorkingPath)
+	file.CheckDir(dbUstagePath)
 }
 
 func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -123,14 +123,12 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectCountMap[p.GetRkey()] = 0
 	collectTotalMap[p.GetRkey()] = len
 
-	// Create or truncate the db file
+	// create or truncate the db file
 	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
 	}
-	file.Close()
-
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -152,20 +150,10 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
 	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
-	_, err = file.Seek(0, 2)
-	if err != nil {
-		return task.FAIL, err
-	}
-	_, err = file.Write(decrypt_buf)
-	if err != nil {
-		return task.FAIL, err
-	}
-	file.Close()
-
 	// update progress
 	collectCountMap[p.GetRkey()] += 1
 	collectMu.Lock()
@@ -242,25 +230,9 @@ func TmpEnd(key string) { //!tmp version
 			logger.Info("Collect tmp End version: ", zap.Any("message", key))
 			// truncate data
 			path := filepath.Join(dbWorkingPath, (key + ".db"))
-			data, err := os.ReadFile(path)
+			err := file.TruncateFile(path, collectTotalMap[key])
 			if err != nil {
-				logger.Error("Read file error", zap.Any("message", err.Error()))
-				continue
-			}
-			fileInfo, err := os.Stat(path)
-			if err != nil {
-				logger.Error("Stat file error", zap.Any("message", err.Error()))
-				continue
-			}
-			realLen := fileInfo.Size()
-			if int(realLen) < collectTotalMap[key] {
-				logger.Error("Incomplete data")
-				continue
-			}
-			err = os.WriteFile(path, data[:collectTotalMap[key]], 0644)
-			if err != nil {
-				logger.Error("Write file error", zap.Any("message", err.Error()))
-				continue
+				logger.Error("Error truncating file: ", zap.Any("error", err.Error()))
 			}
 			// move to dbUnstage
 			srcPath := filepath.Join(dbWorkingPath, (key + ".db"))
