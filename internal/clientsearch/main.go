@@ -97,7 +97,6 @@ func Conn_UDP_start(c chan string, wg *sync.WaitGroup) {
 		}
 	}
 	c <- "UDP Server is nil"
-	return
 }
 
 func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {

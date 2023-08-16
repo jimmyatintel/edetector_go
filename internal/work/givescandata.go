@@ -219,7 +219,7 @@ func scanNetworkElastic(id string, time string, key string, data string) {
 		line = strings.ReplaceAll(line, ">", "")
 		line = id + "@|@" + time + "@|@" + line
 		uuid := uuid.NewString()
-		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", key, line, &memory.MemoryNetworkScan{}, "ed_high", "0", 0, "0", "0")
+		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", key, line, &memory.MemoryNetworkScan{}, "ed_mid", "0", 0, "0", "0")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

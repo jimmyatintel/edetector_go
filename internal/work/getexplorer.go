@@ -48,7 +48,6 @@ func HandleExpolorer(p packet.Packet) {
 }
 
 func StartGetExplorer(p packet.UserPacket) error {
-	logger.Info("ExplorerInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	err := clientsearchsend.SendUserTCPtoClient(p, task.EXPLORER_INFO, p.GetMessage())
 	if err != nil {
 		return err
