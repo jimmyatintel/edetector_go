@@ -22,7 +22,7 @@ import (
 var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
 
-// var explorerCountMap = make(map[string]int)
+var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 var diskMap = make(map[string]string)
 var fileWorkingPath = "fileWorking"
@@ -77,16 +77,16 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
-	// // update progress
-	// parts := strings.Split(p.GetMessage(), "|")
-	// count, err := strconv.Atoi(parts[0])
-	// if err != nil {
-	// 	return task.FAIL, err
-	// }
-	// explorerCountMap[key] = count
-	// driveMu.Lock()
-	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
-	// driveMu.Unlock()
+	// update progress
+	parts := strings.Split(p.GetMessage(), "|")
+	count, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return task.FAIL, err
+	}
+	explorerCountMap[key] = count
+	driveMu.Lock()
+	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -109,10 +109,6 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	// err = unzipFile(key)
-	// if err != nil {
-	// 	return task.FAIL, err
-	// }
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
