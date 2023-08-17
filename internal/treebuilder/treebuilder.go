@@ -139,7 +139,7 @@ func Main() {
 		UUIDMap = nil
 		RelationMap[agent] = nil
 		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
-		err = os.Rename(explorerFile, dstPath)
+		err = file.MoveFile(explorerFile, dstPath)
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
