@@ -8,3 +8,4 @@ dbStaged
 fileWorking
 fileUnstage
 fileStaged
+*.exe

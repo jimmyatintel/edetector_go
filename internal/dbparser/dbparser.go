@@ -51,7 +51,10 @@ func init() {
 	}
 }
 
-func Main() {
+
+func Main(version string) {
+	parser_init()
+	logger.Info("Welcome to DB Parser", zap.Any("version", version))
 	for {
 		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
 		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
