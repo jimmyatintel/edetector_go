@@ -4,29 +4,28 @@ import (
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/file"
 	"edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 )
 
-var unstagePath = "dbUnstage"
-var stagedPath = "dbStaged"
+var dbUnstagePath = "dbUnstage"
+var dbStagedPath = "dbStaged"
 
-func parser_init() {
-	CheckDir(unstagePath)
-	CheckDir(stagedPath)
+func init() {
+	file.CheckDir(dbUnstagePath)
+	file.CheckDir(dbStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -52,31 +51,12 @@ func parser_init() {
 	}
 }
 
-func CheckDir(path string) {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		err := os.Mkdir(path, 0755)
-		if err != nil {
-			logger.Error("error creating working dir:", zap.Any("error", err.Error()))
-		}
-		logger.Info("create dir:", zap.Any("message", path))
-	}
-}
 
 func Main(version string) {
 	parser_init()
 	logger.Info("Welcome to DB Parser", zap.Any("version", version))
 	for {
-		dbFile, err := getOldestFile(unstagePath)
-		if dbFile == "" {
-			logger.Info("No file to parse")
-			time.Sleep(30 * time.Second)
-			continue
-		} else if err != nil {
-			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
-			time.Sleep(30 * time.Second)
-			continue
-		}
+		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
 		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 		agent := path[len(path)-1]
 		db, err := sql.Open("sqlite3", dbFile)
@@ -111,35 +91,13 @@ func Main(version string) {
 			rows.Close()
 		}
 		db.Close()
-		err = os.Rename(filepath.Join(dbFile), filepath.Join(stagedPath, agent+".db"))
+		err = file.MoveFile(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
 		taskservice.Finish_task(agent, "StartCollect")
 		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
-}
-
-func getOldestFile(dir string) (string, error) {
-	var oldestFile string
-	var oldestTime time.Time
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && filepath.Ext(path) == ".db" {
-			modTime := info.ModTime()
-			if oldestTime.IsZero() || modTime.Before(oldestTime) {
-				oldestTime = modTime
-				oldestFile = path
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-	return oldestFile, nil
 }
 
 func getTableNames(db *sql.DB) ([]string, error) {
@@ -192,6 +150,7 @@ func rowsToString(rows *sql.Rows, tablename string) (string, error) {
 		line = strings.ReplaceAll(line, "<nil>", "0")
 		line = strings.ReplaceAll(line, "@|@ ", "@|@0")
 		line = strings.ReplaceAll(line, " @|@", "0@|@")
+		line = convertTime(tablename, line)
 		builder.WriteString(line)
 		builder.WriteString("#newline#")
 	}
@@ -310,14 +269,14 @@ func toElastic(details string, agent string, line string, item string, date stri
 	uuid := uuid.NewString()
 	int_date, err := strconv.Atoi(date)
 	if err != nil {
-		// logger.Debug("Invalid date: ", zap.Any("message", date))
+		logger.Error("Invalid date: ", zap.Any("message", date))
 		int_date = 0
 	}
 	err = elasticquery.SendToMainElastic(uuid, details, agent, item, int_date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low")
+	err = elasticquery.SendToDetailsElastic(uuid, details, agent, line, st, "ed_low", item, int_date, ttype, etc)
 	if err != nil {
 		return err
 	}

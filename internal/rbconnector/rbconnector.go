@@ -118,7 +118,7 @@ func mid_speed() {
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
 		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
@@ -143,7 +143,7 @@ func low_speed() {
 		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		low_mutex.Unlock()
 		for len(low_bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}
 }

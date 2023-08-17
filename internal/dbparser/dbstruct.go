@@ -27,6 +27,10 @@ type AppResourceUsageMonitor struct {
 	Backgroundnumberofflushes    int    `json:"backgroundnumberofflushes"`
 	Interfaceluid                string `json:"interfaceluid"`
 	Timestamp                    int    `json:"timestamp"`
+	ItemMain                     string `json:"item_main"`
+	DateMain                     int    `json:"date_main"`
+	TypeMain                     string `json:"type_main"`
+	EtcMain                      string `json:"etc_main"`
 }
 
 func (n AppResourceUsageMonitor) Elastical() ([]byte, error) {
@@ -42,6 +46,10 @@ type ARPCache struct {
 	Internetaddress string `json:"internetaddress"`
 	Physicaladdress string `json:"physicaladdress"`
 	Type            string `json:"type"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n ARPCache) Elastical() ([]byte, error) {
@@ -69,6 +77,10 @@ type BaseService struct {
 	Systemname        string `json:"systemname"`
 	Acceptpause       bool   `json:"acceptpause"`
 	Acceptstop        bool   `json:"acceptstop"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n BaseService) Elastical() ([]byte, error) {
@@ -82,12 +94,16 @@ type ChromeBookmarks struct {
 	AgentName     string `json:"agentName"`
 	Id            int    `json:"id"`
 	Parent        int    `json:"parent"`
-	Type          string `json:"type"`
+	Type          string `json:"ttype"`
 	Name          string `json:"name"`
 	Url           string `json:"url"`
 	Guid          string `json:"guid"`
 	Date_added    int    `json:"date_added"`
 	Date_modified int    `json:"date_modified"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n ChromeBookmarks) Elastical() ([]byte, error) {
@@ -106,13 +122,17 @@ type ChromeCache struct {
 	Cache_control    string `json:"cache_control"`
 	Content_encoding string `json:"content_encoding"`
 	Content_length   int    `json:"content_length"`
-	Conent_type      string `json:"ententent_type"`
+	Conent_type      string `json:"content_type"`
 	Date             int    `json:"date"`
 	Expires          int    `json:"expires"`
 	Last_modified    int    `json:"last_modified"`
 	Server           string `json:"server"`
 	Usage_counter    int    `json:"usage_counter"`
 	Reuse_counter    int    `json:"reuse_counter"`
+	ItemMain         string `json:"item_main"`
+	DateMain         int    `json:"date_main"`
+	TypeMain         string `json:"type_main"`
+	EtcMain          string `json:"etc_main"`
 }
 
 func (n ChromeCache) Elastical() ([]byte, error) {
@@ -144,6 +164,10 @@ type ChromeDownload struct {
 	LastModified     int    `json:"last_modified"`
 	MimeType         string `json:"mime_type"`
 	OriginalMimeType string `json:"original_mime_type"`
+	ItemMain         string `json:"item_main"`
+	DateMain         int    `json:"date_main"`
+	TypeMain         string `json:"type_main"`
+	EtcMain          string `json:"etc_main"`
 }
 
 func (n ChromeDownload) Elastical() ([]byte, error) {
@@ -160,6 +184,10 @@ type ChromeHistory struct {
 	VisitTime     int    `json:"visit_time"`
 	VisitCount    int    `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n ChromeHistory) Elastical() ([]byte, error) {
@@ -174,6 +202,10 @@ type ChromeKeywordSearch struct {
 	Term      string `json:"term"`
 	Title     string `json:"title"`
 	URL       string `json:"url"`
+	ItemMain  string `json:"item_main"`
+	DateMain  int    `json:"date_main"`
+	TypeMain  string `json:"type_main"`
+	EtcMain   string `json:"etc_main"`
 }
 
 func (n ChromeKeywordSearch) Elastical() ([]byte, error) {
@@ -192,6 +224,10 @@ type ChromeLogin struct {
 	PasswordElement string `json:"password_element"`
 	PasswordValue   string `json:"password_value"`
 	DateCreated     string `json:"date_created"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n ChromeLogin) Elastical() ([]byte, error) {
@@ -216,6 +252,10 @@ type DNSInfo struct {
 	Section        int    `json:"section"`
 	Status         int    `json:"status"`
 	Type           int    `json:"type"`
+	ItemMain       string `json:"item_main"`
+	DateMain       int    `json:"date_main"`
+	TypeMain       string `json:"type_main"`
+	EtcMain        string `json:"etc_main"`
 }
 
 func (n DNSInfo) Elastical() ([]byte, error) {
@@ -236,6 +276,10 @@ type EdgeBookmarks struct {
 	GUID         string `json:"guid"`
 	DateAdded    int    `json:"date_added"`
 	DateModified int    `json:"date_modified"`
+	ItemMain     string `json:"item_main"`
+	DateMain     int    `json:"date_main"`
+	TypeMain     string `json:"type_main"`
+	EtcMain      string `json:"etc_main"`
 }
 
 func (n EdgeBookmarks) Elastical() ([]byte, error) {
@@ -261,6 +305,10 @@ type EdgeCache struct {
 	Server          string `json:"server"`
 	UsageCounter    int    `json:"usage_counter"`
 	ReuseCounter    int    `json:"reuse_counter"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n EdgeCache) Elastical() ([]byte, error) {
@@ -281,6 +329,10 @@ type EdgeCookies struct {
 	ExpiresUTC     int    `json:"expires_utc"`
 	LastAccessUTC  int    `json:"last_access_utc"`
 	SourcePort     int    `json:"source_port"`
+	ItemMain       string `json:"item_main"`
+	DateMain       int    `json:"date_main"`
+	TypeMain       string `json:"type_main"`
+	EtcMain        string `json:"etc_main"`
 }
 
 func (n EdgeCookies) Elastical() ([]byte, error) {
@@ -298,6 +350,10 @@ type EdgeHistory struct {
 	VisitTime     int    `json:"visit_time"`
 	VisitCount    int    `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n EdgeHistory) Elastical() ([]byte, error) {
@@ -317,6 +373,10 @@ type EdgeLogin struct {
 	PasswordElement string `json:"password_element"`
 	PasswordValue   string `json:"password_value"`
 	DateCreated     int    `json:"date_created"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n EdgeLogin) Elastical() ([]byte, error) {
@@ -346,6 +406,10 @@ type EventApplication struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
+	ItemMain                     string `json:"item_main"`
+	DateMain                     int    `json:"date_main"`
+	TypeMain                     string `json:"type_main"`
+	EtcMain                      string `json:"etc_main"`
 }
 
 func (n EventApplication) Elastical() ([]byte, error) {
@@ -375,6 +439,10 @@ type EventSecurity struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
+	ItemMain                     string `json:"item_main"`
+	DateMain                     int    `json:"date_main"`
+	TypeMain                     string `json:"type_main"`
+	EtcMain                      string `json:"etc_main"`
 }
 
 func (n EventSecurity) Elastical() ([]byte, error) {
@@ -404,6 +472,10 @@ type EventSystem struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
+	ItemMain                     string `json:"item_main"`
+	DateMain                     int    `json:"date_main"`
+	TypeMain                     string `json:"type_main"`
+	EtcMain                      string `json:"etc_main"`
 }
 
 func (n EventSystem) Elastical() ([]byte, error) {
@@ -431,6 +503,10 @@ type FirefoxBookmarks struct {
 	URLGUID          string `json:"url_guid"`
 	URLDescription   string `json:"url_description"`
 	PreviewImageURL  string `json:"preview_image_url"`
+	ItemMain         string `json:"item_main"`
+	DateMain         int    `json:"date_main"`
+	TypeMain         string `json:"type_main"`
+	EtcMain          string `json:"etc_main"`
 }
 
 func (n FirefoxBookmarks) Elastical() ([]byte, error) {
@@ -455,6 +531,10 @@ type FirefoxCache struct {
 	LastModified    int    `json:"last_modified"`
 	Frequency       int    `json:"frequency"`
 	Expiration      int    `json:"expiration"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n FirefoxCache) Elastical() ([]byte, error) {
@@ -473,6 +553,10 @@ type FirefoxCookies struct {
 	Path         string `json:"path"`
 	LastAccessed int    `json:"lastaccessed"`
 	CreationTime int    `json:"creationtime"`
+	ItemMain     string `json:"item_main"`
+	DateMain     int    `json:"date_main"`
+	TypeMain     string `json:"type_main"`
+	EtcMain      string `json:"etc_main"`
 }
 
 func (n FirefoxCookies) Elastical() ([]byte, error) {
@@ -494,6 +578,10 @@ type FirefoxHistory struct {
 	VisitCount    int    `json:"visit_count"`
 	VisitDate     int    `json:"visit_date"`
 	LastVisitDate int    `json:"last_visit_date"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n FirefoxHistory) Elastical() ([]byte, error) {
@@ -510,6 +598,10 @@ type IEHistory struct {
 	ExpiresTime     int    `json:"expirestime"`
 	LastUpdatedTime int    `json:"lastupdatedtime"`
 	VisitedTime     int    `json:"visitedtime"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n IEHistory) Elastical() ([]byte, error) {
@@ -541,6 +633,10 @@ type InstalledSoftware struct {
 	RegistryTime              int    `json:"registrytime"`
 	InstallFolderCreatedTime  int    `json:"installfoldercreatedtime"`
 	InstallFolderModifiedTime int    `json:"installfoldermodifiedtime"`
+	ItemMain                  string `json:"item_main"`
+	DateMain                  int    `json:"date_main"`
+	TypeMain                  string `json:"type_main"`
+	EtcMain                   string `json:"etc_main"`
 }
 
 func (n InstalledSoftware) Elastical() ([]byte, error) {
@@ -561,6 +657,10 @@ type JumpList struct {
 	CreateTime    int    `json:"createtime"`
 	AccessTime    int    `json:"accesstime"`
 	ModifiedTime  int    `json:"modifiedtime"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n JumpList) Elastical() ([]byte, error) {
@@ -574,6 +674,10 @@ type MUICache struct {
 	AgentName       string `json:"agentName"`
 	ApplicationPath string `json:"applicationpath"`
 	ApplicationName string `json:"applicationname"`
+	ItemMain        string `json:"item_main"`
+	DateMain        int    `json:"date_main"`
+	TypeMain        string `json:"type_main"`
+	EtcMain         string `json:"etc_main"`
 }
 
 func (n MUICache) Elastical() ([]byte, error) {
@@ -594,6 +698,10 @@ type Network struct {
 	State          string `json:"state"`
 	RemoteHostname string `json:"remotehostname"`
 	Protocol       string `json:"protocol"`
+	ItemMain       string `json:"item_main"`
+	DateMain       int    `json:"date_main"`
+	TypeMain       string `json:"type_main"`
+	EtcMain        string `json:"etc_main"`
 }
 
 func (n Network) Elastical() ([]byte, error) {
@@ -616,6 +724,10 @@ type NetworkDataUsageMonitor struct {
 	NetworkAdapterGUID string `json:"network_adapter_guid"`
 	InterfaceLUID      string `json:"interfaceluid"`
 	Timestamp          int    `json:"timestamp"`
+	ItemMain           string `json:"item_main"`
+	DateMain           int    `json:"date_main"`
+	TypeMain           string `json:"type_main"`
+	EtcMain            string `json:"etc_main"`
 }
 
 func (n NetworkDataUsageMonitor) Elastical() ([]byte, error) {
@@ -636,6 +748,10 @@ type NetworkResources struct {
 	DisplayType   string `json:"displaytype"`
 	Usage         string `json:"usage"`
 	IPAddress     string `json:"ipaddress"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n NetworkResources) Elastical() ([]byte, error) {
@@ -651,6 +767,10 @@ type OpenedFiles struct {
 	ProcessName string `json:"processname"`
 	Type        string `json:"type"`
 	ObjectName  string `json:"objectname"`
+	ItemMain    string `json:"item_main"`
+	DateMain    int    `json:"date_main"`
+	TypeMain    string `json:"type_main"`
+	EtcMain     string `json:"etc_main"`
 }
 
 func (n OpenedFiles) Elastical() ([]byte, error) {
@@ -670,6 +790,10 @@ type Prefetch struct {
 	FileSize           int64  `json:"filesize"`
 	FolderCreatedTime  int    `json:"foldercreatedtime"`
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
+	ItemMain           string `json:"item_main"`
+	DateMain           int    `json:"date_main"`
+	TypeMain           string `json:"type_main"`
+	EtcMain            string `json:"etc_main"`
 }
 
 func (n Prefetch) Elastical() ([]byte, error) {
@@ -694,6 +818,10 @@ type Process struct {
 	FileDescription   string `json:"filedescription"`
 	CompanyName       string `json:"companyname"`
 	Priority          string `json:"priority"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n Process) Elastical() ([]byte, error) {
@@ -719,6 +847,10 @@ type Service struct {
 	State        string `json:"state"`
 	Status       string `json:"status"`
 	SystemName   string `json:"systemname"`
+	ItemMain     string `json:"item_main"`
+	DateMain     int    `json:"date_main"`
+	TypeMain     string `json:"type_main"`
+	EtcMain      string `json:"etc_main"`
 }
 
 func (n Service) Elastical() ([]byte, error) {
@@ -741,6 +873,10 @@ type Shortcuts struct {
 	Hotkey           string `json:"hotkey"`
 	ShowCmd          string `json:"showcmd"`
 	ModifyTime       int    `json:"modifytime"`
+	ItemMain         string `json:"item_main"`
+	DateMain         int    `json:"date_main"`
+	TypeMain         string `json:"type_main"`
+	EtcMain          string `json:"etc_main"`
 }
 
 func (n Shortcuts) Elastical() ([]byte, error) {
@@ -759,6 +895,10 @@ type StartRun struct {
 	Caption     string `json:"caption"`
 	Description string `json:"description"`
 	UserSID     string `json:"usersid"`
+	ItemMain    string `json:"item_main"`
+	DateMain    int    `json:"date_main"`
+	TypeMain    string `json:"type_main"`
+	EtcMain     string `json:"etc_main"`
 }
 
 func (n StartRun) Elastical() ([]byte, error) {
@@ -777,6 +917,10 @@ type TaskSchedule struct {
 	NextRunTime   int    `json:"nextruntime"`
 	StartBoundary int64  `json:"startboundary"`
 	EndBoundary   int    `json:"endboundary"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
 }
 
 func (n TaskSchedule) Elastical() ([]byte, error) {
@@ -804,6 +948,10 @@ type USBdevices struct {
 	FirstInstallDate               int    `json:"first_install_date"`
 	LastArrivalDate                int    `json:"last_arrival_date"`
 	LastRemovalDate                int    `json:"last_removal_date"`
+	ItemMain                       string `json:"item_main"`
+	DateMain                       int    `json:"date_main"`
+	TypeMain                       string `json:"type_main"`
+	EtcMain                        string `json:"etc_main"`
 }
 
 func (n USBdevices) Elastical() ([]byte, error) {
@@ -821,6 +969,10 @@ type UserAssist struct {
 	FocusCount       int    `json:"focus_count"`
 	FocusTimeSeconds int    `json:"focus_time(s)"`
 	ModifiedTime     int    `json:"modifiedtime"`
+	ItemMain         string `json:"item_main"`
+	DateMain         int    `json:"date_main"`
+	TypeMain         string `json:"type_main"`
+	EtcMain          string `json:"etc_main"`
 }
 
 func (n UserAssist) Elastical() ([]byte, error) {
@@ -840,6 +992,10 @@ type UserProfiles struct {
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
 	LastLoginTime      int    `json:"lastlogontime"`
 	PrivilegeLevel     string `json:"privileglevel"`
+	ItemMain           string `json:"item_main"`
+	DateMain           int    `json:"date_main"`
+	TypeMain           string `json:"type_main"`
+	EtcMain            string `json:"etc_main"`
 }
 
 func (n UserProfiles) Elastical() ([]byte, error) {
@@ -867,6 +1023,10 @@ type WindowsActivity struct {
 	StartTime            int    `json:"start_time"`
 	EndTime              int    `json:"end_time"`
 	LastModifiedOnClient int    `json:"last_modified_on_client"`
+	ItemMain             string `json:"item_main"`
+	DateMain             int    `json:"date_main"`
+	TypeMain             string `json:"type_main"`
+	EtcMain              string `json:"etc_main"`
 }
 
 func (n WindowsActivity) Elastical() ([]byte, error) {

@@ -5,4 +5,7 @@ log_history
 dbWorking
 dbUnstage
 dbStaged
+fileWorking
+fileUnstage
+fileStaged
 *.exe
