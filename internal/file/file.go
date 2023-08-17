@@ -3,6 +3,7 @@ package file
 import (
 	"edetector_go/pkg/logger"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -93,6 +94,28 @@ func TruncateFile(path string, realLen int) error {
 		return err
 	}
 	err = os.WriteFile(path, data[:realLen], 0644)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func MoveFile(srcPath string, dstPath string) error {
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	_, err = io.Copy(dstFile, srcFile)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(srcPath)
 	if err != nil {
 		return err
 	}
