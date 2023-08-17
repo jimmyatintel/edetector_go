@@ -11,7 +11,6 @@ import (
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -89,7 +88,7 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-		err = os.Rename(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
+		err = file.MoveFile(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
