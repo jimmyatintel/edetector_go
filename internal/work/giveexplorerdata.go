@@ -36,7 +36,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	if len(parts) >= 2 {
+	if len(parts) >= 3 {
 		total, err := strconv.Atoi(parts[0])
 		if err != nil {
 			return task.FAIL, err
@@ -53,11 +53,12 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		err := errors.New("invalid msg format")
 		return task.FAIL, err
 	}
+	msg := parts[1] + "|" + parts[2] + "|Explorer|ScheduleName"
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
+		Work:       task.TRANSPORT_EXPLORER,
+		Message:    msg,
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -68,10 +69,17 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 
+	lastNewlineInd := strings.LastIndex(p.GetMessage(), "\n")
+	var realData string
+	if lastNewlineInd >= 0 {
+		realData = p.GetMessage()[:lastNewlineInd+1]
+	} else {
+		logger.Error("Invalid GiveExplorerData")
+	}
 	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
-	err := file.WriteFile(path, []byte(p.GetMessage()))
+	err := file.WriteFile(path, []byte(realData))
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -104,12 +112,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	filename := key + "-" + diskMap[key]
-	path := filepath.Join(fileWorkingPath, (filename + ".txt"))
-	err := file.TruncateFile(path, explorerTotalMap[key])
-	if err != nil {
-		return task.FAIL, err
-	}
-	err = file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".txt")))
+	err := file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".txt")))
 	if err != nil {
 		return task.FAIL, err
 	}
