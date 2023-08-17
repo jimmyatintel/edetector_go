@@ -1,6 +1,7 @@
 package file
 
 import (
+	"archive/zip"
 	"edetector_go/pkg/logger"
 	"errors"
 	"io"
@@ -116,6 +117,42 @@ func MoveFile(srcPath string, dstPath string) error {
 		return err
 	}
 	err = os.Remove(srcPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UnzipFile(zipPath string, dstPath string) error {
+	// open the zip file for reading
+	reader, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	// extract the files from the zip archive
+	for _, file := range reader.File {
+		if !file.FileInfo().IsDir() {
+			destFile, err := os.Create(dstPath)
+			if err != nil {
+				return err
+			}
+			srcFile, err := file.Open()
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(destFile, srcFile)
+			if err != nil {
+				return err
+			}
+			destFile.Close()
+			srcFile.Close()
+		} else {
+			err = errors.New("the zip file contains a directory")
+			return err
+		}
+	}
+	reader.Close()
+	err = os.Remove(zipPath)
 	if err != nil {
 		return err
 	}

@@ -121,8 +121,8 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	collectCountMap[p.GetRkey()] = 0
 	collectTotalMap[p.GetRkey()] = len
 
-	// create or truncate the db file
-	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
+	// create or truncate the zip file
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".zip"))
 	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -147,7 +147,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".db"))
+	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".zip"))
 	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
@@ -226,16 +226,24 @@ func TmpEnd(key string) { //!tmp version
 			lastDataTime = time.Now()
 			tmpMu.Unlock()
 			logger.Info("Collect tmp End version: ", zap.Any("message", key))
+
+			srcPath := filepath.Join(dbWorkingPath, (key + ".zip"))
+			workPath := filepath.Join(dbWorkingPath, key+".db")
+			unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
 			// truncate data
-			path := filepath.Join(dbWorkingPath, (key + ".db"))
-			err := file.TruncateFile(path, collectTotalMap[key])
+			err := file.TruncateFile(srcPath, collectTotalMap[key])
 			if err != nil {
 				logger.Error("Error truncating file: ", zap.Any("error", err.Error()))
+				continue
 			}
-			// move to dbUnstage
-			srcPath := filepath.Join(dbWorkingPath, (key + ".db"))
-			dstPath := filepath.Join(dbUstagePath, (key + ".db"))
-			err = file.MoveFile(srcPath, dstPath)
+			// unzip data
+			err = file.UnzipFile(srcPath, workPath)
+			if err != nil {
+				logger.Error("Error unzip file: ", zap.Any("error", err.Error()))
+				continue
+			}
+			// move to Unstage
+			err = file.MoveFile(workPath, unstagePath)
 			if err != nil {
 				logger.Error("Move failed", zap.Any("message", err.Error()))
 				continue

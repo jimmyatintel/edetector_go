@@ -1,7 +1,6 @@
 package work
 
 import (
-	"archive/zip"
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
@@ -10,8 +9,6 @@ import (
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"errors"
-	"io"
-	"os"
 
 	"path/filepath"
 	"strconv"
@@ -46,7 +43,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 		explorerTotalMap[key] = total
 		diskMap[key] = parts[1]
-		// create or truncate the db file
+		// create or truncate the zip file
 		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
 		err = file.CreateFile(path)
 		if err != nil {
@@ -110,17 +107,23 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+
 	filename := key + "-" + diskMap[key]
-	path := filepath.Join(fileWorkingPath, (filename + ".zip"))
-	err := file.TruncateFile(path, explorerTotalMap[key])
+	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
+	workPath := filepath.Join(fileWorkingPath, filename+".txt")
+	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
+	// truncate data
+	err := file.TruncateFile(srcPath, explorerTotalMap[key])
 	if err != nil {
 		return task.FAIL, err
 	}
-	err = unzipFile(key)
+	// unzip data
+	err = file.UnzipFile(srcPath, workPath)
 	if err != nil {
 		return task.FAIL, err
 	}
-	err = file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".txt")))
+	// move to Unstage
+	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -166,41 +169,4 @@ func driveProgress(clientid string) {
 	// 	}
 
 	// }
-}
-
-func unzipFile(key string) error {
-	// open the zip file for reading
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
-	reader, err := zip.OpenReader(path)
-	if err != nil {
-		return err
-	}
-	// extract the files from the zip archive
-	for _, file := range reader.File {
-		if !file.FileInfo().IsDir() {
-			destFile, err := os.Create(filepath.Join(fileUnstagePath, key+"-"+diskMap[key]+".txt"))
-			if err != nil {
-				return err
-			}
-			srcFile, err := file.Open()
-			if err != nil {
-				return err
-			}
-			_, err = io.Copy(destFile, srcFile)
-			if err != nil {
-				return err
-			}
-			destFile.Close()
-			srcFile.Close()
-		} else {
-			err = errors.New("the zip file contains a directory")
-			return err
-		}
-	}
-	reader.Close()
-	err = os.Remove(path)
-	if err != nil {
-		return err
-	}
-	return nil
 }
