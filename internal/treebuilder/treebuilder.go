@@ -56,7 +56,8 @@ func init() {
 	}
 }
 
-func Main() {
+func Main(version string) {
+	logger.Info("Welcome to edetector connector", zap.Any("version", version))
 	for {
 		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
 		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")

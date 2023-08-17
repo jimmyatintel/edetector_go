@@ -53,7 +53,6 @@ func init() {
 
 
 func Main(version string) {
-	parser_init()
 	logger.Info("Welcome to DB Parser", zap.Any("version", version))
 	for {
 		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
