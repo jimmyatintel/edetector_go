@@ -84,15 +84,15 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 
 	// update progress
-	parts := strings.Split(p.GetMessage(), "|")
-	count, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return task.FAIL, err
-	}
-	explorerCountMap[key] = count
-	driveMu.Lock()
-	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
-	driveMu.Unlock()
+	// parts := strings.Split(p.GetMessage(), "|")
+	// count, err := strconv.Atoi(parts[0])
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
+	// explorerCountMap[key] = count
+	// driveMu.Lock()
+	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	// driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
