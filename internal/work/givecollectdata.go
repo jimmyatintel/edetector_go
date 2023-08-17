@@ -16,7 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"net"
 
@@ -29,10 +28,6 @@ var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
-
-// ! tmp version
-var tmpMu sync.Mutex
-var lastDataTime = time.Now()
 
 func init() {
 	file.CheckDir(dbWorkingPath)
@@ -108,11 +103,6 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	//! tmp version
-	tmpMu.Lock()
-	lastDataTime = time.Now()
-	tmpMu.Unlock()
-	go TmpEnd(p.GetRkey())
 	// init collect info
 	len, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -157,10 +147,6 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	collectMu.Lock()
 	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
 	collectMu.Unlock()
-	//! tmp version
-	tmpMu.Lock()
-	lastDataTime = time.Now()
-	tmpMu.Unlock()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -175,7 +161,27 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveCollectDataEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+
+	srcPath := filepath.Join(dbWorkingPath, (key + ".zip"))
+	workPath := filepath.Join(dbWorkingPath, key+".db")
+	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
+	// truncate data
+	err := file.TruncateFile(srcPath, collectTotalMap[key])
+	if err != nil {
+		return task.FAIL, err
+	}
+	// unzip data
+	err = file.UnzipFile(srcPath, workPath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	// move to Unstage
+	err = file.MoveFile(workPath, unstagePath)
+	if err != nil {
+		return task.FAIL, err
+	}
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -183,7 +189,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -216,40 +222,5 @@ func collectProgress(clientid string) {
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(clientid)
 		}
-	}
-}
-
-func TmpEnd(key string) { //!tmp version
-	for {
-		tmpMu.Lock()
-		if time.Since(lastDataTime) > time.Duration(120)*time.Second {
-			lastDataTime = time.Now()
-			tmpMu.Unlock()
-			logger.Info("Collect tmp End version: ", zap.Any("message", key))
-
-			srcPath := filepath.Join(dbWorkingPath, (key + ".zip"))
-			workPath := filepath.Join(dbWorkingPath, key+".db")
-			unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
-			// truncate data
-			err := file.TruncateFile(srcPath, collectTotalMap[key])
-			if err != nil {
-				logger.Error("Error truncating file: ", zap.Any("error", err.Error()))
-				continue
-			}
-			// unzip data
-			err = file.UnzipFile(srcPath, workPath)
-			if err != nil {
-				logger.Error("Error unzip file: ", zap.Any("error", err.Error()))
-				continue
-			}
-			// move to Unstage
-			err = file.MoveFile(workPath, unstagePath)
-			if err != nil {
-				logger.Error("Move failed", zap.Any("message", err.Error()))
-				continue
-			}
-			return
-		}
-		tmpMu.Unlock()
 	}
 }
