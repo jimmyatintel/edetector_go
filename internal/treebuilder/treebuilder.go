@@ -108,6 +108,7 @@ func Main() {
 			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
 			c_time, err := strconv.Atoi(original[5])
+
 			if err != nil {
 				logger.Error("error converting time")
 			}

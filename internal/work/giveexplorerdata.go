@@ -24,9 +24,9 @@ import (
 
 // var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
+var explorerCountMap = make(map[string]int)
+var driveProgressMap = make(map[string]int)
 var diskMap = make(map[string]string)
-
-// var explorerCountMap = make(map[string]int)
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
 
@@ -83,7 +83,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
-	// // update progress
+	// update progress
 	// parts := strings.Split(p.GetMessage(), "|")
 	// count, err := strconv.Atoi(parts[0])
 	// if err != nil {
