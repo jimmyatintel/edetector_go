@@ -105,12 +105,12 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	filename := key + "-" + diskMap[key]
-	path := filepath.Join(fileWorkingPath, (filename + ".zip"))
+	path := filepath.Join(fileWorkingPath, (filename + ".txt"))
 	err := file.TruncateFile(path, ExplorerTotalMap[key])
 	if err != nil {
 		return task.FAIL, err
 	}
-	err = file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".zip")))
+	err = file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".txt")))
 	if err != nil {
 		return task.FAIL, err
 	}
