@@ -37,13 +37,13 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	if len(parts) >= 3 {
-		total, err := strconv.Atoi(parts[1])
+	if len(parts) >= 2 {
+		total, err := strconv.Atoi(parts[0])
 		if err != nil {
 			return task.FAIL, err
 		}
 		ExplorerTotalMap[key] = total
-		diskMap[key] = parts[2]
+		diskMap[key] = parts[1]
 		// create or truncate the db file
 		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
 		err = file.CreateFile(path)
