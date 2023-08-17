@@ -2,6 +2,8 @@ package work
 
 import (
 	"archive/zip"
+	"bytes"
+	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
@@ -16,12 +18,11 @@ import (
 
 	"net"
 	"strings"
-	"sync"
 
 	"go.uber.org/zap"
 )
 
-var driveMu sync.Mutex
+// var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
 var diskMap = make(map[string]string)
 
@@ -71,8 +72,13 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	// write file
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
 	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
-	err := file.WriteFile(path, []byte(p.GetMessage()))
+	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -106,6 +112,10 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
 	err := file.TruncateFile(path, ExplorerTotalMap[key])
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = unzipFile(key)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -153,28 +163,6 @@ func driveProgress(clientid string) {
 	// }
 }
 
-func truncateFile(key string) error {
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return err
-	}
-	realLen := fileInfo.Size()
-	if int(realLen) < ExplorerTotalMap[key] {
-		err = errors.New("incomplete data")
-		return err
-	}
-	err = os.WriteFile(path, data[:ExplorerTotalMap[key]], 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func unzipFile(key string) error {
 	// open the zip file for reading
 	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
@@ -205,9 +193,9 @@ func unzipFile(key string) error {
 		}
 	}
 	reader.Close()
-	// err = os.Remove(path)
-	// if err != nil {
-	// 	return err
-	// }
+	err = os.Remove(path)
+	if err != nil {
+		return err
+	}
 	return nil
 }
