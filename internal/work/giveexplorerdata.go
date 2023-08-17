@@ -2,10 +2,8 @@ package work
 
 import (
 	"archive/zip"
-	"bytes"
-	C_AES "edetector_go/internal/C_AES"
-	"edetector_go/internal/checkdir"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
@@ -14,6 +12,7 @@ import (
 	"errors"
 	"io"
 	"os"
+
 	"path/filepath"
 	"strconv"
 
@@ -26,16 +25,15 @@ import (
 
 var driveMu sync.Mutex
 var ExplorerTotalMap = make(map[string]int)
+var diskMap = make(map[string]string)
 
 // var explorerCountMap = make(map[string]int)
-var driveProgressMap = make(map[string]int)
-var diskMap = make(map[string]string)
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
 
 func init() {
-	checkdir.CheckDir(fileWorkingPath)
-	checkdir.CheckDir(fileUnstagePath)
+	file.CheckDir(fileWorkingPath)
+	file.CheckDir(fileUnstagePath)
 }
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -49,14 +47,15 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 		ExplorerTotalMap[key] = total
 		diskMap[key] = parts[2]
+		// create or truncate the db file
 		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
-		file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+		err = file.CreateFile(path)
 		if err != nil {
 			return task.FAIL, err
 		}
-		file.Close()
 	} else {
-		return task.FAIL, nil
+		err := errors.New("invalid msg format")
+		return task.FAIL, err
 	}
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -74,25 +73,11 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	// write file
-	dp := packet.CheckIsData(p)
-	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
-	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
-	decrypt_buf = decrypt_buf[100:]
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
+	err := file.WriteFile(path, []byte(p.GetMessage()))
 	if err != nil {
 		return task.FAIL, err
 	}
-	_, err = file.Seek(0, 2)
-	if err != nil {
-		return task.FAIL, err
-	}
-	_, err = file.Write(decrypt_buf)
-	if err != nil {
-		return task.FAIL, err
-	}
-	file.Close()
 
 	// // update progress
 	// parts := strings.Split(p.GetMessage(), "|")
@@ -121,11 +106,8 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	err := truncateFile(key)
-	if err != nil {
-		return task.FAIL, err
-	}
-	err = unzipFile(key)
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	err := file.TruncateFile(path, ExplorerTotalMap[key])
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -26,6 +26,10 @@ type ExplorerDetails struct {
 	AccessTime        int    `json:"accessTime"`
 	EntryModifiedTime int    `json:"entryModifiedTime"`
 	Datalen           int    `json:"dataLen"`
+	ItemMain          string `json:"item_main"`
+	DateMain          int    `json:"date_main"`
+	TypeMain          string `json:"type_main"`
+	EtcMain           string `json:"etc_main"`
 }
 
 func (n ExplorerDetails) Elastical() ([]byte, error) {

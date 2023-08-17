@@ -2,9 +2,8 @@ package treebuilder
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/checkdir"
-	"edetector_go/internal/dbparser"
 	"edetector_go/internal/fflag"
+	"edetector_go/internal/file"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -12,25 +11,26 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 var RelationMap = make(map[string](map[int](Relation)))
-var Finished = make(chan string)
+var UUIDMap = make(map[string]int)
 var fileUnstagePath = "fileUnstage"
 var fileStagedPath = "fileStaged"
 
 type Relation struct {
 	UUID  string
+	Name  string
+	Path  string
 	Child []string
 }
 
 func init() {
-	checkdir.CheckDir(fileUnstagePath)
-	checkdir.CheckDir(fileStagedPath)
+	file.CheckDir(fileUnstagePath)
+	file.CheckDir(fileStagedPath)
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -56,19 +56,8 @@ func init() {
 }
 
 func Main() {
-	logger.Info("starting tree builder...")
 	for {
-		var rootInd int
-		explorerFile, err := dbparser.GetOldestFile(fileUnstagePath)
-		if explorerFile == "" {
-			logger.Info("No file to parse")
-			time.Sleep(30 * time.Second)
-			continue
-		} else if err != nil {
-			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
-			time.Sleep(30 * time.Second)
-			continue
-		}
+		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
 		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
 		agent := strings.Split(path[len(path)-1], "-")[0]
 		explorerContent, err := os.ReadFile(explorerFile)
@@ -77,8 +66,9 @@ func Main() {
 			continue
 		}
 		RelationMap[agent] = make(map[int](Relation))
-		logger.Info("Handling explorer of agent: ", zap.Any("message", agent))
-		// send to elastic(main & details) & record the relation
+		logger.Info("Open txt file: ", zap.Any("message", explorerFile))
+		// record the relation
+		var rootInd int
 		lines := strings.Split(string(explorerContent), "\n")
 		for _, line := range lines {
 			if len(line) == 0 {
@@ -92,67 +82,61 @@ func Main() {
 			}
 			generateUUID(agent, parent)
 			generateUUID(agent, child)
+			// record name
+			tmp := RelationMap[agent][child]
+			tmp.Name = original[1]
+			RelationMap[agent][child] = tmp
+			// record relation
 			if parent == child {
 				rootInd = parent
 			} else {
-				relation := RelationMap[agent][parent]
-				relation.Child = append(relation.Child, RelationMap[agent][child].UUID)
-				RelationMap[agent][parent] = relation
+				tmp := RelationMap[agent][parent]
+				tmp.Child = append(tmp.Child, RelationMap[agent][child].UUID)
+				RelationMap[agent][parent] = tmp
 			}
-			//! tmp version: new explorer struct
-			create_time, write_time, access_time, entry_modified_time, err := tmpGetTime(original)
-			if err != nil {
-				logger.Error("error parsing time: ", zap.Any("message", err))
+		}
+		logger.Info("record the relation")
+		// tree traversal & send to elastic(relation)
+		treeTraversal(agent, rootInd, true, "")
+		logger.Info("tree traversal & send to elastic (relation)")
+		// send to elastic (main & details)
+		for _, line := range lines {
+			if len(line) == 0 {
 				continue
 			}
-			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + create_time + "@|@" + write_time + "@|@" + access_time + "@|@" + entry_modified_time + "@|@" + original[9]
+			original := strings.Split(line, "|")
+			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
 			values := strings.Split(line, "@|@")
-
-			c_time, err := strconv.Atoi(create_time)
+			c_time, err := strconv.Atoi(original[5])
 			if err != nil {
 				logger.Error("error converting time")
 			}
-			err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", "path(todo)", "ed_low")
+			_, child, err := getRelation(original)
 			if err != nil {
-				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+				logger.Error("error getting relation: ", zap.Any("message", err))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low")
+			// err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", RelationMap[agent][child].Path, "ed_low")
+			// if err != nil {
+			// 	logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+			// 	continue
+			// }
+			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", RelationMap[agent][child].Path)
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
 		}
-		logger.Info("send to elastic(main & details) & record the relation")
-		// send to elastic(relation)
-		for id, relation := range RelationMap[agent] {
-			var isRoot bool
-			if rootInd == id {
-				isRoot = true
-			} else {
-				isRoot = false
-			}
-			data := ExplorerRelation{
-				Agent:  agent,
-				IsRoot: isRoot,
-				Parent: relation.UUID,
-				Child:  relation.Child,
-			}
-			err := elasticquery.SendToRelationElastic(data, "ed_low")
-			if err != nil {
-				logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
-				continue
-			}
-		}
-		logger.Info("send to elastic(relation)")
+		logger.Info("send to elastic (main & details)")
 		// clear
+		UUIDMap = nil
 		RelationMap[agent] = nil
 		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
 		err = os.Rename(explorerFile, dstPath)
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
-		logger.Info("Finish handling explorer of agent: ", zap.Any("message", agent))
+		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }
 
@@ -171,36 +155,35 @@ func getRelation(original []string) (int, int, error) {
 func generateUUID(agent string, ind int) {
 	_, exists := RelationMap[agent][ind]
 	if !exists {
+		uuid := uuid.NewString()
 		relation := Relation{
-			UUID:  uuid.NewString(),
+			UUID:  uuid,
+			Name:  "",
+			Path:  "",
 			Child: []string{},
 		}
 		RelationMap[agent][ind] = relation
+		UUIDMap[uuid] = ind
+		// logger.Debug("uuid", zap.Any("message", strconv.Itoa(ind)+": "+uuid))
 	}
 }
 
-func tmpGetTime(original []string) (string, string, string, string, error) { //!tmp version
-	layout := "2006/01/02 15:04:05"
-	t, err := time.Parse(layout, original[5])
-	if err != nil {
-		return "", "", "", "", err
+func treeTraversal(agent string, ind int, isRoot bool, path string) {
+	relation := RelationMap[agent][ind]
+	path = path + "/" + relation.Name
+	relation.Path = path
+	RelationMap[agent][ind] = relation
+	data := ExplorerRelation{
+		Agent:  agent,
+		IsRoot: isRoot,
+		Parent: relation.UUID,
+		Child:  relation.Child,
 	}
-	create_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[6])
+	err := elasticquery.SendToRelationElastic(data, "ed_low")
 	if err != nil {
-		return "", "", "", "", err
+		logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
 	}
-	write_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[7])
-	if err != nil {
-		return "", "", "", "", err
+	for _, uuid := range relation.Child {
+		treeTraversal(agent, UUIDMap[uuid], false, path)
 	}
-	access_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[8])
-	if err != nil {
-		return "", "", "", "", err
-	}
-	entry_modified_time := strconv.FormatInt(t.Unix(), 10)
-
-	return create_time, write_time, access_time, entry_modified_time, err
 }

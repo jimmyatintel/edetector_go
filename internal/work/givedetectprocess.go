@@ -58,7 +58,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		line = line + "@|@" + network + "@|@riskLevel@|@detect"
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
-		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp)
+		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp, "0", 0, "0", "0")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
