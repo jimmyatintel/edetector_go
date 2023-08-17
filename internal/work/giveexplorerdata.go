@@ -23,7 +23,7 @@ import (
 )
 
 // var driveMu sync.Mutex
-var ExplorerTotalMap = make(map[string]int)
+var explorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
 var driveProgressMap = make(map[string]int)
 var diskMap = make(map[string]string)
@@ -44,7 +44,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		if err != nil {
 			return task.FAIL, err
 		}
-		ExplorerTotalMap[key] = total
+		explorerTotalMap[key] = total
 		diskMap[key] = parts[1]
 		// create or truncate the db file
 		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
@@ -91,7 +91,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// }
 	// explorerCountMap[key] = count
 	// driveMu.Lock()
-	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
+	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(explorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
 	// driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
@@ -112,7 +112,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	filename := key + "-" + diskMap[key]
 	path := filepath.Join(fileWorkingPath, (filename + ".zip"))
-	err := file.TruncateFile(path, ExplorerTotalMap[key])
+	err := file.TruncateFile(path, explorerTotalMap[key])
 	if err != nil {
 		return task.FAIL, err
 	}
