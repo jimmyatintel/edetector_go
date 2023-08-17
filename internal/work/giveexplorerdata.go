@@ -6,9 +6,7 @@ import (
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
 	"errors"
 	"io"
 	"os"
@@ -141,18 +139,18 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 }
 
 func driveProgress(clientid string) {
-	for {
-		driveMu.Lock()
-		if driveProgressMap[clientid] >= 100 {
-			break
-		}
-		rowsAffected := query.Update_progress(driveProgressMap[clientid], clientid, "StartGetDrive")
-		driveMu.Unlock()
-		if rowsAffected != 0 {
-			go taskservice.RequestToUser(clientid)
-		}
+	// for {
+	// 	driveMu.Lock()
+	// 	if driveProgressMap[clientid] >= 100 {
+	// 		break
+	// 	}
+	// 	rowsAffected := query.Update_progress(driveProgressMap[clientid], clientid, "StartGetDrive")
+	// 	driveMu.Unlock()
+	// 	if rowsAffected != 0 {
+	// 		go taskservice.RequestToUser(clientid)
+	// 	}
 
-	}
+	// }
 }
 
 func truncateFile(key string) error {
