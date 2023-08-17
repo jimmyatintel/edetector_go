@@ -14,6 +14,10 @@ func convertTime(tableName string, line string) string {
 		RFCToTimestamp(&values)
 		line = strings.Join(values[:], "@|@")
 		return line
+	case "ChromeCache":
+		RFCToTimestamp(&values)
+		line = strings.Join(values[:], "@|@")
+		return line
 	case "InstalledSoftware":
 		DigitToTimestamp(&values)
 		line = strings.Join(values[:], "@|@")
