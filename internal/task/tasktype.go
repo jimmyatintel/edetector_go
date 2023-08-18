@@ -29,19 +29,19 @@ const (
 	GIVE_SCAN_END      TaskType = "GiveScanEnd"
 
 	// new drive
-	GET_DRIVE           TaskType = "GetDrive"
-	GIVE_DRIVE_INFO     TaskType = "GiveDriveInfo"
-	EXPLORER_INFO       TaskType = "ExplorerInfo"
-	EXPLORER            TaskType = "Explorer"
-	GIVE_EXPLORER_DATA  TaskType = "GiveExplorerData"
-	GIVE_EXPLORER_END   TaskType = "GiveExplorerEnd"
-	GIVE_EXPLORER_ERROR TaskType = "GiveExplorerError"
+	GET_DRIVE              TaskType = "GetDrive"
+	GIVE_DRIVE_INFO        TaskType = "GiveDriveInfo"
+	EXPLORER_INFO          TaskType = "ExplorerInfo"
+	EXPLORER               TaskType = "Explorer"
+	GIVE_EXPLORER_PROGRESS TaskType = "GiveExplorerProgress"
+	GIVE_EXPLORER_INFO     TaskType = "GiveExplorerInfo"
+	GIVE_EXPLORER_DATA     TaskType = "GiveExplorerData"
+	GIVE_EXPLORER_END      TaskType = "GiveExplorerEnd"
+	GIVE_EXPLORER_ERROR    TaskType = "GiveExplorerError"
 
 	// collection
-	IMPORT_STARTUP          TaskType = "ImportStartup"
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
-	COLLECT_INFO            TaskType = "CollectInfo"
-	GET_COLLECT_INFO_DATA   TaskType = "GetCollectInfoData"
+	GIVE_COLLECT_INFO       TaskType = "GiveCollectInfo"
 	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
 	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
@@ -79,13 +79,13 @@ var Worklist = []TaskType{
 	GIVE_DRIVE_INFO,
 	EXPLORER_INFO,
 	EXPLORER,
+	GIVE_EXPLORER_PROGRESS,
+	GIVE_EXPLORER_INFO,
 	GIVE_EXPLORER_DATA,
 	GIVE_EXPLORER_END,
 	GIVE_EXPLORER_ERROR,
-	IMPORT_STARTUP,
 	GET_COLLECT_INFO,
-	COLLECT_INFO,
-	GET_COLLECT_INFO_DATA,
+	GIVE_COLLECT_INFO,
 	GIVE_COLLECT_PROGRESS,
 	GIVE_COLLECT_DATA_INFO,
 	GIVE_COLLECT_DATA,

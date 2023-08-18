@@ -719,7 +719,7 @@ type NetworkDataUsageMonitor struct {
 	UserName           string `json:"user_name"`
 	UserSID            string `json:"user_sid"`
 	BytesSent          int    `json:"bytes_sent"`
-	BytesReceived      int    `json:"bytes_recvd"`
+	BytesReceived      int64  `json:"bytes_recvd"`
 	NetworkAdapter     string `json:"network_adapter"`
 	NetworkAdapterGUID string `json:"network_adapter_guid"`
 	InterfaceLUID      string `json:"interfaceluid"`

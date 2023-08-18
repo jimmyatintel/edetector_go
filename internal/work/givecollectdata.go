@@ -10,11 +10,8 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	"errors"
-	"math"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 
 	"net"
@@ -22,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var collectMu sync.Mutex
+var collectMu *sync.Mutex
 var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
@@ -30,12 +27,18 @@ var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
 
 func init() {
+	collectMu = &sync.Mutex{}
 	file.CheckDir(dbWorkingPath)
 	file.CheckDir(dbUstagePath)
 }
 
-func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("ImportStartup: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+func GiveCollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveCollectInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	collectMu.Lock()
+	collectProgressMap[key] = 0
+	collectMu.Unlock()
+	go updateCollectProgress(key)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -49,43 +52,15 @@ func ImportStartup(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	return task.SUCCESS, nil
 }
 
-func CollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("CollectInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.GET_COLLECT_INFO_DATA,
-		Message:    "10",
-	}
-	collectMu.Lock()
-	collectProgressMap[p.GetRkey()] = 0
-	collectMu.Unlock()
-	go collectProgress(p.GetRkey())
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-
 	// update progress
-	parts := strings.Split(p.GetMessage(), "/")
-	if len(parts) != 2 {
-		return task.FAIL, errors.New("invalid progress format")
-	}
-	numerator, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return task.FAIL, err
-	}
-	denominator, err := strconv.Atoi(parts[1])
+	progress, err := getProgressByMsg(p.GetMessage(), 20)
 	if err != nil {
 		return task.FAIL, err
 	}
 	collectMu.Lock()
-	collectProgressMap[p.GetRkey()] = int(math.Min((float64(numerator) / float64(denominator) * 20), 20))
+	collectProgressMap[p.GetRkey()] = progress
 	collectMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
@@ -131,21 +106,22 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveCollectData: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Debug("GiveCollectData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// write file
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".zip"))
+	path := filepath.Join(dbWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
 	// update progress
-	collectCountMap[p.GetRkey()] += 1
+	collectCountMap[key] += 1
 	collectMu.Lock()
-	collectProgressMap[p.GetRkey()] = int(20 + float64(collectCountMap[p.GetRkey()])/(float64(collectTotalMap[p.GetRkey()]/65436))*80)
+	collectProgressMap[key] = getProgressByCount(collectCountMap[key], collectTotalMap[key], 80)
 	collectMu.Unlock()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -211,16 +187,16 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	return task.SUCCESS, nil
 }
 
-func collectProgress(clientid string) {
+func updateCollectProgress(key string) {
 	for {
 		collectMu.Lock()
-		if collectProgressMap[clientid] >= 100 {
+		if collectProgressMap[key] >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(collectProgressMap[clientid], clientid, "StartCollect")
+		rowsAffected := query.Update_progress(collectProgressMap[key], key, "StartGetDrive")
 		collectMu.Unlock()
 		if rowsAffected != 0 {
-			go taskservice.RequestToUser(clientid)
+			go taskservice.RequestToUser(key)
 		}
 	}
 }

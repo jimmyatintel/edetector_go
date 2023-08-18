@@ -7,11 +7,13 @@ import (
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
-	"errors"
+	"edetector_go/pkg/mariadb/query"
+	"strconv"
+	"sync"
 
 	"path/filepath"
-	"strconv"
 
 	"net"
 	"strings"
@@ -19,15 +21,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// var driveMu sync.Mutex
+var driveMu *sync.Mutex
 var explorerTotalMap = make(map[string]int)
 var explorerCountMap = make(map[string]int)
-var driveProgressMap = make(map[string]int)
+var explorerProgressMap = make(map[string]int)
 var diskMap = make(map[string]string)
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
 
 func init() {
+	driveMu = &sync.Mutex{}
 	file.CheckDir(fileWorkingPath)
 	file.CheckDir(fileUnstagePath)
 }
@@ -36,21 +39,11 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	if len(parts) >= 2 {
-		total, err := strconv.Atoi(parts[0])
-		if err != nil {
-			return task.FAIL, err
-		}
-		explorerTotalMap[key] = total
-		diskMap[key] = parts[1]
-		// create or truncate the zip file
-		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
-		err = file.CreateFile(path)
-		if err != nil {
-			return task.FAIL, err
-		}
-	} else {
-		err := errors.New("invalid msg format")
+	diskMap[key] = parts[0]
+	// create or truncate the zip file
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	err := file.CreateFile(path)
+	if err != nil {
 		return task.FAIL, err
 	}
 	var send_packet = packet.WorkPacket{
@@ -59,7 +52,52 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveExplorerProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// update progress
+	progress, err := getProgressByMsg(p.GetMessage(), 50)
+	if err != nil {
+		return task.FAIL, err
+	}
+	driveMu.Lock()
+	explorerProgressMap[p.GetRkey()] = progress
+	driveMu.Unlock()
+
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveExplorerInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	total, err := strconv.Atoi(p.GetMessage())
+	if err != nil {
+		return task.FAIL, err
+	}
+	explorerCountMap[p.GetRkey()] = 0
+	explorerTotalMap[p.GetRkey()] = total
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -81,15 +119,10 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 
 	// update progress
-	// parts := strings.Split(p.GetMessage(), "|")
-	// count, err := strconv.Atoi(parts[0])
-	// if err != nil {
-	// 	return task.FAIL, err
-	// }
-	// explorerCountMap[key] = count
-	// driveMu.Lock()
-	// driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(explorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
-	// driveMu.Unlock()
+	explorerCountMap[key] += 1
+	driveMu.Lock()
+	explorerProgressMap[key] = getProgressByCount(explorerCountMap[key], explorerTotalMap[key], 50)
+	driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -156,17 +189,17 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	return task.SUCCESS, nil
 }
 
-func driveProgress(clientid string) {
-	// for {
-	// 	driveMu.Lock()
-	// 	if driveProgressMap[clientid] >= 100 {
-	// 		break
-	// 	}
-	// 	rowsAffected := query.Update_progress(driveProgressMap[clientid], clientid, "StartGetDrive")
-	// 	driveMu.Unlock()
-	// 	if rowsAffected != 0 {
-	// 		go taskservice.RequestToUser(clientid)
-	// 	}
-
-	// }
+func updateDriveProgress(key string) {
+	for {
+		driveMu.Lock()
+		driveProgress := int((float64(driveCountMap[key])/float64(driveTotalMap[key]))*100 + float64(explorerProgressMap[key])/float64(driveTotalMap[key]))
+		driveMu.Unlock()
+		if driveProgress >= 100 {
+			break
+		}
+		rowsAffected := query.Update_progress(driveProgress, key, "StartGetDrive")
+		if rowsAffected != 0 {
+			go taskservice.RequestToUser(key)
+		}
+	}
 }

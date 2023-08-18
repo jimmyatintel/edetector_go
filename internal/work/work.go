@@ -7,7 +7,6 @@ import (
 	"net"
 )
 
-
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
 
 func init() {
@@ -31,15 +30,16 @@ func init() {
 		task.GIVE_SCAN_END:      GiveScanEnd,
 
 		// drive
-		task.GIVE_DRIVE_INFO:     GiveDriveInfo,
-		task.EXPLORER:            Explorer,
-		task.GIVE_EXPLORER_DATA:  GiveExplorerData,
-		task.GIVE_EXPLORER_END:   GiveExplorerEnd,
-		task.GIVE_EXPLORER_ERROR: GiveExplorerError,
+		task.GIVE_DRIVE_INFO:        GiveDriveInfo,
+		task.EXPLORER:               Explorer,
+		task.GIVE_EXPLORER_PROGRESS: GiveExplorerProgress,
+		task.GIVE_EXPLORER_INFO:     GiveExplorerInfo,
+		task.GIVE_EXPLORER_DATA:     GiveExplorerData,
+		task.GIVE_EXPLORER_END:      GiveExplorerEnd,
+		task.GIVE_EXPLORER_ERROR:    GiveExplorerError,
 
 		// collection
-		task.IMPORT_STARTUP:          ImportStartup,
-		task.COLLECT_INFO:            CollectInfo,
+		task.GIVE_COLLECT_INFO:       GiveCollectInfo,
 		task.GIVE_COLLECT_PROGRESS:   GiveCollectProgress,
 		task.GIVE_COLLECT_DATA_INFO:  GiveCollectDataInfo,
 		task.GIVE_COLLECT_DATA:       GiveCollectData,

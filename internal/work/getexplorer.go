@@ -6,7 +6,6 @@ import (
 	"edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
-	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -19,8 +18,11 @@ var driveCountMap = make(map[string]int)
 func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")
+	driveMu.Lock()
+	explorerProgressMap[key] = 0
+	driveMu.Unlock()
+	go updateDriveProgress(key)
 	driveTotalMap[key] = len(drives) - 1
-	go driveProgress(key)
 	user_explorer[key] = make(chan string)
 	for ind, d := range drives {
 		parts := strings.Split(d, "-")
@@ -37,8 +39,6 @@ func HandleExpolorer(p packet.Packet) {
 			if err != nil {
 				logger.Error("Start get explorer failed:", zap.Any("error", err.Error()))
 			}
-			m := strconv.Itoa(driveTotalMap[p.GetRkey()]) + "/" + strconv.Itoa(driveCountMap[p.GetRkey()]) + " " + msg
-			logger.Info("Start handle & blocking ", zap.Any("message", m))
 			user_explorer[key] <- msg
 			logger.Info("Next round")
 		}
