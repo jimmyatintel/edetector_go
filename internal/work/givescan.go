@@ -187,3 +187,4 @@ func updateScanProgress(key string) {
 		}
 	}
 }
+                                                     
