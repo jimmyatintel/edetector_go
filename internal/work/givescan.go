@@ -10,27 +10,70 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
+var scanMu *sync.Mutex
+var scanTotalMap = make(map[string]int)
+var scanCountMap = make(map[string]int)
+var scanProgressMap = make(map[string]int)
 var scanMap = make(map[string](string))
+
+func init() {
+	scanMu = &sync.Mutex{}
+}
 
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	scanMap[p.GetRkey()] = ""
+	key := p.GetRkey()
+	logger.Info("GiveScanInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	total, err := strconv.Atoi(p.GetMessage())
+	if err != nil {
+		return task.FAIL, err
+	}
+	scanTotalMap[key] = total
+	scanMu.Lock()
+	scanProgressMap[key] = 0
+	scanMu.Unlock()
+	go updateScanProgress(key)
+	scanMap[key] = ""
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
 		Message:    "",
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("GiveScanProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	// update progress
+	progress, err := getProgressByMsg(p.GetMessage(), 50)
+	if err != nil {
+		return task.FAIL, err
+	}
+	scanMu.Lock()
+	scanProgressMap[p.GetRkey()] = progress
+	scanMu.Unlock()
+	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       task.DATA_RIGHT,
+		Message:    "",
+	}
+	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -44,7 +87,7 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
-		Message:    "null",
+		Message:    "",
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -54,11 +97,12 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScan: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	scanMap[p.GetRkey()] += p.GetMessage()
+	key := p.GetRkey()
+	logger.Debug("GiveScan: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	scanMap[key] += p.GetMessage()
 	// send to elasticsearch
-	lines := strings.Split(scanMap[p.GetRkey()], "\n")
-	scanMap[p.GetRkey()] = ""
+	lines := strings.Split(scanMap[key], "\n")
+	scanMap[key] = ""
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
@@ -96,11 +140,16 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
 	}
+	// update progress
+	scanCountMap[key] += 1
+	scanMu.Lock()
+	scanProgressMap[key] = int(50 + float64(scanCountMap[key])/(float64(scanTotalMap[key]))*50)
+	scanMu.Unlock()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
-		Message:    "null",
+		Message:    "",
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -115,7 +164,7 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       task.DATA_RIGHT,
-		Message:    "null",
+		Message:    "",
 	}
 	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
 	if err != nil {
@@ -123,4 +172,18 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	taskservice.Finish_task(p.GetRkey(), "StartScan")
 	return task.SUCCESS, nil
+}
+
+func updateScanProgress(key string) {
+	for {
+		scanMu.Lock()
+		if scanProgressMap[key] >= 100 {
+			break
+		}
+		rowsAffected := query.Update_progress(scanProgressMap[key], key, "StartScan")
+		scanMu.Unlock()
+		if rowsAffected != 0 {
+			go taskservice.RequestToUser(key)
+		}
+	}
 }

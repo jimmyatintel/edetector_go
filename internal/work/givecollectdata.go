@@ -20,8 +20,8 @@ import (
 )
 
 var collectMu *sync.Mutex
-var collectTotalMap = make(map[string]int)
 var collectCountMap = make(map[string]int)
+var collectTotalMap = make(map[string]int)
 var collectProgressMap = make(map[string]int)
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
