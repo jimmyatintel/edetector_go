@@ -27,7 +27,7 @@ func Online(KeyNum string) error {
 		Status: 1,
 		Time:   currentTime,
 	}
-	return Redis_set(KeyNum, onlineStatusInfo.Marshal())
+	return RedisSet(KeyNum, onlineStatusInfo.Marshal())
 }
 
 func Offline(KeyNum string) error {
@@ -36,7 +36,7 @@ func Offline(KeyNum string) error {
 		Status: 0,
 		Time:   currentTime,
 	}
-	return Redis_set(KeyNum, onlineStatusInfo.Marshal())
+	return RedisSet(KeyNum, onlineStatusInfo.Marshal())
 }
 
 func GetStatus(content string) int {

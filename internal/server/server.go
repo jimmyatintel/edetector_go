@@ -87,5 +87,5 @@ func servershutdown() {
 		logger.Info("offline ", zap.Any("message", client))
 		taskservice.RequestToUser(client)
 	}
-	redis.Redis_close()
+	redis.RedisClose()
 }

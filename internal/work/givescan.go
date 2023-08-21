@@ -11,39 +11,27 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"net"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-var scanMu *sync.Mutex
-var scanTotalMap = make(map[string]int)
-var scanCountMap = make(map[string]int)
-var scanProgressMap = make(map[string]int)
-var scanMap = make(map[string](string))
-
-func init() {
-	scanMu = &sync.Mutex{}
-}
-
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	total, err := strconv.Atoi(p.GetMessage())
+	_, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
-	scanTotalMap[key] = total
-	scanMu.Lock()
-	scanProgressMap[key] = 0
-	scanMu.Unlock()
+	redis.RedisSet(key+"-ScanTotal", p.GetMessage())
+	redis.RedisSet(key+"-ScanProgress", "0")
+	redis.RedisSet(key+"-ScanMsg", "")
 	go updateScanProgress(key)
-	scanMap[key] = ""
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -65,9 +53,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	scanMu.Lock()
-	scanProgressMap[key] = progress
-	scanMu.Unlock()
+	redis.RedisSet(key+"-ScanProgress", strconv.Itoa(progress))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -82,8 +68,9 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Debug("GiveScanFragment: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	scanMap[p.GetRkey()] += p.GetMessage()
+	key := p.GetRkey()
+	logger.Debug("GiveScanFragment: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	redis.RedisSet(key+"-ScanMsg", redis.RedisGetString(key+"-ScanMsg")+p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -142,10 +129,9 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 	}
 	// update progress
-	scanCountMap[key] += 1
-	scanMu.Lock()
-	scanProgressMap[key] = int(50 + float64(scanCountMap[key])/(float64(scanTotalMap[key]))*50)
-	scanMu.Unlock()
+	redis.RedisSet((key + "-ScanCount"), strconv.Itoa(redis.RedisGetInt(key+"-ScanCount")+1))
+	progress := int(50 + float64(redis.RedisGetInt(key+"-ScanCount"))/(float64(redis.RedisGetInt(key+"-ScanTotal"))*50))
+	redis.RedisSet(key+"-ScanProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -178,13 +164,13 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func updateScanProgress(key string) {
 	for {
 		scanMu.Lock()
-		if scanProgressMap[key] >= 100 {
+		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(scanProgressMap[key], key, "StartScan")
+		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
 		scanMu.Unlock()
 		if rowsAffected != 0 {
-			logger.Info("update progress", zap.Any("message", scanProgressMap[key]))
+			logger.Info("update progress", zap.Any("message", redis.RedisGetInt(key+"-ScanProgress")))
 			go taskservice.RequestToUser(key)
 		}
 	}
