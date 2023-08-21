@@ -79,7 +79,9 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				// wait for key to join the packet
 				key = NewPacket.GetRkey()
 				Clientlist = append(Clientlist, key)
-				taskchannel.Task_worker_channel[NewPacket.GetRkey()] = task_chan
+				taskchannel.TaskMu.Lock()
+				taskchannel.TaskWorkerChannel[NewPacket.GetRkey()] = task_chan
+				taskchannel.TaskMu.Unlock()
 				logger.Info("set worker key-channel mapping: ", zap.Any("message", NewPacket.GetRkey()))
 			} else if key != "null" {
 				err = redis.Online(key)

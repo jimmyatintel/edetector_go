@@ -2,6 +2,12 @@ package taskchannel
 
 import (
 	packet "edetector_go/internal/packet"
+	"sync"
 )
 
-var Task_worker_channel map[string](chan packet.Packet)
+var TaskMu *sync.Mutex
+var TaskWorkerChannel map[string](chan packet.Packet)
+
+func init() {
+	TaskMu = &sync.Mutex{}
+}

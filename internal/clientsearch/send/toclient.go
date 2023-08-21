@@ -29,11 +29,15 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 		Work:       workType,
 		Message:    msg,
 	}
-	_, exists := taskchannel.Task_worker_channel[p.GetRkey()]
+	taskchannel.TaskMu.Lock()
+	_, exists := taskchannel.TaskWorkerChannel[p.GetRkey()]
+	taskchannel.TaskMu.Unlock()
 	if !exists {
 		return errors.New("invalid key")
 	}
-	task_chan := taskchannel.Task_worker_channel[p.GetRkey()]
+	taskchannel.TaskMu.Lock()
+	task_chan := taskchannel.TaskWorkerChannel[p.GetRkey()]
+	taskchannel.TaskMu.Unlock()
 	task_chan <- &send_packet
 	return nil
 }
