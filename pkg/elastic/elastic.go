@@ -105,6 +105,7 @@ func BulkIndexRequest(action []string, work []string) error {
 }
 
 func UpdateRequest(agent string, id string, time string, index string) error {
+	return nil
 	if !flagcheck() {
 		return nil
 	}
