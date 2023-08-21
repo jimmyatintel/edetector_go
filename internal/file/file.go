@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"edetector_go/pkg/logger"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -91,7 +92,7 @@ func TruncateFile(path string, realLen int) error {
 	}
 	fileLen := fileInfo.Size()
 	if int(fileLen) < realLen {
-		err = errors.New("incomplete data")
+		err = errors.New("incomplete data " + fmt.Sprint(fileLen))
 		return err
 	}
 	err = os.WriteFile(path, data[:realLen], 0644)

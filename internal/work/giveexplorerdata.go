@@ -62,7 +62,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	// update progress
-	progress, err := getProgressByMsg(p.GetMessage(), 50)
+	progress, err := getProgressByMsg(p.GetMessage(), 75)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -112,7 +112,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
+	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
 	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
@@ -121,7 +121,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// update progress
 	explorerCountMap[key] += 1
 	driveMu.Lock()
-	explorerProgressMap[key] = getProgressByCount(explorerCountMap[key], explorerTotalMap[key], 50)
+	explorerProgressMap[key] = getProgressByCount(explorerCountMap[key], explorerTotalMap[key], 25)
 	driveMu.Unlock()
 
 	var send_packet = packet.WorkPacket{

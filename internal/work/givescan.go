@@ -58,14 +58,15 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveScanProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), 50)
 	if err != nil {
 		return task.FAIL, err
 	}
 	scanMu.Lock()
-	scanProgressMap[p.GetRkey()] = progress
+	scanProgressMap[key] = progress
 	scanMu.Unlock()
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -183,8 +184,8 @@ func updateScanProgress(key string) {
 		rowsAffected := query.Update_progress(scanProgressMap[key], key, "StartScan")
 		scanMu.Unlock()
 		if rowsAffected != 0 {
+			logger.Info("update progress", zap.Any("message", scanProgressMap[key]))
 			go taskservice.RequestToUser(key)
 		}
 	}
 }
-                                                     

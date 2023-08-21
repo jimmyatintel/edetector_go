@@ -25,6 +25,7 @@ func init() {
 
 		// new scan
 		task.GIVE_SCAN_INFO:     GiveScanInfo,
+		task.GIVE_SCAN_PROGRESS: GiveScanProgress,
 		task.GIVE_SCAN_FRAGMENT: GiveScanFragment,
 		task.GIVE_SCAN:          GiveScan,
 		task.GIVE_SCAN_END:      GiveScanEnd,
