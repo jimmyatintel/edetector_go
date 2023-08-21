@@ -47,11 +47,20 @@ func RedisSet(key string, value interface{}) error {
 	return RedisClient.Set(context.Background(), key, value, 0).Err()
 }
 
-func RedisSetAdd(key string, value interface{}) error {
+func RedisSet_AddString(key string, value string) error {
 	if !checkflag() {
 		return nil
 	}
-	return RedisClient.Set(context.Background(), key, value, 0).Err()
+	newValue := RedisGetString(key) + value
+	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
+}
+
+func RedisSet_AddInteger(key string, value int) error {
+	if !checkflag() {
+		return nil
+	}
+	newValue := RedisGetInt(key) + value
+	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
 }
 
 func RedisGetString(key string) string {

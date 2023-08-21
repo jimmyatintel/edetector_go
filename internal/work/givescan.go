@@ -29,6 +29,7 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	redis.RedisSet(key+"-ScanTotal", p.GetMessage())
+	redis.RedisSet(key+"-ScanCount", "0")
 	redis.RedisSet(key+"-ScanProgress", "0")
 	redis.RedisSet(key+"-ScanMsg", "")
 	go updateScanProgress(key)
@@ -53,7 +54,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	redis.RedisSet(key+"-ScanProgress", strconv.Itoa(progress))
+	redis.RedisSet(key+"-ScanProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -70,7 +71,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveScanFragment: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	redis.RedisSet(key+"-ScanMsg", redis.RedisGetString(key+"-ScanMsg")+p.GetMessage())
+	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -87,10 +88,10 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveScan: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	scanMap[key] += p.GetMessage()
+	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
 	// send to elasticsearch
-	lines := strings.Split(scanMap[key], "\n")
-	scanMap[key] = ""
+	lines := strings.Split(redis.RedisGetString(key+"-ScanMsg"), "\n")
+	redis.RedisSet(key+"-ScanMsg", "")
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
@@ -129,7 +130,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 	}
 	// update progress
-	redis.RedisSet((key + "-ScanCount"), strconv.Itoa(redis.RedisGetInt(key+"-ScanCount")+1))
+	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
 	progress := int(50 + float64(redis.RedisGetInt(key+"-ScanCount"))/(float64(redis.RedisGetInt(key+"-ScanTotal"))*50))
 	redis.RedisSet(key+"-ScanProgress", progress)
 	var send_packet = packet.WorkPacket{
@@ -163,12 +164,10 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func updateScanProgress(key string) {
 	for {
-		scanMu.Lock()
 		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
 			break
 		}
 		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
-		scanMu.Unlock()
 		if rowsAffected != 0 {
 			logger.Info("update progress", zap.Any("message", redis.RedisGetInt(key+"-ScanProgress")))
 			go taskservice.RequestToUser(key)
