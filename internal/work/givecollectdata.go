@@ -10,24 +10,19 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"path/filepath"
 	"strconv"
-	"sync"
 
 	"net"
 
 	"go.uber.org/zap"
 )
 
-var collectMu *sync.Mutex
-var collectCountMap = make(map[string]int)
-var collectTotalMap = make(map[string]int)
-var collectProgressMap = make(map[string]int)
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
 
 func init() {
-	collectMu = &sync.Mutex{}
 	file.CheckDir(dbWorkingPath)
 	file.CheckDir(dbUstagePath)
 }
@@ -35,9 +30,7 @@ func init() {
 func GiveCollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	collectMu.Lock()
-	collectProgressMap[key] = 0
-	collectMu.Unlock()
+	redis.RedisSet(key+"-CollectProgress", 0)
 	go updateCollectProgress(key)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -53,16 +46,14 @@ func GiveCollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveCollectProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), 20)
 	if err != nil {
 		return task.FAIL, err
 	}
-	collectMu.Lock()
-	collectProgressMap[p.GetRkey()] = progress
-	collectMu.Unlock()
-
+	redis.RedisSet(key+"-CollectProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -77,15 +68,15 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveCollectDataInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// init collect info
-	len, err := strconv.Atoi(p.GetMessage())
+	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
-	collectCountMap[p.GetRkey()] = 0
-	collectTotalMap[p.GetRkey()] = len
-
+	redis.RedisSet(key+"-CollectTotal", total)
+	redis.RedisSet(key+"-CollectCount", 0)
 	// create or truncate the zip file
 	path := filepath.Join(dbWorkingPath, (p.GetRkey() + ".zip"))
 	err = file.CreateFile(path)
@@ -119,10 +110,9 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	// update progress
-	collectCountMap[key] += 1
-	collectMu.Lock()
-	collectProgressMap[key] = getProgressByCount(collectCountMap[key], collectTotalMap[key], 80)
-	collectMu.Unlock()
+	redis.RedisSet_AddInteger((key + "-CollectCount"), 1)
+	progress := getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 80)
+	redis.RedisSet(key+"-CollectProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -144,7 +134,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	workPath := filepath.Join(dbWorkingPath, key+".db")
 	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
 	// truncate data
-	err := file.TruncateFile(srcPath, collectTotalMap[key])
+	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-CollectTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -189,12 +179,10 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 
 func updateCollectProgress(key string) {
 	for {
-		collectMu.Lock()
-		if collectProgressMap[key] >= 100 {
+		if redis.RedisGetInt(key+"-CollectProgress") >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(collectProgressMap[key], key, "StartGetDrive")
-		collectMu.Unlock()
+		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartGetDrive")
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(key)
 		}

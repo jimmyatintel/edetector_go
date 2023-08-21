@@ -10,8 +10,8 @@ import (
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"strconv"
-	"sync"
 
 	"path/filepath"
 
@@ -21,16 +21,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var driveMu *sync.Mutex
-var explorerTotalMap = make(map[string]int)
-var explorerCountMap = make(map[string]int)
-var explorerProgressMap = make(map[string]int)
-var diskMap = make(map[string]string)
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
 
 func init() {
-	driveMu = &sync.Mutex{}
 	file.CheckDir(fileWorkingPath)
 	file.CheckDir(fileUnstagePath)
 }
@@ -39,9 +33,9 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	parts := strings.Split(p.GetMessage(), "|")
-	diskMap[key] = parts[0]
+	redis.RedisSet(key+"-Disk", parts[0])
 	// create or truncate the zip file
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "-" + parts[0] + ".zip"))
 	err := file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -60,16 +54,14 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerProgress: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveExplorerProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), 75)
 	if err != nil {
 		return task.FAIL, err
 	}
-	driveMu.Lock()
-	explorerProgressMap[p.GetRkey()] = progress
-	driveMu.Unlock()
-
+	redis.RedisSet(key+"-ExplorerProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -84,13 +76,14 @@ func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 }
 
 func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	key := p.GetRkey()
+	logger.Info("GiveExplorerInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
-	explorerCountMap[p.GetRkey()] = 0
-	explorerTotalMap[p.GetRkey()] = total
+	redis.RedisSet(key+"-ExplorerTotal", total)
+	redis.RedisSet(key+"-ExplorerCount", 0)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -112,17 +105,16 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
 	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
 	decrypt_buf = decrypt_buf[100:]
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "-" + redis.RedisGetString(key+"-Disk") + ".zip"))
 	err := file.WriteFile(path, decrypt_buf)
 	if err != nil {
 		return task.FAIL, err
 	}
 
 	// update progress
-	explorerCountMap[key] += 1
-	driveMu.Lock()
-	explorerProgressMap[key] = getProgressByCount(explorerCountMap[key], explorerTotalMap[key], 25)
-	driveMu.Unlock()
+	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
+	progress := getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 25)
+	redis.RedisSet(key+"-ExplorerProgress", progress)
 
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -141,12 +133,12 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 
-	filename := key + "-" + diskMap[key]
+	filename := key + "-" + redis.RedisGetString(key+"-Disk")
 	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
 	// truncate data
-	err := file.TruncateFile(srcPath, explorerTotalMap[key])
+	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ExplorerTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -191,9 +183,7 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 
 func updateDriveProgress(key string) {
 	for {
-		driveMu.Lock()
-		driveProgress := int((float64(driveCountMap[key])/float64(driveTotalMap[key]))*100 + float64(explorerProgressMap[key])/float64(driveTotalMap[key]))
-		driveMu.Unlock()
+		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
 		if driveProgress >= 100 {
 			break
 		}

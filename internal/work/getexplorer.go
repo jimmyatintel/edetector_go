@@ -6,23 +6,20 @@ import (
 	"edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/redis"
 	"strings"
 
 	"go.uber.org/zap"
 )
 
 var user_explorer = make(map[string]chan string)
-var driveTotalMap = make(map[string]int)
-var driveCountMap = make(map[string]int)
 
 func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")
-	driveMu.Lock()
-	explorerProgressMap[key] = 0
-	driveMu.Unlock()
+	redis.RedisSet(key+"-ExplorerProgress", 0)
 	go updateDriveProgress(key)
-	driveTotalMap[key] = len(drives) - 1
+	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
 	user_explorer[key] = make(chan string)
 	for ind, d := range drives {
 		parts := strings.Split(d, "-")
@@ -30,7 +27,7 @@ func HandleExpolorer(p packet.Packet) {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
 			msg := drive + "|" + driveInfo
-			driveCountMap[key] = ind
+			redis.RedisSet(key + "-DriveCount", ind)
 			var user_packet = packet.TaskPacket{
 				Key:     key,
 				Message: msg,
