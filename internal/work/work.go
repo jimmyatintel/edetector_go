@@ -20,8 +20,9 @@ func init() {
 		task.CHECK_CONNECT: CheckConnect,
 
 		// new detect
-		task.GIVE_DETECT_NETWORK: GiveDetectNetwork,
-		task.GIVE_DETECT_PROCESS: GiveDetectProcess,
+		task.GIVE_DETECT_NETWORK:      GiveDetectNetwork,
+		task.GIVE_DETECT_PROCESS_FRAG: GiveDetectProcessFrag,
+		task.GIVE_DETECT_PROCESS:      GiveDetectProcess,
 
 		// new scan
 		task.GIVE_SCAN_INFO:     GiveScanInfo,

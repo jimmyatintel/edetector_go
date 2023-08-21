@@ -10,6 +10,7 @@ import (
 	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/redis"
 	"fmt"
 	"net"
 	"strconv"
@@ -19,27 +20,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var detectMap = make(map[string](string))
-
-func GiveDetectProcessFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectProcessFirst: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	detectMap[p.GetRkey()] = p.GetMessage()
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func GiveDetectProcessFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectProcessFragment: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	detectMap[p.GetRkey()] += p.GetMessage()
+func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveDetectProcessFrag: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -56,14 +40,10 @@ func GiveDetectProcessFragment(p packet.Packet, conn net.Conn) (task.TaskResult,
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveDetectProcess: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	_, exists := detectMap[key]
-	if !exists {
-		detectMap[key] = ""
-	}
-	detectMap[key] += p.GetMessage()
+	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	// send to elasticsearch
-	lines := strings.Split(detectMap[key], "\n")
-	detectMap[key] = ""
+	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
+	redis.RedisSet(key+"-DetectMsg", "")
 	// send to elasticsearch
 	for _, line := range lines {
 		if len(line) == 0 {

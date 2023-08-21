@@ -24,13 +24,13 @@ import (
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	_, err := strconv.Atoi(p.GetMessage())
+	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
-	redis.RedisSet(key+"-ScanTotal", p.GetMessage())
-	redis.RedisSet(key+"-ScanCount", "0")
-	redis.RedisSet(key+"-ScanProgress", "0")
+	redis.RedisSet(key+"-ScanTotal", total)
+	redis.RedisSet(key+"-ScanCount", 0)
+	redis.RedisSet(key+"-ScanProgress", 0)
 	redis.RedisSet(key+"-ScanMsg", "")
 	go updateScanProgress(key)
 	var send_packet = packet.WorkPacket{
@@ -131,7 +131,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
-	progress := int(50 + float64(redis.RedisGetInt(key+"-ScanCount"))/(float64(redis.RedisGetInt(key+"-ScanTotal"))*50))
+	progress := int(50 + (float64(redis.RedisGetInt(key+"-ScanCount")) / (float64(redis.RedisGetInt(key+"-ScanTotal")) * 50)))
+	logger.Info("progress: ", zap.Any("message", progress))
 	redis.RedisSet(key+"-ScanProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

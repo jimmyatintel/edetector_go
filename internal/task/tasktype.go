@@ -17,9 +17,10 @@ const (
 	DATA_RIGHT    TaskType = "DataRight"
 
 	// new detect
-	UPDATE_DETECT_MODE  TaskType = "UpdateDetectMode"
-	GIVE_DETECT_NETWORK TaskType = "GiveDetectNetwork"
-	GIVE_DETECT_PROCESS TaskType = "GiveDetectProcess"
+	UPDATE_DETECT_MODE       TaskType = "UpdateDetectMode"
+	GIVE_DETECT_NETWORK      TaskType = "GiveDetectNetwork"
+	GIVE_DETECT_PROCESS_FRAG TaskType = "GiveDetectProcessFrag"
+	GIVE_DETECT_PROCESS      TaskType = "GiveDetectProcess"
 
 	// new scan
 	GET_SCAN           TaskType = "GetScan"
@@ -70,6 +71,7 @@ var Worklist = []TaskType{
 	DATA_RIGHT,
 	UPDATE_DETECT_MODE,
 	GIVE_DETECT_NETWORK,
+	GIVE_DETECT_PROCESS_FRAG,
 	GIVE_DETECT_PROCESS,
 	GET_SCAN,
 	GIVE_SCAN_INFO,

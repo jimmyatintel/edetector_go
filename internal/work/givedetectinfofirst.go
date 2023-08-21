@@ -6,14 +6,17 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"net"
 
 	"go.uber.org/zap"
 )
 
 func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
 	// front process back netowork
-	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	redis.RedisSet(key+"-DetectMsg", "")
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
