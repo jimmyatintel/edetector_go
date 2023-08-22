@@ -6,6 +6,7 @@ import (
 	"edetector_go/internal/fflag"
 	"edetector_go/internal/file"
 	"edetector_go/internal/taskservice"
+	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -90,7 +91,7 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-
+		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		err = file.MoveFile(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))

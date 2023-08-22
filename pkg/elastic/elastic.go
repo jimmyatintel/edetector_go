@@ -17,7 +17,10 @@ import (
 )
 
 var es *elasticsearch.Client
-var dbTables = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
+
+var diskIndex = []string{"explorer", "explorer_relation"}
+
+var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
 	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
 	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
 	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
@@ -221,56 +224,61 @@ func SearchRequest(index string, body string) string {
 	return docID
 }
 
-// func DeleteByQueryRequest(field string, value string) error {
-// 	deleteQuery := fmt.Sprintf(`
-// 	{
-// 		"query": {
-// 			"term": {
-// 				"%s": "%s"
-// 			}
-// 		}
-// 	}
-// 	`, field, value)
-// 	req := esapi.DeleteByQueryRequest{
-// 		Index: []string{"peggy_main", "peggy_process"},
-// 		Body:  strings.NewReader(deleteQuery),
-// 	}
-// 	res, err := req.Do(context.Background(), es)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer res.Body.Close()
+func DeleteByQueryRequest(field string, value string, ttype string) error {
+	deleteQuery := fmt.Sprintf(`
+	{
+		"query": {
+			"term": {
+				"%s": "%s"
+			}
+		}
+	}
+	`, field, value)
+	req := esapi.DeleteByQueryRequest{
+		Index: getIndexes(ttype),
+		Body:  strings.NewReader(deleteQuery),
+	}
+	res, err := req.Do(context.Background(), es)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 
-// 	if res.IsError() {
-// 		return 
-// 		fmt.Printf("Error response: %s\n", res.Status())
-// 	} else {
-// 		fmt.Println("Delete-by-query operation completed successfully")
+	if res.IsError() {
+		return errors.New("error response")
+	} else {
+		var responseJSON map[string]interface{}
+		err := json.NewDecoder(res.Body).Decode(&responseJSON)
+		if err != nil {
+			return err
+		}
+		logger.Info("Deleted repeated data:", zap.Any("message", responseJSON["deleted"]))
 
-// 		var responseJSON map[string]interface{}
-// 		err := json.NewDecoder(res.Body).Decode(&responseJSON)
-// 		if err != nil {
-// 			fmt.Println("Error decoding response JSON: ", err)
-// 			return
-// 		}
+		conflictCount := responseJSON["version_conflicts"].(float64)
+		if conflictCount != 0 {
+			logger.Error("Version conflict: ", zap.Any("message", conflictCount))
+		}
+		failures := responseJSON["failures"].([]interface{})
+		if len(failures) == 0 {
+			logger.Error("Failures: ", zap.Any("message", failures))
+		}
+	}
+	return nil
+}
 
-// 		deletedCount := responseJSON["deleted"]
-// 		fmt.Println("Deleted Count:", deletedCount)
-
-// 		conflictCount := responseJSON["version_conflicts"].(float64)
-// 		if conflictCount == 0 {
-// 			fmt.Println("no:", conflictCount)
-
-// 		} else {
-// 			fmt.Println("yes:", conflictCount)
-// 		}
-
-// 		failures := responseJSON["failures"].([]interface{})
-// 		if len(failures) == 0 {
-// 			fmt.Println("no:", failures)
-
-// 		} else {
-// 			fmt.Println("yes:", failures)
-// 		}
-// 	}
-// }
+func getIndexes(ttype string) []string {
+	prefix := config.Viper.GetString("ELASTIC_PREFIX")
+	indexes := []string{prefix + "_main"}
+	switch ttype {
+	case "StartGetDrive":
+		for _, ind := range diskIndex {
+			indexes = append(indexes, prefix+"_"+ind)
+		}
+	case "StartCollect":
+		for _, ind := range dbIndex {
+			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
+		}
+	}
+	logger.Info("indexes: ", zap.Any("message", indexes))
+	return indexes
+}
