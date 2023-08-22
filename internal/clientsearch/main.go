@@ -106,8 +106,6 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	TCP_CHANNEL := make(chan string)
 	TCP_DETECT_CHANNEL := make(chan string)
 	UDP_CHANNEL := make(chan string)
-	// Task_map_channel := make(map[string](chan string))
-	// TASK_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	go Conn_TCP_start(TCP_CHANNEL, wg)

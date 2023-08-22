@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -60,6 +61,7 @@ func Main() {
 		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
 		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
 		agent := strings.Split(path[len(path)-1], "-")[0]
+		time.Sleep(5 * time.Second) // wait for fully copy
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
 			logger.Error("Read file error", zap.Any("message", err.Error()))

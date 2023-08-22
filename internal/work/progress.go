@@ -23,6 +23,6 @@ func getProgressByMsg(msg string, max float64) (int, error) {
 	return int(math.Min((float64(numerator) / float64(denominator) * max), max)), nil
 }
 
-func getProgressByCount(numerator int, denominator int, max float64) int {
-	return int((100 - max) + float64(numerator)/(float64(denominator/65436))*max)
+func getProgressByCount(numerator int, denominator int, base int, max float64) int {
+	return int(math.Min((float64(numerator) / (float64(denominator / base)) * max), max))
 }

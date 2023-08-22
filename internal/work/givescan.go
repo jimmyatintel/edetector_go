@@ -20,6 +20,9 @@ import (
 	"go.uber.org/zap"
 )
 
+var scanFirstPart float64 = 50
+var scanSecondPart float64 = 100 - scanFirstPart
+
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
@@ -50,7 +53,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
-	progress, err := getProgressByMsg(p.GetMessage(), 50)
+	progress, err := getProgressByMsg(p.GetMessage(), scanFirstPart)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -131,8 +134,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
-	progress := int(50 + (float64(redis.RedisGetInt(key+"-ScanCount")) / (float64(redis.RedisGetInt(key+"-ScanTotal")) * 50)))
-	logger.Info("progress: ", zap.Any("message", progress))
+	progress := int(scanFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ScanCount"), redis.RedisGetInt(key+"-ScanTotal"), 1, scanSecondPart)
 	redis.RedisSet(key+"-ScanProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -170,7 +172,6 @@ func updateScanProgress(key string) {
 		}
 		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
 		if rowsAffected != 0 {
-			logger.Info("update progress", zap.Any("message", redis.RedisGetInt(key+"-ScanProgress")))
 			go taskservice.RequestToUser(key)
 		}
 	}

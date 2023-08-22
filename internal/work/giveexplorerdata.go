@@ -23,6 +23,8 @@ import (
 
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
+var explorerFirstPart float64 = 75
+var explorerSecondPart float64 = 100 - explorerFirstPart
 
 func init() {
 	file.CheckDir(fileWorkingPath)
@@ -57,7 +59,7 @@ func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	key := p.GetRkey()
 	logger.Info("GiveExplorerProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
-	progress, err := getProgressByMsg(p.GetMessage(), 75)
+	progress, err := getProgressByMsg(p.GetMessage(), explorerFirstPart)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -113,7 +115,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
-	progress := getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 25)
+	progress := int(explorerFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 65426, explorerSecondPart)
 	redis.RedisSet(key+"-ExplorerProgress", progress)
 
 	var send_packet = packet.WorkPacket{
@@ -162,7 +164,10 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	<-user_explorer[key]
+	ExplorerMu.Lock()
+	inject_chan := UserExplorerChannel[key]
+	ExplorerMu.Unlock()
+	<-inject_chan
 	return task.SUCCESS, nil
 }
 

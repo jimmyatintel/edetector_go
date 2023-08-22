@@ -21,6 +21,8 @@ import (
 
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
+var collectFirstPart float64 = 20
+var collectSecondPart float64 = 100 - collectFirstPart
 
 func init() {
 	file.CheckDir(dbWorkingPath)
@@ -49,7 +51,7 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	key := p.GetRkey()
 	logger.Info("GiveCollectProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
-	progress, err := getProgressByMsg(p.GetMessage(), 20)
+	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -111,7 +113,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-CollectCount"), 1)
-	progress := getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 80)
+	progress := int(collectFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 65436, collectSecondPart)
 	redis.RedisSet(key+"-CollectProgress", progress)
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
@@ -182,7 +184,7 @@ func updateCollectProgress(key string) {
 		if redis.RedisGetInt(key+"-CollectProgress") >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartGetDrive")
+		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")
 		if rowsAffected != 0 {
 			go taskservice.RequestToUser(key)
 		}

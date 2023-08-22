@@ -8,11 +8,17 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/redis"
 	"strings"
+	"sync"
 
 	"go.uber.org/zap"
 )
 
-var user_explorer = make(map[string]chan string)
+var ExplorerMu *sync.Mutex
+var UserExplorerChannel = make(map[string](chan string))
+
+func init() {
+	ExplorerMu = &sync.Mutex{}
+}
 
 func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
@@ -20,14 +26,17 @@ func HandleExpolorer(p packet.Packet) {
 	redis.RedisSet(key+"-ExplorerProgress", 0)
 	go updateDriveProgress(key)
 	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
-	user_explorer[key] = make(chan string)
+	tmp_chan := make(chan string)
+	ExplorerMu.Lock()
+	UserExplorerChannel[key] = tmp_chan
+	ExplorerMu.Unlock()
 	for ind, d := range drives {
 		parts := strings.Split(d, "-")
 		if len(parts) == 2 {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
 			msg := drive + "|" + driveInfo
-			redis.RedisSet(key + "-DriveCount", ind)
+			redis.RedisSet(key+"-DriveCount", ind)
 			var user_packet = packet.TaskPacket{
 				Key:     key,
 				Message: msg,
@@ -36,7 +45,10 @@ func HandleExpolorer(p packet.Packet) {
 			if err != nil {
 				logger.Error("Start get explorer failed:", zap.Any("error", err.Error()))
 			}
-			user_explorer[key] <- msg
+			ExplorerMu.Lock()
+			block_chan := UserExplorerChannel[key]
+			ExplorerMu.Unlock()
+			block_chan <- msg
 			logger.Info("Next round")
 		}
 	}
