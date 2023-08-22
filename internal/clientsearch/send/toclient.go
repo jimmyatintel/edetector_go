@@ -36,7 +36,7 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 		return errors.New("invalid key")
 	}
 	taskchannel.TaskMu.Lock()
-	task_chan := taskchannel.TaskWorkerChannel[p.GetRkey()]
+	task_chan := *taskchannel.TaskWorkerChannel[p.GetRkey()]
 	taskchannel.TaskMu.Unlock()
 	task_chan <- &send_packet
 	return nil

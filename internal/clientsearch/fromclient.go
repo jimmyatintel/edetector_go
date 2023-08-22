@@ -80,7 +80,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				key = NewPacket.GetRkey()
 				Clientlist = append(Clientlist, key)
 				taskchannel.TaskMu.Lock()
-				taskchannel.TaskWorkerChannel[NewPacket.GetRkey()] = task_chan
+				taskchannel.TaskWorkerChannel[NewPacket.GetRkey()] = &task_chan
 				taskchannel.TaskMu.Unlock()
 				logger.Info("set worker key-channel mapping: ", zap.Any("message", NewPacket.GetRkey()))
 			} else if key != "null" {

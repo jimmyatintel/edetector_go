@@ -165,7 +165,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	ExplorerMu.Lock()
-	inject_chan := UserExplorerChannel[key]
+	inject_chan := *UserExplorerChannel[key]
 	ExplorerMu.Unlock()
 	<-inject_chan
 	return task.SUCCESS, nil

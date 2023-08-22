@@ -57,7 +57,7 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	taskchannel.TaskWorkerChannel = make(map[string](chan packet.Packet))
+	taskchannel.TaskWorkerChannel = make(map[string](*chan packet.Packet))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()

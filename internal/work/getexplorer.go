@@ -14,7 +14,7 @@ import (
 )
 
 var ExplorerMu *sync.Mutex
-var UserExplorerChannel = make(map[string](chan string))
+var UserExplorerChannel = make(map[string](*chan string))
 
 func init() {
 	ExplorerMu = &sync.Mutex{}
@@ -28,7 +28,7 @@ func HandleExpolorer(p packet.Packet) {
 	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
 	tmp_chan := make(chan string)
 	ExplorerMu.Lock()
-	UserExplorerChannel[key] = tmp_chan
+	UserExplorerChannel[key] = &tmp_chan
 	ExplorerMu.Unlock()
 	for ind, d := range drives {
 		parts := strings.Split(d, "-")
@@ -46,7 +46,7 @@ func HandleExpolorer(p packet.Packet) {
 				logger.Error("Start get explorer failed:", zap.Any("error", err.Error()))
 			}
 			ExplorerMu.Lock()
-			block_chan := UserExplorerChannel[key]
+			block_chan := *UserExplorerChannel[key]
 			ExplorerMu.Unlock()
 			block_chan <- msg
 			logger.Info("Next round")

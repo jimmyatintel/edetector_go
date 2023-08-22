@@ -6,7 +6,7 @@ import (
 )
 
 var TaskMu *sync.Mutex
-var TaskWorkerChannel map[string](chan packet.Packet)
+var TaskWorkerChannel map[string](*chan packet.Packet)
 
 func init() {
 	TaskMu = &sync.Mutex{}
