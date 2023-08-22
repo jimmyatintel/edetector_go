@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
@@ -56,6 +57,7 @@ func Main() {
 		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
 		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 		agent := path[len(path)-1]
+		time.Sleep(5 * time.Second) // wait for fully copy
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
@@ -88,6 +90,7 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
+
 		err = file.MoveFile(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))

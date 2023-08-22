@@ -1,6 +1,7 @@
 package work
 
 import (
+	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
@@ -8,16 +9,11 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/redis"
 	"strings"
-	"sync"
 
 	"go.uber.org/zap"
 )
 
-var ExplorerMu *sync.Mutex
-var UserExplorerChannel = make(map[string](*chan string))
-
 func init() {
-	ExplorerMu = &sync.Mutex{}
 }
 
 func HandleExpolorer(p packet.Packet) {
@@ -27,9 +23,7 @@ func HandleExpolorer(p packet.Packet) {
 	go updateDriveProgress(key)
 	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
 	tmp_chan := make(chan string)
-	ExplorerMu.Lock()
-	UserExplorerChannel[key] = &tmp_chan
-	ExplorerMu.Unlock()
+	channelmap.AssignDiskChannel(key, &tmp_chan)
 	for ind, d := range drives {
 		parts := strings.Split(d, "-")
 		if len(parts) == 2 {
@@ -45,9 +39,11 @@ func HandleExpolorer(p packet.Packet) {
 			if err != nil {
 				logger.Error("Start get explorer failed:", zap.Any("error", err.Error()))
 			}
-			ExplorerMu.Lock()
-			block_chan := *UserExplorerChannel[key]
-			ExplorerMu.Unlock()
+			block_chan, err := channelmap.GetDiskChannel(key)
+			if err != nil {
+				logger.Error("Get disk channel failed:", zap.Any("error", err.Error()))
+				continue
+			}
 			block_chan <- msg
 			logger.Info("Next round")
 		}

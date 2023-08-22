@@ -3,9 +3,9 @@ package clientsearch
 import (
 	"context"
 	config "edetector_go/config"
+	channelmap "edetector_go/internal/channelmap"
 	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
-	taskchannel "edetector_go/internal/taskchannel"
 	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
 
@@ -57,14 +57,15 @@ func Connect_init() int {
 	return 0
 }
 func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
-	taskchannel.TaskWorkerChannel = make(map[string](*chan packet.Packet))
+	channelmap.TaskWorkerChannel = make(map[string](*chan packet.Packet))
 	if Client_TCP_Server != nil {
 		for {
 			conn, err := Client_TCP_Server.Accept()
 			if err != nil {
-				// fmt.Println("Error accepting: ", err.Error())
+				logger.Error("Error accepting:", zap.Any("error", err.Error()))
 				c <- err.Error()
 			}
+			logger.Info("worker port accepted")
 			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
@@ -76,10 +77,10 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
 			if err != nil {
-				// fmt.Println("Error accepting: ", err.Error())
+				logger.Error("Error accepting:", zap.Any("error", err.Error()))
 				c <- err.Error()
 			}
-			// fmt.Println("new conn")
+			logger.Info("detect port accepted")
 			go handleTCPRequest(conn, nil, "detect")
 		}
 	}

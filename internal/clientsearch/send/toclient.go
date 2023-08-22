@@ -3,10 +3,9 @@ package clientsearchsend
 import (
 	// "context"
 	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/channelmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	"edetector_go/internal/taskchannel"
-	"errors"
 
 	"net"
 )
@@ -29,15 +28,10 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 		Work:       workType,
 		Message:    msg,
 	}
-	taskchannel.TaskMu.Lock()
-	_, exists := taskchannel.TaskWorkerChannel[p.GetRkey()]
-	taskchannel.TaskMu.Unlock()
-	if !exists {
-		return errors.New("invalid key")
+	task_chan, err := channelmap.GetTaskChannel(p.GetRkey())
+	if err != nil {
+		return err
 	}
-	taskchannel.TaskMu.Lock()
-	task_chan := *taskchannel.TaskWorkerChannel[p.GetRkey()]
-	taskchannel.TaskMu.Unlock()
 	task_chan <- &send_packet
 	return nil
 }

@@ -17,6 +17,12 @@ import (
 )
 
 var es *elasticsearch.Client
+var dbTables = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
+	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
+	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
+	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
+	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
+	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity"}
 
 func flagcheck() bool {
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
@@ -214,3 +220,57 @@ func SearchRequest(index string, body string) string {
 	}
 	return docID
 }
+
+// func DeleteByQueryRequest(field string, value string) error {
+// 	deleteQuery := fmt.Sprintf(`
+// 	{
+// 		"query": {
+// 			"term": {
+// 				"%s": "%s"
+// 			}
+// 		}
+// 	}
+// 	`, field, value)
+// 	req := esapi.DeleteByQueryRequest{
+// 		Index: []string{"peggy_main", "peggy_process"},
+// 		Body:  strings.NewReader(deleteQuery),
+// 	}
+// 	res, err := req.Do(context.Background(), es)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer res.Body.Close()
+
+// 	if res.IsError() {
+// 		return 
+// 		fmt.Printf("Error response: %s\n", res.Status())
+// 	} else {
+// 		fmt.Println("Delete-by-query operation completed successfully")
+
+// 		var responseJSON map[string]interface{}
+// 		err := json.NewDecoder(res.Body).Decode(&responseJSON)
+// 		if err != nil {
+// 			fmt.Println("Error decoding response JSON: ", err)
+// 			return
+// 		}
+
+// 		deletedCount := responseJSON["deleted"]
+// 		fmt.Println("Deleted Count:", deletedCount)
+
+// 		conflictCount := responseJSON["version_conflicts"].(float64)
+// 		if conflictCount == 0 {
+// 			fmt.Println("no:", conflictCount)
+
+// 		} else {
+// 			fmt.Println("yes:", conflictCount)
+// 		}
+
+// 		failures := responseJSON["failures"].([]interface{})
+// 		if len(failures) == 0 {
+// 			fmt.Println("no:", failures)
+
+// 		} else {
+// 			fmt.Println("yes:", failures)
+// 		}
+// 	}
+// }

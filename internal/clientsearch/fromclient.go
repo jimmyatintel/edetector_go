@@ -8,9 +8,9 @@ import (
 
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
-	taskchannel "edetector_go/internal/taskchannel"
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
+	channelmap "edetector_go/internal/channelmap"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"net"
@@ -40,6 +40,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}()
 	}
 	for {
+		logger.Info("reading buffer")
 		reqLen, err := conn.Read(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
@@ -49,16 +50,16 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 						logger.Error("Update offline error:", zap.Any("error", err.Error()))
 					}
 				}
-				logger.Debug(string(key) + " " + string(port) + " Connection close")
+				logger.Info(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
 				logger.Error("Error reading:", zap.Any("error", string(key)+err.Error()))
 				return
 			}
 		}
+		logger.Info("Receive length:", zap.Any("message", reqLen))
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
-		// fmt.Println("len: ", reqLen)
 		// fmt.Println("decrypt buf: ", string(decrypt_buf))
 		if reqLen == 1024 {
 			rabbitmq.Declare("clientsearch")
@@ -79,9 +80,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				// wait for key to join the packet
 				key = NewPacket.GetRkey()
 				Clientlist = append(Clientlist, key)
-				taskchannel.TaskMu.Lock()
-				taskchannel.TaskWorkerChannel[NewPacket.GetRkey()] = &task_chan
-				taskchannel.TaskMu.Unlock()
+				channelmap.AssignTaskChannel(key, &task_chan)
 				logger.Info("set worker key-channel mapping: ", zap.Any("message", NewPacket.GetRkey()))
 			} else if key != "null" {
 				err = redis.Online(key)

@@ -3,6 +3,7 @@ package work
 import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
@@ -164,9 +165,10 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	ExplorerMu.Lock()
-	inject_chan := *UserExplorerChannel[key]
-	ExplorerMu.Unlock()
+	inject_chan, err := channelmap.GetDiskChannel(key)
+	if err != nil {
+		return task.FAIL, err
+	}
 	<-inject_chan
 	return task.SUCCESS, nil
 }
