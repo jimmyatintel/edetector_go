@@ -5,6 +5,18 @@ import (
 	"edetector_go/pkg/mariadb"
 )
 
+func GetMachineIPandName(KeyNum string) (string, string) {
+	agentIP := GetMachineIP(KeyNum)
+	if agentIP == "" {
+		logger.Error("Error getting machine ip")
+	}
+	agentName := GetMachineName(KeyNum)
+	if agentName == "" {
+		logger.Error("Error getting machine name")
+	}
+	return agentIP, agentName
+}
+
 func GetMachineIP(KeyNum string) (ip string) {
 	res, err := mariadb.DB.Query("SELECT ip FROM client WHERE client_id = ?", KeyNum)
 	if err != nil {

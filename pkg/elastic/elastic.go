@@ -280,6 +280,5 @@ func getIndexes(ttype string) []string {
 			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
 		}
 	}
-	logger.Info("indexes: ", zap.Any("message", indexes))
 	return indexes
 }

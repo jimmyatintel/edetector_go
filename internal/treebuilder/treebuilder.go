@@ -58,10 +58,8 @@ func init() {
 
 func Main() {
 	for {
-		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
-		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
-		agent := strings.Split(path[len(path)-1], "-")[0]
-		time.Sleep(5 * time.Second) // wait for fully copy
+		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
+		time.Sleep(3 * time.Second) // wait for fully copy
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
 			logger.Error("Read file error", zap.Any("message", err.Error()))
@@ -102,37 +100,37 @@ func Main() {
 		treeTraversal(agent, rootInd, true, "")
 		logger.Info("tree traversal & send to elastic (relation)")
 		// send to elastic (main & details)
-		for _, line := range lines {
-			if len(line) == 0 {
-				continue
-			}
-			original := strings.Split(line, "|")
-			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
-			values := strings.Split(line, "@|@")
-			c_time, err := strconv.Atoi(original[5])
+		// for _, line := range lines {
+			// if len(line) == 0 {
+				// continue
+			// }
+			// original := strings.Split(line, "|")
+			// line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
+			// values := strings.Split(line, "@|@")
+			// c_time, err := strconv.Atoi(original[5])
 
-			if err != nil {
-				logger.Error("error converting time")
-			}
-			_, child, err := getRelation(original)
-			if err != nil {
-				logger.Error("error getting relation: ", zap.Any("message", err))
-				continue
-			}
+			// if err != nil {
+			// 	logger.Error("error converting time")
+			// }
+			// _, child, err := getRelation(original)
+			// if err != nil {
+			// 	logger.Error("error getting relation: ", zap.Any("message", err))
+			// 	continue
+			// }
 			// err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", RelationMap[agent][child].Path, "ed_low")
 			// if err != nil {
 			// 	logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 			// 	continue
 			// }
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", RelationMap[agent][child].Path)
-			if err != nil {
-				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-				continue
-			}
-		}
+			// err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", RelationMap[agent][child].Path)
+			// if err != nil {
+			// 	logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			// 	continue
+			// }
+		// }
 		logger.Info("send to elastic (main & details)")
 		// clear
-		UUIDMap = nil
+		UUIDMap = make(map[string]int)
 		RelationMap[agent] = nil
 		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
 		err = file.MoveFile(explorerFile, dstPath)
