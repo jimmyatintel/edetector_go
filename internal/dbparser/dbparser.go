@@ -58,6 +58,7 @@ func Main() {
 		dbFile := file.GetOldestFile(dbUnstagePath, ".db")
 		path := strings.Split(strings.Split(dbFile, ".db")[0], "/")
 		agent := path[len(path)-1]
+		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		time.Sleep(5 * time.Second) // wait for fully copy
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
@@ -91,7 +92,6 @@ func Main() {
 			rows.Close()
 		}
 		db.Close()
-		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		err = file.MoveFile(filepath.Join(dbFile), filepath.Join(dbStagedPath, agent+".db"))
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))

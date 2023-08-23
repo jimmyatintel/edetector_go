@@ -51,7 +51,7 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveScanProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveScanProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), scanFirstPart)
 	if err != nil {

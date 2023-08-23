@@ -259,7 +259,7 @@ func DeleteByQueryRequest(field string, value string, ttype string) error {
 			logger.Error("Version conflict: ", zap.Any("message", conflictCount))
 		}
 		failures := responseJSON["failures"].([]interface{})
-		if len(failures) == 0 {
+		if len(failures) != 0 {
 			logger.Error("Failures: ", zap.Any("message", failures))
 		}
 	}

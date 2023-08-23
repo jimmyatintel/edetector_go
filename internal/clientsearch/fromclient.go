@@ -40,7 +40,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}()
 	}
 	for {
-		logger.Info("reading buffer")
 		reqLen, err := conn.Read(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
@@ -57,7 +56,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				return
 			}
 		}
-		logger.Info("Receive length:", zap.Any("message", reqLen))
 		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
 		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
 		// fmt.Println("decrypt buf: ", string(decrypt_buf))

@@ -58,7 +58,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveExplorerProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), explorerFirstPart)
 	if err != nil {
@@ -102,7 +102,7 @@ func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// write file
 	dp := packet.CheckIsData(p)
 	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
