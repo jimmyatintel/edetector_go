@@ -14,7 +14,6 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -142,16 +141,13 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 		for i, val := range colValues {
 			switch v := (*val.(*interface{})).(type) {
 			case []byte:
-				logger.Info("byte type")
 				values[i] = string(v)
 			default:
 				values[i] = fmt.Sprintf("%v", v)
 			}
-			if values[i] == "" || values[i] == "<nil>" {
-				logger.Info("empty", zap.Any("message", tableName+" "+strconv.Itoa(i)+" "+values[i]))
+			if values[i] == "" || values[i] == " " || values[i] == "<nil>" {
 				values[i] = "0"
 			}
-			logger.Info("data", zap.Any("message", tableName+" "+strconv.Itoa(i)+" "+values[i]))
 		}
 		var err error
 		index := config.Viper.GetString("ELASTIC_PREFIX") + "_" + strings.ToLower(tableName) //! developing
@@ -165,6 +161,7 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 		case "ChromeBookmarks":
 			err = toElastic(index, agent, values, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
 		case "ChromeCache":
+			RFCToTimestamp(&values)
 			err = toElastic(index, agent, values, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
 		case "ChromeDownload":
 			err = toElastic(index, agent, values, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
@@ -179,6 +176,7 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 		case "EdgeBookmarks":
 			err = toElastic(index, agent, values, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
 		case "EdgeCache":
+			RFCToTimestamp(&values)
 			err = toElastic(index, agent, values, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
 		case "EdgeCookies":
 			err = toElastic(index, agent, values, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
@@ -203,6 +201,7 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 		case "IEHistory":
 			err = toElastic(index, agent, values, values[0], values[4], "website_bookmark", values[1], &IEHistory{})
 		case "InstalledSoftware":
+			DigitToTimestamp(&values)
 			err = toElastic(index, agent, values, values[0], values[17], "network_record", values[6], &InstalledSoftware{})
 		case "JumpList":
 			err = toElastic(index, agent, values, values[0], values[5], "software", values[1], &JumpList{})
@@ -250,17 +249,11 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 func toElastic(index string, agent string, values []string, item string, date string, ttype string, etc string, st elasticquery.Request_data) error {
 	ip, name := query.GetMachineIPandName(agent)
 	uuid := uuid.NewString()
-	int_date, err := strconv.Atoi(date)
-	if err != nil {
-		logger.Error("Invalid date: ", zap.Any("message", date))
-		int_date = 0
-		date = "0"
-	}
-	err = elasticquery.SendToMainElastic(index, uuid, agent, ip, name, item, int_date, ttype, etc, "ed_high")
+	err := elasticquery.SendToMainElastic(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_high")
+	err = elasticquery.SendToDetailsElastic(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}

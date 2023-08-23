@@ -3,13 +3,21 @@ package elasticquery
 import (
 	"edetector_go/config"
 	"edetector_go/internal/rbconnector"
+	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"reflect"
 	"strconv"
+
+	"go.uber.org/zap"
 )
 
-func SendToMainElastic(index string, uuid string, agentID string, ip string, name string, item string, date int, ttype string, etc string, priority string) error {
+func SendToMainElastic(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
+	date_int, err := strconv.Atoi(date)
+	if err != nil {
+		logger.Error("error converting time", zap.Any("error", err.Error()))
+		date_int = 0
+	}
 	template := mainSource{
 		UUID:      uuid,
 		Index:     index,
@@ -17,7 +25,7 @@ func SendToMainElastic(index string, uuid string, agentID string, ip string, nam
 		AgentIP:   ip,
 		AgentName: name,
 		ItemMain:  item,
-		DateMain:  date,
+		DateMain:  date_int,
 		TypeMain:  ttype,
 		EtcMain:   etc,
 	}
