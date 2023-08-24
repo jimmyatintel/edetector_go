@@ -26,13 +26,13 @@ func server_init() {
 		logger.Error("Error loading feature flag")
 		return
 	}
-	vp := config.LoadConfig()
+	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file")
+		logger.Error("Error loading config file", zap.Any("error", err.Error()))
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"))
+		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("WORKER_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {

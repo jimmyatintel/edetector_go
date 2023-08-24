@@ -1,27 +1,60 @@
 package logger
 
 import (
+	"edetector_go/config"
+	"fmt"
 	"os"
 	"path"
 	"runtime"
 
+	zapsyslog "github.com/imperfectgo/zap-syslog"
+	"github.com/imperfectgo/zap-syslog/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var Log *zap.Logger
 
-func InitLogger(path string) {
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoder := zapcore.NewJSONEncoder(encoderConfig)
-
-	file, _ := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 644)
+func InitLogger(path string, hostname string, app string) {
+	// file logger
+	file, _ := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	fileWriteSyncer := zapcore.AddSync(file)
-
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+	// console logger
+	stdout := zapcore.AddSync(os.Stdout)
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	// system logger
+	syslogCfg := zapsyslog.SyslogEncoderConfig{
+		EncoderConfig: zapcore.EncoderConfig{
+			NameKey:        "logger",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			StacktraceKey:  "stacktrace",
+			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+			EncodeTime:     zapcore.EpochTimeEncoder,
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+		},
+		Facility: syslog.LOG_LOCAL0,
+		Hostname: hostname,
+		PID:      os.Getpid(),
+		App:      app,
+	}
+	syslogEncoder := zapsyslog.NewSyslogEncoder(syslogCfg)
+	graylogPath := fmt.Sprintf("%s:%s", config.Viper.GetString("GRAYLOG_HOST"), config.Viper.GetString("GRAYLOG_SYSLOG_PORT"))
+	sync, err := zapsyslog.NewConnSyncer("tcp", graylogPath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	// set core
 	core := zapcore.NewTee(
-		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapcore.InfoLevel), // you can change the output level here
-		zapcore.NewCore(encoder, fileWriteSyncer, zapcore.DebugLevel),
+		zapcore.NewCore(consoleEncoder, stdout, zapcore.DebugLevel),
+		zapcore.NewCore(fileEncoder, fileWriteSyncer, zapcore.DebugLevel),
+		zapcore.NewCore(syslogEncoder, zapcore.Lock(sync), zapcore.DebugLevel),
 	)
 	Log = zap.New(core)
 }
