@@ -33,13 +33,16 @@
 
 |      Direction 	| TaskName              	| Format 	| Msg e.g. 	| Note 	|
 |---------------	|-----------------------	|--------	|----------	|------	|
-| Agent → Server 	| GiveDetectNetwork     	| <details><summary>MemoryNetworkDetect</summary> ProcessId int<br>Address string<br>Timestamp int<br>ProcessCreateTime int<br>ConnectionINorOUT bool <br>AgentPort int </details> |<details><summary>MemoryNetworkDetect</summary> 104984\|13.107.42.16:443\|1690922105\|1690080351\|0\|52365| |
+| Agent → Server 	| GiveDetectNetwork     	|  \{MemoryNetworkDetect\} struct |<details><summary>MemoryNetworkDetect</summary> 104984\|13.107.42.16:443\|1690922105\|1690080351\|0\|52365| |
 | Server → Agent 	| DataRight             	|        	|          	|      	|
 | Agent → Server 	| GiveDetectProcessFrag 	|   \(detect data fragment\)     	|          	|   Split into multiple fragments if it's too long   	|
 | Server → Agent 	| DataRight             	|        	|          	|      	|
-| Agent → Server 	| GiveDetectProcess     	|    <details><summary>Memory</summary> ProcessName string<br>ProcessCreateTime int<br>DynamicCommand string<br>ProcessMD5 string<br>ProcessPath string <br>ParentProcessId int <br>ParentProcessName string<br>ParentProcessPath string<br>DigitalSign string<br>ProcessId int<br>InjectActive string<br>ProcessBeInjected int<br>Boot string<br>Hide string<br>ImportOtherDLL string<br>Hook string <br>ProcessConnectIP string<br>RiskLevel int<br>Mode string    	|<details><summary>Memory</summary> 	|   Single or the last one   	|
+| Agent → Server 	| GiveDetectProcess     	| \{Memory struct\}	|<details><summary>Memory</summary> 	|   Single or the last one   	|
 | Server → Agent 	| DataRight             	|        	|          	|      	|
 | Server → Agent 	| DataRight             	|        	|          	|      	|
+
+<details><summary>MemoryNetworkDetect</summary> ProcessId int<br>Address string<br>Timestamp int<br>ProcessCreateTime int<br>ConnectionINorOUT bool <br>AgentPort int </details>
+<details><summary>Memory</summary> ProcessName string<br>ProcessCreateTime int<br>DynamicCommand string<br>ProcessMD5 string<br>ProcessPath string <br>ParentProcessId int <br>ParentProcessName string<br>ParentProcessPath string<br>DigitalSign string<br>ProcessId int<br>InjectActive string<br>ProcessBeInjected int<br>Boot string<br>Hide string<br>ImportOtherDLL string<br>Hook string <br>ProcessConnectIP string<br>RiskLevel int<br>Mode string
 
 </details>
 
