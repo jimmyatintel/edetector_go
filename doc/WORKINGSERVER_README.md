@@ -4,20 +4,6 @@
 <details>
 <summary>Handshake</summary>
 
-<style>
-    .task {
-        width: 80%;
-    }
-    .task th {
-        word-wrap: break-word;
-    }
-    .task tr:nth-child(even) {
-        background-color: gray;
-    }
-</style>
-
-<div class="task">
-
 | Direction      | TaskName            | Format           | Msg e\.g\. | Note |
 |----------------|---------------------|------------------|------------|------|
 | Agent → Server | GiveInfo            | \(Agent info\)   |            |      |
@@ -26,9 +12,6 @@
 | Server → Agent | UpdateDetectMode    | process\|network | 0\|0       |      |
 | Agent → Server | GiveDetectInfo      | process\|network | 0\|0       |      |
 | Server → Agent | CheckConnect        | \(Heartbeat\)    |            |      |
-
-
-</div>
 
 </details>
 
