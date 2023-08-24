@@ -3,10 +3,6 @@ package memory
 import "encoding/json"
 
 type Memory struct {
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	DynamicCommand    string `json:"dynamicCommand"`
@@ -26,6 +22,10 @@ type Memory struct {
 	ProcessConnectIP  string `json:"processConnectIP"`
 	RiskLevel         int    `json:"riskLevel"`
 	Mode              string `json:"mode"`
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
 	ItemMain          string `json:"item_main"`
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`
@@ -37,16 +37,16 @@ func (n Memory) Elastical() ([]byte, error) {
 }
 
 type MemoryNetworkDetect struct {
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
 	Address           string `json:"address"`
 	Timestamp         int    `json:"timestamp"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	ConnectionINorOUT bool   `json:"connectionInOrOut"`
 	AgentPort         int    `json:"agentPort"`
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
 	ItemMain          string `json:"item_main"`
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`
@@ -58,16 +58,16 @@ func (n MemoryNetworkDetect) Elastical() ([]byte, error) {
 }
 
 type MemoryNetworkScan struct {
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
 	ProcessId         int    `json:"processId"`
 	ProcessCreateTime int    `json:"processCreateTime"`
 	SrcAddress        string `json:"srcAddress"`
 	DstAddress        string `json:"dstAddress"`
 	Action            string `json:"action"`
 	Timestamp         int    `json:"timestamp"`
+	UUID              string `json:"uuid"`
+	Agent             string `json:"agent"`
+	AgentIP           string `json:"agentIP"`
+	AgentName         string `json:"agentName"`
 	ItemMain          string `json:"item_main"`
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`

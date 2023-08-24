@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -24,7 +25,7 @@ func CheckDir(path string) {
 	}
 }
 
-func GetOldestFile(dir string, extension string) string {
+func GetOldestFile(dir string, extension string) (string, string) {
 	for {
 		var oldestFile string
 		var oldestTime time.Time
@@ -51,7 +52,9 @@ func GetOldestFile(dir string, extension string) string {
 			time.Sleep(30 * time.Second)
 			continue
 		}
-		return oldestFile
+		element := strings.Split(strings.Split(oldestFile, extension)[0], "/")
+		agent := strings.Split(element[len(element)-1], "-")[0]
+		return oldestFile, agent
 	}
 }
 

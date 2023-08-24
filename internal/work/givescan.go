@@ -90,6 +90,7 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
+	ip, name := query.GetMachineIPandName(key)
 	logger.Debug("GiveScan: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
 	// send to elasticsearch
@@ -99,35 +100,28 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		if len(line) == 0 {
 			continue
 		}
-		line = strings.ReplaceAll(line, "|", "@|@")
-		values := strings.Split(line, "@|@")
-		int_date, err := strconv.Atoi(values[1])
-		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", values[1]))
-			int_date = 0
-		}
-		network := "true"
+		values := strings.Split(line, "|")
 		if values[16] == "null" {
-			network = "false"
+			values[16] = "false"
+		} else {
+			values[16] = "true"
 		}
-		lastElement := strings.LastIndex(line, "@|@")
-		line = line[:lastElement] + "@|@" + network + "@|@riskLevel@|@scan"
+		values = append(values, "risklevel", "scan")
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
-		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp, "0", 0, "0", "0")
+		_, err := elasticquery.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
-		m_tmp.RiskLevel, err = risklevel.Getriskscore(m_tmp)
+		values[17], err = risklevel.Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
-		line = strings.ReplaceAll(line, "riskLevel", strconv.Itoa(m_tmp.RiskLevel))
-		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
+		err = elasticquery.SendToMainElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_mid", values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel))
+		err = elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

@@ -7,6 +7,7 @@ import (
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"os"
 	"strconv"
@@ -58,10 +59,9 @@ func init() {
 
 func Main() {
 	for {
-		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
-		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
-		agent := strings.Split(path[len(path)-1], "-")[0]
-		time.Sleep(5 * time.Second) // wait for fully copy
+		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
+		ip, name := query.GetMachineIPandName(agent)
+		time.Sleep(3 * time.Second) // wait for fully copy
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
 			logger.Error("Read file error", zap.Any("message", err.Error()))
@@ -76,8 +76,8 @@ func Main() {
 			if len(line) == 0 {
 				continue
 			}
-			original := strings.Split(line, "|")
-			parent, child, err := getRelation(original)
+			values := strings.Split(line, "|")
+			parent, child, err := getRelation(values)
 			if err != nil {
 				logger.Error("error getting relation: ", zap.Any("message", err))
 				continue
@@ -86,7 +86,7 @@ func Main() {
 			generateUUID(agent, child)
 			// record name
 			tmp := RelationMap[agent][child]
-			tmp.Name = original[1]
+			tmp.Name = values[1]
 			RelationMap[agent][child] = tmp
 			// record relation
 			if parent == child {
@@ -106,33 +106,28 @@ func Main() {
 			if len(line) == 0 {
 				continue
 			}
-			original := strings.Split(line, "|")
-			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + original[5] + "@|@" + original[6] + "@|@" + original[7] + "@|@" + original[8] + "@|@" + original[9]
-			values := strings.Split(line, "@|@")
-			c_time, err := strconv.Atoi(original[5])
-
+			values := strings.Split(line, "|")
+			child, err := strconv.Atoi(values[8])
 			if err != nil {
-				logger.Error("error converting time")
-			}
-			_, child, err := getRelation(original)
-			if err != nil {
-				logger.Error("error getting relation: ", zap.Any("message", err))
+				logger.Error("error getting child: ", zap.Any("message", err))
 				continue
 			}
-			// err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", RelationMap[agent][child].Path, "ed_low")
-			// if err != nil {
-			// 	logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
-			// 	continue
-			// }
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", RelationMap[agent][child].Path)
+			values = values[:len(values)-2]
+			// err = elasticquery.SendToMainElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
+			if err != nil {
+				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+				continue
+			}
+			err = elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
+			time.Sleep(1 * time.Microsecond)
 		}
 		logger.Info("send to elastic (main & details)")
 		// clear
-		UUIDMap = nil
+		UUIDMap = make(map[string]int)
 		RelationMap[agent] = nil
 		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
 		err = file.MoveFile(explorerFile, dstPath)
@@ -143,12 +138,13 @@ func Main() {
 	}
 }
 
-func getRelation(original []string) (int, int, error) {
-	parent, err := strconv.Atoi(original[2])
+func getRelation(values []string) (int, int, error) {
+	values[9] = strings.TrimSpace(values[9])
+	parent, err := strconv.Atoi(values[9])
 	if err != nil {
 		return -1, -1, err
 	}
-	child, err := strconv.Atoi(original[0])
+	child, err := strconv.Atoi(values[8])
 	if err != nil {
 		return -1, -1, err
 	}

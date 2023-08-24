@@ -8,6 +8,7 @@ import (
 	task "edetector_go/internal/task"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"net"
 	"strings"
 
@@ -32,18 +33,18 @@ func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 }
 
 func detectNetworkElastic(p packet.Packet) {
+	ip, name := query.GetMachineIPandName(p.GetRkey())
 	networkSet := make(map[string]struct{})
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
 		}
-		line = strings.ReplaceAll(line, "|", "@|@")
 		uuid := uuid.NewString()
-		values := strings.Split(line, "@|@")
+		values := strings.Split(line, "|")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", p.GetRkey(), line, &(memory.MemoryNetworkDetect{}), "ed_mid", "0", 0, "0", "0")
+		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

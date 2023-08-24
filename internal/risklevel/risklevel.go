@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func Getriskscore(info memory.Memory) (int, error) {
+func Getriskscore(info memory.Memory) (string, error) {
 	score := 0
 	if info.ProcessBeInjected == 2 {
 		if _, ok := HighRiskMap[info.ProcessName]; ok {
@@ -58,14 +58,14 @@ func Getriskscore(info memory.Memory) (int, error) {
 	return level, nil
 }
 
-func scoretoLevel(score int) int {
+func scoretoLevel(score int) string {
 	if score >= 150 {
-		return 3
+		return "3"
 	} else if score > 90 {
-		return 2
+		return "2"
 	} else if score > 30 {
-		return 1
+		return "1"
 	} else {
-		return 0
+		return "0"
 	}
 }

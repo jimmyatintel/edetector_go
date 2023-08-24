@@ -2,31 +2,8 @@ package dbparser
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
-
-func convertTime(tableName string, line string) string {
-	values := strings.Split(line, "@|@")
-	switch tableName {
-	case "EdgeCache":
-		// parse to unix timestamp
-		RFCToTimestamp(&values)
-		line = strings.Join(values[:], "@|@")
-		return line
-	case "ChromeCache":
-		RFCToTimestamp(&values)
-		line = strings.Join(values[:], "@|@")
-		return line
-	case "InstalledSoftware":
-		DigitToTimestamp(&values)
-		line = strings.Join(values[:], "@|@")
-		return line
-
-	default:
-		return line
-	}
-}
 
 func RFCToTimestamp(values *[]string) {
 	date := (*values)[8]

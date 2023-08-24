@@ -4,31 +4,28 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/rbconnector"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"reflect"
 	"strconv"
-	"strings"
+
+	"go.uber.org/zap"
 )
 
-func SendToMainElastic(uuid string, index string, agent string, item string, date int, ttype string, etc string, priority string) error {
-	agentIP := query.GetMachineIP(agent)
-	if agentIP == "" {
-		logger.Error("Error getting machine ip")
-	}
-	agentName := query.GetMachineName(agent)
-	if agentName == "" {
-		logger.Error("Error getting machine name")
+func SendToMainElastic(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
+	date_int, err := strconv.Atoi(date)
+	if err != nil {
+		logger.Error("error converting time", zap.Any("error", err.Error()))
+		date_int = 0
 	}
 	template := mainSource{
 		UUID:      uuid,
 		Index:     index,
-		Agent:     agent,
-		AgentIP:   agentIP,
-		AgentName: agentName,
+		Agent:     agentID,
+		AgentIP:   ip,
+		AgentName: name,
 		ItemMain:  item,
-		DateMain:  date,
+		DateMain:  date_int,
 		TypeMain:  ttype,
 		EtcMain:   etc,
 	}
@@ -51,8 +48,8 @@ func SendToMainElastic(uuid string, index string, agent string, item string, dat
 	return nil
 }
 
-func SendToDetailsElastic(uuid string, index string, agentID string, mes string, data Request_data, priority string, item string, date int, ttype string, etc string) error {
-	template, err := StringToStruct(uuid, agentID, mes, data, item, date, ttype, etc)
+func SendToDetailsElastic(index string, st Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
+	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc)
 	if err != nil {
 		return err
 	}
@@ -95,18 +92,9 @@ func SendToRelationElastic(template Request_data, priority string) error {
 	return nil
 }
 
-func StringToStruct(uuid string, agentID string, mes string, data Request_data, item string, date int, ttype string, etc string) (Request_data, error) {
-	agentIP := query.GetMachineIP(agentID)
-	if agentIP == "" {
-		logger.Error("Error getting machine ip")
-	}
-	agentName := query.GetMachineName(agentID)
-	if agentName == "" {
-		logger.Error("Error getting machine name")
-	}
-	v := reflect.Indirect(reflect.ValueOf(data))
-	line := uuid + "@|@" + agentID + "@|@" + agentIP + "@|@" + agentName + "@|@" + mes + "@|@" + item + "@|@" + strconv.Itoa(date) + "@|@" + ttype + "@|@" + etc
-	values := strings.Split(line, "@|@")
+func StringToStruct(st Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (Request_data, error) {
+	v := reflect.Indirect(reflect.ValueOf(st))
+	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc)
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {
@@ -126,5 +114,5 @@ func StringToStruct(uuid string, agentID string, mes string, data Request_data, 
 			field.Set(reflect.ValueOf(value))
 		}
 	}
-	return data, nil
+	return st, nil
 }

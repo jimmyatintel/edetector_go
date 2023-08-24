@@ -10,10 +10,10 @@ import (
 	"edetector_go/pkg/elastic"
 	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -39,9 +39,9 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
+	ip, name := query.GetMachineIPandName(key)
 	logger.Info("GiveDetectProcess: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
-	// send to elasticsearch
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
 	// send to elasticsearch
@@ -49,13 +49,8 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		if len(line) == 0 {
 			continue
 		}
-		line = strings.ReplaceAll(line, "|", "@|@")
-		values := strings.Split(line, "@|@")
-		int_date, err := strconv.Atoi(values[1])
-		if err != nil {
-			logger.Error("Invalid date: ", zap.Any("message", values[1]))
-			int_date = 0
-		}
+		values := strings.Split(line, "|")
+		values = append(values, "network", "risklevel", "detect")
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -70,30 +65,27 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			}
 		}`, p.GetRkey(), values[9], values[1])
 		doc := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
-		var network string
 		if doc == "" {
-			network = "detecting"
+			values[16] = "detecting"
 		} else {
-			network = "true"
+			values[16] = "true"
 			logger.Debug("Update information of the detect process: ", zap.Any("message", values[9]+" "+values[1]))
 		}
-		line = line + "@|@" + network + "@|@riskLevel@|@detect"
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
-		_, err = elasticquery.StringToStruct(uuid, p.GetRkey(), line, &m_tmp, "0", 0, "0", "0")
+		_, err := elasticquery.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
-		m_tmp.RiskLevel, err = risklevel.Getriskscore(m_tmp)
+		values[17], err = risklevel.Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
-		line = strings.ReplaceAll(line, "riskLevel", strconv.Itoa(m_tmp.RiskLevel))
-		err = elasticquery.SendToMainElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel), "ed_mid")
+		err = elasticquery.SendToMainElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(uuid, config.Viper.GetString("ELASTIC_PREFIX")+"_memory", p.GetRkey(), line, &m_tmp, "ed_mid", values[0], int_date, "memory", strconv.Itoa(m_tmp.RiskLevel))
+		err = elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
