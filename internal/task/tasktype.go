@@ -43,7 +43,6 @@ const (
 
 	// collection
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
-	GIVE_COLLECT_INFO       TaskType = "GiveCollectInfo"
 	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
 	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
@@ -89,7 +88,6 @@ var Worklist = []TaskType{
 	GIVE_EXPLORER_END,
 	GIVE_EXPLORER_ERROR,
 	GET_COLLECT_INFO,
-	GIVE_COLLECT_INFO,
 	GIVE_COLLECT_PROGRESS,
 	GIVE_COLLECT_DATA_INFO,
 	GIVE_COLLECT_DATA,

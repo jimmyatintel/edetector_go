@@ -19,7 +19,6 @@ func init() {
 		GIVE_EXPLORER_END:      "StartGetDrive",
 		GIVE_EXPLORER_ERROR:    "StartGetDrive",
 
-		GIVE_COLLECT_INFO:       "StartCollect",
 		GIVE_COLLECT_PROGRESS:   "StartCollect",
 		GIVE_COLLECT_DATA_INFO:  "StartCollect",
 		GIVE_COLLECT_DATA:       "StartCollect",

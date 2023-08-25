@@ -104,11 +104,17 @@
 
 ## Version
 
-### 2.0.0 (2023/8/24)
+### 2.0.1 (2023/8/24)
 Enhancements:
-- Redirecting the gin log to the graylog
+- Redirect the Gin logs to Graylog
+- Add ack and count limit to the connector to prevent excessive consumption
+
 Fixed bugs:
-- Failed task mapping
+- Mapp failed subtasks to their corresponding tasks in MariaDB
+- Set the entry points of progress collection
+- Remove the "GiveCollectInfo" function
+- Fix bugs in the "memory_network_detect" (incorrect key parameter)
+- Skip FAT drives
 
 ### 2.0.0 (2023/8/24)
 Description:

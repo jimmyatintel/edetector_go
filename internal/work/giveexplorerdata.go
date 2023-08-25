@@ -156,6 +156,11 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	inject_chan, err := channelmap.GetDiskChannel(key)
+	if err != nil {
+		return task.FAIL, err
+	}
+	<-inject_chan
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -166,11 +171,6 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	inject_chan, err := channelmap.GetDiskChannel(key)
-	if err != nil {
-		return task.FAIL, err
-	}
-	<-inject_chan
 	return task.SUCCESS, nil
 }
 
