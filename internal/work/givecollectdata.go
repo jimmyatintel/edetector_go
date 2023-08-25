@@ -11,6 +11,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"errors"
 	"path/filepath"
 	"strconv"
 
@@ -176,7 +177,7 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	if err != nil {
 		return task.FAIL, err
 	}
-	return task.SUCCESS, nil
+	return task.FAIL, errors.New(p.GetMessage())
 }
 
 func updateCollectProgress(key string) {

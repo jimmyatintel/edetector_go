@@ -7,6 +7,7 @@ func init() {
 	TaskTypeMap = map[TaskType]string{
 		GIVE_SCAN_INFO:     "StartScan",
 		GIVE_SCAN_PROGRESS: "StartScan",
+		GIVE_SCAN_FRAGMENT: "StartScan",
 		GIVE_SCAN:          "StartScan",
 		GIVE_SCAN_END:      "StartScan",
 

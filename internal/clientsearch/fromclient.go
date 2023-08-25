@@ -6,11 +6,11 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/internal/taskservice"
 
+	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
-	channelmap "edetector_go/internal/channelmap"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"net"
@@ -97,7 +97,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
-				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
+				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
+				if ok {
+					taskservice.Failed_task(NewPacket.GetRkey(), taskType)
+				}
 				return
 			}
 		} else if reqLen > 1024 {
@@ -149,7 +152,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error(string(NewPacket.GetTaskType())+" task failed:", zap.Any("error", err.Error()))
-				taskservice.Failed_task(NewPacket.GetRkey(), task.TaskTypeMap[NewPacket.GetTaskType()])
+				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
+				if ok {
+					taskservice.Failed_task(NewPacket.GetRkey(), taskType)
+				}
 				return
 			}
 		} else {

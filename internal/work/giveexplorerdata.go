@@ -12,6 +12,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"errors"
 	"strconv"
 
 	"path/filepath"
@@ -174,7 +175,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Error("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
@@ -185,7 +186,7 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	if err != nil {
 		return task.FAIL, err
 	}
-	return task.SUCCESS, nil
+	return task.FAIL, errors.New(p.GetMessage())
 }
 
 func updateDriveProgress(key string) {
