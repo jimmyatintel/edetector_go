@@ -75,7 +75,7 @@ func Start() {
 }
 
 func high_speed() {
-	msgs, err := rabbitmq.Consume("ed_high", 10)
+	msgs, err := rabbitmq.Consume("ed_high", 100)
 	if err != nil {
 		logger.Error("High speed consumer error: " + err.Error())
 		return
@@ -94,6 +94,7 @@ func high_speed() {
 			logger.Error(err.Error())
 			continue
 		}
+		msg.Ack(false)
 	}
 }
 
