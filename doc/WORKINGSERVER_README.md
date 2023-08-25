@@ -105,6 +105,12 @@
 ## Version
 
 ### 2.0.0 (2023/8/24)
+Enhancements:
+- Redirecting the gin log to the graylog
+Fixed bugs:
+- Failed task mapping
+
+### 2.0.0 (2023/8/24)
 Description:
 - Fully functionality for the **new agent**
 - Redirecting the log to the graylog
