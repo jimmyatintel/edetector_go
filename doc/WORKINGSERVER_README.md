@@ -31,18 +31,50 @@
 
 <summary>Detect</summary>
 
-|      Direction 	| TaskName              	| Format 	| Msg e.g. 	| Note 	|
-|---------------	|-----------------------	|--------	|----------	|------	|
-| Agent → Server 	| GiveDetectNetwork     	|  \{struct MemoryNetworkDetect\}  |<details><summary>MemoryNetworkDetect</summary> 104984\|13.107.42.16:443\|1690922105\|1690080351\|0\|52365| |
-| Server → Agent 	| DataRight             	|        	|          	|      	|
-| Agent → Server 	| GiveDetectProcessFrag 	|   \(detect data fragment\)     	|          	|   Split into multiple fragments if it's too long   	|
-| Server → Agent 	| DataRight             	|        	|          	|      	|
-| Agent → Server 	| GiveDetectProcess     	| \{struct Memory\}	|<details><summary>Memory</summary> 	|   Single or the last one   	|
-| Server → Agent 	| DataRight             	|        	|          	|      	|
-| Server → Agent 	| DataRight             	|        	|          	|      	|
+| Direction      | TaskName              | Format                         | Msg e.g.                                                                                                             | Note                                           |
+| -------------- | --------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Agent → Server | GiveDetectNetwork     | \{struct MemoryNetworkDetect\} | <details><summary>MemoryNetworkDetect</summary> 104984\|13.107.42.16:443\|1690922105\|1690080351\|0\|52365</details> |                                                |
+| Server → Agent | DataRight             |                                |                                                                                                                      |                                                |
+| Agent → Server | GiveDetectProcessFrag | \(detect data fragment\)       |                                                                                                                      | Split into multiple fragments if it's too long |
+| Server → Agent | DataRight             |                                |                                                                                                                      |                                                |
+| Agent → Server | GiveDetectProcess     | \{struct Memory\}              | <details><summary>Memory</summary></details>                                                                         | Single or the last one                         |
+| Server → Agent | DataRight             |                                |                                                                                                                      |                                                |
+| Server → Agent | DataRight             |                                |                                                                                                                      |                                                |
 
-<details><summary>MemoryNetworkDetect</summary> ProcessId int<br>Address string<br>Timestamp int<br>ProcessCreateTime int<br>ConnectionINorOUT bool <br>AgentPort int </details>
-<details><summary>Memory</summary> ProcessName string<br>ProcessCreateTime int<br>DynamicCommand string<br>ProcessMD5 string<br>ProcessPath string <br>ParentProcessId int <br>ParentProcessName string<br>ParentProcessPath string<br>DigitalSign string<br>ProcessId int<br>InjectActive string<br>ProcessBeInjected int<br>Boot string<br>Hide string<br>ImportOtherDLL string<br>Hook string <br>ProcessConnectIP string<br>RiskLevel int<br>Mode string </details>
+<details><summary><em>MemoryNetworkDetect</em></summary>
+
+    ProcessId <code>int</code><br>
+    Address <code>string</code><br>
+    Timestamp <code>int</code><br>
+    ProcessCreateTime <code>int</code><br>
+    ConnectionINorOUT <code>bool</code><br>
+    AgentPort <code>int 
+
+</details>
+
+<details><summary><em>Memory</em></summary>
+
+    ProcessName <code>string</code><br>
+    ProcessCreateTime <code>int</code><br>
+    DynamicCommand <code>string</code><br>
+    ProcessMD5 <code>string</code><br>
+    ProcessPath <code>string </code><br>
+    ParentProcessId <code>int </code><br>
+    ParentProcessName <code>string</code><br>
+    ParentProcessPath <code>string</code><br>
+    DigitalSign <code>string</code><br>
+    ProcessId <code>int</code><br>
+    InjectActive <code>string</code><br>
+    ProcessBeInjected <code>int</code><br>
+    Boot <code>string</code><br>
+    Hide <code>string</code><br>
+    ImportOtherDLL <code>string</code><br>
+    Hook <code>string</code><br>
+    ProcessConnectIP <code>string</code><br>
+    RiskLevel <code>int</code><br>
+    ode <code>string</code>
+
+</details>
 
 </details>
 
