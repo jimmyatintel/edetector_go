@@ -48,7 +48,7 @@
     Timestamp <code>int</code><br>
     ProcessCreateTime <code>int</code><br>
     ConnectionINorOUT <code>bool</code><br>
-    AgentPort <code>int 
+    AgentPort <code>int</code>
 </details>
 </blockquote>
 
