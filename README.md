@@ -12,6 +12,8 @@ This repository contains four microservices :
 ## Version
 
 ### 2.0.2 (2023/8/28)
+Enhancements:
+- Use environment variables for the first progress part
 Fixed bugs:
 - Fix bugs in the "memory_network_scan" (error parsing)
 
