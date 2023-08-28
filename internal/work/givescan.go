@@ -105,8 +105,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		if values[16] == "null" {
 			values[16] = "false"
 		} else {
-			values[16] = "true"
 			go scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
+			values[16] = "true"
 		}
 		values = append(values, "risklevel", "scan")
 		uuid := uuid.NewString()
@@ -182,9 +182,8 @@ func scanNetworkElastic(id string, time string, key string, data string, ip stri
 		re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
 		line = re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
 		line = strings.ReplaceAll(line, ">", "")
-		info := strings.Split(line, "|")
-		values := []string{id, time}
-		values = append(values, info...)
+		line = id + "|" + time + "|" + line
+		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
 		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &memory.MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
