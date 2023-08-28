@@ -39,6 +39,7 @@ func Start(ctx context.Context) {
 	corsConfig.AllowHeaders = []string{"Content-Type", "Accept", "Content-Length", "Authorization", "Origin", "X-Requested-With"}
 	router.RedirectFixedPath = true
 	router.Use(cors.New(corsConfig))
+	router.Use(logger.GinLog())
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})

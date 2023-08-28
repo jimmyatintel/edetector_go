@@ -11,8 +11,10 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"errors"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"net"
 
@@ -29,24 +31,6 @@ func init() {
 	file.CheckDir(dbUstagePath)
 }
 
-func GiveCollectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	key := p.GetRkey()
-	logger.Info("GiveCollectInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	redis.RedisSet(key+"-CollectProgress", 0)
-	go updateCollectProgress(key)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
@@ -54,6 +38,9 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
 	if err != nil {
 		return task.FAIL, err
+	}
+	if strings.Split(p.GetMessage(), "/")[0] == "1" {
+		go updateCollectProgress(key)
 	}
 	redis.RedisSet(key+"-CollectProgress", progress)
 	var send_packet = packet.WorkPacket{
@@ -176,7 +163,7 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	if err != nil {
 		return task.FAIL, err
 	}
-	return task.SUCCESS, nil
+	return task.FAIL, errors.New(p.GetMessage())
 }
 
 func updateCollectProgress(key string) {

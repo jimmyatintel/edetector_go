@@ -44,7 +44,7 @@ func detectNetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "|")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
+		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}

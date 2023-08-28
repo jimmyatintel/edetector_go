@@ -114,7 +114,6 @@ func BulkIndexRequest(action []string, work []string) error {
 }
 
 func UpdateRequest(agent string, id string, time string, index string) error {
-	return nil
 	if !flagcheck() {
 		return nil
 	}
@@ -226,6 +225,9 @@ func SearchRequest(index string, body string) string {
 }
 
 func DeleteByQueryRequest(field string, value string, ttype string) error {
+	if !flagcheck() {
+		return errors.New("elastic is not enabled")
+	}
 	deleteQuery := fmt.Sprintf(`
 	{
 		"query": {
@@ -269,7 +271,7 @@ func DeleteByQueryRequest(field string, value string, ttype string) error {
 
 func getIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
-	indexes := []string{prefix + "_main"}
+	indexes := []string{}
 	switch ttype {
 	case "StartGetDrive":
 		for _, ind := range diskIndex {

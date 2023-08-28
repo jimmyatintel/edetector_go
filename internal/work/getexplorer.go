@@ -29,6 +29,10 @@ func HandleExpolorer(p packet.Packet) {
 		if len(parts) == 2 {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
+			if driveInfo == "FAT" { // tmp version: skip FAT
+				logger.Info("Skipping FAT")
+				continue
+			}
 			msg := drive + "|" + driveInfo
 			redis.RedisSet(key+"-DriveCount", ind)
 			var user_packet = packet.TaskPacket{

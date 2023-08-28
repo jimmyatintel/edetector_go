@@ -70,14 +70,18 @@ func Publish(queue string, body []byte) error {
 		},
 	)
 }
-func Consume(queue string) (<-chan amqp.Delivery, error) {
+func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
 	if channel == nil {
 		return nil, errors.New("failed to consume message: channel is nil")
+	}
+	err := channel.Qos(count, 0, false)
+	if err != nil {
+		logger.Error("Error setting consume messages")
 	}
 	return channel.Consume(
 		queue,
 		"",
-		true,
+		false,
 		false,
 		false,
 		false,

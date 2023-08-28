@@ -41,7 +41,6 @@ func init() {
 		task.GIVE_EXPLORER_ERROR:    GiveExplorerError,
 
 		// collection
-		task.GIVE_COLLECT_INFO:       GiveCollectInfo,
 		task.GIVE_COLLECT_PROGRESS:   GiveCollectProgress,
 		task.GIVE_COLLECT_DATA_INFO:  GiveCollectDataInfo,
 		task.GIVE_COLLECT_DATA:       GiveCollectData,
