@@ -1,6 +1,6 @@
 # Working Server Documentation
 
-<!-- ## Functions
+## Functions
 <details>
 <summary>Handshake</summary>
 
@@ -96,7 +96,7 @@
 
 <details>
 
-<summary>Collect</summary> -->
+<summary>Collect</summary>
 
 
 
