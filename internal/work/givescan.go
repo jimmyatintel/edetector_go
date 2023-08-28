@@ -105,7 +105,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		if values[16] == "null" {
 			values[16] = "false"
 		} else {
-			go scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
+			scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
 			values[16] = "true"
 		}
 		values = append(values, "risklevel", "scan")
