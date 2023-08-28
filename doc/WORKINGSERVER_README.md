@@ -1,6 +1,6 @@
 # Working Server Documentation
 
-## Functions
+<!-- ## Functions
 <details>
 <summary>Handshake</summary>
 
@@ -96,7 +96,7 @@
 
 <details>
 
-<summary>Collect</summary>
+<summary>Collect</summary> -->
 
 
 
@@ -104,10 +104,11 @@
 
 ## Version
 
-### 2.0.1 (2023/8/24)
+### 2.0.1 (2023/8/28)
 Enhancements:
 - Redirect the Gin logs to Graylog
 - Add ack and count limit to the connector to prevent excessive consumption
+- Add scan network to the elasticsearch
 
 Fixed bugs:
 - Mapp failed subtasks to their corresponding tasks in MariaDB
