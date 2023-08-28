@@ -21,13 +21,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var scanFirstPart float64 = 50
-var scanSecondPart float64 = 100 - scanFirstPart
+var scanFirstPart float64
+var scanSecondPart float64
 
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	scanFirstPart = config.Viper.GetFloat64("SCAN_FIRST_PART")
+	scanSecondPart = 100 - scanFirstPart
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

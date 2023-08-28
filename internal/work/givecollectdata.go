@@ -2,6 +2,7 @@ package work
 
 import (
 	"bytes"
+	"edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/file"
@@ -23,8 +24,8 @@ import (
 
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
-var collectFirstPart float64 = 20
-var collectSecondPart float64 = 100 - collectFirstPart
+var collectFirstPart float64
+var collectSecondPart float64
 
 func init() {
 	file.CheckDir(dbWorkingPath)
@@ -35,12 +36,14 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	key := p.GetRkey()
 	logger.Info("GiveCollectProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
+	if strings.Split(p.GetMessage(), "/")[0] == "1" {
+		collectFirstPart = config.Viper.GetFloat64("COLLECT_FIRST_PART")
+		collectSecondPart = 100 - collectFirstPart
+		go updateCollectProgress(key)
+	}
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
 	if err != nil {
 		return task.FAIL, err
-	}
-	if strings.Split(p.GetMessage(), "/")[0] == "1" {
-		go updateCollectProgress(key)
 	}
 	redis.RedisSet(key+"-CollectProgress", progress)
 	var send_packet = packet.WorkPacket{
