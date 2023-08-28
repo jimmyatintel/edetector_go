@@ -2,6 +2,7 @@ package work
 
 import (
 	"bytes"
+	"edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/file"
@@ -23,7 +24,7 @@ import (
 
 var dbWorkingPath = "dbWorking"
 var dbUstagePath = "dbUnstage"
-var collectFirstPart float64 = 20
+var collectFirstPart float64 = config.Viper.GetFloat64("COLLECT_FIRST_PART")
 var collectSecondPart float64 = 100 - collectFirstPart
 
 func init() {

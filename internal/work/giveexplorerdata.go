@@ -2,6 +2,7 @@ package work
 
 import (
 	"bytes"
+	"edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
@@ -25,7 +26,7 @@ import (
 
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
-var explorerFirstPart float64 = 75
+var explorerFirstPart float64 = config.Viper.GetFloat64("EXPLORER_FIRST_PART")
 var explorerSecondPart float64 = 100 - explorerFirstPart
 
 func init() {

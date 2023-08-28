@@ -21,7 +21,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var scanFirstPart float64 = 50
+var scanFirstPart float64 = config.Viper.GetFloat64("SCAN_FIRST_PART")
 var scanSecondPart float64 = 100 - scanFirstPart
 
 // new scan
