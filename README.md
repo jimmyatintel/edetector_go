@@ -11,6 +11,10 @@ This repository contains four microservices :
 
 ## Version
 
+### 2.0.2 (2023/8/28)
+Fixed bugs:
+- Fix bugs in the "memory_network_scan" (error parsing)
+
 ### 2.0.1 (2023/8/28)
 Enhancements:
 - Redirect the Gin logs to Graylog
@@ -22,7 +26,6 @@ Fixed bugs:
 - Set the entry points of progress collection
 - Remove the "GiveCollectInfo" function
 - Fix bugs in the "memory_network_detect" (incorrect key parameter)
-- Fix bugs in the "memory_network_scan" (error parsing)
 - Skip FAT drives
 
 ### 2.0.0 (2023/8/24)
