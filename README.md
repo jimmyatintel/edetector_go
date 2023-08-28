@@ -22,6 +22,7 @@ Fixed bugs:
 - Set the entry points of progress collection
 - Remove the "GiveCollectInfo" function
 - Fix bugs in the "memory_network_detect" (incorrect key parameter)
+- Fix bugs in the "memory_network_scan" (error parsing)
 - Skip FAT drives
 
 ### 2.0.0 (2023/8/24)
