@@ -67,12 +67,20 @@ func Main() {
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
+			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
+			if err != nil {
+				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+			}
 			continue
 		}
 		logger.Info("Open db file: ", zap.Any("message", dbFile))
 		tableNames, err := getTableNames(db)
 		if err != nil {
 			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
+			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
+			if err != nil {
+				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+			}
 			continue
 		}
 		// loop all tables in the db file
