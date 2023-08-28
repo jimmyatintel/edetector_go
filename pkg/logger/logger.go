@@ -6,7 +6,9 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	zapsyslog "github.com/imperfectgo/zap-syslog"
 	"github.com/imperfectgo/zap-syslog/syslog"
 	"go.uber.org/zap"
@@ -105,4 +107,24 @@ func getCallerInfoForLog() (callerFields []zap.Field) {
 
 	callerFields = append(callerFields, zap.String("func", funcName), zap.String("file", file), zap.Int("line", line))
 	return
+}
+
+func GinLog() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		startTime := time.Now()
+		c.Next()
+		endTime := time.Now()
+		latencyTime := endTime.Sub(startTime)
+		clientIP := c.ClientIP()
+		method := c.Request.Method
+		statusCode := c.Writer.Status()
+		requestURI := c.Request.RequestURI
+		Log.Info("GinLog",
+			zap.Int("status", statusCode),
+			zap.String("method", method),
+			zap.String("ip", clientIP),
+			zap.String("uri", requestURI),
+			zap.String("latency", latencyTime.String()),
+		)
+	}
 }
