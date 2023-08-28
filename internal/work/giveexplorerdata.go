@@ -26,8 +26,8 @@ import (
 
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
-var explorerFirstPart float64 = config.Viper.GetFloat64("EXPLORER_FIRST_PART")
-var explorerSecondPart float64 = 100 - explorerFirstPart
+var explorerFirstPart float64
+var explorerSecondPart float64
 
 func init() {
 	file.CheckDir(fileWorkingPath)
@@ -37,6 +37,8 @@ func init() {
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	explorerFirstPart = config.Viper.GetFloat64("EXPLORER_FIRST_PART")
+	explorerSecondPart = 100 - explorerFirstPart
 	parts := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-Disk", parts[0])
 	// create or truncate the zip file
