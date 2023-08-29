@@ -37,7 +37,7 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	logger.Info("GiveCollectProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
-		collectFirstPart = config.Viper.GetFloat64("COLLECT_FIRST_PART")
+		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
 		collectSecondPart = 100 - collectFirstPart
 		go updateCollectProgress(key)
 	}
