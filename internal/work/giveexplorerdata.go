@@ -200,6 +200,7 @@ func updateDriveProgress(key string) {
 		}
 		rowsAffected := query.Update_progress(driveProgress, key, "StartGetDrive")
 		if rowsAffected != 0 {
+			logger.Info("update drive progress", zap.Any("message", driveProgress))
 			go taskservice.RequestToUser(key)
 		}
 	}

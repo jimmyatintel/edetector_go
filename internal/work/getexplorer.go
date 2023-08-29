@@ -20,8 +20,9 @@ func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-ExplorerProgress", 0)
-	go updateDriveProgress(key)
+	redis.RedisSet(key+"-DriveCount", 0)
 	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
+	go updateDriveProgress(key)
 	tmp_chan := make(chan string)
 	channelmap.AssignDiskChannel(key, &tmp_chan)
 	for ind, d := range drives {
