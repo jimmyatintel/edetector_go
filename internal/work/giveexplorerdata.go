@@ -37,7 +37,7 @@ func init() {
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	explorerFirstPart = config.Viper.GetFloat64("EXPLORER_FIRST_PART")
+	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
 	explorerSecondPart = 100 - explorerFirstPart
 	parts := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-Disk", parts[0])
