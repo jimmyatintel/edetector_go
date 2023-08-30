@@ -1,11 +1,10 @@
-package risklevel
+package work
 
 import (
-	"edetector_go/internal/memory"
 	"strings"
 )
 
-func Getriskscore(info memory.Memory) (string, error) {
+func Getriskscore(info Memory) (string, error) {
 	score := 0
 	if info.ProcessBeInjected == 2 {
 		if _, ok := HighRiskMap[info.ProcessName]; ok {

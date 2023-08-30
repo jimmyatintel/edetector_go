@@ -54,5 +54,4 @@ func First_detect_info(KeyNum string, message string) string {
 		}
 		return strconv.Itoa(process) + "|" + strconv.Itoa(network)
 	}
-
 }

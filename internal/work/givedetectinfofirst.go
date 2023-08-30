@@ -18,13 +18,7 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet(key+"-DetectMsg", "")
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.UPDATE_DETECT_MODE,
-		Message:    rt,
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.UPDATE_DETECT_MODE, rt, conn)
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -2,8 +2,8 @@ package treebuilder
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
-	"edetector_go/internal/file"
+	"edetector_go/pkg/fflag"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/query"
@@ -116,12 +116,12 @@ func Main(version string) {
 			values = values[:len(values)-2]
 			// err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
 				continue
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
 				continue
 			}
 			time.Sleep(1 * time.Microsecond)
@@ -181,7 +181,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 	}
 	err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
 	if err != nil {
-		logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
+		logger.Error("Error sending to rabbitMQ (relation): ", zap.Any("error", err.Error()))
 	}
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, UUIDMap[uuid], false, path)

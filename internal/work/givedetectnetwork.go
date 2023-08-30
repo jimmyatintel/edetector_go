@@ -3,7 +3,6 @@ package work
 import (
 	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/elastic"
@@ -20,13 +19,7 @@ import (
 func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveDetectNetwork: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	go detectNetworkElastic(p)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -45,9 +38,9 @@ func detectNetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "|")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
 		}
 	}
 	elastic.UpdateNetworkInfo(p.GetRkey(), networkSet)

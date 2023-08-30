@@ -3,9 +3,7 @@ package work
 import (
 	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/memory"
 	"edetector_go/internal/packet"
-	"edetector_go/internal/risklevel"
 	"edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
@@ -40,13 +38,7 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	redis.RedisSet(key+"-ScanProgress", 0)
 	redis.RedisSet(key+"-ScanMsg", "")
 	go updateScanProgress(key)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -62,13 +54,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	redis.RedisSet(key+"-ScanProgress", progress)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -79,13 +65,7 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveScanFragment: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -113,35 +93,29 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		}
 		values = append(values, "risklevel", "scan")
 		uuid := uuid.NewString()
-		m_tmp := memory.Memory{}
+		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
-		values[17], err = risklevel.Getriskscore(m_tmp)
+		values[17], err = Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
 		}
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
 	progress := int(scanFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ScanCount"), redis.RedisGetInt(key+"-ScanTotal"), 1, scanSecondPart)
 	redis.RedisSet(key+"-ScanProgress", progress)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -150,13 +124,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveScanEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -187,9 +155,9 @@ func scanNetworkElastic(id string, time string, key string, data string, ip stri
 		logger.Info("scan network", zap.Any("message", line))
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &memory.MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
 		}
 	}
 }

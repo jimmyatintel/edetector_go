@@ -3,8 +3,8 @@ package rbconnector
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
 	"edetector_go/pkg/elastic"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"

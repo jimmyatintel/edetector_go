@@ -48,6 +48,7 @@ func Rabbit_init() {
 		panic(err)
 	}
 }
+
 func Declare(name string) (amqp.Queue, error) {
 	if channel == nil {
 		return amqp.Queue{}, errors.New("failed to declare queue: channel is nil")
@@ -70,6 +71,7 @@ func Publish(queue string, body []byte) error {
 		},
 	)
 }
+
 func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
 	if channel == nil {
 		return nil, errors.New("failed to consume message: channel is nil")
@@ -88,6 +90,7 @@ func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
 		nil,
 	)
 }
+
 func Connection_close() {
 	if Connection != nil {
 		Connection.Close()

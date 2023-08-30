@@ -1,4 +1,4 @@
-package risklevel
+package work
 
 var HighRiskMap map[string]bool
 

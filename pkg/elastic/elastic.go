@@ -3,7 +3,7 @@ package elastic
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"encoding/json"
 	"errors"

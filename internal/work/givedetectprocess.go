@@ -3,9 +3,7 @@ package work
 import (
 	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
-	"edetector_go/internal/risklevel"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
@@ -24,13 +22,7 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	key := p.GetRkey()
 	logger.Info("GiveDetectProcessFrag: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -72,31 +64,25 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Debug("Update information of the detect process: ", zap.Any("message", values[9]+" "+values[1]))
 		}
 		uuid := uuid.NewString()
-		m_tmp := memory.Memory{}
+		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
-		values[17], err = risklevel.Getriskscore(m_tmp)
+		values[17], err = Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
 		}
 	}
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}

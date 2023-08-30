@@ -31,7 +31,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				case message := <-task_chan:
 					data := message.Fluent()
 					logger.Info("get task msg: ", zap.Any("message", string(data)))
-					err := clientsearchsend.SendTCPtoClient(data, conn)
+					err := clientsearchsend.SendTaskTCPtoClient(data, conn)
 					if err != nil {
 						logger.Error("send failed:", zap.Any("error", err.Error()))
 					}

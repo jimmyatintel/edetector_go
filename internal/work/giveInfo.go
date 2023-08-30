@@ -23,13 +23,7 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	}
 	query.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	query.Addmachine(ClientInfo)
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.OPEN_CHECK_THREAD,
-		Message:    ClientInfo.KeyNum,
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn) // send ack(OPEN_CHECK_THREAD) to client
+	err := clientsearchsend.SendTCPtoClient(p, task.OPEN_CHECK_THREAD, ClientInfo.KeyNum, conn) // send ack(OPEN_CHECK_THREAD) to client
 	if err != nil {
 		return task.FAIL, err
 	}

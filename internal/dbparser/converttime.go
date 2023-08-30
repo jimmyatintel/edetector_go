@@ -44,8 +44,6 @@ func DigitToTimestamp(values *[]string) {
 		return
 	}
 	t = t.In(location)
-	// 	outputFormat := "2006-01-02 15:04:05 MST"
-	// 	formattedDateTime := t.Format(outputFormat)
 	installdate := fmt.Sprintf("%d", t.Unix())
 	(*values)[3] = installdate
 }

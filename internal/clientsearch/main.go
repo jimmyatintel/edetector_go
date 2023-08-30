@@ -4,9 +4,9 @@ import (
 	"context"
 	config "edetector_go/config"
 	channelmap "edetector_go/internal/channelmap"
-	fflag "edetector_go/internal/fflag"
 	packet "edetector_go/internal/packet"
 	"edetector_go/internal/taskservice"
+	fflag "edetector_go/pkg/fflag"
 	logger "edetector_go/pkg/logger"
 
 	"go.uber.org/zap"

@@ -3,7 +3,7 @@ package redis
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"strconv"
 
@@ -18,6 +18,7 @@ func checkflag() bool {
 	}
 	return false
 }
+
 func Redis_init() *redis.Client {
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr:     config.Viper.GetString("REDIS_HOST") + ":" + config.Viper.GetString("REDIS_PORT"),
