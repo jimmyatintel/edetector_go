@@ -7,6 +7,7 @@ Enhancements:
 - Enhance readability for the init function
 - Update progress without notifying frontend
 - Improve Naming & file structure: sendToElastic -> ToRabbitMQ
+- Display the version at the start
 
 Fixed bugs:
 - Invoke "RequestToUser" through a regular call instead of using a go routine

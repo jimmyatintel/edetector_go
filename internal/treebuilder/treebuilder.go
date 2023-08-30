@@ -56,8 +56,9 @@ func builder_init() {
 	}
 }
 
-func Main() {
+func Main(version string) {
 	builder_init()
+	logger.Info("Welcome to edetector tree builder: ", zap.Any("version", version))
 	for {
 		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
 		ip, name := query.GetMachineIPandName(agent)

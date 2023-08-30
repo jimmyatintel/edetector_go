@@ -55,8 +55,9 @@ func parser_init() {
 	}
 }
 
-func Main() {
+func Main(version string) {
 	parser_init()
+	logger.Info("Welcome to edetector dbparser: ", zap.Any("version", version))
 	for {
 		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")

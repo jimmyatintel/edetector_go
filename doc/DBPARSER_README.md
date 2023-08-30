@@ -6,6 +6,7 @@
 Enhancements:
 - Enhance readability for the init function
 - Improve Naming & file structure: sendToElastic -> ToRabbitMQ
+- Display the version at the start
 
 ### 2.0.1 (2023/8/28)
 Enhancements:
