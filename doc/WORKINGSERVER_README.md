@@ -11,7 +11,6 @@ Enhancements:
 
 Fixed bugs:
 - Invoke "RequestToUser" through a regular call instead of using a go routine
-- 
 
 ### 2.0.4 (2023/8/29)
 Fixed bugs:
