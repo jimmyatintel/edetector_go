@@ -4,7 +4,6 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/fflag"
 	"edetector_go/internal/file"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/query"
@@ -30,7 +29,7 @@ type Relation struct {
 	Child []string
 }
 
-func init() {
+func builder_init() {
 	file.CheckDir(fileUnstagePath)
 	file.CheckDir(fileStagedPath)
 
@@ -58,6 +57,7 @@ func init() {
 }
 
 func Main() {
+	builder_init()
 	for {
 		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
 		ip, name := query.GetMachineIPandName(agent)
@@ -113,12 +113,12 @@ func Main() {
 				continue
 			}
 			values = values[:len(values)-2]
-			// err = elasticquery.SendToMainElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
+			// err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
-			err = elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
+			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 				continue
@@ -178,7 +178,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 		Parent: relation.UUID,
 		Child:  relation.Child,
 	}
-	err := elasticquery.SendToRelationElastic(data, "ed_low")
+	err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
 	if err != nil {
 		logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
 	}

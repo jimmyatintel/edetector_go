@@ -13,9 +13,6 @@ import (
 	"go.uber.org/zap"
 )
 
-func init() {
-}
-
 func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")

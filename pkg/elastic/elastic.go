@@ -33,13 +33,16 @@ func flagcheck() bool {
 	}
 	return false
 }
-func SetElkClient() error {
+
+func Elastic_init() {
 	var err error
 	cfg := elasticsearch.Config{
 		Addresses: []string{"http://" + config.Viper.GetString("ELASTIC_HOST") + ":" + config.Viper.GetString("ELASTIC_PORT")},
 	}
 	es, err = elasticsearch.NewClient(cfg)
-	return err
+	if err != nil {
+		logger.Error("Error connecting to elastic: " + err.Error())
+	}
 }
 
 func CreateIndex(name string) {

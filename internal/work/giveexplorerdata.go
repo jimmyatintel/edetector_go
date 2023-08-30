@@ -9,12 +9,12 @@ import (
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"errors"
 	"strconv"
+	"time"
 
 	"path/filepath"
 
@@ -198,9 +198,7 @@ func updateDriveProgress(key string) {
 		if driveProgress >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(driveProgress, key, "StartGetDrive")
-		if rowsAffected != 0 {
-			go taskservice.RequestToUser(key)
-		}
+		query.Update_progress(driveProgress, key, "StartGetDrive")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

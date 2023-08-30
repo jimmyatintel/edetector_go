@@ -6,9 +6,10 @@ import (
 	"edetector_go/internal/memory"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	elasticquery "edetector_go/pkg/elastic/query"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/rabbitmq"
 	"net"
 	"strings"
 
@@ -44,10 +45,10 @@ func detectNetworkElastic(p packet.Packet) {
 		values := strings.Split(line, "|")
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(memory.MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
 	}
-	elasticquery.UpdateNetworkInfo(p.GetRkey(), networkSet)
+	elastic.UpdateNetworkInfo(p.GetRkey(), networkSet)
 }

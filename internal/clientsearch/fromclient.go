@@ -86,7 +86,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					logger.Error("Update online failed:", zap.Any("error", err.Error()))
 				}
 				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
-					go taskservice.RequestToUser(key)
+					taskservice.RequestToUser(key)
 				}
 			}
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]

@@ -1,10 +1,9 @@
-package elasticquery
+package rabbitmq
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/rbconnector"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"reflect"
 	"strconv"
@@ -12,13 +11,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func SendToMainElastic(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
+type Message struct {
+	Index string `json:"index"`
+	Data  string `json:"data"`
+}
+
+func ToRabbitMQ_Main(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
 	date_int, err := strconv.Atoi(date)
 	if err != nil {
 		logger.Error("error converting time", zap.Any("error", err.Error()))
 		date_int = 0
 	}
-	template := mainSource{
+	template := elastic.MainSource{
 		UUID:      uuid,
 		Index:     index,
 		Agent:     agentID,
@@ -33,7 +37,7 @@ func SendToMainElastic(index string, uuid string, agentID string, ip string, nam
 	if err != nil {
 		return err
 	}
-	var msg = rbconnector.Message{
+	var msg = Message{
 		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_main",
 		Data:  string(request),
 	}
@@ -41,14 +45,14 @@ func SendToMainElastic(index string, uuid string, agentID string, ip string, nam
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.Publish(priority, msgBytes)
+	err = Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SendToDetailsElastic(index string, st Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
+func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
 	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc)
 	if err != nil {
 		return err
@@ -57,7 +61,7 @@ func SendToDetailsElastic(index string, st Request_data, values []string, uuid s
 	if err != nil {
 		return err
 	}
-	var msg = rbconnector.Message{
+	var msg = Message{
 		Index: index,
 		Data:  string(request),
 	}
@@ -65,19 +69,19 @@ func SendToDetailsElastic(index string, st Request_data, values []string, uuid s
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.Publish(priority, msgBytes)
+	err = Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SendToRelationElastic(template Request_data, priority string) error {
+func ToRabbitMQ_Relation(template elastic.Request_data, priority string) error {
 	request, err := template.Elastical()
 	if err != nil {
 		return err
 	}
-	var msg = rbconnector.Message{
+	var msg = Message{
 		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_explorer_relation",
 		Data:  string(request),
 	}
@@ -85,14 +89,14 @@ func SendToRelationElastic(template Request_data, priority string) error {
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.Publish(priority, msgBytes)
+	err = Publish(priority, msgBytes)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func StringToStruct(st Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (Request_data, error) {
+func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (elastic.Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(st))
 	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc)
 	for i := 0; i < v.NumField(); i++ {

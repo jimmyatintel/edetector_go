@@ -8,7 +8,6 @@ import (
 	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
@@ -16,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"net"
 
@@ -174,9 +174,7 @@ func updateCollectProgress(key string) {
 		if redis.RedisGetInt(key+"-CollectProgress") >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")
-		if rowsAffected != 0 {
-			go taskservice.RequestToUser(key)
-		}
+		query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

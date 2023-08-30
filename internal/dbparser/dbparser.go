@@ -7,7 +7,6 @@ import (
 	"edetector_go/internal/file"
 	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/query"
@@ -25,7 +24,7 @@ import (
 var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
 
-func init() {
+func parser_init() {
 	file.CheckDir(dbUnstagePath)
 	file.CheckDir(dbStagedPath)
 
@@ -51,15 +50,13 @@ func init() {
 		logger.Info("rabbit is enabled.")
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
+		elastic.Elastic_init()
 		logger.Info("elastic is enabled.")
 	}
 }
 
 func Main() {
+	parser_init()
 	for {
 		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
@@ -254,14 +251,14 @@ func sendCollectToElastic(rows *sql.Rows, tableName string, agent string) error 
 	return nil
 }
 
-func toElastic(index string, agent string, values []string, item string, date string, ttype string, etc string, st elasticquery.Request_data) error {
+func toElastic(index string, agent string, values []string, item string, date string, ttype string, etc string, st elastic.Request_data) error {
 	ip, name := query.GetMachineIPandName(agent)
 	uuid := uuid.NewString()
-	err := elasticquery.SendToMainElastic(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
+	err := rabbitmq.ToRabbitMQ_Main(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}
-	err = elasticquery.SendToDetailsElastic(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}

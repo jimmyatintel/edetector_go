@@ -19,11 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type Message struct {
-	Index string `json:"index"`
-	Data  string `json:"data"`
-}
-
 var mid_mutex *sync.Mutex
 var low_mutex *sync.Mutex
 
@@ -35,6 +30,7 @@ var low_bulkaction []string
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
 	low_mutex = &sync.Mutex{}
+
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Error("Error loading feature flag")
@@ -50,10 +46,7 @@ func connector_init() {
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
+		elastic.Elastic_init()
 		logger.Info("elastic is enabled.")
 	}
 }
@@ -83,7 +76,7 @@ func high_speed() {
 	logger.Info("Connected to high speed queue")
 	for msg := range msgs {
 		log.Printf("Received a message: %s", msg.Body)
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())
@@ -107,7 +100,7 @@ func mid_speed() {
 	logger.Info("Connected to mid speed queue")
 	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())
@@ -133,7 +126,7 @@ func low_speed() {
 	logger.Info("Connected to low speed queue")
 	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
 			logger.Error(err.Error())

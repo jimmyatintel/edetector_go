@@ -35,23 +35,20 @@ func server_init() {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("WORKER_LOG_FILE")))
 	}
+	if err := mariadb.Connect_init(); err != nil {
+		logger.Error("Error connecting to mariadb: " + err.Error())
+	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {
 			logger.Error("Error connecting to redis")
 		}
-	}
-	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
 		logger.Info("rabbit is enabled.")
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
+		elastic.Elastic_init()
 		logger.Info("elastic is enabled.")
 	}
 }
@@ -78,6 +75,7 @@ func Main(version string) {
 	logger.Info("Server shutdown complete")
 	defer cancel()
 }
+
 func servershutdown() {
 	// rabbitmq.Connection_close()
 	for _, client := range Client.Clientlist {

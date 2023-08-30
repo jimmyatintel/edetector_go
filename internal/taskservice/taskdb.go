@@ -17,7 +17,7 @@ func Finish_task(clientid string, tasktype string) {
 func Failed_task(clientid string, tasktype string) {
 	taskid := query.Get_task_id(clientid, tasktype)
 	Change_task_status(taskid, 4)
-	go RequestToUser(clientid)
+	RequestToUser(clientid)
 }
 
 func Change_task_status(taskid string, status int) {

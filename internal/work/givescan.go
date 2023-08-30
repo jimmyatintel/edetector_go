@@ -8,14 +8,15 @@ import (
 	"edetector_go/internal/risklevel"
 	"edetector_go/internal/task"
 	taskservice "edetector_go/internal/taskservice"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"net"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -113,7 +114,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		values = append(values, "risklevel", "scan")
 		uuid := uuid.NewString()
 		m_tmp := memory.Memory{}
-		_, err := elasticquery.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
 		}
@@ -121,11 +122,11 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		if err != nil {
 			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToMainElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
 		}
-		err = elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
@@ -168,10 +169,8 @@ func updateScanProgress(key string) {
 		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
 			break
 		}
-		rowsAffected := query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
-		if rowsAffected != 0 {
-			go taskservice.RequestToUser(key)
-		}
+		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }
 
@@ -188,7 +187,7 @@ func scanNetworkElastic(id string, time string, key string, data string, ip stri
 		logger.Info("scan network", zap.Any("message", line))
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
-		err := elasticquery.SendToDetailsElastic(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &memory.MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &memory.MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
 		}
