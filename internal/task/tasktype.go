@@ -56,6 +56,7 @@ const (
 	START_GET_EXPLORER      UserTaskType = "StartGetExplorer"
 	START_COLLECTION        UserTaskType = "StartCollect"
 	USER_TRANSPORT_EXPLORER UserTaskType = "TransportExplorer"
+	TERMINATE               UserTaskType = "Terminate"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
@@ -102,5 +103,6 @@ var UserWorklist = []UserTaskType{
 	START_COLLECTION,
 	START_GET_EXPLORER,
 	USER_TRANSPORT_EXPLORER,
+	TERMINATE,
 	USER_UNDEFINE,
 }

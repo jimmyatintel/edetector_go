@@ -2,6 +2,11 @@
 
 ## Version
 
+### 2.0.6 (2023/8/31)
+Enhancements:
+- Add "Terminate" mission
+- 
+
 ### 2.0.5 (2023/8/30)
 Enhancements:
 - Enhance readability for the init function
