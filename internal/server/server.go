@@ -4,12 +4,13 @@ import (
 	"context"
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
-	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	fflag "edetector_go/pkg/fflag"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/request"
 
 	"edetector_go/pkg/redis"
 	"os"
@@ -84,7 +85,15 @@ func servershutdown() {
 			logger.Error("Update offline failed:", zap.Any("error", err.Error()))
 		}
 		logger.Info("offline ", zap.Any("message", client))
-		taskservice.RequestToUser(client)
+		handlingTasks, err := query.Load_stored_task("nil", client, 2, "nil")
+		if err != nil {
+			logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
+			continue
+		}
+		for _, t := range handlingTasks {
+			query.Failed_task(client, t[3])
+		}
+		request.RequestToUser(client)
 	}
 	redis.RedisClose()
 }

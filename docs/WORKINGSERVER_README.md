@@ -5,7 +5,8 @@
 ### 2.0.6 (2023/8/31)
 Enhancements:
 - Add "Terminate" mission
-- 
+- Merge internal/taskservice/taskdb.go into pkg/mariadb/query/taskservice.go
+- Move touser.go to pkg
 
 ### 2.0.5 (2023/8/30)
 Enhancements:

@@ -5,7 +5,6 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
@@ -128,7 +127,7 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	taskservice.Finish_task(p.GetRkey(), "StartScan")
+	query.Finish_task(p.GetRkey(), "StartScan")
 	return task.SUCCESS, nil
 }
 

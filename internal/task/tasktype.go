@@ -41,13 +41,16 @@ const (
 	GIVE_EXPLORER_END      TaskType = "GiveExplorerEnd"
 	GIVE_EXPLORER_ERROR    TaskType = "GiveExplorerError"
 
-	// collection
+	// new collection
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
 	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
 	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+
+	// terminate
+	TERMINATE_ALL TaskType = "TerminateAll"
 
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
@@ -94,6 +97,7 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	TERMINATE_ALL,
 }
 
 var UserWorklist = []UserTaskType{

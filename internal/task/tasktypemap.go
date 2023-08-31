@@ -31,5 +31,6 @@ func init() {
 		START_SCAN:         "StartScan",
 		START_GET_DRIVE:    "StartGetDrive",
 		START_COLLECTION:   "StartCollect",
+		TERMINATE:          "Terminate",
 	}
 }

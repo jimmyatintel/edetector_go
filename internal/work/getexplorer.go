@@ -5,8 +5,8 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"strings"
 
@@ -51,7 +51,7 @@ func HandleExpolorer(p packet.Packet) {
 		}
 	}
 	logger.Info("Finish all drives: ", zap.Any("message", key))
-	taskservice.Finish_task(key, "StartGetDrive")
+	query.Finish_task(key, "StartGetDrive")
 }
 
 func StartGetExplorer(p packet.UserPacket) error {

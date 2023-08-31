@@ -3,12 +3,12 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/config"
-	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"path/filepath"
 	"time"
@@ -89,7 +89,7 @@ func Main(version string) {
 		if err != nil {
 			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 		}
-		taskservice.Finish_task(agent, "StartCollect")
+		query.Finish_task(agent, "StartCollect")
 		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }

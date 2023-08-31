@@ -12,6 +12,7 @@ import (
 	"edetector_go/internal/task"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 
 	"github.com/gin-contrib/cors"
@@ -85,10 +86,13 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	_, err = taskFunc(NewPacket)
 	if err != nil {
 		logger.Error(string(NewPacket.GetUserTaskType())+" task failed:", zap.Any("error", err.Error()))
-		Failed_task(NewPacket.GetRkey(), task.UserTaskTypeMap[NewPacket.GetUserTaskType()])
+		UsertaskType, ok := task.UserTaskTypeMap[NewPacket.GetUserTaskType()]
+		if ok {
+			query.Failed_task(NewPacket.GetRkey(), UsertaskType)
+		}
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		Finish_task(NewPacket.GetRkey(), "ChangeDetectMode")
+		query.Finish_task(NewPacket.GetRkey(), "ChangeDetectMode")
 	}
 }

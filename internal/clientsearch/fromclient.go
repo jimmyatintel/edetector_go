@@ -4,15 +4,16 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
-	"edetector_go/internal/taskservice"
 
 	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
+	"edetector_go/pkg/request"
 	"net"
 
 	"go.uber.org/zap"
@@ -86,7 +87,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					logger.Error("Update online failed:", zap.Any("error", err.Error()))
 				}
 				if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
-					taskservice.RequestToUser(key)
+					request.RequestToUser(key)
 				}
 			}
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
@@ -99,7 +100,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
 				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
 				if ok {
-					taskservice.Failed_task(NewPacket.GetRkey(), taskType)
+					query.Failed_task(NewPacket.GetRkey(), taskType)
 				}
 				return
 			}
@@ -154,7 +155,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error(string(NewPacket.GetTaskType())+" task failed:", zap.Any("error", err.Error()))
 				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
 				if ok {
-					taskservice.Failed_task(NewPacket.GetRkey(), taskType)
+					query.Failed_task(NewPacket.GetRkey(), taskType)
 				}
 				return
 			}
