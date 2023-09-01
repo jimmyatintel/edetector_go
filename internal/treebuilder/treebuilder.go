@@ -2,12 +2,14 @@ package treebuilder
 
 import (
 	"edetector_go/config"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"os"
 	"strconv"
 	"strings"
@@ -54,6 +56,10 @@ func builder_init() {
 		rabbitmq.Rabbit_init()
 		logger.Info("rabbit is enabled.")
 	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+		elastic.Elastic_init()
+		logger.Info("elastic is enabled.")
+	}
 }
 
 func Main(version string) {
@@ -73,6 +79,9 @@ func Main(version string) {
 		// record the relation
 		var rootInd int
 		lines := strings.Split(string(explorerContent), "\n")
+		if terminateDrive(agent, explorerFile) {
+			continue
+		}
 		for _, line := range lines {
 			if len(line) == 0 {
 				continue
@@ -99,9 +108,15 @@ func Main(version string) {
 			}
 		}
 		logger.Info("record the relation")
+		if terminateDrive(agent, explorerFile) {
+			continue
+		}
 		// tree traversal & send to elastic(relation)
 		treeTraversal(agent, rootInd, true, "")
 		logger.Info("tree traversal & send to elastic (relation)")
+		if terminateDrive(agent, explorerFile) {
+			continue
+		}
 		// send to elastic (main & details)
 		for _, line := range lines {
 			if len(line) == 0 {
@@ -127,15 +142,12 @@ func Main(version string) {
 			time.Sleep(1 * time.Microsecond)
 		}
 		logger.Info("send to elastic (main & details)")
-		// clear
-		UUIDMap = make(map[string]int)
-		RelationMap[agent] = nil
-		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
-		err = file.MoveFile(explorerFile, dstPath)
-		if err != nil {
-			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		clearBuilder(agent, explorerFile)
+		if terminateDrive(agent, explorerFile) {
+			continue
 		}
 		logger.Info("Task finished: ", zap.Any("message", agent))
+		clearBuilder(agent, explorerFile)
 	}
 }
 
@@ -185,5 +197,29 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 	}
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, UUIDMap[uuid], false, path)
+	}
+}
+
+func terminateDrive(agent string, explorerFile string) bool {
+	var flag = false
+	if redis.RedisGetInt(agent+"-terminateDrive") == 1 {
+		flag = true
+		redis.RedisSet(agent+"-terminateDrive", 0)
+		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
+		clearBuilder(agent, explorerFile)
+	}
+	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
+		query.Finish_task(agent, "Terminate")
+	}
+	return flag
+}
+
+func clearBuilder(agent string, explorerFile string) {
+	UUIDMap = make(map[string]int)
+	RelationMap[agent] = nil
+	dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
+	err := file.MoveFile(explorerFile, dstPath)
+	if err != nil {
+		logger.Error("Error moving file: ", zap.Any("error", err.Error()))
 	}
 }

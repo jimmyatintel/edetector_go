@@ -10,6 +10,7 @@ import (
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"path/filepath"
 	"time"
 
@@ -54,6 +55,7 @@ func parser_init() {
 func Main(version string) {
 	parser_init()
 	logger.Info("Welcome to edetector dbparser: ", zap.Any("version", version))
+outerloop:
 	for {
 		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
@@ -78,17 +80,16 @@ func Main(version string) {
 			continue
 		}
 		for _, tableName := range tableNames {
+			if terminateCollect(agent, dbFile, db) {
+				continue outerloop
+			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
 				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
 				continue
 			}
 		}
-		db.Close()
-		err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
-		if err != nil {
-			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
-		}
+		closeParser(db, dbFile, agent)
 		query.Finish_task(agent, "StartCollect")
 		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
@@ -112,4 +113,26 @@ func getTableNames(db *sql.DB) ([]string, error) {
 		return nil, err
 	}
 	return tableNames, nil
+}
+
+func terminateCollect(agent string, dbFile string, db *sql.DB) bool {
+	var flag = false
+	if redis.RedisGetInt(agent+"-terminateCollect") == 1 {
+		flag = true
+		redis.RedisSet(agent+"-terminateCollect", 0)
+		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
+		query.Terminated_task(agent, "StartCollect")
+	}
+	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
+		query.Finish_task(agent, "Terminate")
+	}
+	return flag
+}
+
+func closeParser(db *sql.DB, dbFile string, agent string) {
+	db.Close()
+	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
+	if err != nil {
+		logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+	}
 }
