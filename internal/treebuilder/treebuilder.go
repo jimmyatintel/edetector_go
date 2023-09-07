@@ -142,12 +142,11 @@ func Main(version string) {
 			time.Sleep(1 * time.Microsecond)
 		}
 		logger.Info("send to elastic (main & details)")
-		clearBuilder(agent, explorerFile)
 		if terminateDrive(agent, explorerFile) {
 			continue
 		}
-		logger.Info("Task finished: ", zap.Any("message", agent))
 		clearBuilder(agent, explorerFile)
+		logger.Info("Task finished: ", zap.Any("message", agent))
 	}
 }
 
@@ -202,10 +201,13 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 
 func terminateDrive(agent string, explorerFile string) bool {
 	var flag = false
+	if redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
+		return flag
+	}
 	if redis.RedisGetInt(agent+"-terminateDrive") == 1 {
 		flag = true
-		redis.RedisSet(agent+"-terminateDrive", 0)
 		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
+		redis.RedisSet(agent+"-terminateDrive", 0)
 		clearBuilder(agent, explorerFile)
 	}
 	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {

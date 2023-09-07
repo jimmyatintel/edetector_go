@@ -80,7 +80,8 @@ outerloop:
 			continue
 		}
 		for _, tableName := range tableNames {
-			if terminateCollect(agent, dbFile, db) {
+			if terminateCollect(agent) {
+				closeParser(db, dbFile, agent)
 				continue outerloop
 			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
@@ -115,13 +116,16 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	return tableNames, nil
 }
 
-func terminateCollect(agent string, dbFile string, db *sql.DB) bool {
+func terminateCollect(agent string) bool {
 	var flag = false
+	if redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
+		return flag
+	}
 	if redis.RedisGetInt(agent+"-terminateCollect") == 1 {
 		flag = true
-		redis.RedisSet(agent+"-terminateCollect", 0)
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		query.Terminated_task(agent, "StartCollect")
+		redis.RedisSet(agent+"-terminateCollect", 0)
 	}
 	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
 		query.Finish_task(agent, "Terminate")

@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-
-	"go.uber.org/zap"
 )
 
 func Load_stored_task(task_id string, client_id string, status int, tasktype string) ([][]string, error) {
@@ -49,8 +47,8 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 	return result, nil
 }
 
-func Update_task_status(taskid string, status int) {
-	_, err := mariadb.DB.Exec("update task set status = ? where task_id = ?", status, taskid)
+func Update_task_status(clientid string, tasktype string, old_status int, new_status int) {
+	_, err := mariadb.DB.Exec("update task set status = ? where client_id = ? and type = ? and status = ?", new_status, clientid, tasktype, old_status)
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -75,13 +73,7 @@ func Update_task_timestamp(clientid string, tasktype string) {
 }
 
 func Finish_task(clientid string, tasktype string) {
-	result, err := Load_stored_task("nil", clientid, -1, tasktype)
-	if err != nil {
-		logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
-		return
-	}
-	taskid := result[0][0]
-	Update_task_status(taskid, 3)
+	Update_task_status(clientid, tasktype, 2, 3)
 	if tasktype == "ChangeDetectMode" {
 		return
 	}
@@ -89,20 +81,17 @@ func Finish_task(clientid string, tasktype string) {
 	request.RequestToUser(clientid)
 }
 
-func Terminated_task(taskid string, clientid string, tasktype string) {
-	Update_task_status(taskid, 4)
+func Terminated_task(clientid string, tasktype string) {
+	Update_task_status(clientid, tasktype, 2, 4)
 	Update_task_timestamp(clientid, tasktype)
 	request.RequestToUser(clientid)
 }
 
 func Failed_task(clientid string, tasktype string) {
-	result, err := Load_stored_task("nil", clientid, -1, tasktype)
-	if err != nil {
-		logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
+	Update_task_status(clientid, tasktype, 2, 5)
+	if tasktype == "ChangeDetectMode" {
 		return
 	}
-	taskid := result[0][0]
-	Update_task_status(taskid, 5)
 	Update_task_timestamp(clientid, tasktype)
 	request.RequestToUser(clientid)
 }
