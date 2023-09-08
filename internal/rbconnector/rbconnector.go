@@ -33,12 +33,12 @@ func connector_init() {
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
+		logger.Panic("Error loading feature flag")
 		return
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
@@ -80,12 +80,12 @@ func high_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("unmarshal error: " + err.Error())
 			continue
 		}
 		err = elastic.IndexRequest(m.Index, m.Data)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("index request error: " + err.Error())
 			continue
 		}
 		msg.Ack(false)
@@ -104,7 +104,7 @@ func mid_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("unmarshal error: " + err.Error())
 			continue
 		}
 		mid_mutex.Lock()
@@ -130,7 +130,7 @@ func low_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("unmarshal error: " + err.Error())
 			continue
 		}
 		low_mutex.Lock()
@@ -152,7 +152,7 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Error("bulk index request error: " + err.Error())
 				continue
 			}
 			*bulkdata = nil

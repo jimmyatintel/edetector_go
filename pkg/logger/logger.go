@@ -61,6 +61,15 @@ func InitLogger(path string, hostname string, app string) {
 	Log = zap.New(core)
 }
 
+func Debug(message string, fields ...zap.Field) {
+	if Log == nil {
+		return
+	}
+	callerFields := getCallerInfoForLog()
+	fields = append(fields, callerFields...)
+	Log.Debug(message, fields...)
+}
+
 func Info(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
@@ -70,13 +79,13 @@ func Info(message string, fields ...zap.Field) {
 	Log.Info(message, fields...)
 }
 
-func Debug(message string, fields ...zap.Field) {
+func Warn(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
-	Log.Debug(message, fields...)
+	Log.Warn(message, fields...)
 }
 
 func Error(message string, fields ...zap.Field) {
@@ -88,13 +97,13 @@ func Error(message string, fields ...zap.Field) {
 	Log.Error(message, fields...)
 }
 
-func Warn(message string, fields ...zap.Field) {
+func Panic(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
-	Log.Warn(message, fields...)
+	Log.Panic(message, fields...)
 }
 
 func getCallerInfoForLog() (callerFields []zap.Field) {

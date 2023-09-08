@@ -32,12 +32,12 @@ func Connect_init() int {
 		logger.Info("tcp is enabled")
 		Client_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
+			logger.Panic("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
 		Client_detect_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
+			logger.Panic("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
 	}
@@ -45,12 +45,12 @@ func Connect_init() int {
 		logger.Info("udp is enabled")
 		Client_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
+			logger.Panic("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
 		Client_detect_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
+			logger.Panic("Error listening:", zap.Any("error", err.Error()))
 			return 1
 		}
 	}
@@ -160,7 +160,7 @@ func Connection_close(Connection_close_chan chan<- int) {
 
 func Main(ctx context.Context, Connection_close_chan chan<- int) {
 	if Connect_init() == 1 {
-		logger.Error("Init Connection error")
+		logger.Panic("Init Connection error")
 		os.Exit(1)
 	}
 	Connect_start(ctx, Connection_close_chan)

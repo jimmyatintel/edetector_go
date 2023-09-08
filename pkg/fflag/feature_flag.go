@@ -22,7 +22,7 @@ func init_from_gitlab() {
 		unleash.WithListener(&metricsInterface{}),
 	)
 	if err != nil {
-		logger.Error("Error init from github", zap.Any("error", err.Error()))
+		logger.Panic("Error init from github", zap.Any("error", err.Error()))
 	}
 	if unleash.IsEnabled("debug_mode") {
 		logger.Info("debug_mode is enabled")
@@ -35,6 +35,6 @@ func Get_fflag() {
 	FFLAG = client
 	isEnabled, _ := FFLAG.FeatureEnabled("always_true")
 	if !isEnabled {
-		logger.Error("Connection to Flagsmith failed")
+		logger.Panic("Connection to Flagsmith failed")
 	}
 }

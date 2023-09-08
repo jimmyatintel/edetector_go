@@ -27,12 +27,12 @@ func parser_init() {
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
+		logger.Panic("Error loading feature flag")
 		return
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
@@ -40,7 +40,7 @@ func parser_init() {
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
 	}
 	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
+		logger.Panic("Error connecting to mariadb: " + err.Error())
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()

@@ -24,12 +24,12 @@ import (
 func server_init() {
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
+		logger.Panic("Error loading feature flag")
 		return
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
 		return
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
@@ -37,11 +37,11 @@ func server_init() {
 		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("WORKER_LOG_FILE")))
 	}
 	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
+		logger.Panic("Error connecting to mariadb: " + err.Error())
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {
-			logger.Error("Error connecting to redis")
+			logger.Panic("Error connecting to redis")
 		}
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {

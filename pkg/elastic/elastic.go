@@ -41,7 +41,7 @@ func Elastic_init() {
 	}
 	es, err = elasticsearch.NewClient(cfg)
 	if err != nil {
-		logger.Error("Error connecting to elastic: " + err.Error())
+		logger.Panic("Error connecting to elastic: " + err.Error())
 	}
 }
 
@@ -54,7 +54,7 @@ func CreateIndex(name string) {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("error creating index: " + err.Error())
 	}
 	defer res.Body.Close()
 	logger.Info(res.String())
