@@ -25,6 +25,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	defer conn.Close()
 	buf := make([]byte, 2048)
 	key := "null"
+	agentTaskType := ""
 	if task_chan != nil {
 		go func() {
 			for {
@@ -44,12 +45,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		reqLen, err := conn.Read(buf)
 		if err != nil {
 			if err.Error() == "EOF" {
-				if key != "null" {
-					err = redis.Offline(key)
-					if err != nil {
-						logger.Error("Update offline error:", zap.Any("error", err.Error()))
-					}
-				}
 				logger.Info(string(key) + " " + string(port) + " Connection close")
 				return
 			} else {
@@ -67,6 +62,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
+			}
+			if agentTaskType == "" {
+				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
+				if ok {
+					agentTaskType = taskType
+				}
 			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
@@ -98,9 +99,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
-				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
-				if ok {
-					query.Failed_task(NewPacket.GetRkey(), taskType)
+				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
 				return
 			}
@@ -132,6 +132,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 				return
 			}
+			if agentTaskType == "" {
+				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
+				if ok {
+					agentTaskType = taskType
+				}
+			}
 			if NewPacket.GetTaskType() == "Undefine" {
 				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
 				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
@@ -153,9 +159,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error(string(NewPacket.GetTaskType())+" task failed:", zap.Any("error", err.Error()))
-				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
-				if ok {
-					query.Failed_task(NewPacket.GetRkey(), taskType)
+				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
 				return
 			}
