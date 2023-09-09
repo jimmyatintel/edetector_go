@@ -28,7 +28,7 @@ func Redis_init() *redis.Client {
 	_, err := RedisClient.Ping(context.Background()).Result()
 	if err != nil {
 		logger.Panic("Error connecting to redis")
-		return nil
+		panic(err)
 	}
 	logger.Info("redis is enabled")
 	return RedisClient

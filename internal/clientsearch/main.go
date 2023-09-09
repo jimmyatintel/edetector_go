@@ -33,12 +33,12 @@ func Connect_init() int {
 		Client_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
 			logger.Panic("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			panic(err)
 		}
 		Client_detect_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
 			logger.Panic("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			panic(err)
 		}
 	}
 	if Udp_enable, err = fflag.FFLAG.FeatureEnabled("client_udp"); Udp_enable && err == nil {
@@ -46,12 +46,12 @@ func Connect_init() int {
 		Client_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
 			logger.Panic("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			panic(err)
 		}
 		Client_detect_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
 			logger.Panic("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			panic(err)
 		}
 	}
 	return 0

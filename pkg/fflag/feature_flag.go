@@ -23,6 +23,7 @@ func init_from_gitlab() {
 	)
 	if err != nil {
 		logger.Panic("Error init from github", zap.Any("error", err.Error()))
+		panic(err)
 	}
 	if unleash.IsEnabled("debug_mode") {
 		logger.Info("debug_mode is enabled")
@@ -36,5 +37,6 @@ func Get_fflag() {
 	isEnabled, _ := FFLAG.FeatureEnabled("always_true")
 	if !isEnabled {
 		logger.Panic("Connection to Flagsmith failed")
+		panic("Connection to Flagsmith failed")
 	}
 }

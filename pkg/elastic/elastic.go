@@ -42,6 +42,7 @@ func Elastic_init() {
 	es, err = elasticsearch.NewClient(cfg)
 	if err != nil {
 		logger.Panic("Error connecting to elastic: " + err.Error())
+		panic(err)
 	}
 }
 

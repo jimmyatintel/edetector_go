@@ -34,12 +34,12 @@ func connector_init() {
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Panic("Error loading feature flag")
-		return
+		panic("error loading feature flag")
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
-		return
+		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "CONNECTOR", "connector")

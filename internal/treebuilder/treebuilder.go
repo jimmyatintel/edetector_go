@@ -38,12 +38,12 @@ func builder_init() {
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
 		logger.Panic("Error loading feature flag")
-		return
+		panic("Error loading feature flag")
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
-		return
+		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("BUILDER_LOG_FILE"), "treebuilder", "TREEBUILDER")
@@ -51,6 +51,7 @@ func builder_init() {
 	}
 	if err := mariadb.Connect_init(); err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
