@@ -1,15 +1,20 @@
 package work
 
 import (
+	"bytes"
 	"edetector_go/config"
+	C_AES "edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"net"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,8 +24,15 @@ import (
 	"go.uber.org/zap"
 )
 
+var scanWorkingPath = "scanWorking"
+var scanUstagePath = "scanUnstage"
 var scanFirstPart float64
 var scanSecondPart float64
+
+func init() {
+	file.CheckDir(scanWorkingPath)
+	file.CheckDir(scanUstagePath)
+}
 
 // new scan
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -35,7 +47,6 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	redis.RedisSet(key+"-ScanTotal", total)
 	redis.RedisSet(key+"-ScanCount", 0)
 	redis.RedisSet(key+"-ScanProgress", 0)
-	redis.RedisSet(key+"-ScanMsg", "")
 	go updateScanProgress(key)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -60,11 +71,23 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	return task.SUCCESS, nil
 }
 
-func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveScanFragment: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
-	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	logger.Info("GiveScanDataInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	// init scan info
+	total, err := strconv.Atoi(p.GetMessage())
+	if err != nil {
+		return task.FAIL, err
+	}
+	redis.RedisSet(key+"-ScanTotal", total)
+	redis.RedisSet(key+"-ScanCount", 0)
+	// create or truncate the zip file
+	path := filepath.Join(scanWorkingPath, (p.GetRkey() + ".zip"))
+	err = file.CreateFile(path)
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -73,12 +96,81 @@ func GiveScanFragment(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	ip, name := query.GetMachineIPandName(key)
 	logger.Debug("GiveScan: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	redis.RedisSet_AddString(key+"-ScanMsg", p.GetMessage())
+	// write file
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
+	path := filepath.Join(scanWorkingPath, (key + ".zip"))
+	err := file.WriteFile(path, decrypt_buf)
+	if err != nil {
+		return task.FAIL, err
+	}
+	// update progress
+	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
+	progress := int(scanFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ScanCount"), redis.RedisGetInt(key+"-ScanTotal"), 65436, scanSecondPart)
+	redis.RedisSet(key+"-ScanProgress", progress)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveScanEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+
+	srcPath := filepath.Join(scanWorkingPath, (key + ".zip"))
+	workPath := filepath.Join(scanWorkingPath, key+".txt")
+	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))
+	// truncate data
+	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ScanTotal"))
+	if err != nil {
+		return task.FAIL, err
+	}
+	// unzip data
+	err = file.UnzipFile(srcPath, workPath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	// move to Unstage
+	err = file.MoveFile(workPath, unstagePath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = parseScan(unstagePath, p.GetRkey())
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	query.Finish_task(key, "StartScan")
+	return task.SUCCESS, nil
+}
+
+func updateScanProgress(key string) {
+	for {
+		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
+			break
+		}
+		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
+	}
+}
+
+func parseScan(path string, key string) error {
+	ip, name := query.GetMachineIPandName(key)
+	logger.Info("ParseScan: ", zap.Any("message", key))
 	// send to elasticsearch
-	lines := strings.Split(redis.RedisGetString(key+"-ScanMsg"), "\n")
-	redis.RedisSet(key+"-ScanMsg", "")
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		if len(line) == 0 {
 			continue
@@ -95,50 +187,22 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
-			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
+			return err
 		}
 		values[17], err = Getriskscore(m_tmp)
 		if err != nil {
-			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
+			return err
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
+			return err
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
+			return err
 		}
 	}
-	// update progress
-	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
-	progress := int(scanFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ScanCount"), redis.RedisGetInt(key+"-ScanTotal"), 1, scanSecondPart)
-	redis.RedisSet(key+"-ScanProgress", progress)
-	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveScanEnd: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	query.Finish_task(p.GetRkey(), "StartScan")
-	return task.SUCCESS, nil
-}
-
-func updateScanProgress(key string) {
-	for {
-		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
-			break
-		}
-		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
-		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
-	}
+	return nil
 }
 
 func scanNetworkElastic(id string, time string, key string, data string, ip string, name string) {

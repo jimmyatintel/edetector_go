@@ -5,11 +5,11 @@ var UserTaskTypeMap map[UserTaskType]string
 
 func init() {
 	TaskTypeMap = map[TaskType]string{
-		GIVE_SCAN_INFO:     "StartScan",
-		GIVE_SCAN_PROGRESS: "StartScan",
-		GIVE_SCAN_FRAGMENT: "StartScan",
-		GIVE_SCAN:          "StartScan",
-		GIVE_SCAN_END:      "StartScan",
+		GIVE_SCAN_INFO:      "StartScan",
+		GIVE_SCAN_PROGRESS:  "StartScan",
+		GIVE_SCAN_DATA_INFO: "StartScan",
+		GIVE_SCAN:           "StartScan",
+		GIVE_SCAN_END:       "StartScan",
 
 		GIVE_DRIVE_INFO:        "StartGetDrive",
 		EXPLORER:               "StartGetDrive",
