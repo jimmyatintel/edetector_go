@@ -49,6 +49,11 @@ const (
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
 
+	// image
+	GIVE_IMAGE_INFO TaskType = "GiveImageInfo"
+	GIVE_IMAGE      TaskType = "GiveImage"
+	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
+
 	// terminate
 	TERMINATE_ALL TaskType = "TerminateAll"
 
@@ -97,6 +102,9 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	GIVE_IMAGE_INFO,
+	GIVE_IMAGE,
+	GIVE_IMAGE_END,
 	TERMINATE_ALL,
 }
 
