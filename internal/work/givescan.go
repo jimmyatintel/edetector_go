@@ -225,7 +225,6 @@ func scanNetworkElastic(id string, time string, key string, data string, ip stri
 		line = re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
 		line = strings.ReplaceAll(line, ">", "")
 		line = id + "|" + time + "|" + line
-		logger.Info("scan network", zap.Any("message", line))
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
 		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
