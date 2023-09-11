@@ -49,7 +49,7 @@ func Offline(KeyNum string) {
 	}
 	handlingTasks, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
 	if err != nil {
-		logger.Warn("Get handling tasks failed:", zap.Any("error", err.Error()))
+		logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
 		return
 	}
 	for _, t := range handlingTasks {

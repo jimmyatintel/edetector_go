@@ -125,16 +125,16 @@ func getTableNames(db *sql.DB) ([]string, error) {
 
 func terminateCollect(agent string) bool {
 	var flag = false
-	if redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
+	if redis.RedisExists(agent+"-terminateFinishIteration") && redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
 		return flag
 	}
-	if redis.RedisGetInt(agent+"-terminateCollect") == 1 {
+	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		query.Terminated_task(agent, "StartCollect")
 		redis.RedisSet(agent+"-terminateCollect", 0)
 	}
-	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
+	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
 		query.Finish_task(agent, "Terminate")
 	}
 	return flag

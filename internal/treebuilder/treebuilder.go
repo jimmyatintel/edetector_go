@@ -208,16 +208,16 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 
 func terminateDrive(agent string, explorerFile string) bool {
 	var flag = false
-	if redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
+	if redis.RedisExists(agent+"-terminateFinishIteration") && redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
 		return flag
 	}
-	if redis.RedisGetInt(agent+"-terminateDrive") == 1 {
+	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisGetInt(agent+"-terminateDrive") == 1 {
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
 		redis.RedisSet(agent+"-terminateDrive", 0)
 		clearBuilder(agent, explorerFile)
 	}
-	if redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
+	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
 		query.Finish_task(agent, "Terminate")
 	}
 	return flag

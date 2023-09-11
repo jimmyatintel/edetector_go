@@ -4,7 +4,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/request"
-	"errors"
 	"fmt"
 	"strconv"
 )
@@ -41,8 +40,7 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 		result = append(result, tmp)
 	}
 	if len(result) == 0 {
-		err := errors.New("task not found")
-		return result, err
+		logger.Info("No handling tasks for:" + client_id)
 	}
 	return result, nil
 }
