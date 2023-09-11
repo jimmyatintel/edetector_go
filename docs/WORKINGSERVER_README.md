@@ -7,6 +7,7 @@ Enhancements:
 - Add "Terminate" mission
 - Add "Image" mission
 - Add "ReadyScan" function
+- Enhance readability for "fromclient.go"
 - Identify the task type from agent connection
 - Elevate certain error-level messages to the panic level
 - Zip scan data

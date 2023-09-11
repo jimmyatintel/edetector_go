@@ -48,18 +48,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
 			return
 		}
+		Data_acache := make([]byte, 0)
+		Data_acache = append(Data_acache, buf[:reqLen]...)
 		if reqLen == 1024 {
-			decrypt_buf = bytes.Repeat([]byte{0}, reqLen)
-			C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
 			NewPacket = new(packet.WorkPacket)
-			err := NewPacket.NewPacket(decrypt_buf, buf)
-			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
-				continue
-			}
 		} else if reqLen > 1024 {
-			Data_acache := make([]byte, 0)
-			Data_acache = append(Data_acache, buf[:reqLen]...)
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
@@ -68,16 +61,16 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				}
 				Data_acache = append(Data_acache, buf[:reqLen]...)
 			}
-			decrypt_buf := bytes.Repeat([]byte{0}, len(Data_acache))
-			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
 			NewPacket = new(packet.DataPacket)
-			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
-			if err != nil {
-				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
-				continue
-			}
 		} else {
 			logger.Error("Invalid packet(short):", zap.Any("message", decrypt_buf))
+			continue
+		}
+		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
+		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
+		if err != nil {
+			logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
 			continue
 		}
 		if key == "unknown" {
