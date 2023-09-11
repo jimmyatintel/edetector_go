@@ -53,6 +53,12 @@ func builder_init() {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
 		panic(err)
 	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+		if db := redis.Redis_init(); db == nil {
+			logger.Panic("Error connecting to redis")
+			panic(err)
+		}
+	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
 		logger.Info("rabbit is enabled.")

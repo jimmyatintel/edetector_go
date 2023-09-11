@@ -70,7 +70,7 @@ func RedisGetString(key string) string {
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis " + err.Error())
+		logger.Warn("Error getting value from redis " + err.Error())
 		return ""
 	}
 	return val
@@ -82,7 +82,7 @@ func RedisGetInt(key string) int {
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis " + err.Error())
+		logger.Warn("Error getting value from redis " + err.Error())
 		return 0
 	}
 	val_int, err := strconv.Atoi(val)

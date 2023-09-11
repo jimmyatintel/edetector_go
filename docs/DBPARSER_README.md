@@ -6,6 +6,8 @@
 Enhancements:
 - Add extension name to the log to differentiate between the builder and parser
 - Elevate certain error-level messages to the panic level
+- Add "Terminate" mission
+    - Add redis service
 
 ### 2.0.3 (2023/8/31)
 Enhancements:

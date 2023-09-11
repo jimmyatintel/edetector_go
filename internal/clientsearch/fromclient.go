@@ -41,71 +41,21 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}()
 	}
 	for {
+		var NewPacket packet.Packet
+		var decrypt_buf []byte
 		reqLen, err := conn.Read(buf)
 		if err != nil {
-			if agentTaskType != "CollectProgress" {
-				logger.Warn("Connection close: ", zap.Any("message", string(key)+" ,Type: "+agentTaskType+" ,Error: "+err.Error()))
-			}
-			if agentTaskType == "StartScan" && retryScanFlag {
-				query.Update_task_status(key, agentTaskType, 2, 0)
-			} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
-				query.Failed_task(key, agentTaskType)
-			} else if agentTaskType == "Main" {
-				redis.Offline(key)
-			}
+			connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
 			return
 		}
-		decrypt_buf := bytes.Repeat([]byte{0}, reqLen)
-		C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
 		if reqLen == 1024 {
-			var NewPacket = new(packet.WorkPacket)
+			decrypt_buf = bytes.Repeat([]byte{0}, reqLen)
+			C_AES.Decryptbuffer(buf, reqLen, decrypt_buf)
+			NewPacket = new(packet.WorkPacket)
 			err := NewPacket.NewPacket(decrypt_buf, buf)
 			if err != nil {
 				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
-				return
-			}
-			if key == "unknown" {
-				key = NewPacket.GetRkey()
-			}
-			if agentTaskType == "unknown" {
-				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
-				if ok {
-					agentTaskType = taskType
-				}
-			}
-			if NewPacket.GetTaskType() == "Undefine" {
-				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
-				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
-				return
-			}
-			if NewPacket.GetTaskType() == task.READY_SCAN {
-				retryScanFlag = true
-			} else {
-				retryScanFlag = false
-			}
-			if NewPacket.GetTaskType() == task.GIVE_INFO {
-				// wait for key to join the packet
-				Clientlist = append(Clientlist, key)
-				channelmap.AssignTaskChannel(key, &task_chan)
-				logger.Info("set worker key-channel mapping: ", zap.Any("message", key))
-			} else {
-				redis.Online(key)
-			}
-			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
-			if !ok {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
-				return
-			}
-			_, err = taskFunc(NewPacket, conn)
-			if err != nil {
-				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
-				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
-					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
-				} else if agentTaskType == "Main" {
-					redis.Offline(key)
-				}
-				return
+				continue
 			}
 		} else if reqLen > 1024 {
 			Data_acache := make([]byte, 0)
@@ -113,54 +63,62 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
-					logger.Warn("Connection close: ", zap.Any("message", string(key)+" ,Type: "+agentTaskType+" ,Error: "+err.Error()))
-					if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
-						query.Failed_task(key, agentTaskType)
-					}
+					connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
 					return
 				}
 				Data_acache = append(Data_acache, buf[:reqLen]...)
 			}
 			decrypt_buf := bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
-			var NewPacket = new(packet.DataPacket)
+			NewPacket = new(packet.DataPacket)
 			err := NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
 				logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
-				return
-			}
-			if key == "unknown" {
-				key = NewPacket.GetRkey()
-			}
-			if agentTaskType == "unknown" {
-				taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
-				if ok {
-					agentTaskType = taskType
-				}
-			}
-			if NewPacket.GetTaskType() == "Undefine" {
-				nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-				logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
-				logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
-				return
-			}
-			retryScanFlag = false
-			redis.Online(key)
-			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
-			if !ok {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
-				return
-			}
-			_, err = taskFunc(NewPacket, conn)
-			if err != nil {
-				logger.Error(string(NewPacket.GetTaskType())+" task failed:", zap.Any("error", err.Error()))
-				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
-					query.Failed_task(key, agentTaskType)
-				}
-				return
+				continue
 			}
 		} else {
 			logger.Error("Invalid packet(short):", zap.Any("message", decrypt_buf))
+			continue
+		}
+		if key == "unknown" {
+			key = NewPacket.GetRkey()
+		}
+		if agentTaskType == "unknown" {
+			taskType, ok := task.TaskTypeMap[NewPacket.GetTaskType()]
+			if ok {
+				agentTaskType = taskType
+			}
+		}
+		if NewPacket.GetTaskType() == "Undefine" {
+			nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
+			logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
+			logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
+			continue
+		}
+		if NewPacket.GetTaskType() == task.READY_SCAN {
+			retryScanFlag = true
+		} else {
+			retryScanFlag = false
+		}
+		if NewPacket.GetTaskType() == task.GIVE_INFO {
+			// wait for key to join the packet
+			Clientlist = append(Clientlist, key)
+			channelmap.AssignTaskChannel(key, &task_chan)
+			logger.Info("set worker key-channel mapping: ", zap.Any("message", key))
+		} else {
+			redis.Online(key)
+		}
+		taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+		if !ok {
+			logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+			continue
+		}
+		_, err = taskFunc(NewPacket, conn)
+		if err != nil {
+			logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
+			if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+				query.Failed_task(NewPacket.GetRkey(), agentTaskType)
+			}
 			continue
 		}
 	}
@@ -168,4 +126,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("udp")
+}
+
+func connectionClosedByAgent(key string, agentTaskType string, retryScanFlag bool, err error) {
+	if agentTaskType != "CollectProgress" {
+		logger.Warn("Connection close: ", zap.Any("message", string(key)+" ,Type: "+agentTaskType+" ,Error: "+err.Error()))
+	}
+	if agentTaskType == "StartScan" && retryScanFlag {
+		query.Update_task_status(key, agentTaskType, 2, 0)
+	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+		query.Failed_task(key, agentTaskType)
+	} else if agentTaskType == "Main" {
+		redis.Offline(key)
+	}
 }
