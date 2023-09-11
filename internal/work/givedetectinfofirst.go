@@ -7,6 +7,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"edetector_go/pkg/request"
 	"net"
 
 	"go.uber.org/zap"
@@ -18,6 +19,7 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	redis.RedisSet(key+"-DetectMsg", "")
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
+	request.RequestToUser(key) // online
 	err := clientsearchsend.SendTCPtoClient(p, task.UPDATE_DETECT_MODE, rt, conn)
 	if err != nil {
 		return task.FAIL, err

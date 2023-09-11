@@ -8,9 +8,7 @@ import (
 	fflag "edetector_go/pkg/fflag"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
-	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
-	"edetector_go/pkg/request"
 
 	"edetector_go/pkg/redis"
 	"os"
@@ -82,20 +80,7 @@ func Main(version string) {
 func servershutdown() {
 	// rabbitmq.Connection_close()
 	for _, client := range Client.Clientlist {
-		err := redis.Offline(client)
-		if err != nil {
-			logger.Error("Update offline failed:", zap.Any("error", err.Error()))
-		}
-		logger.Info("offline ", zap.Any("message", client))
-		handlingTasks, err := query.Load_stored_task("nil", client, 2, "nil")
-		if err != nil {
-			logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
-			continue
-		}
-		for _, t := range handlingTasks {
-			query.Failed_task(client, t[3])
-		}
-		request.RequestToUser(client)
+		redis.Offline(client)
 	}
 	redis.RedisClose()
 }

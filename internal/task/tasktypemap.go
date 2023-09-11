@@ -11,11 +11,12 @@ func init() {
 		GIVE_DETECT_PROCESS_FRAG: "DetectProcess",
 		GIVE_DETECT_PROCESS:      "DetectProcess",
 
-		GIVE_SCAN_INFO: "StartScan",
+		READY_SCAN: "StartScan",
 
-		GIVE_DRIVE_INFO: "StartGetDrive",
+		EXPLORER: "StartGetDrive",
 
-		GIVE_COLLECT_PROGRESS: "StartCollect",
+		GIVE_COLLECT_PROGRESS:  "CollectProgress",
+		GIVE_COLLECT_DATA_INFO: "StartCollect",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{

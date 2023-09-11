@@ -47,11 +47,16 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 	return result, nil
 }
 
-func Update_task_status(clientid string, tasktype string, old_status int, new_status int) {
-	_, err := mariadb.DB.Exec("update task set status = ? where client_id = ? and type = ? and status = ?", new_status, clientid, tasktype, old_status)
+func Update_task_status(clientid string, tasktype string, old_status int, new_status int) int {
+	result, err := mariadb.DB.Exec("update task set status = ? where client_id = ? and type = ? and status = ?", new_status, clientid, tasktype, old_status)
 	if err != nil {
 		logger.Error("error Update_task_status: " + err.Error())
 	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Error("error getting rowsAffected: " + err.Error())
+	}
+	return int(rowsAffected)
 }
 
 func Update_task_timestamp(clientid string, tasktype string) {
@@ -73,25 +78,31 @@ func Update_task_timestamp(clientid string, tasktype string) {
 }
 
 func Finish_task(clientid string, tasktype string) {
-	Update_task_status(clientid, tasktype, 2, 3)
+	rowsAffected := Update_task_status(clientid, tasktype, 2, 3)
 	if tasktype == "ChangeDetectMode" {
 		return
 	}
-	Update_task_timestamp(clientid, tasktype)
-	request.RequestToUser(clientid)
+	if rowsAffected > 0 {
+		Update_task_timestamp(clientid, tasktype)
+		request.RequestToUser(clientid)
+	}
 }
 
 func Terminated_task(clientid string, tasktype string) {
-	Update_task_status(clientid, tasktype, 2, 4)
-	Update_task_timestamp(clientid, tasktype)
-	request.RequestToUser(clientid)
+	rowsAffected := Update_task_status(clientid, tasktype, 2, 4)
+	if rowsAffected > 0 {
+		Update_task_timestamp(clientid, tasktype)
+		request.RequestToUser(clientid)
+	}
 }
 
 func Failed_task(clientid string, tasktype string) {
-	Update_task_status(clientid, tasktype, 2, 5)
+	rowsAffected := Update_task_status(clientid, tasktype, 2, 5)
 	if tasktype == "ChangeDetectMode" {
 		return
 	}
-	Update_task_timestamp(clientid, tasktype)
-	request.RequestToUser(clientid)
+	if rowsAffected > 0 {
+		Update_task_timestamp(clientid, tasktype)
+		request.RequestToUser(clientid)
+	}
 }

@@ -25,6 +25,7 @@ func init() {
 		task.GIVE_DETECT_PROCESS:      GiveDetectProcess,
 
 		// new scan
+		task.READY_SCAN:          ReadyScan,
 		task.GIVE_SCAN_INFO:      GiveScanInfo,
 		task.GIVE_SCAN_PROGRESS:  GiveScanProgress,
 		task.GIVE_SCAN_DATA_INFO: GiveScanDataInfo,

@@ -5,9 +5,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/mariadb/method"
-	"edetector_go/pkg/redis"
-
-	"go.uber.org/zap"
 )
 
 func Checkindex(KeyNum string, ip string, mac string) {
@@ -56,9 +53,5 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	)
 	if err != nil {
 		logger.Error("error add client_setting: " + err.Error())
-	}
-	err = redis.Offline(ClientInfo.KeyNum)
-	if err != nil {
-		logger.Error("Update Offline failed:", zap.Any("error", err.Error()))
 	}
 }

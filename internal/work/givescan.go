@@ -35,6 +35,15 @@ func init() {
 }
 
 // new scan
+func ReadyScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("ReadyScan: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
@@ -175,6 +184,7 @@ func parseScan(path string, key string) error {
 		if len(line) == 0 {
 			continue
 		}
+		line = strings.ReplaceAll(line, "\r", "")
 		values := strings.Split(line, "|")
 		if values[16] == "null" {
 			values[16] = "false"

@@ -2,6 +2,15 @@
 
 ## Version
 
+### 2.0.7 ()
+Enhancements:
+- Add "Terminate" mission
+- Add "Image" mission
+- Add "ReadyScan" function
+- Identify the task type from agent connection
+- Elevate certain error-level messages to the panic level
+- Zip scan data
+
 ### 2.0.6 (2023/8/31)
 Enhancements:
 - Add "Terminate" mission

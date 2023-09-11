@@ -24,6 +24,7 @@ const (
 
 	// new scan
 	GET_SCAN            TaskType = "GetScan"
+	READY_SCAN          TaskType = "ReadyScan"
 	GIVE_SCAN_INFO      TaskType = "GiveScanInfo"
 	GIVE_SCAN_PROGRESS  TaskType = "GiveScanProgress"
 	GIVE_SCAN_DATA_INFO TaskType = "GiveScanDataInfo"
@@ -82,6 +83,7 @@ var Worklist = []TaskType{
 	GIVE_DETECT_PROCESS_FRAG,
 	GIVE_DETECT_PROCESS,
 	GET_SCAN,
+	READY_SCAN,
 	GIVE_SCAN_INFO,
 	GIVE_SCAN_PROGRESS,
 	GIVE_SCAN_DATA_INFO,

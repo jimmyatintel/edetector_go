@@ -49,7 +49,7 @@ func GetOldestFile(dir string, extension string) (string, string) {
 			continue
 		}
 		if oldestFile == "" {
-			logger.Info("No file to parse")
+			logger.Info("No " + extension + " file to parse")
 			time.Sleep(30 * time.Second)
 			continue
 		}
