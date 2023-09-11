@@ -109,7 +109,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		_, err = taskFunc(NewPacket, conn)
 		if err != nil {
 			logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
-			if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+			if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 				query.Failed_task(NewPacket.GetRkey(), agentTaskType)
 			}
 			continue
@@ -127,7 +127,7 @@ func connectionClosedByAgent(key string, agentTaskType string, retryScanFlag boo
 	}
 	if agentTaskType == "StartScan" && retryScanFlag {
 		query.Update_task_status(key, agentTaskType, 2, 0)
-	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" {
+	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		query.Failed_task(key, agentTaskType)
 	} else if agentTaskType == "Main" {
 		redis.Offline(key)

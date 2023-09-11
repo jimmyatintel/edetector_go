@@ -95,6 +95,7 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	query.Finish_task(key, "StartGetImage")
 	return task.SUCCESS, nil
 }
 
@@ -103,7 +104,7 @@ func updateImageProgress(key string) {
 		if redis.RedisGetInt(key+"-ImageProgress") >= 100 {
 			break
 		}
-		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "Image")
+		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

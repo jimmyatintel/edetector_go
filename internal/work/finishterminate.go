@@ -23,7 +23,7 @@ func FinishTerminate(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	redis.RedisSet(key+"-terminateDrive", 0)
 	redis.RedisSet(key+"-terminateCollect", 0)
 	for _, t := range handlingTasks {
-		if t[3] == "StartScan" {
+		if t[3] == "StartScan" || t[3] == "StartGetImage" {
 			query.Terminated_task(key, t[3])
 		} else if t[3] == "StartGetDrive" {
 			redis.RedisSet(key+"-terminateDrive", 1)

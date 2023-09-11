@@ -65,6 +65,8 @@ func Update_task_timestamp(clientid string, tasktype string) {
 		col = "collect_finish_time"
 	} else if tasktype == "StartGetDrive" {
 		col = "file_finish_time"
+	} else if tasktype == "StartGetImage" {
+		col = "image_finish_time"
 	} else {
 		return
 	}

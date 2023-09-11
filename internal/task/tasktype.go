@@ -51,6 +51,7 @@ const (
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
 
 	// image
+	GET_IMAGE       TaskType = "GetImage"
 	GIVE_IMAGE_INFO TaskType = "GiveImageInfo"
 	GIVE_IMAGE      TaskType = "GiveImage"
 	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
@@ -65,6 +66,7 @@ const (
 	START_GET_EXPLORER      UserTaskType = "StartGetExplorer"
 	START_COLLECTION        UserTaskType = "StartCollect"
 	USER_TRANSPORT_EXPLORER UserTaskType = "TransportExplorer"
+	START_GET_IMAGE         UserTaskType = "StartGetImage"
 	TERMINATE               UserTaskType = "Terminate"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
@@ -104,6 +106,7 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	GET_IMAGE,
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,
@@ -117,6 +120,7 @@ var UserWorklist = []UserTaskType{
 	START_COLLECTION,
 	START_GET_EXPLORER,
 	USER_TRANSPORT_EXPLORER,
+	START_GET_IMAGE,
 	TERMINATE,
 	USER_UNDEFINE,
 }
