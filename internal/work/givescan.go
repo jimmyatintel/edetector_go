@@ -134,13 +134,8 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	srcPath := filepath.Join(scanWorkingPath, (key + ".zip"))
 	workPath := filepath.Join(scanWorkingPath, key+".txt")
 	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))
-	// truncate data
-	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ScanTotal"))
-	if err != nil {
-		return task.FAIL, err
-	}
 	// unzip data
-	err = file.UnzipFile(srcPath, workPath)
+	err := file.UnzipFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

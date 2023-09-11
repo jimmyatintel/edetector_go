@@ -2,6 +2,9 @@ package file
 
 import (
 	"archive/zip"
+	"bytes"
+	"edetector_go/internal/C_AES"
+	"edetector_go/internal/packet"
 	"edetector_go/pkg/logger"
 	"errors"
 	"fmt"
@@ -68,7 +71,11 @@ func CreateFile(path string) error {
 	return nil
 }
 
-func WriteFile(path string, data []byte) error {
+func WriteFile(path string, p packet.Packet) error {
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -78,7 +85,7 @@ func WriteFile(path string, data []byte) error {
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(data)
+	_, err = file.Write(decrypt_buf)
 	if err != nil {
 		return err
 	}
@@ -128,7 +135,12 @@ func MoveFile(srcPath string, dstPath string) error {
 	return nil
 }
 
-func UnzipFile(zipPath string, dstPath string) error {
+func UnzipFile(zipPath string, dstPath string, size int) error {
+	// truncate data
+	err := TruncateFile(zipPath, size)
+	if err != nil {
+		return err
+	}
 	// open the zip file for reading
 	reader, err := zip.OpenReader(zipPath)
 	if err != nil {

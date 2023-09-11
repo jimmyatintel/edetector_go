@@ -1,9 +1,7 @@
 package work
 
 import (
-	"bytes"
 	"edetector_go/config"
-	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
@@ -90,12 +88,8 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
 	// write file
-	dp := packet.CheckIsData(p)
-	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
-	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
-	decrypt_buf = decrypt_buf[100:]
 	path := filepath.Join(fileWorkingPath, (key + "-" + redis.RedisGetString(key+"-Disk") + ".zip"))
-	err := file.WriteFile(path, decrypt_buf)
+	err := file.WriteFile(path, p)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -120,13 +114,8 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
-	// truncate data
-	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ExplorerTotal"))
-	if err != nil {
-		return task.FAIL, err
-	}
 	// unzip data
-	err = file.UnzipFile(srcPath, workPath)
+	err := file.UnzipFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
