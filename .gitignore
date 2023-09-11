@@ -9,3 +9,6 @@ dbStaged
 fileWorking
 fileUnstage
 fileStaged
+scanWorking
+scanUnstage
+scanStaged

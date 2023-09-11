@@ -23,12 +23,12 @@ const (
 	GIVE_DETECT_PROCESS      TaskType = "GiveDetectProcess"
 
 	// new scan
-	GET_SCAN           TaskType = "GetScan"
-	GIVE_SCAN_INFO     TaskType = "GiveScanInfo"
-	GIVE_SCAN_PROGRESS TaskType = "GiveScanProgress"
-	GIVE_SCAN_FRAGMENT TaskType = "GiveScanFragment"
-	GIVE_SCAN          TaskType = "GiveScan"
-	GIVE_SCAN_END      TaskType = "GiveScanEnd"
+	GET_SCAN            TaskType = "GetScan"
+	GIVE_SCAN_INFO      TaskType = "GiveScanInfo"
+	GIVE_SCAN_PROGRESS  TaskType = "GiveScanProgress"
+	GIVE_SCAN_DATA_INFO TaskType = "GiveScanDataInfo"
+	GIVE_SCAN           TaskType = "GiveScan"
+	GIVE_SCAN_END       TaskType = "GiveScanEnd"
 
 	// new drive
 	GET_DRIVE              TaskType = "GetDrive"
@@ -48,6 +48,11 @@ const (
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+
+	// image
+	GIVE_IMAGE_INFO TaskType = "GiveImageInfo"
+	GIVE_IMAGE      TaskType = "GiveImage"
+	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
 
 	// terminate
 	TERMINATE_ALL TaskType = "TerminateAll"
@@ -79,7 +84,7 @@ var Worklist = []TaskType{
 	GET_SCAN,
 	GIVE_SCAN_INFO,
 	GIVE_SCAN_PROGRESS,
-	GIVE_SCAN_FRAGMENT,
+	GIVE_SCAN_DATA_INFO,
 	GIVE_SCAN,
 	GIVE_SCAN_END,
 	GET_DRIVE,
@@ -97,6 +102,9 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	GIVE_IMAGE_INFO,
+	GIVE_IMAGE,
+	GIVE_IMAGE_END,
 	TERMINATE_ALL,
 }
 
