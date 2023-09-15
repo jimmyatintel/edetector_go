@@ -1,11 +1,53 @@
 package work
 
 import (
+	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
+	"strconv"
 	"strings"
 )
 
 func Getriskscore(info Memory) (string, error) {
 	score := 0
+	// white list
+	whiteList, err := query.Load_white_list()
+	if err != nil {
+		logger.Error("error loading white list" + err.Error())
+	} else {
+		for _, white := range whiteList {
+			if white[0] == info.ProcessName && white[1] == info.ProcessMD5 && white[3] == info.ProcessPath {
+				return "0", nil
+			}
+		}
+	}
+	// black list
+	blackList, err := query.Load_black_list()
+	if err != nil {
+		logger.Error("error loading black list" + err.Error())
+	} else {
+		for _, black := range blackList {
+			if black[0] == info.ProcessName && black[1] == info.ProcessMD5 && black[3] == info.ProcessPath {
+				return "3", nil
+			}
+		}
+	}
+	// hack list
+	hackList, err := query.Load_hack_list()
+	if err != nil {
+		logger.Error("error loading hack list" + err.Error())
+	} else {
+		for _, hack := range hackList {
+			if hack[0] == info.ProcessName && strings.Contains(info.DynamicCommand, hack[1]) && hack[2] == info.ProcessPath {
+				point, err := strconv.Atoi(hack[3])
+				if err != nil {
+					logger.Error("error converting adding_point to integer" + err.Error())
+					continue
+				}
+				score += point
+			}
+		}
+	}
+
 	if info.ProcessBeInjected == 2 {
 		if _, ok := HighRiskMap[info.ProcessName]; ok {
 			score += 150
