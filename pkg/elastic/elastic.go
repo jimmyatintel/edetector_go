@@ -197,7 +197,7 @@ func SearchRequest(index string, body string) string {
 	// logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
+		logger.Error("Error decoding response: " + err.Error())
 		return ""
 	}
 	hits, ok := result["hits"].(map[string]interface{})

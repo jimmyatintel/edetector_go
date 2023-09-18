@@ -38,7 +38,7 @@ func RequestToUser(id string) {
 	path := fmt.Sprintf("http://%s:%s/updateTask", ip, port)
 	req, err := http.NewRequest("POST", path, bytes.NewBuffer(payload))
 	if err != nil {
-		logger.Error("Error creating HTTP request: ", zap.Any("error", err.Error()))
+		logger.Error("Error creating HTTP request: " + err.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -48,11 +48,11 @@ func RequestToUser(id string) {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() == context.DeadlineExceeded {
-				logger.Error("Request timed out: ", zap.Any("error", err.Error()))
+				logger.Error("Request timed out: " + err.Error())
 				return
 			}
 		default:
-			logger.Error("Error sending HTTP request: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending HTTP request: " + err.Error())
 			return
 		}
 	}

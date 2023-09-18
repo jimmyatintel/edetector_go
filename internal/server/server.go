@@ -15,8 +15,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func server_init() {
@@ -27,12 +25,12 @@ func server_init() {
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("WORKER_LOG_FILE")))
+		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
 	if err := mariadb.Connect_init(); err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
@@ -46,17 +44,17 @@ func server_init() {
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
-		logger.Info("rabbit is enabled.")
+		logger.Info("Rabbit is enabled.")
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		elastic.Elastic_init()
-		logger.Info("elastic is enabled.")
+		logger.Info("Elastic is enabled.")
 	}
 }
 
 func Main(version string) {
 	server_init()
-	logger.Info("Welcome to edetector main server: ", zap.Any("version", version))
+	logger.Info("Welcome to edetector main server: " + version)
 	Quit := make(chan os.Signal, 1)
 	Connection_close := make(chan int, 1)
 	ctx, cancel := context.WithCancel(context.Background())

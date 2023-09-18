@@ -15,7 +15,6 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
 )
 
 var dbUnstagePath = "dbUnstage"
@@ -32,12 +31,12 @@ func parser_init() {
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"), "dbparser", "DBPARSR")
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
+		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("PARSER_LOG_FILE"))
 	}
 	if err := mariadb.Connect_init(); err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
@@ -61,7 +60,7 @@ func parser_init() {
 
 func Main(version string) {
 	parser_init()
-	logger.Info("Welcome to edetector dbparser: ", zap.Any("version", version))
+	logger.Info("Welcome to edetector dbparser: " + version)
 outerloop:
 	for {
 		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
@@ -69,20 +68,20 @@ outerloop:
 		time.Sleep(3 * time.Second) // wait for fully copy
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
-			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
+			logger.Error("Error opening database file: " + err.Error())
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
-				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+				logger.Error("Error moving file: " + err.Error())
 			}
 			continue
 		}
-		logger.Info("Open db file: ", zap.Any("message", dbFile))
+		logger.Info("Open db file: " + dbFile)
 		tableNames, err := getTableNames(db)
 		if err != nil {
-			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
+			logger.Error("Error getting table names: " + err.Error())
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
-				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+				logger.Error("Error moving file: " + err.Error())
 			}
 			continue
 		}
@@ -93,13 +92,13 @@ outerloop:
 			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
-				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to elastic: " + err.Error())
 				continue
 			}
 		}
 		closeParser(db, dbFile, agent)
 		query.Finish_task(agent, "StartCollect")
-		logger.Info("Task finished: ", zap.Any("message", agent))
+		logger.Info("DB parser task finished: " + agent)
 	}
 }
 
@@ -144,6 +143,6 @@ func closeParser(db *sql.DB, dbFile string, agent string) {
 	db.Close()
 	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 	if err != nil {
-		logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		logger.Error("Error moving file: " + err.Error())
 	}
 }

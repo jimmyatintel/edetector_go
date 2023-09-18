@@ -17,7 +17,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 type TaskRequest struct {
@@ -50,7 +49,7 @@ func Start(ctx context.Context) {
 func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Error("Invalid request format", zap.Any("error", err.Error()))
+		logger.Error("Invalid request format: " + err.Error())
 		return
 	}
 	handleTaskrequest(ctx, req.TaskID)
@@ -69,23 +68,23 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	NewPacket := new(packet.TaskPacket)
 	err := NewPacket.NewPacket(content)
 	if err != nil {
-		logger.Error("Error reading task packet:", zap.Any("error", err.Error()), zap.Any("len", len(content)))
+		logger.Error("Error reading task packet: " + err.Error())
 		return
 	}
 	if NewPacket.GetUserTaskType() == "Undefine" {
 		nullIndex := bytes.IndexByte(content[76:100], 0)
-		logger.Error("Undefine User Task Type: ", zap.String("error", string(content[76:76+nullIndex])))
+		logger.Error("Undefine User Task Type: " + string(content[76:76+nullIndex]))
 		return
 	}
 	logger.Info("Task " + taskid + " " + string(NewPacket.GetUserTaskType()) + " is handling...")
 	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
 	if !ok {
-		logger.Error("Function notfound:", zap.Any("name", NewPacket.GetUserTaskType()))
+		logger.Error("Function notfound:" + string(NewPacket.GetUserTaskType()))
 		return
 	}
 	_, err = taskFunc(NewPacket)
 	if err != nil {
-		logger.Error(string(NewPacket.GetUserTaskType())+" task failed:", zap.Any("error", err.Error()))
+		logger.Error("Task " + string(NewPacket.GetUserTaskType()) + "failed" + err.Error())
 		UsertaskType, ok := task.UserTaskTypeMap[NewPacket.GetUserTaskType()]
 		if ok {
 			query.Failed_task(NewPacket.GetRkey(), UsertaskType)

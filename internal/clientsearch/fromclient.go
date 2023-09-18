@@ -13,8 +13,6 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"net"
-
-	"go.uber.org/zap"
 )
 
 var Clientlist []string
@@ -31,10 +29,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				select {
 				case message := <-task_chan:
 					data := message.Fluent()
-					logger.Info("get task msg: ", zap.Any("message", string(data)))
+					logger.Info("Get task msg: " + string(data))
 					err := clientsearchsend.SendTaskTCPtoClient(data, conn)
 					if err != nil {
-						logger.Error("send failed:", zap.Any("error", err.Error()))
+						logger.Error("Error Sending: " + err.Error())
 					}
 				}
 			}
@@ -63,14 +61,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			NewPacket = new(packet.DataPacket)
 		} else {
-			logger.Error("Invalid packet(short):", zap.Any("message", decrypt_buf))
+			logger.Error("Invalid packet (too short): " + string(decrypt_buf))
 			continue
 		}
 		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
 		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 		if err != nil {
-			logger.Error("Error reading:", zap.Any("error", err.Error()+" "+string(decrypt_buf)))
+			logger.Error("Error reading: " + err.Error() + ", Content: " + string(decrypt_buf))
 			continue
 		}
 		if key == "unknown" {
@@ -84,8 +82,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		if NewPacket.GetTaskType() == "Undefine" {
 			nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
-			logger.Error("Undefine Task Type: ", zap.String("error", string(decrypt_buf[76:76+nullIndex])))
-			logger.Error("pkt content: ", zap.String("error", string(NewPacket.GetMessage())))
+			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
 		if NewPacket.GetTaskType() == task.READY_SCAN {
@@ -97,22 +94,22 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			// wait for key to join the packet
 			Clientlist = append(Clientlist, key)
 			channelmap.AssignTaskChannel(key, &task_chan)
-			logger.Info("set worker key-channel mapping: ", zap.Any("message", key))
+			logger.Info("Set key-channel mapping: " + key)
 		} else {
 			redis.Online(key)
 		}
 		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			work.DataRight <- 1
-			logger.Info("DataRight", zap.Any("message", key))
+			logger.Info("DataRight: " + key)
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
-				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				logger.Error("Function notfound: " + string(NewPacket.GetTaskType()))
 				continue
 			}
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
-				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + "failed" + err.Error())
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
@@ -123,12 +120,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 }
 
 func handleUDPRequest(addr net.Addr, buf []byte) {
-	logger.Info("udp")
+	logger.Info("UDP")
 }
 
 func connectionClosedByAgent(key string, agentTaskType string, retryScanFlag bool, err error) {
 	if agentTaskType != "CollectProgress" {
-		logger.Warn("Connection close: ", zap.Any("message", string(key)+" ,Type: "+agentTaskType+" ,Error: "+err.Error()))
+		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 	}
 	if agentTaskType == "StartScan" && retryScanFlag {
 		query.Update_task_status(key, agentTaskType, 2, 0)

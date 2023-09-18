@@ -138,12 +138,12 @@ func Main(version string) {
 			values = values[:len(values)-2]
 			// err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to rabbitMQ (main): " + err.Error())
 				continue
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 				continue
 			}
 			time.Sleep(1 * time.Microsecond)
@@ -199,7 +199,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 	}
 	err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
 	if err != nil {
-		logger.Error("Error sending to rabbitMQ (relation): ", zap.Any("error", err.Error()))
+		logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
 	}
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, UUIDMap[uuid], false, path)
@@ -229,6 +229,6 @@ func clearBuilder(agent string, explorerFile string) {
 	dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
 	err := file.MoveFile(explorerFile, dstPath)
 	if err != nil {
-		logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		logger.Error("Error moving file: " + err.Error())
 	}
 }

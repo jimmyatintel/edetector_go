@@ -11,14 +11,13 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
-	logger.Info("Handling table: ", zap.Any("message", tableName))
+	logger.Info("Handling table: " + tableName)
 	rows, err := db.Query("SELECT * FROM " + tableName)
 	if err != nil {
-		logger.Error("Error getting rows: ", zap.Any("error", err.Error()))
+		logger.Error("Error getting rows: " + err.Error())
 		return err
 	}
 	defer rows.Close()
@@ -137,7 +136,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "WindowsActivity":
 			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &WindowsActivity{})
 		default:
-			logger.Error("Unknown table name: ", zap.Any("message", tableName))
+			logger.Error("Unknown table name: " + tableName)
 			return nil
 		}
 		if err != nil {
