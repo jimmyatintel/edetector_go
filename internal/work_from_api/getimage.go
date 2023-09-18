@@ -11,7 +11,7 @@ import (
 
 func StartGetImage(p packet.UserPacket) (task.TaskResult, error) {
 	logger.Info("StartGetImage: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	settingType := "TODO" 
+	settingType := "root:\\windows\\system32\\sru\\||srudb.dat\n\\ConnectedDevicesPlatform\\*\\|LOCALAPPDATA|ActivitiesCache.db\n\\Microsoft\\windows\\|APPDATA|recent"
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_IMAGE, settingType)
 	if err != nil {
 		return task.FAIL, err
