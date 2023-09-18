@@ -48,8 +48,7 @@ func appendByteMsg(data []byte, msg []byte) []byte {
 	} else if len(msg) == length {
 		msg = msg[:length]
 	} else {
-		msg = append(msg, 0)
-		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)-1))...)
+		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)))...)
 	}
 	data = data[:100]
 	data = append(data, msg...)

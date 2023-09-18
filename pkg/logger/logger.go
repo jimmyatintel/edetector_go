@@ -86,6 +86,13 @@ func Warn(message string, fields ...zap.Field) {
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Warn(message, fields...)
+	// _, err := method.Exec(
+	// 	"INSERT INTO log (timestamp, level, service, content) VALUE (?,WARN,?,?)",
+	// 	,
+	// )
+	// if err != nil {
+	// 	Error("Error add client_info: " + err.Error())
+	// }
 }
 
 func Error(message string, fields ...zap.Field) {

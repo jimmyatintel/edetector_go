@@ -53,7 +53,7 @@ func GiveUpdate(p packet.Packet, fileLen int, path string) {
 		start += 65436
 		if start >= fileLen {
 			logger.Info("GiveUpdateEnd: " + p.GetRkey())
-			err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_END, "", conn)
+			err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE_END, []byte{}, conn)
 			if err != nil {
 				logger.Error("Send GiveUpdateEnd error: " + err.Error())
 			}
