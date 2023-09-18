@@ -6,6 +6,8 @@ import (
 	"edetector_go/internal/channelmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/logger"
+	"strings"
 
 	"net"
 )
@@ -37,14 +39,31 @@ func SendTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn n
 	return nil
 }
 
-func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn net.Conn) error {
+func appendByteMsg(data []byte, msg []byte) []byte {
+	length := 65436
+	if len(msg) > length {
+		logger.Error("error msg length of DataPacket")
+		return data
+	} else if len(msg) == length {
+		msg = msg[:length]
+	} else {
+		msg = append(msg, 0)
+		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)-1))...)
+	}
+	data = data[:100]
+	data = append(data, msg...)
+	return data
+}
+
+func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, conn net.Conn) error {
 	var send_packet = packet.DataPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       worktype,
-		Message:    msg,
+		Message:    "",
 	}
 	data := send_packet.Fluent()
+	data = appendByteMsg(data, msg)
 	encrypt_buf := make([]byte, len(data))
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(encrypt_buf)

@@ -17,6 +17,10 @@ import (
 
 var DataRight chan int
 
+func init() {
+	DataRight = make(chan int)
+}
+
 func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("ReadyUpdateAgent: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	path := filepath.Join("agentFile", "test.exe")
@@ -34,7 +38,6 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveUpdate(p packet.Packet, conn net.Conn, fileLen int, path string) {
-	logger.Info("GiveUpdate: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
 	content, err := os.ReadFile(path)
 	if err != nil {
 		logger.Error("Read file error", zap.Any("message", err.Error()))
@@ -44,13 +47,15 @@ func GiveUpdate(p packet.Packet, conn net.Conn, fileLen int, path string) {
 		<-DataRight
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
-		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE, string(data), conn)
+		logger.Info("GiveUpdate: ", zap.Any("message", p.GetRkey()))
+		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE, data, conn)
 		if err != nil {
 			logger.Error("Send GiveUpdate error", zap.Any("message", err.Error()))
 		}
 		start += 65436
 	}
-	err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE_END, "", conn)
+	logger.Info("GiveUpdate: ", zap.Any("message", p.GetRkey()))
+	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_END, "", conn)
 	if err != nil {
 		logger.Error("Send GiveUpdateEnd error", zap.Any("message", err.Error()))
 	}

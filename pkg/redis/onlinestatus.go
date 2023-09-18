@@ -55,7 +55,7 @@ func Offline(KeyNum string) {
 	for _, t := range handlingTasks {
 		query.Failed_task(KeyNum, t[3])
 	}
-	logger.Info("Offline and let all task failed: ", zap.Any("message", KeyNum))
+	logger.Info("Offline and let all task fail: ", zap.Any("message", KeyNum))
 	request.RequestToUser(KeyNum)
 }
 

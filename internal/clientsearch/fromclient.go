@@ -103,6 +103,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			work.DataRight <- 1
+			logger.Info("DataRight", zap.Any("message", key))
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
@@ -118,7 +119,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				continue
 			}
 		}
-
 	}
 }
 

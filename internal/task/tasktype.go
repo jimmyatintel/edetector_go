@@ -59,9 +59,9 @@ const (
 	// update
 	UPDATE_AGENT       TaskType = "UpdateAgent"
 	READY_UPDATE_AGENT TaskType = "ReadyUpdateAgent"
-	GIVE_UPDATE_INFO   TaskType = "GIVE_UPDATE_INFO"
-	GIVE_UPDATE        TaskType = "GIVE_UPDATE"
-	GIVE_UPDATE_END    TaskType = "GIVE_UPDATE_END"
+	GIVE_UPDATE_INFO   TaskType = "GiveUpdateInfo"
+	GIVE_UPDATE        TaskType = "GiveUpdate"
+	GIVE_UPDATE_END    TaskType = "GiveUpdateEnd"
 
 	// terminate
 	TERMINATE_ALL TaskType = "TerminateAll"
