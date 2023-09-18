@@ -15,7 +15,7 @@ func Getriskscore(info Memory) (string, error) {
 		logger.Error("error loading white list" + err.Error())
 	} else {
 		for _, white := range whiteList {
-			if white[0] == info.ProcessName && white[1] == info.ProcessMD5 && white[3] == info.ProcessPath {
+			if info.ProcessName == white[0] && info.ProcessMD5 == white[1] && strings.Contains(info.DigitalSign, white[2]) && strings.Contains(info.ProcessPath, white[3])  {
 				return "0", nil
 			}
 		}
@@ -26,7 +26,7 @@ func Getriskscore(info Memory) (string, error) {
 		logger.Error("error loading black list" + err.Error())
 	} else {
 		for _, black := range blackList {
-			if black[0] == info.ProcessName && black[1] == info.ProcessMD5 && black[3] == info.ProcessPath {
+			if info.ProcessName == black[0] && info.ProcessMD5 == black[1] && strings.Contains(info.DigitalSign, black[2]) && strings.Contains(info.ProcessPath, black[3]) {
 				return "3", nil
 			}
 		}
@@ -37,7 +37,7 @@ func Getriskscore(info Memory) (string, error) {
 		logger.Error("error loading hack list" + err.Error())
 	} else {
 		for _, hack := range hackList {
-			if hack[0] == info.ProcessName && strings.Contains(info.DynamicCommand, hack[1]) && hack[2] == info.ProcessPath {
+			if info.ProcessName == hack[0] && strings.Contains(info.DynamicCommand, hack[1]) && strings.Contains(info.ProcessPath, hack[2]) {
 				point, err := strconv.Atoi(hack[3])
 				if err != nil {
 					logger.Error("error converting adding_point to integer" + err.Error())
