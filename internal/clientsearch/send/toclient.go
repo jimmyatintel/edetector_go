@@ -37,6 +37,23 @@ func SendTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn n
 	return nil
 }
 
+func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn net.Conn) error {
+	var send_packet = packet.DataPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       worktype,
+		Message:    msg,
+	}
+	data := send_packet.Fluent()
+	encrypt_buf := make([]byte, len(data))
+	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
+	_, err := conn.Write(encrypt_buf)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error {
 	var send_packet = packet.WorkPacket{
 		MacAddress: p.GetMacAddress(),

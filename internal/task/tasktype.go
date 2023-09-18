@@ -56,6 +56,13 @@ const (
 	GIVE_IMAGE      TaskType = "GiveImage"
 	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
 
+	// update
+	UPDATE_AGENT       TaskType = "UpdateAgent"
+	READY_UPDATE_AGENT TaskType = "ReadyUpdateAgent"
+	GIVE_UPDATE_INFO   TaskType = "GIVE_UPDATE_INFO"
+	GIVE_UPDATE        TaskType = "GIVE_UPDATE"
+	GIVE_UPDATE_END    TaskType = "GIVE_UPDATE_END"
+
 	// terminate
 	TERMINATE_ALL TaskType = "TerminateAll"
 
@@ -67,6 +74,7 @@ const (
 	START_COLLECTION        UserTaskType = "StartCollect"
 	USER_TRANSPORT_EXPLORER UserTaskType = "TransportExplorer"
 	START_GET_IMAGE         UserTaskType = "StartGetImage"
+	START_UPDATE            UserTaskType = "StartUpdate"
 	TERMINATE               UserTaskType = "Terminate"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
@@ -110,6 +118,11 @@ var Worklist = []TaskType{
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,
+	UPDATE_AGENT,
+	READY_UPDATE_AGENT,
+	GIVE_UPDATE_INFO,
+	GIVE_UPDATE,
+	GIVE_UPDATE_END,
 	TERMINATE_ALL,
 }
 
@@ -121,6 +134,7 @@ var UserWorklist = []UserTaskType{
 	START_GET_EXPLORER,
 	USER_TRANSPORT_EXPLORER,
 	START_GET_IMAGE,
+	START_UPDATE,
 	TERMINATE,
 	USER_UNDEFINE,
 }

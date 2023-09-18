@@ -19,6 +19,8 @@ func init() {
 		GIVE_COLLECT_DATA_INFO: "StartCollect",
 
 		GIVE_IMAGE_INFO: "StartGetImage",
+
+		READY_UPDATE_AGENT: "StartUpdate",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{
@@ -27,6 +29,7 @@ func init() {
 		START_GET_DRIVE:    "StartGetDrive",
 		START_COLLECTION:   "StartCollect",
 		START_GET_IMAGE:    "StartGetImage",
+		START_UPDATE:       "StartUpdate",
 		TERMINATE:          "Terminate",
 	}
 }

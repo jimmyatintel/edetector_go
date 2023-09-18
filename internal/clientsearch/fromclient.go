@@ -101,19 +101,24 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else {
 			redis.Online(key)
 		}
-		taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
-		if !ok {
-			logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
-			continue
-		}
-		_, err = taskFunc(NewPacket, conn)
-		if err != nil {
-			logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
-			if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-				query.Failed_task(NewPacket.GetRkey(), agentTaskType)
+		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+			work.DataRight <- 1
+		} else {
+			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
+			if !ok {
+				logger.Error("Function notfound:", zap.Any("name", NewPacket.GetTaskType()))
+				continue
 			}
-			continue
+			_, err = taskFunc(NewPacket, conn)
+			if err != nil {
+				logger.Error(string(NewPacket.GetTaskType())+" task failed: ", zap.Any("error", err.Error()))
+				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
+					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
+				}
+				continue
+			}
 		}
+
 	}
 }
 
