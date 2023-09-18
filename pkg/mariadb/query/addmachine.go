@@ -10,7 +10,7 @@ import (
 func Checkindex(KeyNum string, ip string, mac string) {
 	res, err := mariadb.DB.Query("SELECT EXISTS(SELECT * FROM client WHERE client_id = ?)", KeyNum)
 	if err != nil {
-		logger.Error("error check index query: " + err.Error())
+		logger.Error("Error check index query: " + err.Error())
 		return
 	}
 	defer res.Close()
@@ -18,7 +18,7 @@ func Checkindex(KeyNum string, ip string, mac string) {
 	for res.Next() {
 		err := res.Scan(&check)
 		if err != nil {
-			logger.Error("error scan: " + err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return
 		}
 	}
@@ -37,7 +37,7 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 		ClientInfo.KeyNum, ClientInfo.SysInfo, ClientInfo.OsInfo, ClientInfo.ComputerName, ClientInfo.UserName, ClientInfo.FileVersion, ClientInfo.BootTime, ClientInfo.KeyNum,
 	)
 	if err != nil {
-		logger.Error("error add client_info: " + err.Error())
+		logger.Error("Error add client_info: " + err.Error())
 	}
 	// client_task_status table
 	_, err = method.Exec(
@@ -45,13 +45,13 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 		ClientInfo.KeyNum, nil, nil, nil, nil, nil, nil, nil, ClientInfo.KeyNum,
 	)
 	if err != nil {
-		logger.Error("error add client_task_status: " + err.Error())
+		logger.Error("Error add client_task_status: " + err.Error())
 	}
 	_, err = method.Exec(
 		"INSERT INTO client_setting (client_id, networkreport, processreport) VALUE (?,0,0) ON DUPLICATE KEY UPDATE client_id = ?",
 		ClientInfo.KeyNum, ClientInfo.KeyNum,
 	)
 	if err != nil {
-		logger.Error("error add client_setting: " + err.Error())
+		logger.Error("Error add client_setting: " + err.Error())
 	}
 }

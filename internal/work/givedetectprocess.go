@@ -15,12 +15,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveDetectProcessFrag: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectProcessFrag: " + key + "|" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -32,7 +31,7 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	ip, name := query.GetMachineIPandName(key)
-	logger.Info("GiveDetectProcess: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectProcess: " + key + "|" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
@@ -61,7 +60,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			values[16] = "detecting"
 		} else {
 			values[16] = "true"
-			logger.Debug("Update information of the detect process: ", zap.Any("message", values[9]+" "+values[1]))
+			logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
 		}
 		uuid := uuid.NewString()
 		m_tmp := Memory{}

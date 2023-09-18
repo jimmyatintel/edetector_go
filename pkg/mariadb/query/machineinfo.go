@@ -27,7 +27,7 @@ func GetMachineIP(KeyNum string) (ip string) {
 	for res.Next() {
 		err := res.Scan(&ip)
 		if err != nil {
-			logger.Error("error scan: " + err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}
@@ -44,7 +44,7 @@ func GetMachineMAC(KeyNum string) (mac string) {
 	for res.Next() {
 		err := res.Scan(&mac)
 		if err != nil {
-			logger.Error("error scan: " + err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}
@@ -61,7 +61,7 @@ func GetMachineName(KeyNum string) (name string) {
 	for res.Next() {
 		err := res.Scan(&name)
 		if err != nil {
-			logger.Error("error scan: " + err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}

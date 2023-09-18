@@ -38,9 +38,12 @@ func parser_init() {
 		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"), "dbparser", "DBPARSR")
 		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("PARSER_LOG_FILE"))
 	}
-	if err := mariadb.Connect_init(); err != nil {
+	connString, err := mariadb.Connect_init()
+	if err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
 		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {

@@ -6,8 +6,6 @@ import (
 	"edetector_go/pkg/request"
 	"encoding/json"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type ClientOnlineStatus struct {
@@ -49,13 +47,13 @@ func Offline(KeyNum string) {
 	}
 	handlingTasks, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
 	if err != nil {
-		logger.Error("Get handling tasks failed:", zap.Any("error", err.Error()))
+		logger.Error("Get handling tasks failed: " + err.Error())
 		return
 	}
 	for _, t := range handlingTasks {
 		query.Failed_task(KeyNum, t[3])
 	}
-	logger.Info("Offline and let all task fail: ", zap.Any("message", KeyNum))
+	logger.Info("Offline and let all task fail: " + KeyNum)
 	request.RequestToUser(KeyNum)
 }
 
@@ -63,7 +61,7 @@ func GetStatus(content string) int {
 	var clientStatus ClientOnlineStatus
 	err := json.Unmarshal([]byte(content), &clientStatus)
 	if err != nil {
-		logger.Error("Get status failed:", zap.Any("error", err.Error()))
+		logger.Error("Get status failed: " + err.Error())
 		return -1
 	}
 	return clientStatus.Status

@@ -13,8 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 func CheckDir(path string) {
@@ -22,10 +20,10 @@ func CheckDir(path string) {
 	if os.IsNotExist(err) {
 		err := os.Mkdir(path, 0755)
 		if err != nil {
-			logger.Panic("error creating working dir:", zap.Any("error", err.Error()))
+			logger.Panic("Error creating working dir: " + err.Error())
 			panic(err)
 		}
-		logger.Info("create dir:", zap.Any("message", path))
+		logger.Info("Create dir: " + path)
 	}
 }
 
@@ -47,7 +45,7 @@ func GetOldestFile(dir string, extension string) (string, string) {
 			return nil
 		})
 		if err != nil {
-			logger.Error("Error getting oldest file:", zap.Any("error", err.Error()))
+			logger.Error("Error getting oldest file: " + err.Error())
 			time.Sleep(30 * time.Second)
 			continue
 		}

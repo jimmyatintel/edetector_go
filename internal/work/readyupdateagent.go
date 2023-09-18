@@ -11,18 +11,16 @@ import (
 	"strconv"
 
 	"net"
-
-	"go.uber.org/zap"
 )
 
-var DataRight chan int
+var DataRight chan net.Conn
 
 func init() {
-	DataRight = make(chan int)
+	DataRight = make(chan net.Conn)
 }
 
 func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("ReadyUpdateAgent: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("ReadyUpdateAgent: " + p.GetRkey() + "|" + p.GetMessage())
 	path := filepath.Join("agentFile", "test.exe")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
@@ -33,30 +31,33 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	go GiveUpdate(p, conn, fileLen, path)
+	go GiveUpdate(p, fileLen, path)
 	return task.SUCCESS, nil
 }
 
-func GiveUpdate(p packet.Packet, conn net.Conn, fileLen int, path string) {
+func GiveUpdate(p packet.Packet, fileLen int, path string) {
 	content, err := os.ReadFile(path)
 	if err != nil {
-		logger.Error("Read file error", zap.Any("message", err.Error()))
+		logger.Error("Read file error: " + err.Error())
 	}
 	start := 0
-	for start < fileLen {
-		<-DataRight
+	for {
+		conn := <-DataRight
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
-		logger.Info("GiveUpdate: ", zap.Any("message", p.GetRkey()))
+		logger.Info("GiveUpdate: " + p.GetRkey())
 		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE, data, conn)
 		if err != nil {
-			logger.Error("Send GiveUpdate error", zap.Any("message", err.Error()))
+			logger.Error("Send GiveUpdate error: " + err.Error())
 		}
 		start += 65436
-	}
-	logger.Info("GiveUpdate: ", zap.Any("message", p.GetRkey()))
-	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_END, "", conn)
-	if err != nil {
-		logger.Error("Send GiveUpdateEnd error", zap.Any("message", err.Error()))
+		if start >= fileLen {
+			logger.Info("GiveUpdate: " + p.GetRkey())
+			err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_END, "", conn)
+			if err != nil {
+				logger.Error("Send GiveUpdateEnd error: " + err.Error())
+			}
+			break
+		}
 	}
 }

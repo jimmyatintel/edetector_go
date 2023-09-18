@@ -30,7 +30,7 @@ func Redis_init() *redis.Client {
 		logger.Panic("Error connecting to redis")
 		panic(err)
 	}
-	logger.Info("redis is enabled")
+	logger.Info("Redis is enabled")
 	return RedisClient
 }
 
@@ -44,7 +44,7 @@ func RedisClose() {
 func RedisExists(key string) bool {
 	exists, err := RedisClient.Exists(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error checking key existence:" + err.Error())
+		logger.Error("Error checking key existence: " + err.Error())
 		return false
 	}
 	if exists == 1 {
@@ -83,7 +83,7 @@ func RedisGetString(key string) string {
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis " + err.Error())
+		logger.Error("Error getting value from redis: " + err.Error())
 		return ""
 	}
 	return val
@@ -95,7 +95,7 @@ func RedisGetInt(key string) int {
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis " + err.Error())
+		logger.Error("Error getting value from redis: " + err.Error())
 		return 0
 	}
 	val_int, err := strconv.Atoi(val)

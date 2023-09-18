@@ -48,11 +48,11 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 func Update_task_status(clientid string, tasktype string, old_status int, new_status int) int {
 	result, err := mariadb.DB.Exec("update task set status = ? where client_id = ? and type = ? and status = ?", new_status, clientid, tasktype, old_status)
 	if err != nil {
-		logger.Error("error Update_task_status: " + err.Error())
+		logger.Error("Error Update_task_status: " + err.Error())
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		logger.Error("error getting rowsAffected: " + err.Error())
+		logger.Error("Error getting rowsAffected: " + err.Error())
 	}
 	return int(rowsAffected)
 }
@@ -73,7 +73,7 @@ func Update_task_timestamp(clientid string, tasktype string) {
 	qu := "update client_task_status set " + col + " = CURRENT_TIMESTAMP where client_id = ?"
 	_, err := mariadb.DB.Exec(qu, clientid)
 	if err != nil {
-		logger.Error("error Update_task_timestamp: " + err.Error())
+		logger.Error("Error Update_task_timestamp: " + err.Error())
 	}
 }
 

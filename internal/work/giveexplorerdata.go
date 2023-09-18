@@ -18,8 +18,6 @@ import (
 
 	"net"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 var fileWorkingPath = "fileWorking"
@@ -34,7 +32,7 @@ func init() {
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("Explorer: " + key + "|" + p.GetMessage())
 	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
 	explorerSecondPart = 100 - explorerFirstPart
 	parts := strings.Split(p.GetMessage(), "|")
@@ -54,7 +52,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveExplorerProgress: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveExplorerProgress: " + key + "|" + p.GetMessage())
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), explorerFirstPart)
 	if err != nil {
@@ -70,7 +68,7 @@ func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 
 func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerInfo: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveExplorerInfo: " + key + "|" + p.GetMessage())
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
@@ -86,7 +84,7 @@ func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Debug("GiveExplorerData: " + key + "|" + p.GetMessage())
 	// write file
 	path := filepath.Join(fileWorkingPath, (key + "-" + redis.RedisGetString(key+"-Disk") + ".zip"))
 	err := file.WriteFile(path, p)
@@ -108,7 +106,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveExplorerEnd: " + key + "|" + p.GetMessage())
 
 	filename := key + "-" + redis.RedisGetString(key+"-Disk")
 	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
@@ -137,7 +135,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Error("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Error("GiveExplorerError: " + p.GetRkey() + "|" + p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err

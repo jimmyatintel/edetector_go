@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
-
-	"go.uber.org/zap"
 )
 
 type Message struct {
@@ -19,7 +17,7 @@ type Message struct {
 func ToRabbitMQ_Main(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
 	date_int, err := strconv.Atoi(date)
 	if err != nil {
-		logger.Error("error converting time", zap.Any("error", err.Error()))
+		logger.Error("Error converting time: " + err.Error())
 		date_int = 0
 	}
 	template := elastic.MainSource{

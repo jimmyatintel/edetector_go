@@ -32,9 +32,12 @@ func server_init() {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
-	if err := mariadb.Connect_init(); err != nil {
+	connString, err := mariadb.Connect_init()
+	if err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
 		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {

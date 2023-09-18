@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type Request struct {
@@ -24,7 +22,7 @@ func RequestToUser(id string) {
 	// Marshal payload into JSON
 	payload, err := json.Marshal(request)
 	if err != nil {
-		logger.Error("Error marshaling JSON:", zap.Any("error", err.Error()))
+		logger.Error("Error marshaling JSON: " + err.Error())
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -59,7 +57,7 @@ func RequestToUser(id string) {
 	defer response.Body.Close()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
-		logger.Error("Request failed with status code:", zap.Any("error", response.StatusCode))
+		logger.Error("Request failed with status code: " + string(response.StatusCode))
 		return
 	}
 }

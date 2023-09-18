@@ -55,10 +55,10 @@ func CreateIndex(name string) {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		logger.Error("error creating index: " + err.Error())
+		logger.Error("Error creating index: " + err.Error())
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	logger.Info("Created index: " + res.String())
 }
 
 func IndexRequest(name string, body string) error {
@@ -74,8 +74,7 @@ func IndexRequest(name string, body string) error {
 		return err
 	}
 	defer res.Body.Close()
-	logger.Debug("Index content: ", zap.Any("message", body))
-	logger.Debug("Index request: ", zap.Any("message", res.String()))
+	logger.Debug("Index request: " + res.String())
 	return nil
 }
 
@@ -98,7 +97,6 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
-	logger.Info("len:", zap.Any("message", len(action)))
 	index := 0
 	for {
 		ind := strings.Index(res.String()[index:], "error")
@@ -111,7 +109,7 @@ func BulkIndexRequest(action []string, work []string) error {
 		} else {
 			output = res.String()[index : index+300]
 		}
-		logger.Info("res: ", zap.Any("message", output))
+		logger.Info("BulkIndexRequest Res: " + output)
 		index = ind + 1
 	}
 	return nil
@@ -161,7 +159,7 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 		}
 		updatedCount := int(response["updated"].(float64))
 		if updatedCount > 0 {
-			logger.Debug("Update network of the detect process: ", zap.Any("message", agent+" "+id+" "+time))
+			logger.Debug("Update network of the detect process: " + agent + "|" + id + "|" + time)
 		} else {
 			createBody := fmt.Sprintf(`
 			{
@@ -175,7 +173,7 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 			if err != nil {
 				return err
 			}
-			logger.Debug("Create a new detect process: ", zap.Any("message", agent+" "+id+" "+time))
+			logger.Debug("Create a new detect process: " + agent + "|" + id + "|" + time)
 		}
 	}
 	return nil
@@ -259,7 +257,7 @@ func DeleteByQueryRequest(field string, value string, ttype string) error {
 		if err != nil {
 			return err
 		}
-		logger.Info("Deleted repeated data:", zap.Any("message", responseJSON["deleted"]))
+		logger.Info("Deleted repeated data: ", zap.Any("message", responseJSON["deleted"]))
 
 		conflictCount := responseJSON["version_conflicts"].(float64)
 		if conflictCount != 0 {

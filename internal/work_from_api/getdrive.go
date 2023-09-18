@@ -5,12 +5,10 @@ import (
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
-
-	"go.uber.org/zap"
 )
 
 func StartGetDrive(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartGetDrive: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("StartGetDrive: " + p.GetRkey() + "|" + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DRIVE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

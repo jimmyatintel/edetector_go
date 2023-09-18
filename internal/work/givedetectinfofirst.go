@@ -9,14 +9,12 @@ import (
 	"edetector_go/pkg/redis"
 	"edetector_go/pkg/request"
 	"net"
-
-	"go.uber.org/zap"
 )
 
 func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	// front process back netowork
-	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectInfoFirst: " + key + "|" + p.GetMessage())
 	redis.RedisSet(key+"-DetectMsg", "")
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
 	request.RequestToUser(key) // online
@@ -28,6 +26,6 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectInfo: " + p.GetRkey() + "|" + p.GetMessage())
 	return task.SUCCESS, nil
 }

@@ -99,7 +99,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			redis.Online(key)
 		}
 		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			work.DataRight <- 1
+			work.DataRight <- conn
 			logger.Info("DataRight: " + key)
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]

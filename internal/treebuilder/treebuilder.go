@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 var RelationMap = make(map[string](map[int](Relation)))
@@ -42,16 +41,19 @@ func builder_init() {
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Panic("Error loading config file", zap.Any("error", err.Error()))
+		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("BUILDER_LOG_FILE"), "treebuilder", "TREEBUILDER")
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("BUILDER_LOG_FILE")))
+		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("BUILDER_LOG_FILE"))
 	}
-	if err := mariadb.Connect_init(); err != nil {
+	connString, err := mariadb.Connect_init()
+	if err != nil {
 		logger.Panic("Error connecting to mariadb: " + err.Error())
 		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
 		if db := redis.Redis_init(); db == nil {
@@ -61,28 +63,28 @@ func builder_init() {
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
-		logger.Info("rabbit is enabled.")
+		logger.Info("Rabbit is enabled.")
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		elastic.Elastic_init()
-		logger.Info("elastic is enabled.")
+		logger.Info("Elastic is enabled.")
 	}
 }
 
 func Main(version string) {
 	builder_init()
-	logger.Info("Welcome to edetector tree builder: ", zap.Any("version", version))
+	logger.Info("Welcome to edetector tree builder: " + version)
 	for {
 		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
 		ip, name := query.GetMachineIPandName(agent)
 		time.Sleep(3 * time.Second) // wait for fully copy
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
-			logger.Error("Read file error", zap.Any("message", err.Error()))
+			logger.Error("Read file error: " + err.Error())
 			continue
 		}
 		RelationMap[agent] = make(map[int](Relation))
-		logger.Info("Open txt file: ", zap.Any("message", explorerFile))
+		logger.Info("Open txt file: " + explorerFile)
 		// record the relation
 		var rootInd int
 		lines := strings.Split(string(explorerContent), "\n")
@@ -96,7 +98,7 @@ func Main(version string) {
 			values := strings.Split(line, "|")
 			parent, child, err := getRelation(values)
 			if err != nil {
-				logger.Error("error getting relation: ", zap.Any("message", err))
+				logger.Error("Error getting relation: " + err.Error())
 				continue
 			}
 			generateUUID(agent, parent)
@@ -114,13 +116,13 @@ func Main(version string) {
 				RelationMap[agent][parent] = tmp
 			}
 		}
-		logger.Info("record the relation")
+		logger.Info("Record the relation")
 		if terminateDrive(agent, explorerFile) {
 			continue
 		}
 		// tree traversal & send to elastic(relation)
 		treeTraversal(agent, rootInd, true, "")
-		logger.Info("tree traversal & send to elastic (relation)")
+		logger.Info("Tree traversal & send to elastic (relation)")
 		if terminateDrive(agent, explorerFile) {
 			continue
 		}
@@ -132,7 +134,7 @@ func Main(version string) {
 			values := strings.Split(line, "|")
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
-				logger.Error("error getting child: ", zap.Any("message", err))
+				logger.Error("Error getting child: " + err.Error())
 				continue
 			}
 			values = values[:len(values)-2]
@@ -148,12 +150,12 @@ func Main(version string) {
 			}
 			time.Sleep(1 * time.Microsecond)
 		}
-		logger.Info("send to elastic (main & details)")
+		logger.Info("Send to elastic (main & details)")
 		if terminateDrive(agent, explorerFile) {
 			continue
 		}
 		clearBuilder(agent, explorerFile)
-		logger.Info("Task finished: ", zap.Any("message", agent))
+		logger.Info("Tree builder task finished: " + agent)
 	}
 }
 
@@ -182,7 +184,6 @@ func generateUUID(agent string, ind int) {
 		}
 		RelationMap[agent][ind] = relation
 		UUIDMap[uuid] = ind
-		// logger.Debug("uuid", zap.Any("message", strconv.Itoa(ind)+": "+uuid))
 	}
 }
 
