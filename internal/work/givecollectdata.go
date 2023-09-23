@@ -30,7 +30,7 @@ func init() {
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveCollectProgress: " + key + "**" + p.GetMessage())
+	logger.Info("GiveCollectProgress: " + key + "::" + p.GetMessage())
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
@@ -51,7 +51,7 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveCollectDataInfo: " + key + "**" + p.GetMessage())
+	logger.Info("GiveCollectDataInfo: " + key + "::" + p.GetMessage())
 	// init collect info
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -74,7 +74,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveCollectData: " + key + "**" + p.GetMessage())
+	logger.Debug("GiveCollectData: " + key + "::" + p.GetMessage())
 	// write file
 	path := filepath.Join(dbWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)
@@ -94,7 +94,7 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveCollectDataEnd: " + key + "**" + p.GetMessage())
+	logger.Info("GiveCollectDataEnd: " + key + "::" + p.GetMessage())
 
 	srcPath := filepath.Join(dbWorkingPath, (key + ".zip"))
 	workPath := filepath.Join(dbWorkingPath, key+".db")
@@ -117,7 +117,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 }
 
 func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveCollectDataError: " + p.GetRkey() + "**" + p.GetMessage())
+	logger.Info("GiveCollectDataError: " + p.GetRkey() + "::" + p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err

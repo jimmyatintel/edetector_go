@@ -33,7 +33,7 @@ func init() {
 
 // new scan
 func ReadyScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("ReadyScan: " + p.GetRkey() + "**" + p.GetMessage())
+	logger.Info("ReadyScan: " + p.GetRkey() + "::" + p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
@@ -43,7 +43,7 @@ func ReadyScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveScanInfo: " + key + "**" + p.GetMessage())
+	logger.Info("GiveScanInfo: " + key + "::" + p.GetMessage())
 	scanFirstPart = float64(config.Viper.GetInt("SCAN_FIRST_PART"))
 	scanSecondPart = 100 - scanFirstPart
 	total, err := strconv.Atoi(p.GetMessage())
@@ -63,7 +63,7 @@ func GiveScanInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveScanProgress: " + key + "**" + p.GetMessage())
+	logger.Debug("GiveScanProgress: " + key + "::" + p.GetMessage())
 	// update progress
 	progress, err := getProgressByMsg(p.GetMessage(), scanFirstPart)
 	if err != nil {
@@ -79,7 +79,7 @@ func GiveScanProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveScanDataInfo: " + key + "**" + p.GetMessage())
+	logger.Info("GiveScanDataInfo: " + key + "::" + p.GetMessage())
 	// init scan info
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -102,7 +102,7 @@ func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveScan: " + key + "**" + p.GetMessage())
+	logger.Debug("GiveScan: " + key + "::" + p.GetMessage())
 	// write file
 	path := filepath.Join(scanWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)
@@ -122,7 +122,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveScanEnd: " + key + "**" + p.GetMessage())
+	logger.Info("GiveScanEnd: " + key + "::" + p.GetMessage())
 
 	srcPath := filepath.Join(scanWorkingPath, (key + ".zip"))
 	workPath := filepath.Join(scanWorkingPath, key+".txt")

@@ -9,14 +9,14 @@ import (
 )
 
 func StartGetImage(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartGetImage: " + p.GetRkey() + "**" + p.GetMessage())
+	logger.Info("StartGetImage: " + p.GetRkey() + "::" + p.GetMessage())
 	imageList, err := query.Load_key_image(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
 	imageStr := ""
 	for _, image := range imageList {
-		imageStr = imageStr + image[1] + "|" + image[0] + "|" + image[2] + "\n"
+		imageStr = imageStr + image[1] + "|" + image[0] + "|" + image[2] + ","
 	}
 	err = clientsearchsend.SendUserTCPtoClient(p, task.GET_IMAGE, imageStr)
 	if err != nil {

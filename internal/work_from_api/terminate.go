@@ -9,7 +9,7 @@ import (
 
 func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("Terminate: " + key + "**" + p.GetMessage())
+	logger.Info("Terminate: " + key + "::" + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.TERMINATE_ALL, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

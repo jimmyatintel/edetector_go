@@ -19,7 +19,7 @@ import (
 
 func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveDetectProcessFrag: " + key + "**" + p.GetMessage())
+	logger.Info("GiveDetectProcessFrag: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -31,7 +31,7 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	ip, name := query.GetMachineIPandName(key)
-	logger.Info("GiveDetectProcess: " + key + "**" + p.GetMessage())
+	logger.Info("GiveDetectProcess: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")

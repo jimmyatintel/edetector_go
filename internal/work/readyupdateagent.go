@@ -20,7 +20,7 @@ func init() {
 }
 
 func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("ReadyUpdateAgent: " + p.GetRkey() + "**" + p.GetMessage())
+	logger.Info("ReadyUpdateAgent: " + p.GetRkey() + "::" + p.GetMessage())
 	path := filepath.Join("agentFile", "test.exe")
 	fileInfo, err := os.Stat(path)
 	if err != nil {
