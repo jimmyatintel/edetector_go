@@ -9,3 +9,9 @@ dbStaged
 fileWorking
 fileUnstage
 fileStaged
+scanWorking
+scanUnstage
+scanStaged
+imageWorking
+imageUnstage
+agentFile
