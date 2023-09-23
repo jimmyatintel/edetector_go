@@ -109,6 +109,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
+	query.Finish_task(key, "StartCollect")
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err

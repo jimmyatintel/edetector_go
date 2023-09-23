@@ -90,18 +90,26 @@ func WriteFile(path string, p packet.Packet) error {
 	return nil
 }
 
-func TruncateFile(path string, realLen int) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
+func GetFileSize(path string) (int, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	fileLen := fileInfo.Size()
+	return int(fileLen), nil
+}
+
+func TruncateFile(path string, realLen int) error {
+	fileLen, err := GetFileSize(path)
+	if err != nil {
+		return err
+	}
 	if int(fileLen) < realLen {
 		err = errors.New("incomplete data " + fmt.Sprint(fileLen))
+		return err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
 		return err
 	}
 	err = os.WriteFile(path, data[:realLen], 0644)
