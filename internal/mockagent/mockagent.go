@@ -48,7 +48,7 @@ func Main() {
 	SendTCPtoServer(task.GIVE_INFO, info, conn)
 	go handleMainConn(conn)
 	for {
-		SendTCPtoServer(task.CHECK_CONNECT, info, conn)
+		SendTCPtoServer(task.CHECK_CONNECT, "", conn)
 		time.Sleep(30 * time.Second)
 	}
 }
@@ -87,7 +87,7 @@ func handleMainConn(conn net.Conn) {
 			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, "0|0", conn)
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
 			SendTCPtoServer(task.GIVE_DETECT_INFO, NewPacket.GetMessage(), conn)
-		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.GET_DRIVE{
+		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.GET_DRIVE {
 			go handleNewTask(NewPacket.GetTaskType())
 		} else {
 			logger.Error("Undefined task type: " + string(NewPacket.GetTaskType()))
@@ -114,7 +114,7 @@ func handleNewTask(taskType task.TaskType) {
 	buf := make([]byte, 1024)
 	for {
 		NewPacket := receive(buf, new_conn)
-		if NewPacket.GetTaskType() == task.DATA_RIGHT || NewPacket.GetTaskType() == task.EXPLORER_INFO{
+		if NewPacket.GetTaskType() == task.DATA_RIGHT || NewPacket.GetTaskType() == task.EXPLORER_INFO {
 			dataRightFromServer <- 1
 		}
 	}

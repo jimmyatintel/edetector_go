@@ -5,6 +5,7 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"math"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	fileLen := int(fileInfo.Size())
+	logger.Info("ServerSend GiveUpdateInfo: " + p.GetRkey() + "::" + strconv.Itoa(fileLen))
 	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_INFO, strconv.Itoa(fileLen), conn)
 	if err != nil {
 		return task.FAIL, err
@@ -43,21 +45,22 @@ func GiveUpdate(p packet.Packet, fileLen int, path string) {
 	start := 0
 	for {
 		conn := <-DataRight
+		if start >= fileLen {
+			logger.Info("ServerSend GiveUpdateEnd: " + p.GetRkey())
+			err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE_END, []byte{}, conn)
+			if err != nil {
+				logger.Error("Send GiveUpdateEnd error: " + err.Error())
+			}
+			query.Finish_task(p.GetRkey(), "StartScan")
+			break
+		}
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
-		logger.Info("GiveUpdate: " + p.GetRkey())
+		logger.Info("ServerSend GiveUpdate: " + p.GetRkey())
 		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE, data, conn)
 		if err != nil {
 			logger.Error("Send GiveUpdate error: " + err.Error())
 		}
 		start += 65436
-		if start >= fileLen {
-			logger.Info("GiveUpdateEnd: " + p.GetRkey())
-			err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE_END, []byte{}, conn)
-			if err != nil {
-				logger.Error("Send GiveUpdateEnd error: " + err.Error())
-			}
-			break
-		}
 	}
 }
