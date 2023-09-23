@@ -8,7 +8,7 @@ import (
 )
 
 func StartGetImage(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartGetImage: " + p.GetRkey() + "|" + p.GetMessage())
+	logger.Info("StartGetImage: " + p.GetRkey() + "||" + p.GetMessage())
 	settingType := "root:\\windows\\system32\\sru\\||srudb.dat,\\ConnectedDevicesPlatform\\*\\|LOCALAPPDATA|ActivitiesCache.db,\\Microsoft\\windows\\|APPDATA|recent"
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_IMAGE, settingType)
 	if err != nil {

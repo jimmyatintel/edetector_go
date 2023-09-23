@@ -8,7 +8,7 @@ import (
 )
 
 func StartScan(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartScan: " + p.GetRkey() + "|" + p.GetMessage())
+	logger.Info("StartScan: " + p.GetRkey() + "||" + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

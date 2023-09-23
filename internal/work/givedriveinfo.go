@@ -11,7 +11,7 @@ import (
 )
 
 func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDriveInfo: " + p.GetRkey() + "|" + p.GetMessage())
+	logger.Info("GiveDriveInfo: " + p.GetRkey() + "||" + p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
