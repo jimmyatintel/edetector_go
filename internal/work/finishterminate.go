@@ -12,7 +12,7 @@ import (
 
 func FinishTerminate(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("FinishTerminate: " + key + "||" + p.GetMessage())
+	logger.Info("FinishTerminate: " + key + "**" + p.GetMessage())
 	handlingTasks, err := query.Load_stored_task("nil", key, 2, "nil")
 	if err != nil {
 		return task.FAIL, err

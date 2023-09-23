@@ -16,7 +16,7 @@ import (
 )
 
 func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectNetwork: " + p.GetRkey() + "||" + p.GetMessage())
+	logger.Info("GiveDetectNetwork: " + p.GetRkey() + "**" + p.GetMessage())
 	go detectNetworkElastic(p)
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {

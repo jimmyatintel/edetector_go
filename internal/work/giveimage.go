@@ -25,7 +25,7 @@ func init() {
 
 func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveImageInfo: " + key + "||" + p.GetMessage())
+	logger.Info("GiveImageInfo: " + key + "**" + p.GetMessage())
 	go updateImageProgress(key)
 	// init image info
 	total, err := strconv.Atoi(p.GetMessage())
@@ -49,7 +49,7 @@ func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveImage: " + key + "||" + p.GetMessage())
+	logger.Debug("GiveImage: " + key + "**" + p.GetMessage())
 	// write file
 	path := filepath.Join(imageWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)
@@ -69,7 +69,7 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveImageEnd: " + key + "||" + p.GetMessage())
+	logger.Info("GiveImageEnd: " + key + "**" + p.GetMessage())
 
 	workPath := filepath.Join(imageWorkingPath, key+".zip")
 	unstagePath := filepath.Join(imageUstagePath, (key + ".zip"))

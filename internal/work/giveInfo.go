@@ -14,7 +14,7 @@ import (
 )
 
 func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the first packet: insert user info
-	logger.Info("GiveInfo: " + p.GetRkey() + "||" + p.GetMessage())
+	logger.Info("GiveInfo: " + p.GetRkey() + "**" + p.GetMessage())
 	np := packet.CheckIsWork(p)
 	ClientInfo := client.PacketClientInfo(np)
 	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") { // assign a new key(uuid)

@@ -109,7 +109,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
-				logger.Error("Task " + string(NewPacket.GetTaskType()) + "failed" + err.Error())
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed" + err.Error())
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}

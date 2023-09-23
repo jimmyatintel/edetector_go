@@ -8,7 +8,7 @@ import (
 )
 
 func StartGetDrive(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartGetDrive: " + p.GetRkey() + "||" + p.GetMessage())
+	logger.Info("StartGetDrive: " + p.GetRkey() + "**" + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DRIVE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
