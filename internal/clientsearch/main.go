@@ -9,8 +9,6 @@ import (
 	fflag "edetector_go/pkg/fflag"
 	logger "edetector_go/pkg/logger"
 
-	"go.uber.org/zap"
-
 	// "io/ioutil"
 	"net"
 	"os"
@@ -29,29 +27,29 @@ var Task_enable bool
 func Connect_init() int {
 	var err error
 	if Tcp_enable, err = fflag.FFLAG.FeatureEnabled("client_tcp"); Tcp_enable && err == nil {
-		logger.Info("tcp is enabled")
+		logger.Info("TCP is enabled")
 		Client_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			logger.Panic("Error listening: " + err.Error())
+			panic(err)
 		}
 		Client_detect_TCP_Server, err = net.Listen(config.Viper.GetString("WORKER_SERVER_TYPE_TCP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			logger.Panic("Error listening: " + err.Error())
+			panic(err)
 		}
 	}
 	if Udp_enable, err = fflag.FFLAG.FeatureEnabled("client_udp"); Udp_enable && err == nil {
-		logger.Info("udp is enabled")
+		logger.Info("UDP is enabled")
 		Client_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			logger.Panic("Error listening: " + err.Error())
+			panic(err)
 		}
 		Client_detect_UDP_Server, err = net.ListenPacket(config.Viper.GetString("WORKER_SERVER_TYPE_UDP"), "0.0.0.0"+":"+config.Viper.GetString("WORKER_DEFAULT_DETECT_PORT"))
 		if err != nil {
-			logger.Error("Error listening:", zap.Any("error", err.Error()))
-			return 1
+			logger.Panic("Error listening: " + err.Error())
+			panic(err)
 		}
 	}
 	return 0
@@ -62,10 +60,10 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 		for {
 			conn, err := Client_TCP_Server.Accept()
 			if err != nil {
-				logger.Error("Error accepting:", zap.Any("error", err.Error()))
+				logger.Error("Error accepting: " + err.Error())
 				c <- err.Error()
 			}
-			logger.Info("worker port accepted")
+			logger.Info("Worker port accepted")
 			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}
@@ -77,10 +75,10 @@ func Conn_TCP_detect_start(c chan string, ctx context.Context) {
 		for {
 			conn, err := Client_detect_TCP_Server.Accept()
 			if err != nil {
-				logger.Error("Error accepting:", zap.Any("error", err.Error()))
+				logger.Error("Error accepting: " + err.Error())
 				c <- err.Error()
 			}
-			logger.Info("detect port accepted")
+			logger.Info("Detect port accepted")
 			go handleTCPRequest(conn, nil, "detect")
 		}
 	}
@@ -120,11 +118,11 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 			logger.Info("Get quit signal")
 			Connection_close(Connection_close_chan)
 		case ErrTCP := <-TCP_CHANNEL:
-			logger.Error("Error TCP listening:", zap.Any("error", ErrTCP))
+			logger.Error("Error TCP listening: " + ErrTCP)
 			Connection_close(Connection_close_chan)
 			rt = 1
 		case ErrTCP := <-TCP_DETECT_CHANNEL:
-			logger.Error("Error TCP listening:", zap.Any("error", ErrTCP))
+			logger.Error("Error TCP listening: " + ErrTCP)
 			rt = 1
 		}
 	} else if Udp_enable {
@@ -133,7 +131,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 			logger.Info("Get quit signal")
 			Connection_close(Connection_close_chan)
 		case ErrUDP := <-UDP_CHANNEL:
-			logger.Error("Error UDP listening:", zap.Any("error", ErrUDP))
+			logger.Error("Error UDP listening: " + ErrUDP)
 			Connection_close(Connection_close_chan)
 			rt = 1
 		}
@@ -148,7 +146,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	return rt
 }
 func Connection_close(Connection_close_chan chan<- int) {
-	// logger.Info("Connection close")
+	logger.Info("Connection close")
 	if Client_TCP_Server != nil {
 		Client_TCP_Server.Close()
 	}
@@ -160,7 +158,7 @@ func Connection_close(Connection_close_chan chan<- int) {
 
 func Main(ctx context.Context, Connection_close_chan chan<- int) {
 	if Connect_init() == 1 {
-		logger.Error("Init Connection error")
+		logger.Panic("Init Connection error")
 		os.Exit(1)
 	}
 	Connect_start(ctx, Connection_close_chan)

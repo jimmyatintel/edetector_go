@@ -8,12 +8,10 @@ import (
 	"edetector_go/pkg/logger"
 
 	"net"
-
-	"go.uber.org/zap"
 )
 
 func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDriveInfo: " + p.GetRkey() + "::" + p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err

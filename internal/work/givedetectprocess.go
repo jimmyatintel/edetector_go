@@ -15,12 +15,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveDetectProcessFrag: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectProcessFrag: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -32,7 +31,7 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	ip, name := query.GetMachineIPandName(key)
-	logger.Info("GiveDetectProcess: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectProcess: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
@@ -61,25 +60,25 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			values[16] = "detecting"
 		} else {
 			values[16] = "true"
-			logger.Debug("Update information of the detect process: ", zap.Any("message", values[9]+" "+values[1]))
+			logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
 		}
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
-			logger.Error("Error converting to struct: ", zap.Any("error", err.Error()))
+			logger.Error("Error converting to struct: " + err.Error())
 		}
 		values[17], err = Getriskscore(m_tmp)
 		if err != nil {
-			logger.Error("Error getting risk level: ", zap.Any("error", err.Error()))
+			logger.Error("Error getting risk level: " + err.Error())
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to rabbitMQ (main): ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (main): " + err.Error())
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
-			logger.Error("Error sending to rabbitMQ (details): ", zap.Any("error", err.Error()))
+			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
 	}
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)

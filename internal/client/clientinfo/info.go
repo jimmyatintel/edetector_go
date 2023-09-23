@@ -3,9 +3,9 @@ package clientinfo
 import (
 	logger "edetector_go/pkg/logger"
 	"encoding/json"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type ClientInfo struct {
@@ -41,7 +41,7 @@ func (c *ClientInfo) Load_data(data string) {
 func (c *ClientInfo) Marshal() string {
 	json, err := json.Marshal(c)
 	if err != nil {
-		logger.Error("Error in json marshal", zap.Any("error", err.Error()))
+		logger.Error("Error in json marshal: " + err.Error())
 	}
 	return string(json)
 }
@@ -50,7 +50,7 @@ func UnMarshal(data string) ClientInfo {
 	clientinfo := ClientInfo{}
 	err := json.Unmarshal([]byte(data), &clientinfo)
 	if err != nil {
-		logger.Error("Error in json unmarshal", zap.Any("error", err.Error()))
+		logger.Error("Error in json unmarshal: " + err.Error())
 	}
 	return clientinfo
 }

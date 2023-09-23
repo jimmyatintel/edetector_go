@@ -2,6 +2,22 @@
 
 ## Version
 
+### 2.0.7 ()
+Enhancements:
+- Add "Terminate" mission
+- Add "Image" mission
+- Add "ReadyScan" function
+- Enhance readability for "fromclient.go"
+- Identify the task type from agent connection
+- Elevate certain error-level messages to the panic level
+- Zip scan data
+
+### 2.0.6 (2023/8/31)
+Enhancements:
+- Add "Terminate" mission
+- Merge internal/taskservice/taskdb.go into pkg/mariadb/query/taskservice.go
+- Move touser.go to pkg
+
 ### 2.0.5 (2023/8/30)
 Enhancements:
 - Enhance readability for the init function

@@ -41,10 +41,12 @@ func Rabbit_init() {
 	Url := "amqp://" + username + ":" + password + "@" + hostname + ":" + port + "/"
 	Connection, err = NewRabbitMQ(Url)
 	if err != nil {
-		logger.Error("Failed to connect to RabbitMQ")
+		logger.Panic("Failed to connect to RabbitMQ")
+		panic(err)
 	}
 	channel, err = Connection.Channel()
 	if err != nil {
+		logger.Panic("Failed to connect to RabbitMQ")
 		panic(err)
 	}
 }

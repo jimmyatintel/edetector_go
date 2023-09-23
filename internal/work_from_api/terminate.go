@@ -7,9 +7,10 @@ import (
 	"edetector_go/pkg/logger"
 )
 
-func StartScan(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartScan: " + p.GetRkey() + "::" + p.GetMessage())
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_SCAN, p.GetMessage())
+func Terminate(p packet.UserPacket) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("Terminate: " + key + "::" + p.GetMessage())
+	err := clientsearchsend.SendUserTCPtoClient(p, task.TERMINATE_ALL, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}

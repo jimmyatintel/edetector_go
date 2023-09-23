@@ -5,12 +5,10 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"strings"
-
-	"go.uber.org/zap"
 )
 
 func HandleExpolorer(p packet.Packet) {
@@ -39,19 +37,19 @@ func HandleExpolorer(p packet.Packet) {
 			}
 			err := StartGetExplorer(&user_packet)
 			if err != nil {
-				logger.Error("Start get explorer failed:", zap.Any("error", err.Error()))
+				logger.Error("Start get explorer failed: " + err.Error())
 			}
 			block_chan, err := channelmap.GetDiskChannel(key)
 			if err != nil {
-				logger.Error("Get disk channel failed:", zap.Any("error", err.Error()))
+				logger.Error("Get disk channel failed: " + err.Error())
 				continue
 			}
 			block_chan <- msg
 			logger.Info("Next round")
 		}
 	}
-	logger.Info("Finish all drives: ", zap.Any("message", key))
-	taskservice.Finish_task(key, "StartGetDrive")
+	logger.Info("Finish all drives: " + key)
+	query.Finish_task(key, "StartGetDrive")
 }
 
 func StartGetExplorer(p packet.UserPacket) error {

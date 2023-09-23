@@ -2,6 +2,16 @@
 
 ## Version
 
+### 2.0.3 ()
+Enhancements:
+- Add extension name to the log to differentiate between the builder and parser
+- Elevate certain error-level messages to the panic level
+- Add "Terminate" mission (Use redis service)
+
+### 2.0.3 (2023/8/31)
+Enhancements:
+- Merge internal/taskservice/taskdb.go into pkg/mariadb/query/taskservice.go
+
 ### 2.0.2 (2023/8/30)
 Enhancements:
 - Enhance readability for the init function

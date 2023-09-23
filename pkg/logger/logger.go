@@ -2,6 +2,7 @@ package logger
 
 import (
 	"edetector_go/config"
+	"edetector_go/pkg/mariadb"
 	"fmt"
 	"os"
 	"path"
@@ -16,6 +17,7 @@ import (
 )
 
 var Log *zap.Logger
+var Service string
 
 func InitLogger(path string, hostname string, app string) {
 	// file logger
@@ -59,15 +61,7 @@ func InitLogger(path string, hostname string, app string) {
 		zapcore.NewCore(syslogEncoder, zapcore.Lock(sync), zapcore.DebugLevel),
 	)
 	Log = zap.New(core)
-}
-
-func Info(message string, fields ...zap.Field) {
-	if Log == nil {
-		return
-	}
-	callerFields := getCallerInfoForLog()
-	fields = append(fields, callerFields...)
-	Log.Info(message, fields...)
+	Service = app
 }
 
 func Debug(message string, fields ...zap.Field) {
@@ -79,13 +73,13 @@ func Debug(message string, fields ...zap.Field) {
 	Log.Debug(message, fields...)
 }
 
-func Error(message string, fields ...zap.Field) {
+func Info(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
-	Log.Error(message, fields...)
+	Log.Info(message, fields...)
 }
 
 func Warn(message string, fields ...zap.Field) {
@@ -95,6 +89,27 @@ func Warn(message string, fields ...zap.Field) {
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Warn(message, fields...)
+	StoreLogToDB("WARN", message)
+}
+
+func Error(message string, fields ...zap.Field) {
+	if Log == nil {
+		return
+	}
+	callerFields := getCallerInfoForLog()
+	fields = append(fields, callerFields...)
+	Log.Error(message, fields...)
+	StoreLogToDB("ERROR", message)
+}
+
+func Panic(message string, fields ...zap.Field) {
+	if Log == nil {
+		return
+	}
+	callerFields := getCallerInfoForLog()
+	fields = append(fields, callerFields...)
+	Log.Panic(message, fields...)
+	StoreLogToDB("PANIC", message)
 }
 
 func getCallerInfoForLog() (callerFields []zap.Field) {
@@ -119,12 +134,15 @@ func GinLog() gin.HandlerFunc {
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
 		requestURI := c.Request.RequestURI
-		Log.Info("GinLog",
-			zap.Int("status", statusCode),
-			zap.String("method", method),
-			zap.String("ip", clientIP),
-			zap.String("uri", requestURI),
-			zap.String("latency", latencyTime.String()),
-		)
+		ginInfo := fmt.Sprintf("[GIN] %v | %3d | %13v | %15s | %-7s %s", endTime.Format("2006/01/02 - 15:04:05"), statusCode, latencyTime, clientIP, method, requestURI)
+		Info(ginInfo)
+	}
+}
+
+func StoreLogToDB(level string, message string) {
+	query := "INSERT INTO log (level, service, content, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)"
+	_, err := mariadb.DB.Exec(query, level, Service, message)
+	if err != nil {
+		Log.Error("Error storing log to database: " + err.Error())
 	}
 }

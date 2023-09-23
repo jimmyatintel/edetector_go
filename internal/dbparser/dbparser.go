@@ -3,18 +3,18 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/config"
-	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"path/filepath"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
 )
 
 var dbUnstagePath = "dbUnstage"
@@ -26,20 +26,30 @@ func parser_init() {
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
+		logger.Panic("Error loading feature flag")
+		panic("Error loading feature flag")
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file", zap.Any("error", err.Error()))
-		return
+		logger.Panic("Error loading config file: " + err.Error())
+		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"), "dbparser", "DBPARSR")
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("PARSER_LOG_FILE")))
+		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("PARSER_LOG_FILE"))
 	}
-	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
+	connString, err := mariadb.Connect_init()
+	if err != nil {
+		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+		if db := redis.Redis_init(); db == nil {
+			logger.Panic("Error connecting to redis")
+			panic(err)
+		}
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
 		rabbitmq.Rabbit_init()
@@ -53,44 +63,45 @@ func parser_init() {
 
 func Main(version string) {
 	parser_init()
-	logger.Info("Welcome to edetector dbparser: ", zap.Any("version", version))
+	logger.Info("Welcome to edetector dbparser: " + version)
+outerloop:
 	for {
 		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		time.Sleep(3 * time.Second) // wait for fully copy
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
-			logger.Error("Error opening database file: ", zap.Any("error", err.Error()))
+			logger.Error("Error opening database file: " + err.Error())
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
-				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+				logger.Error("Error moving file: " + err.Error())
 			}
 			continue
 		}
-		logger.Info("Open db file: ", zap.Any("message", dbFile))
+		logger.Info("Open db file: " + dbFile)
 		tableNames, err := getTableNames(db)
 		if err != nil {
-			logger.Error("Error getting table names: ", zap.Any("error", err.Error()))
+			logger.Error("Error getting table names: " + err.Error())
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
-				logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+				logger.Error("Error moving file: " + err.Error())
 			}
 			continue
 		}
 		for _, tableName := range tableNames {
+			if terminateCollect(agent) {
+				closeParser(db, dbFile, agent)
+				continue outerloop
+			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
-				logger.Error("Error sending to elastic: ", zap.Any("error", err.Error()))
+				logger.Error("Error sending to elastic: " + err.Error())
 				continue
 			}
 		}
-		db.Close()
-		err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
-		if err != nil {
-			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
-		}
-		taskservice.Finish_task(agent, "StartCollect")
-		logger.Info("Task finished: ", zap.Any("message", agent))
+		closeParser(db, dbFile, agent)
+		query.Finish_task(agent, "StartCollect")
+		logger.Info("DB parser task finished: " + agent)
 	}
 }
 
@@ -112,4 +123,29 @@ func getTableNames(db *sql.DB) ([]string, error) {
 		return nil, err
 	}
 	return tableNames, nil
+}
+
+func terminateCollect(agent string) bool {
+	var flag = false
+	if redis.RedisExists(agent+"-terminateFinishIteration") && redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
+		return flag
+	}
+	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
+		flag = true
+		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
+		query.Terminated_task(agent, "StartCollect")
+		redis.RedisSet(agent+"-terminateCollect", 0)
+	}
+	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
+		query.Finish_task(agent, "Terminate")
+	}
+	return flag
+}
+
+func closeParser(db *sql.DB, dbFile string, agent string) {
+	db.Close()
+	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
+	if err != nil {
+		logger.Error("Error moving file: " + err.Error())
+	}
 }

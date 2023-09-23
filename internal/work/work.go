@@ -25,11 +25,12 @@ func init() {
 		task.GIVE_DETECT_PROCESS:      GiveDetectProcess,
 
 		// new scan
-		task.GIVE_SCAN_INFO:     GiveScanInfo,
-		task.GIVE_SCAN_PROGRESS: GiveScanProgress,
-		task.GIVE_SCAN_FRAGMENT: GiveScanFragment,
-		task.GIVE_SCAN:          GiveScan,
-		task.GIVE_SCAN_END:      GiveScanEnd,
+		task.READY_SCAN:          ReadyScan,
+		task.GIVE_SCAN_INFO:      GiveScanInfo,
+		task.GIVE_SCAN_PROGRESS:  GiveScanProgress,
+		task.GIVE_SCAN_DATA_INFO: GiveScanDataInfo,
+		task.GIVE_SCAN:           GiveScan,
+		task.GIVE_SCAN_END:       GiveScanEnd,
 
 		// drive
 		task.GIVE_DRIVE_INFO:        GiveDriveInfo,
@@ -46,5 +47,13 @@ func init() {
 		task.GIVE_COLLECT_DATA:       GiveCollectData,
 		task.GIVE_COLLECT_DATA_END:   GiveCollectDataEnd,
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
+
+		// image
+		task.GIVE_IMAGE_INFO: GiveImageInfo,
+		task.GIVE_IMAGE:      GiveImage,
+		task.GIVE_IMAGE_END:  GiveImageEnd,
+
+		// update
+		task.READY_UPDATE_AGENT: ReadyUpdateAgent,
 	}
 }

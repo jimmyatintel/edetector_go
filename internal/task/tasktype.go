@@ -23,12 +23,13 @@ const (
 	GIVE_DETECT_PROCESS      TaskType = "GiveDetectProcess"
 
 	// new scan
-	GET_SCAN           TaskType = "GetScan"
-	GIVE_SCAN_INFO     TaskType = "GiveScanInfo"
-	GIVE_SCAN_PROGRESS TaskType = "GiveScanProgress"
-	GIVE_SCAN_FRAGMENT TaskType = "GiveScanFragment"
-	GIVE_SCAN          TaskType = "GiveScan"
-	GIVE_SCAN_END      TaskType = "GiveScanEnd"
+	GET_SCAN            TaskType = "GetScan"
+	READY_SCAN          TaskType = "ReadyScan"
+	GIVE_SCAN_INFO      TaskType = "GiveScanInfo"
+	GIVE_SCAN_PROGRESS  TaskType = "GiveScanProgress"
+	GIVE_SCAN_DATA_INFO TaskType = "GiveScanDataInfo"
+	GIVE_SCAN           TaskType = "GiveScan"
+	GIVE_SCAN_END       TaskType = "GiveScanEnd"
 
 	// new drive
 	GET_DRIVE              TaskType = "GetDrive"
@@ -41,13 +42,29 @@ const (
 	GIVE_EXPLORER_END      TaskType = "GiveExplorerEnd"
 	GIVE_EXPLORER_ERROR    TaskType = "GiveExplorerError"
 
-	// collection
+	// new collection
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
 	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
 	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+
+	// image
+	GET_IMAGE       TaskType = "GetImage"
+	GIVE_IMAGE_INFO TaskType = "GiveImageInfo"
+	GIVE_IMAGE      TaskType = "GiveImage"
+	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
+
+	// update
+	UPDATE_AGENT       TaskType = "UpdateAgent"
+	READY_UPDATE_AGENT TaskType = "ReadyUpdateAgent"
+	GIVE_UPDATE_INFO   TaskType = "GiveUpdateInfo"
+	GIVE_UPDATE        TaskType = "GiveUpdate"
+	GIVE_UPDATE_END    TaskType = "GiveUpdateEnd"
+
+	// terminate
+	TERMINATE_ALL TaskType = "TerminateAll"
 
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
@@ -56,6 +73,9 @@ const (
 	START_GET_EXPLORER      UserTaskType = "StartGetExplorer"
 	START_COLLECTION        UserTaskType = "StartCollect"
 	USER_TRANSPORT_EXPLORER UserTaskType = "TransportExplorer"
+	START_GET_IMAGE         UserTaskType = "StartGetImage"
+	START_UPDATE            UserTaskType = "StartUpdate"
+	TERMINATE               UserTaskType = "Terminate"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
@@ -73,9 +93,10 @@ var Worklist = []TaskType{
 	GIVE_DETECT_PROCESS_FRAG,
 	GIVE_DETECT_PROCESS,
 	GET_SCAN,
+	READY_SCAN,
 	GIVE_SCAN_INFO,
 	GIVE_SCAN_PROGRESS,
-	GIVE_SCAN_FRAGMENT,
+	GIVE_SCAN_DATA_INFO,
 	GIVE_SCAN,
 	GIVE_SCAN_END,
 	GET_DRIVE,
@@ -93,6 +114,16 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	GET_IMAGE,
+	GIVE_IMAGE_INFO,
+	GIVE_IMAGE,
+	GIVE_IMAGE_END,
+	UPDATE_AGENT,
+	READY_UPDATE_AGENT,
+	GIVE_UPDATE_INFO,
+	GIVE_UPDATE,
+	GIVE_UPDATE_END,
+	TERMINATE_ALL,
 }
 
 var UserWorklist = []UserTaskType{
@@ -102,5 +133,8 @@ var UserWorklist = []UserTaskType{
 	START_COLLECTION,
 	START_GET_EXPLORER,
 	USER_TRANSPORT_EXPLORER,
+	START_GET_IMAGE,
+	START_UPDATE,
+	TERMINATE,
 	USER_UNDEFINE,
 }

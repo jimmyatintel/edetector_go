@@ -2,6 +2,10 @@
 
 ## Version
 
+### 2.0.3 ()
+Enhancements:
+- Elevate certain error-level messages to the panic level
+
 ### 2.0.2 (2023/8/30)
 Enhancements:
 - Enhance readability for the init function

@@ -1,4 +1,4 @@
-package taskservice
+package request
 
 import (
 	"bytes"
@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type Request struct {
@@ -24,7 +22,7 @@ func RequestToUser(id string) {
 	// Marshal payload into JSON
 	payload, err := json.Marshal(request)
 	if err != nil {
-		logger.Error("Error marshaling JSON:", zap.Any("error", err.Error()))
+		logger.Error("Error marshaling JSON: " + err.Error())
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -38,7 +36,7 @@ func RequestToUser(id string) {
 	path := fmt.Sprintf("http://%s:%s/updateTask", ip, port)
 	req, err := http.NewRequest("POST", path, bytes.NewBuffer(payload))
 	if err != nil {
-		logger.Error("Error creating HTTP request: ", zap.Any("error", err.Error()))
+		logger.Error("Error creating HTTP request: " + err.Error())
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -48,18 +46,18 @@ func RequestToUser(id string) {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() == context.DeadlineExceeded {
-				logger.Error("Request timed out: ", zap.Any("error", err.Error()))
+				logger.Error("Request timed out: " + err.Error())
 				return
 			}
 		default:
-			logger.Error("Error sending HTTP request: ", zap.Any("error", err.Error()))
+			logger.Error("Error sending HTTP request: " + err.Error())
 			return
 		}
 	}
 	defer response.Body.Close()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
-		logger.Error("Request failed with status code:", zap.Any("error", response.StatusCode))
+		logger.Error("Request failed with status code: " + string(response.StatusCode))
 		return
 	}
 }

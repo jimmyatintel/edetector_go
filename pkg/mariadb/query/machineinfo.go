@@ -20,14 +20,14 @@ func GetMachineIPandName(KeyNum string) (string, string) {
 func GetMachineIP(KeyNum string) (ip string) {
 	res, err := mariadb.DB.Query("SELECT ip FROM client WHERE client_id = ?", KeyNum)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error getting machine ip" + err.Error())
 		return ""
 	}
 	defer res.Close()
 	for res.Next() {
 		err := res.Scan(&ip)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}
@@ -37,14 +37,14 @@ func GetMachineIP(KeyNum string) (ip string) {
 func GetMachineMAC(KeyNum string) (mac string) {
 	res, err := mariadb.DB.Query("SELECT mac FROM client WHERE client_id = ?", KeyNum)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error getting machine mac" + err.Error())
 		return ""
 	}
 	defer res.Close()
 	for res.Next() {
 		err := res.Scan(&mac)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}
@@ -54,14 +54,14 @@ func GetMachineMAC(KeyNum string) (mac string) {
 func GetMachineName(KeyNum string) (name string) {
 	res, err := mariadb.DB.Query("SELECT computername FROM client_info WHERE client_id = ?", KeyNum)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error getting machine name" + err.Error())
 		return ""
 	}
 	defer res.Close()
 	for res.Next() {
 		err := res.Scan(&name)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error scan: " + err.Error())
 			return ""
 		}
 	}

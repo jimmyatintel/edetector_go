@@ -15,8 +15,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 var mid_mutex *sync.Mutex
@@ -33,27 +31,27 @@ func connector_init() {
 
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
+		logger.Panic("Error loading feature flag")
+		panic("error loading feature flag")
 	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file", zap.Any("error", err.Error()))
-		return
+		logger.Panic("Error loading config file: " + err.Error())
+		panic(err)
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "CONNECTOR", "connector")
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
+		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("CONNECTOR_LOG_FILE"))
 	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		elastic.Elastic_init()
-		logger.Info("elastic is enabled.")
+		logger.Info("Elastic is enabled.")
 	}
 }
 
 func Start(version string) {
 	connector_init()
-	logger.Info("Welcome to edetector connector: ", zap.Any("version", version))
+	logger.Info("Welcome to edetector connector: " + version)
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()
@@ -80,12 +78,12 @@ func high_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		err = elastic.IndexRequest(m.Index, m.Data)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Index request error: " + err.Error())
 			continue
 		}
 		msg.Ack(false)
@@ -104,7 +102,7 @@ func mid_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		mid_mutex.Lock()
@@ -130,7 +128,7 @@ func low_speed() {
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		low_mutex.Lock()
@@ -152,7 +150,7 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Error("Bulk index request error: " + err.Error())
 				continue
 			}
 			*bulkdata = nil
