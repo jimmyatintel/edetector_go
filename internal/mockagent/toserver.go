@@ -1,6 +1,7 @@
 package mockagent
 
 import (
+	"edetector_go/config"
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
@@ -9,8 +10,9 @@ import (
 
 func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 	var send_packet = packet.WorkPacket{
-		MacAddress: "",
-		IpAddress:  "",
+		MacAddress: config.Viper.GetString("MOCK_AGENT_MAC"),
+		IpAddress:  config.Viper.GetString("MOCK_AGENT_IP"),
+		Rkey:       config.Viper.GetString("MOCK_AGENT_KEY"),
 		Work:       worktype,
 		Message:    msg,
 	}

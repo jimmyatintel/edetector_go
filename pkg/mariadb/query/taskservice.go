@@ -4,7 +4,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/request"
-	"fmt"
 	"strconv"
 )
 
@@ -24,7 +23,6 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 		qu = qu + "type = \"" + tasktype + "\" AND "
 	}
 	qu = qu + "1=1"
-	fmt.Println(qu)
 	res, err := mariadb.DB.Query(qu)
 	if err != nil {
 		return result, err

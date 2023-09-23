@@ -2,10 +2,12 @@ package mockagent
 
 import (
 	"edetector_go/config"
+	"edetector_go/internal/task"
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"net"
 	"os"
+	"time"
 )
 
 func init() {
@@ -35,5 +37,8 @@ func Main() {
 	defer conn.Close()
 	logger.Info("Connected to the server at " + serverAddr)
 
-	// Add your client logic here...
+	// handshake
+	timestamp := time.Now().Format("20060102150405")
+	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + config.Viper.GetString("MOCK_AGENT_KEY")
+	SendTCPtoServer(task.GIVE_INFO, info, conn)
 }
