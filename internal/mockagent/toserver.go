@@ -15,7 +15,7 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 	var send_packet = packet.WorkPacket{
 		MacAddress: config.Viper.GetString("MOCK_AGENT_MAC"),
 		IpAddress:  config.Viper.GetString("MOCK_AGENT_IP"),
-		Rkey:       config.Viper.GetString("MOCK_AGENT_KEY"),
+		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    msg,
 	}
@@ -34,7 +34,7 @@ func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn) erro
 	var send_packet = packet.DataPacket{
 		MacAddress: config.Viper.GetString("MOCK_AGENT_MAC"),
 		IpAddress:  config.Viper.GetString("MOCK_AGENT_IP"),
-		Rkey:       config.Viper.GetString("MOCK_AGENT_KEY"),
+		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    "",
 	}

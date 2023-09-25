@@ -16,6 +16,7 @@ import (
 
 var serverAddr string
 var detectStatus string
+var mockagentKey string
 
 func init() {
 	fflag.Get_fflag()
@@ -39,7 +40,12 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	serverAddr = config.Viper.GetString("WORKING_SERVER_IP") + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+    if len(os.Args) != 3 {
+		logger.Panic("Usage: go run mockagent/agent.go 1(agentID) 163(serverIP)...")
+		panic(err)
+    }
+    mockagentKey = "mockagent" + os.Args[1]
+	serverAddr = config.Viper.GetString("WORKING_SERVER_IP") + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
 }
 
@@ -54,7 +60,7 @@ func Main() {
 
 	// handshake
 	timestamp := time.Now().Format("20060102150405")
-	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + config.Viper.GetString("MOCK_AGENT_KEY")
+	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
 	SendTCPtoServer(task.GIVE_INFO, info, conn)
 	go handleMainConn(conn)
 	for {
