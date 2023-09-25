@@ -8,6 +8,7 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb"
 	"net"
 	"os"
 	"time"
@@ -29,6 +30,13 @@ func init() {
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE"), "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
+	}
+	connString, err := mariadb.Connect_init()
+	if err != nil {
+		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
 	serverAddr = config.Viper.GetString("WORKING_SERVER_IP") + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 }
@@ -87,9 +95,11 @@ func handleMainConn(conn net.Conn) {
 			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, "0|0", conn)
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
 			SendTCPtoServer(task.GIVE_DETECT_INFO, NewPacket.GetMessage(), conn)
-		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.GET_DRIVE {
+		} else if NewPacket.GetTaskType() == task.GET_DRIVE {
+			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn)
+		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO {
 			go handleNewTask(NewPacket.GetTaskType())
-		} else {
+		} else if NewPacket.GetTaskType() != task.DATA_RIGHT {
 			logger.Error("Undefined task type: " + string(NewPacket.GetTaskType()))
 		}
 	}
@@ -108,13 +118,13 @@ func handleNewTask(taskType task.TaskType) {
 		go agentScan(new_conn, dataRightFromServer)
 	case task.GET_COLLECT_INFO:
 		go agentCollect(new_conn, dataRightFromServer)
-	case task.GET_DRIVE:
+	case task.EXPLORER_INFO:
 		go agentDrive(new_conn, dataRightFromServer)
 	}
 	buf := make([]byte, 1024)
 	for {
 		NewPacket := receive(buf, new_conn)
-		if NewPacket.GetTaskType() == task.DATA_RIGHT || NewPacket.GetTaskType() == task.EXPLORER_INFO {
+		if NewPacket.GetTaskType() == task.DATA_RIGHT {
 			dataRightFromServer <- 1
 		}
 	}

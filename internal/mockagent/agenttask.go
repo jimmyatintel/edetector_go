@@ -30,12 +30,9 @@ func agentCollect(conn net.Conn, dataRight chan int) {
 }
 
 func agentDrive(conn net.Conn, dataRight chan int) {
-	SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn)
+	SendTCPtoServer(task.EXPLORER, "C|NTFS", conn)
 	<-dataRight
-	<-dataRight
-	SendTCPtoServer(task.EXPLORER, "C-NTFS", conn)
-	<-dataRight
-	for i := 1; i <= 7000; i++ {
+	for i := 1; i <= 7000; i = i + 100 {
 		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7000", conn)
 		<-dataRight
 	}
