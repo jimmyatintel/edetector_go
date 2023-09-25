@@ -40,12 +40,12 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-    if len(os.Args) != 3 {
+	if len(os.Args) != 3 {
 		logger.Panic("Usage: go run mockagent/agent.go 1(agentID) 163(serverIP)...")
 		panic(err)
-    }
-    mockagentKey = "mockagent" + os.Args[1]
-	serverAddr = config.Viper.GetString("WORKING_SERVER_IP") + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	}
+	mockagentKey = "mockagent" + os.Args[1]
+	serverAddr = "192.168.200." + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
 }
 

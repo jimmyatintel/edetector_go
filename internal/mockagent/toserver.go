@@ -1,7 +1,6 @@
 package mockagent
 
 import (
-	"edetector_go/config"
 	"edetector_go/internal/C_AES"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
@@ -13,8 +12,8 @@ import (
 func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 	logger.Info("SendTCPtoServer: " + string(worktype) + " " + msg)
 	var send_packet = packet.WorkPacket{
-		MacAddress: config.Viper.GetString("MOCK_AGENT_MAC"),
-		IpAddress:  config.Viper.GetString("MOCK_AGENT_IP"),
+		MacAddress: "MO-CK-AG-EN-TM-AC",
+		IpAddress:  "192.168.200.0",
 		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    msg,
@@ -32,8 +31,8 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn) error {
 	logger.Debug("SendDataTCPtoServer: " + string(worktype))
 	var send_packet = packet.DataPacket{
-		MacAddress: config.Viper.GetString("MOCK_AGENT_MAC"),
-		IpAddress:  config.Viper.GetString("MOCK_AGENT_IP"),
+		MacAddress: "MO-CK-AG-EN-TM-AC",
+		IpAddress:  "192.168.200.0",
 		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    "",
