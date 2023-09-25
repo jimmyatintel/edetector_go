@@ -22,6 +22,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	buf := make([]byte, 2048)
 	key := "unknown"
 	agentTaskType := "unknown"
+	var dataRightChan chan net.Conn
 	retryScanFlag := false
 	if task_chan != nil {
 		go func() {
@@ -98,9 +99,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else {
 			redis.Online(key)
 		}
-		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
+			dataRightChan = make(chan net.Conn)
+			work.ReadyUpdateAgent(NewPacket, conn, dataRightChan)
+		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("DataRight: " + key)
-			work.DataRight <- conn
+			dataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {

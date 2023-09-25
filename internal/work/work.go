@@ -52,8 +52,5 @@ func init() {
 		task.GIVE_IMAGE_INFO: GiveImageInfo,
 		task.GIVE_IMAGE:      GiveImage,
 		task.GIVE_IMAGE_END:  GiveImageEnd,
-
-		// update
-		task.READY_UPDATE_AGENT: ReadyUpdateAgent,
 	}
 }

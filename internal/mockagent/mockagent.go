@@ -9,6 +9,7 @@ import (
 	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"errors"
 	"net"
 	"os"
 	"time"
@@ -50,22 +51,22 @@ func init() {
 }
 
 func Main() {
-	conn, err := net.Dial("tcp", serverAddr)
-	if err != nil {
-		logger.Panic("Error connecting to the server:" + err.Error())
-		os.Exit(1)
-	}
-	defer conn.Close()
-	logger.Info("Connected to the server at " + serverAddr)
-
-	// handshake
-	timestamp := time.Now().Format("20060102150405")
-	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
-	SendTCPtoServer(task.GIVE_INFO, info, conn)
-	go handleMainConn(conn)
 	for {
-		SendTCPtoServer(task.CHECK_CONNECT, "", conn)
-		time.Sleep(30 * time.Second)
+		conn, err := net.Dial("tcp", serverAddr)
+		if err != nil {
+			logger.Error("Error connecting to the server:" + err.Error())
+			time.Sleep(30 * time.Second)
+		}
+		logger.Info("Connected to the server at " + serverAddr)
+		// handshake
+		timestamp := time.Now().Format("20060102150405")
+		info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
+		SendTCPtoServer(task.GIVE_INFO, info, conn)
+		err = handleMainConn(conn)
+		if err != nil {
+			logger.Error("Error handling main connection: " + err.Error())
+			time.Sleep(30 * time.Second)
+		}
 	}
 }
 
@@ -93,18 +94,27 @@ func receive(buf []byte, conn net.Conn) packet.Packet {
 	return NewPacket
 }
 
-func handleMainConn(conn net.Conn) {
+func handleMainConn(conn net.Conn) error {
+	go func() {
+		for {
+			SendTCPtoServer(task.CHECK_CONNECT, "", conn)
+			time.Sleep(30 * time.Second)
+		}
+	}()
 	defer conn.Close()
 	buf := make([]byte, 1024)
 	for {
 		NewPacket := receive(buf, conn)
+		if NewPacket == nil {
+			return errors.New("Main connection closed")
+		}
 		logger.Info("Received task from server: " + string(NewPacket.GetTaskType()))
 		if NewPacket.GetTaskType() == task.OPEN_CHECK_THREAD {
 			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, detectStatus, conn)
 			new_conn, err := net.Dial("tcp", serverAddr)
 			if err != nil {
 				logger.Error("Error connecting to the server:" + err.Error())
-				return
+				return err
 			}
 			defer new_conn.Close()
 			go agentDetect(new_conn)
