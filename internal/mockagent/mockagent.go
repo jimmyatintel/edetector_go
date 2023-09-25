@@ -15,6 +15,7 @@ import (
 )
 
 var serverAddr string
+var detectStatus string
 
 func init() {
 	fflag.Get_fflag()
@@ -39,6 +40,7 @@ func init() {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
 	serverAddr = config.Viper.GetString("WORKING_SERVER_IP") + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	detectStatus = "0|0"
 }
 
 func Main() {
@@ -92,9 +94,17 @@ func handleMainConn(conn net.Conn) {
 		NewPacket := receive(buf, conn)
 		logger.Info("Received task from server: " + string(NewPacket.GetTaskType()))
 		if NewPacket.GetTaskType() == task.OPEN_CHECK_THREAD {
-			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, "0|0", conn)
+			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, detectStatus, conn)
+			new_conn, err := net.Dial("tcp", serverAddr)
+			if err != nil {
+				logger.Error("Error connecting to the server:" + err.Error())
+				return
+			}
+			defer new_conn.Close()
+			go agentDetect(new_conn)
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
-			SendTCPtoServer(task.GIVE_DETECT_INFO, NewPacket.GetMessage(), conn)
+			detectStatus = NewPacket.GetMessage()
+			SendTCPtoServer(task.GIVE_DETECT_INFO, detectStatus, conn)
 		} else if NewPacket.GetTaskType() == task.GET_DRIVE {
 			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn)
 		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO {
@@ -128,5 +138,4 @@ func handleNewTask(taskType task.TaskType) {
 			dataRightFromServer <- 1
 		}
 	}
-
 }
