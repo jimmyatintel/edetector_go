@@ -48,13 +48,13 @@ func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Co
 			query.Finish_task(p.GetRkey(), "StartScan")
 			break
 		}
-		end := int(math.Min(float64(fileLen), float64(start+29900)))
+		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
 		logger.Info("ServerSend GiveUpdate: " + p.GetRkey())
 		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE, data, conn)
 		if err != nil {
 			logger.Error("Send GiveUpdate error: " + err.Error())
 		}
-		start += 29900
+		start += 65436
 	}
 }

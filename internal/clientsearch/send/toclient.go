@@ -41,12 +41,12 @@ func SendTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn n
 }
 
 func AppendByteMsg(data []byte, msg []byte) []byte {
-	length := 29900
+	length := 65436
 	if len(msg) > length {
 		logger.Error("Error msg length of DataPacket")
 		return data
 	} else if len(msg) == length {
-		logger.Debug("msg length of DataPacket is 29900")
+		logger.Debug("msg length of DataPacket is 65436")
 		msg = msg[:length]
 	} else {
 		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)))...)

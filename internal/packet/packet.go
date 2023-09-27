@@ -185,7 +185,7 @@ func (p *DataPacket) Fluent() []byte {
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
 	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.Message, 29900, " ")...)
+	data = append(data, ljust(p.Message, 65436, " ")...)
 	// data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
