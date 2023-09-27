@@ -4,7 +4,6 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
-	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
@@ -29,21 +28,21 @@ func connector_init() {
 	mid_mutex = &sync.Mutex{}
 	low_mutex = &sync.Mutex{}
 
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Panic("Error loading feature flag")
-		panic("error loading feature flag")
-	}
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Panic("Error loading feature flag")
+	// 	panic("error loading feature flag")
+	// }
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+	if true {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "CONNECTOR", "connector")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("CONNECTOR_LOG_FILE"))
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+	if true {
 		elastic.Elastic_init()
 		logger.Info("Elastic is enabled.")
 	}

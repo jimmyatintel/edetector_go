@@ -3,7 +3,6 @@ package elastic
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"encoding/json"
 	"errors"
@@ -28,10 +27,10 @@ var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "Ch
 	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity"}
 
 func flagcheck() bool {
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		return true
-	}
-	return false
+	// }
+	// return false
 }
 
 func Elastic_init() {

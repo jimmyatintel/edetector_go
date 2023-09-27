@@ -5,7 +5,6 @@ import (
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
 	"edetector_go/pkg/elastic"
-	fflag "edetector_go/pkg/fflag"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
@@ -18,17 +17,17 @@ import (
 )
 
 func server_init() {
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Panic("Error loading feature flag")
-		panic("Error loading feature flag")
-	}
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Panic("Error loading feature flag")
+	// 	panic("Error loading feature flag")
+	// }
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+	if true {
 		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
@@ -39,17 +38,17 @@ func server_init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+	if true {
 		if db := redis.Redis_init(); db == nil {
 			logger.Panic("Error connecting to redis")
 			panic(err)
 		}
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+	if true {
 		rabbitmq.Rabbit_init()
 		logger.Info("Rabbit is enabled.")
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
+	if true {
 		elastic.Elastic_init()
 		logger.Info("Elastic is enabled.")
 	}
