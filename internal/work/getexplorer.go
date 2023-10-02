@@ -6,6 +6,7 @@ import (
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"strings"
 )
@@ -47,6 +48,7 @@ func HandleExpolorer(p packet.Packet) {
 			logger.Info("Next round")
 		}
 	}
+	query.Finish_task(key, "StartGetDrive")
 	logger.Info("Finish all drives: " + key)
 }
 
