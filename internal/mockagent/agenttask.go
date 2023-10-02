@@ -31,6 +31,7 @@ func agentScan(conn net.Conn, dataRight chan int) {
 		<-dataRight
 	}
 	sendZipFile("scan.zip", task.GIVE_SCAN_DATA_INFO, task.GIVE_SCAN, task.GIVE_SCAN_END, conn, dataRight)
+	conn.Close()
 }
 
 func agentCollect(conn net.Conn, dataRight chan int) {
@@ -39,6 +40,7 @@ func agentCollect(conn net.Conn, dataRight chan int) {
 		<-dataRight
 	}
 	sendZipFile("collect.zip", task.GIVE_COLLECT_DATA_INFO, task.GIVE_COLLECT_DATA, task.GIVE_COLLECT_DATA_END, conn, dataRight)
+	conn.Close()
 }
 
 func agentDrive(conn net.Conn, dataRight chan int) {
@@ -49,6 +51,7 @@ func agentDrive(conn net.Conn, dataRight chan int) {
 		<-dataRight
 	}
 	sendZipFile("explorer.zip", task.GIVE_EXPLORER_INFO, task.GIVE_EXPLORER_DATA, task.GIVE_EXPLORER_END, conn, dataRight)
+	conn.Close()
 }
 
 func sendZipFile(zipPath string, taskInfo task.TaskType, taskData task.TaskType, taskEnd task.TaskType, conn net.Conn, dataRight chan int) {
