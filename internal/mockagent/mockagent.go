@@ -20,18 +20,26 @@ var detectStatus string
 var mockagentKey string
 
 func init() {
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Panic("Error loading feature flag")
-		panic("Error loading feature flag")
-	}
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
+	if len(os.Args) != 3 {
+		err := errors.New("usage: go run mockagent/agent.go 1(agentID) 163(serverIP)")
+		logger.Panic(err.Error())
+		panic(err)
+	}
+	mockagentKey = "mockagent" + os.Args[1]
+	serverAddr = "192.168.200." + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	detectStatus = "0|0"
+	fflag.Get_fflag()
+	if fflag.FFLAG == nil {
+		logger.Panic("Error loading feature flag")
+		panic("Error loading feature flag")
+	}
 	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE"), "server", "SERVER")
+		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE")+mockagentKey+".log", "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
 	connString, err := mariadb.Connect_init()
@@ -41,13 +49,6 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	if len(os.Args) != 3 {
-		logger.Panic("Usage: go run mockagent/agent.go 1(agentID) 163(serverIP)...")
-		panic(err)
-	}
-	mockagentKey = "mockagent" + os.Args[1]
-	serverAddr = "192.168.200." + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
-	detectStatus = "0|0"
 }
 
 func Main() {
@@ -150,7 +151,7 @@ func handleNewTask(taskType task.TaskType) {
 	buf := make([]byte, 1024)
 	for {
 		NewPacket := receive(buf, new_conn)
-		if NewPacket.GetTaskType() == task.DATA_RIGHT {
+		if NewPacket != nil && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			dataRightFromServer <- 1
 		}
 	}
