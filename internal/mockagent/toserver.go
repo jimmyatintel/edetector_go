@@ -12,8 +12,8 @@ import (
 func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 	logger.Info("SendTCPtoServer: " + string(worktype) + " " + msg)
 	var send_packet = packet.WorkPacket{
-		MacAddress: "MO-CK-AG-EN-TM-AC",
-		IpAddress:  "192.168.200.0",
+		MacAddress: mockagentIP,
+		IpAddress:  mockagentMAC,
 		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    msg,
@@ -31,8 +31,8 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn) error {
 	logger.Debug("SendDataTCPtoServer: " + string(worktype))
 	var send_packet = packet.DataPacket{
-		MacAddress: "MO-CK-AG-EN-TM-AC",
-		IpAddress:  "192.168.200.0",
+		MacAddress: mockagentIP,
+		IpAddress:  mockagentMAC,
 		Rkey:       mockagentKey,
 		Work:       worktype,
 		Message:    "",

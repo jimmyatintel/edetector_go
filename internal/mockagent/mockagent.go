@@ -10,14 +10,21 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var serverAddr string
 var detectStatus string
 var mockagentKey string
+var mockagentIP string
+var mockagentMAC string
 
 func init() {
 	vp, err := config.LoadConfig()
@@ -25,13 +32,12 @@ func init() {
 		logger.Panic("Error loading config file: " + err.Error())
 		panic(err)
 	}
-	if len(os.Args) != 3 {
-		err := errors.New("usage: go run mockagent/agent.go 1(agentID) 163(serverIP)")
+	if len(os.Args) != 2 {
+		err := errors.New("usage: go run mockagent/agent.go 163(serverIP)")
 		logger.Panic(err.Error())
 		panic(err)
 	}
-	mockagentKey = "mockagent" + os.Args[1]
-	serverAddr = "192.168.200." + os.Args[2] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	serverAddr = "192.168.200." + os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
 	fflag.Get_fflag()
 	if fflag.FFLAG == nil {
@@ -49,6 +55,16 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
+	mockAgentData()
+}
+
+func mockAgentData() {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	mockagentKey = strings.Replace(uuid.New().String(), "-", "", -1)
+	mockagentIP = "192.168.100." + fmt.Sprint(rand.Intn(101-1))
+	macBytes := []byte{byte(0x02), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256))}
+	mockagentMAC = fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
+	logger.Info("mock agent data: " + mockagentKey +"|"+mockagentIP +"|"+mockagentMAC)
 }
 
 func Main() {

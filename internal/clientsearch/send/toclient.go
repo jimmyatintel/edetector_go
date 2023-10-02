@@ -7,7 +7,6 @@ import (
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/logger"
-	"fmt"
 	"strings"
 
 	"net"
@@ -64,12 +63,8 @@ func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, co
 	}
 	data := send_packet.Fluent()
 	data = AppendByteMsg(data, msg)
-	logger.Debug("len(data): " + fmt.Sprint(len(data)))
-	logger.Debug("data " + string(data))
-	logger.Debug("original " + fmt.Sprintf("%x", data))
-	// encrypt_buf := make([]byte, len(data))
-	// C_AES.Encryptbuffer(data, len(data), encrypt_buf)
-	// logger.Debug("encrypted " + fmt.Sprintf("%x", encrypt_buf))
+	encrypt_buf := make([]byte, len(data))
+	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(data)
 	if err != nil {
 		return err
