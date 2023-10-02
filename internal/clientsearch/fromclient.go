@@ -117,7 +117,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 		}
 		lastTask = string(NewPacket.GetTaskType())
-		logger.Info("last task: " + lastTask)
 	}
 }
 
@@ -133,10 +132,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		query.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
-			logger.Info("not end!!!")
 			query.Failed_task(key, agentTaskType)
-		} else {
-			logger.Info("end!!!")
 		}
 	} else if agentTaskType == "Main" {
 		redis.Offline(key)
