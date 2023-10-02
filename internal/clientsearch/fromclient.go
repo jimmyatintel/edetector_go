@@ -4,6 +4,7 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"strings"
 
 	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
@@ -22,8 +23,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	buf := make([]byte, 2048)
 	key := "unknown"
 	agentTaskType := "unknown"
+	lastTask := "unknown"
 	var dataRightChan chan net.Conn
-	retryScanFlag := false
 	if task_chan != nil {
 		go func() {
 			for {
@@ -44,7 +45,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		var decrypt_buf []byte
 		reqLen, err := conn.Read(buf)
 		if err != nil {
-			connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
+			connectionClosedByAgent(key, agentTaskType, lastTask, err)
 			return
 		}
 		Data_acache := make([]byte, 0)
@@ -55,7 +56,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
-					connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
+					connectionClosedByAgent(key, agentTaskType, lastTask, err)
 					return
 				}
 				Data_acache = append(Data_acache, buf[:reqLen]...)
@@ -86,11 +87,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.READY_SCAN {
-			retryScanFlag = true
-		} else {
-			retryScanFlag = false
-		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO {
 			// wait for key to join the packet
 			Clientlist = append(Clientlist, key)
@@ -120,6 +116,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				continue
 			}
 		}
+		lastTask = string(NewPacket.GetTaskType())
+		logger.Info("last task: " + lastTask)
 	}
 }
 
@@ -127,14 +125,19 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("UDP")
 }
 
-func connectionClosedByAgent(key string, agentTaskType string, retryScanFlag bool, err error) {
+func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
 	if agentTaskType != "CollectProgress" {
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 	}
-	if agentTaskType == "StartScan" && retryScanFlag {
+	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		query.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-		query.Failed_task(key, agentTaskType)
+		if !strings.Contains(lastTask, "End") {
+			logger.Info("not end!!!")
+			query.Failed_task(key, agentTaskType)
+		} else {
+			logger.Info("end!!!")
+		}
 	} else if agentTaskType == "Main" {
 		redis.Offline(key)
 	}
