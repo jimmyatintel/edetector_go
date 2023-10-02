@@ -27,6 +27,13 @@ var mockagentIP string
 var mockagentMAC string
 
 func init() {
+	// mock data
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	mockagentKey = strings.Replace(uuid.New().String(), "-", "", -1)
+	mockagentIP = "192.168.100." + fmt.Sprint(rand.Intn(101-1))
+	macBytes := []byte{byte(0x02), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256))}
+	mockagentMAC = fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
+
 	vp, err := config.LoadConfig()
 	if vp == nil {
 		logger.Panic("Error loading config file: " + err.Error())
@@ -55,16 +62,7 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	mockAgentData()
-}
-
-func mockAgentData() {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-	mockagentKey = strings.Replace(uuid.New().String(), "-", "", -1)
-	mockagentIP = "192.168.100." + fmt.Sprint(rand.Intn(101-1))
-	macBytes := []byte{byte(0x02), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256))}
-	mockagentMAC = fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
-	logger.Info("mock agent data: " + mockagentKey +"|"+mockagentIP +"|"+mockagentMAC)
+	logger.Info("MockAgentData: " + mockagentKey +"|"+mockagentIP +"|"+mockagentMAC)
 }
 
 func Main() {
