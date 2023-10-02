@@ -151,7 +151,9 @@ func handleNewTask(taskType task.TaskType) {
 	buf := make([]byte, 1024)
 	for {
 		NewPacket := receive(buf, new_conn)
-		if NewPacket != nil && NewPacket.GetTaskType() == task.DATA_RIGHT {
+		if NewPacket == nil {
+			break
+		} else if NewPacket.GetTaskType() == task.DATA_RIGHT {
 			dataRightFromServer <- 1
 		}
 	}
