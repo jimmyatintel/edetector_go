@@ -65,7 +65,7 @@ func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, co
 	data = AppendByteMsg(data, msg)
 	encrypt_buf := make([]byte, len(data))
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
-	_, err := conn.Write(data)
+	_, err := conn.Write(encrypt_buf)
 	if err != nil {
 		return err
 	}
