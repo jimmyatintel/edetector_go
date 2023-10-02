@@ -14,13 +14,7 @@ import (
 	"net"
 )
 
-var DataRight chan net.Conn
-
-func init() {
-	DataRight = make(chan net.Conn)
-}
-
-func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	logger.Info("ReadyUpdateAgent: " + p.GetRkey() + "::" + p.GetMessage())
 	path := filepath.Join("agentFile", "test.exe")
 	fileInfo, err := os.Stat(path)
@@ -33,18 +27,18 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	go GiveUpdate(p, fileLen, path)
+	go GiveUpdate(p, fileLen, path, dataRight)
 	return task.SUCCESS, nil
 }
 
-func GiveUpdate(p packet.Packet, fileLen int, path string) {
+func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Conn) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		logger.Error("Read file error: " + err.Error())
 	}
 	start := 0
 	for {
-		conn := <-DataRight
+		conn := <-dataRight
 		if start >= fileLen {
 			logger.Info("ServerSend GiveUpdateEnd: " + p.GetRkey())
 			err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_UPDATE_END, []byte{}, conn)
