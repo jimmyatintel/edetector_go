@@ -81,7 +81,7 @@ func Main(version string) {
 func servershutdown() {
 	// rabbitmq.Connection_close()
 	for _, client := range Client.Clientlist {
-		redis.Offline(client)
+		redis.Offline(client, false)
 	}
 	redis.RedisClose()
 }

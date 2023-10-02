@@ -50,6 +50,7 @@ Enhancements:
 Fixed Bugs:
 - Resolved the issue of generating incorrect new agent IDs (without "-")
 - Enhanced task completion timing
+- Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
 
 To-Do:
 - Implement feature flags

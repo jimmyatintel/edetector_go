@@ -4,6 +4,7 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"fmt"
 	"strings"
 
 	channelmap "edetector_go/internal/channelmap"
@@ -63,14 +64,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}
 			NewPacket = new(packet.DataPacket)
 		} else {
-			logger.Error("Invalid packet (too short): " + string(decrypt_buf))
+			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", decrypt_buf))
 			continue
 		}
 		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
 		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 		if err != nil {
-			logger.Error("Error reading: " + err.Error() + ", Content: " + string(decrypt_buf))
+			logger.Error("Error reading: " + err.Error() + ", Content: " + fmt.Sprintf("%x", decrypt_buf))
 			continue
 		}
 		if key == "unknown" {
@@ -135,6 +136,6 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			query.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
-		redis.Offline(key)
+		redis.Offline(key, false)
 	}
 }
