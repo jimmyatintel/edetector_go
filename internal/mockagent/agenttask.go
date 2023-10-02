@@ -17,7 +17,7 @@ func agentDetect(conn net.Conn) {
 		if detectStatus == "1|1" {
 			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "10924|192.168.200.109:56421|1695608694|0|1|7680\n11032|192.168.200.167:8080|1695608694|1695018229|0|59304\n", conn)
 			time.Sleep(5 * time.Second)
-			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "fontdrvhost.exe|1694863834|\"fontdrvhost.exe\"|66c2300a7723c66361dc82d438f6abac|C:\\Windows\\System32\\fontdrvhost.exe|1160|wininit.exe|null|Microsoft Windows|1496|0,0|0|0,0|0,0|null|null", conn)
+			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "13.exe|1694863834|\"fontdrvhost.exe\"|xxxxxxxxx|C:\\Windows\\application|1160|wininit.exe|null|Microsoft Windows|1496|0,0|0|0,0|0,0|null|null", conn)
 		}
 		time.Sleep(10 * time.Second)
 	}
