@@ -46,7 +46,6 @@ func AppendByteMsg(data []byte, msg []byte) []byte {
 		logger.Error("Error msg length of DataPacket")
 		return data
 	} else if len(msg) == length {
-		logger.Debug("msg length of DataPacket is 65436")
 		msg = msg[:length]
 	} else {
 		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)))...)
