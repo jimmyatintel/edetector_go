@@ -1,4 +1,4 @@
-package elasticquery
+package elastic
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ type Request_data interface {
 	Elastical() ([]byte, error)
 }
 
-type mainSource struct {
+type MainSource struct {
 	UUID      string `json:"uuid"`
 	Index     string `json:"index"`
 	Agent     string `json:"agent"`
@@ -20,6 +20,6 @@ type mainSource struct {
 	EtcMain   string `json:"etc_main"`
 }
 
-func (s *mainSource) Elastical() ([]byte, error) {
+func (s *MainSource) Elastical() ([]byte, error) {
 	return json.Marshal(s)
 }

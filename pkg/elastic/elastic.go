@@ -3,7 +3,7 @@ package elastic
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"encoding/json"
 	"errors"
@@ -18,19 +18,32 @@ import (
 
 var es *elasticsearch.Client
 
+var diskIndex = []string{"explorer", "explorer_relation"}
+
+var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
+	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
+	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
+	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
+	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
+	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity"}
+
 func flagcheck() bool {
 	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 		return true
 	}
 	return false
 }
-func SetElkClient() error {
+
+func Elastic_init() {
 	var err error
 	cfg := elasticsearch.Config{
 		Addresses: []string{"http://" + config.Viper.GetString("ELASTIC_HOST") + ":" + config.Viper.GetString("ELASTIC_PORT")},
 	}
 	es, err = elasticsearch.NewClient(cfg)
-	return err
+	if err != nil {
+		logger.Panic("Error connecting to elastic: " + err.Error())
+		panic(err)
+	}
 }
 
 func CreateIndex(name string) {
@@ -42,10 +55,10 @@ func CreateIndex(name string) {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error creating index: " + err.Error())
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	logger.Info("Created index: " + res.String())
 }
 
 func IndexRequest(name string, body string) error {
@@ -61,8 +74,7 @@ func IndexRequest(name string, body string) error {
 		return err
 	}
 	defer res.Body.Close()
-	logger.Debug("Index content: ", zap.Any("message", body))
-	logger.Debug("Index request: ", zap.Any("message", res.String()))
+	logger.Debug("Index request: " + res.String())
 	return nil
 }
 
@@ -85,7 +97,6 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
-	logger.Info("len:", zap.Any("message", len(action)))
 	index := 0
 	for {
 		ind := strings.Index(res.String()[index:], "error")
@@ -98,7 +109,7 @@ func BulkIndexRequest(action []string, work []string) error {
 		} else {
 			output = res.String()[index : index+300]
 		}
-		logger.Info("res: ", zap.Any("message", output))
+		logger.Info("BulkIndexRequest Res: " + output)
 		index = ind + 1
 	}
 	return nil
@@ -148,7 +159,7 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 		}
 		updatedCount := int(response["updated"].(float64))
 		if updatedCount > 0 {
-			logger.Debug("Update network of the detect process: ", zap.Any("message", agent+" "+id+" "+time))
+			logger.Debug("Update network of the detect process: " + agent + "|" + id + "|" + time)
 		} else {
 			createBody := fmt.Sprintf(`
 			{
@@ -162,7 +173,7 @@ func UpdateRequest(agent string, id string, time string, index string) error {
 			if err != nil {
 				return err
 			}
-			logger.Debug("Create a new detect process: ", zap.Any("message", agent+" "+id+" "+time))
+			logger.Debug("Create a new detect process: " + agent + "|" + id + "|" + time)
 		}
 	}
 	return nil
@@ -184,7 +195,7 @@ func SearchRequest(index string, body string) string {
 	// logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		logger.Error("Error decoding response: ", zap.Any("error", err.Error()))
+		logger.Error("Error decoding response: " + err.Error())
 		return ""
 	}
 	hits, ok := result["hits"].(map[string]interface{})
@@ -213,4 +224,65 @@ func SearchRequest(index string, body string) string {
 		break
 	}
 	return docID
+}
+
+func DeleteByQueryRequest(field string, value string, ttype string) error {
+	if !flagcheck() {
+		return errors.New("elastic is not enabled")
+	}
+	deleteQuery := fmt.Sprintf(`
+	{
+		"query": {
+			"term": {
+				"%s": "%s"
+			}
+		}
+	}
+	`, field, value)
+	req := esapi.DeleteByQueryRequest{
+		Index: getIndexes(ttype),
+		Body:  strings.NewReader(deleteQuery),
+	}
+	res, err := req.Do(context.Background(), es)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return errors.New("error response")
+	} else {
+		var responseJSON map[string]interface{}
+		err := json.NewDecoder(res.Body).Decode(&responseJSON)
+		if err != nil {
+			return err
+		}
+		logger.Info("Deleted repeated data: ", zap.Any("message", responseJSON["deleted"]))
+
+		conflictCount := responseJSON["version_conflicts"].(float64)
+		if conflictCount != 0 {
+			logger.Error("Version conflict: ", zap.Any("message", conflictCount))
+		}
+		failures := responseJSON["failures"].([]interface{})
+		if len(failures) != 0 {
+			logger.Error("Failures: ", zap.Any("message", failures))
+		}
+	}
+	return nil
+}
+
+func getIndexes(ttype string) []string {
+	prefix := config.Viper.GetString("ELASTIC_PREFIX")
+	indexes := []string{}
+	switch ttype {
+	case "StartGetDrive":
+		for _, ind := range diskIndex {
+			indexes = append(indexes, prefix+"_"+ind)
+		}
+	case "StartCollect":
+		for _, ind := range dbIndex {
+			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
+		}
+	}
+	return indexes
 }

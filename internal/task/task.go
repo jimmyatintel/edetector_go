@@ -1,10 +1,8 @@
 package task
 
-import (
-// fflag "edetector_go/internal/fflag"
+// fflag "edetector_go/pkg/fflag"
 // logger "edetector_go/pkg/logger"
 // "go.uber.org/zap"
-)
 
 func GetTaskType(work string) TaskType {
 	for _, v := range Worklist {

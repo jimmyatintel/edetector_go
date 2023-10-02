@@ -3,8 +3,9 @@ package redis
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
+	"strconv"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -17,6 +18,7 @@ func checkflag() bool {
 	}
 	return false
 }
+
 func Redis_init() *redis.Client {
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr:     config.Viper.GetString("REDIS_HOST") + ":" + config.Viper.GetString("REDIS_PORT"),
@@ -25,35 +27,81 @@ func Redis_init() *redis.Client {
 	})
 	_, err := RedisClient.Ping(context.Background()).Result()
 	if err != nil {
-		logger.Error("Error connecting to redis")
-		return nil
+		logger.Panic("Error connecting to redis")
+		panic(err)
 	}
-	logger.Info("redis is enabled")
+	logger.Info("Redis is enabled")
 	return RedisClient
 }
 
-func Redis_close() {
+func RedisClose() {
 	if !checkflag() {
 		return
 	}
 	RedisClient.Close()
 }
 
-func Redis_set(key string, value string) error {
+func RedisExists(key string) bool {
+	exists, err := RedisClient.Exists(context.Background(), key).Result()
+	if err != nil {
+		logger.Error("Error checking key existence: " + err.Error())
+		return false
+	}
+	if exists == 1 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func RedisSet(key string, value interface{}) error {
 	if !checkflag() {
 		return nil
 	}
 	return RedisClient.Set(context.Background(), key, value, 0).Err()
 }
 
-func Redis_get(key string) string {
+func RedisSet_AddString(key string, value string) error {
+	if !checkflag() {
+		return nil
+	}
+	newValue := RedisGetString(key) + value
+	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
+}
+
+func RedisSet_AddInteger(key string, value int) error {
+	if !checkflag() {
+		return nil
+	}
+	newValue := RedisGetInt(key) + value
+	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
+}
+
+func RedisGetString(key string) string {
 	if !checkflag() {
 		return ""
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis " + err.Error())
+		logger.Error("Error getting value from redis: " + err.Error())
 		return ""
 	}
 	return val
+}
+
+func RedisGetInt(key string) int {
+	if !checkflag() {
+		return 0
+	}
+	val, err := RedisClient.Get(context.Background(), key).Result()
+	if err != nil {
+		logger.Error("Error getting value from redis: " + err.Error())
+		return 0
+	}
+	val_int, err := strconv.Atoi(val)
+	if err != nil {
+		logger.Error("Error converting to integer: " + err.Error())
+		return 0
+	}
+	return val_int
 }
