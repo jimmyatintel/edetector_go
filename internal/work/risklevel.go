@@ -27,9 +27,9 @@ func Getriskscore(info Memory) (string, error) {
 	if err != nil {
 		logger.Error("Error loading black list" + err.Error())
 	} else {
-		logger.Info("info: " + info.ProcessName + "," + info.ProcessMD5 + "," + info.DigitalSign + "," + realPath)
+		// logger.Info("info: " + info.ProcessName + "," + info.ProcessMD5 + "," + info.DigitalSign + "," + realPath)
 		for _, black := range blackList {
-			logger.Info("black list: " + black[0] + "," + black[1] + "," + black[2] + "," + black[3])
+			// logger.Info("black list: " + black[0] + "," + black[1] + "," + black[2] + "," + black[3])
 			if info.ProcessName == black[0] && info.ProcessMD5 == black[1] && strings.Contains(info.DigitalSign, black[2]) && strings.Contains(realPath, black[3]) {
 				logger.Debug("Hit black list")
 				return "3", nil
