@@ -6,6 +6,7 @@ import (
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"errors"
@@ -45,12 +46,12 @@ func init() {
 	}
 	serverAddr = "192.168.200." + os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
-	// fflag.Get_fflag()
-	// if fflag.FFLAG == nil {
-	// logger.Panic("Error loading feature flag")
-	// panic("Error loading feature flag")
-	// }
-	if true {
+	fflag.Get_fflag()
+	if fflag.FFLAG == nil {
+		logger.Panic("Error loading feature flag")
+		panic("Error loading feature flag")
+	}
+	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
 		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE")+mockagentKey+".log", "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
@@ -61,7 +62,7 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	logger.Info("MockAgentData: " + mockagentKey + "|" + mockagentIP + "|" + mockagentMAC)
+	logger.Info("MockAgentData: " + mockagentKey +"|"+mockagentIP +"|"+mockagentMAC)
 }
 
 func Main() {
