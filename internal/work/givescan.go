@@ -102,7 +102,7 @@ func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveScan: " + key + "::" + p.GetMessage())
+	logger.Debug("GiveScan: " + key)
 	// write file
 	path := filepath.Join(scanWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)

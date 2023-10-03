@@ -21,18 +21,29 @@ This repository contains four microservices :
 
 ## Version
 
-### 1.0.0 (2023/9/23)
+### 1.0.0 (2023/10/02)
 Finished tasks:
 - Handshake
 - Detect (process & memory)
 - Scan (using zip files)
 - Collect
 - Explorer
+- Image (temporary version)
+- Agent update
 - Terminate
 - Graylog
 - Log system
+- White, black, and hack list (temporary version)
 
-ToDo:
-- Image
-- Agent update
-- White, black, and hack list
+Enhancements:
+- Introduced Mock agent
+  - Completed functions: handshake, detect, scan, collect, and explorer
+  - Implemented a script to generate mock agents with random IDs, IPs, and MAC addresses
+
+Fixed Bugs:
+- Resolved the issue of generating incorrect new agent IDs (without "-")
+- Enhanced task completion timing
+- Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
+
+To-Do:
+- Implement feature flags

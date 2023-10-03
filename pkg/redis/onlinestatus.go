@@ -34,7 +34,7 @@ func Online(KeyNum string) {
 	}
 }
 
-func Offline(KeyNum string) {
+func Offline(KeyNum string, GiveInfo bool) {
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
@@ -45,15 +45,17 @@ func Offline(KeyNum string) {
 		logger.Error("Update offline failed:" + err.Error())
 		return
 	}
-	handlingTasks, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
-	if err != nil {
-		logger.Error("Get handling tasks failed: " + err.Error())
-		return
+	if !GiveInfo {
+		handlingTasks, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
+		}
+		for _, t := range handlingTasks {
+			query.Failed_task(KeyNum, t[3])
+		}
+		logger.Info("Offline and let all task fail: " + KeyNum)
 	}
-	for _, t := range handlingTasks {
-		query.Failed_task(KeyNum, t[3])
-	}
-	logger.Info("Offline and let all task fail: " + KeyNum)
 	request.RequestToUser(KeyNum)
 }
 

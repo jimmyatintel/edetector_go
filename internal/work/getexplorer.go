@@ -48,8 +48,8 @@ func HandleExpolorer(p packet.Packet) {
 			logger.Info("Next round")
 		}
 	}
-	logger.Info("Finish all drives: " + key)
 	query.Finish_task(key, "StartGetDrive")
+	logger.Info("Finish all drives: " + key)
 }
 
 func StartGetExplorer(p packet.UserPacket) error {

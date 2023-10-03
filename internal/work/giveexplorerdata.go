@@ -84,7 +84,7 @@ func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveExplorerData: " + key + "::" + p.GetMessage())
+	logger.Debug("GiveExplorerData: " + key)
 	// write file
 	path := filepath.Join(fileWorkingPath, (key + "-" + redis.RedisGetString(key+"-Disk") + ".zip"))
 	err := file.WriteFile(path, p)

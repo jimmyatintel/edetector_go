@@ -4,8 +4,6 @@ import (
 	logger "edetector_go/pkg/logger"
 	"encoding/json"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 type ClientInfo struct {
@@ -32,10 +30,6 @@ func (c *ClientInfo) Load_data(data string) {
 	c.FileVersion = data_splited[4]
 	c.BootTime = data_splited[5]
 	c.KeyNum = data_splited[6]
-	if c.KeyNum == "null" {
-		uuid := uuid.New()
-		c.KeyNum = uuid.String()
-	}
 }
 
 func (c *ClientInfo) Marshal() string {

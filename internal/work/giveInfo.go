@@ -7,6 +7,7 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"net"
 	"strings"
 
@@ -19,7 +20,9 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	ClientInfo := client.PacketClientInfo(np)
 	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") { // assign a new key(uuid)
 		ClientInfo.KeyNum = strings.Replace(uuid.New().String(), "-", "", -1)
+		logger.Debug("new key: " + ClientInfo.KeyNum)
 	}
+	redis.Offline(ClientInfo.KeyNum, true)
 	query.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	query.Addmachine(ClientInfo)
 	err := clientsearchsend.SendTCPtoClient(p, task.OPEN_CHECK_THREAD, ClientInfo.KeyNum, conn) // send ack(OPEN_CHECK_THREAD) to client

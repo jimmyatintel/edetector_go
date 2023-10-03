@@ -74,7 +74,7 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveCollectData: " + key + "::" + p.GetMessage())
+	logger.Debug("GiveCollectData: " + key)
 	// write file
 	path := filepath.Join(dbWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)

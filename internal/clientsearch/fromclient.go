@@ -4,6 +4,8 @@ import (
 	"bytes"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"fmt"
+	"strings"
 
 	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
@@ -22,7 +24,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	buf := make([]byte, 2048)
 	key := "unknown"
 	agentTaskType := "unknown"
-	retryScanFlag := false
+	lastTask := "unknown"
+	var dataRightChan chan net.Conn
 	if task_chan != nil {
 		go func() {
 			for {
@@ -43,7 +46,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		var decrypt_buf []byte
 		reqLen, err := conn.Read(buf)
 		if err != nil {
-			connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
+			connectionClosedByAgent(key, agentTaskType, lastTask, err)
 			return
 		}
 		Data_acache := make([]byte, 0)
@@ -54,21 +57,21 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
-					connectionClosedByAgent(key, agentTaskType, retryScanFlag, err)
+					connectionClosedByAgent(key, agentTaskType, lastTask, err)
 					return
 				}
 				Data_acache = append(Data_acache, buf[:reqLen]...)
 			}
 			NewPacket = new(packet.DataPacket)
 		} else {
-			logger.Error("Invalid packet (too short): " + string(decrypt_buf))
+			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", decrypt_buf))
 			continue
 		}
 		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
 		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 		if err != nil {
-			logger.Error("Error reading: " + err.Error() + ", Content: " + string(decrypt_buf))
+			logger.Error("Error reading: " + err.Error() + ", Content: " + fmt.Sprintf("%x", decrypt_buf))
 			continue
 		}
 		if key == "unknown" {
@@ -85,11 +88,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.READY_SCAN {
-			retryScanFlag = true
-		} else {
-			retryScanFlag = false
-		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO {
 			// wait for key to join the packet
 			Clientlist = append(Clientlist, key)
@@ -98,9 +96,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else {
 			redis.Online(key)
 		}
-		if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			work.DataRight <- conn
+		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
+			dataRightChan = make(chan net.Conn)
+			work.ReadyUpdateAgent(NewPacket, conn, dataRightChan)
+		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("DataRight: " + key)
+			dataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
@@ -116,6 +117,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				continue
 			}
 		}
+		lastTask = string(NewPacket.GetTaskType())
 	}
 }
 
@@ -123,15 +125,17 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("UDP")
 }
 
-func connectionClosedByAgent(key string, agentTaskType string, retryScanFlag bool, err error) {
+func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
 	if agentTaskType != "CollectProgress" {
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 	}
-	if agentTaskType == "StartScan" && retryScanFlag {
+	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		query.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-		query.Failed_task(key, agentTaskType)
+		if !strings.Contains(lastTask, "End") {
+			query.Failed_task(key, agentTaskType)
+		}
 	} else if agentTaskType == "Main" {
-		redis.Offline(key)
+		redis.Offline(key, false)
 	}
 }
