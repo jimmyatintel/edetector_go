@@ -47,3 +47,7 @@ Fixed Bugs:
 
 To-Do:
 - Implement feature flags
+
+### 1.0.1
+Fixed bugs:
+- Fixed empty columns error of white, black, and hack list
