@@ -111,12 +111,6 @@ func receive(buf []byte, conn net.Conn) packet.Packet {
 }
 
 func handleMainConn(conn net.Conn) error {
-	go func() {
-		for {
-			SendTCPtoServer(task.CHECK_CONNECT, "", conn)
-			time.Sleep(30 * time.Second)
-		}
-	}()
 	defer conn.Close()
 	buf := make([]byte, 1024)
 	for {
@@ -134,6 +128,12 @@ func handleMainConn(conn net.Conn) error {
 			}
 			defer new_conn.Close()
 			go agentDetect(new_conn)
+			go func() {
+				for {
+					SendTCPtoServer(task.CHECK_CONNECT, "", conn)
+					time.Sleep(30 * time.Second)
+				}
+			}()
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
 			detectStatus = NewPacket.GetMessage()
 			SendTCPtoServer(task.GIVE_DETECT_INFO, detectStatus, conn)
