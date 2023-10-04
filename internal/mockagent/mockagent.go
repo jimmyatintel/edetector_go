@@ -6,7 +6,6 @@ import (
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
-	"edetector_go/pkg/fflag"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"errors"
@@ -44,14 +43,14 @@ func init() {
 		logger.Panic(err.Error())
 		panic(err)
 	}
-	serverAddr = "192.168.200." + os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	serverAddr = os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Panic("Error loading feature flag")
-		panic("Error loading feature flag")
-	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// logger.Panic("Error loading feature flag")
+	// panic("Error loading feature flag")
+	// }
+	if true {
 		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE")+mockagentKey+".log", "server", "SERVER")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
@@ -62,23 +61,28 @@ func init() {
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
 	}
-	logger.Info("MockAgentData: " + mockagentKey +"|"+mockagentIP +"|"+mockagentMAC)
+	logger.Info("MockAgentData: " + mockagentKey + "|" + mockagentIP + "|" + mockagentMAC)
 }
 
 func Main() {
-	conn, err := net.Dial("tcp", serverAddr)
-	if err != nil {
-		logger.Error("Error connecting to the server:" + err.Error())
-		time.Sleep(30 * time.Second)
-	}
-	logger.Info("Connected to the server at " + serverAddr)
-	// handshake
-	timestamp := time.Now().Format("20060102150405")
-	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
-	SendTCPtoServer(task.GIVE_INFO, info, conn)
-	err = handleMainConn(conn)
-	if err != nil {
-		logger.Error("Error handling main connection: " + err.Error())
+	for {
+		conn, err := net.Dial("tcp", serverAddr)
+		if err != nil {
+			logger.Error("Error connecting to the server:" + err.Error())
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		logger.Info("Connected to the server at " + serverAddr)
+		// handshake
+		timestamp := time.Now().Format("20060102150405")
+		info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
+		SendTCPtoServer(task.GIVE_INFO, info, conn)
+		err = handleMainConn(conn)
+		if err != nil {
+			logger.Error("Error handling main connection: " + err.Error())
+			time.Sleep(30 * time.Second)
+			continue
+		}
 	}
 }
 
