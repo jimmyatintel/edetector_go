@@ -43,7 +43,7 @@ func init() {
 		logger.Panic(err.Error())
 		panic(err)
 	}
-	serverAddr = "192.168.200." + os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
+	serverAddr = os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	detectStatus = "0|0"
 	// fflag.Get_fflag()
 	// if fflag.FFLAG == nil {
@@ -65,19 +65,24 @@ func init() {
 }
 
 func Main() {
-	conn, err := net.Dial("tcp", serverAddr)
-	if err != nil {
-		logger.Error("Error connecting to the server:" + err.Error())
-		time.Sleep(30 * time.Second)
-	}
-	logger.Info("Connected to the server at " + serverAddr)
-	// handshake
-	timestamp := time.Now().Format("20060102150405")
-	info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
-	SendTCPtoServer(task.GIVE_INFO, info, conn)
-	err = handleMainConn(conn)
-	if err != nil {
-		logger.Error("Error handling main connection: " + err.Error())
+	for {
+		conn, err := net.Dial("tcp", serverAddr)
+		if err != nil {
+			logger.Error("Error connecting to the server:" + err.Error())
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		logger.Info("Connected to the server at " + serverAddr)
+		// handshake
+		timestamp := time.Now().Format("20060102150405")
+		info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + mockagentKey
+		SendTCPtoServer(task.GIVE_INFO, info, conn)
+		err = handleMainConn(conn)
+		if err != nil {
+			logger.Error("Error handling main connection: " + err.Error())
+			time.Sleep(30 * time.Second)
+			continue
+		}
 	}
 }
 
