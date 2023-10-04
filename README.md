@@ -38,16 +38,13 @@ Finished tasks:
 Enhancements:
 - Introduced Mock agent
   - Completed functions: handshake, detect, scan, collect, and explorer
-  - Implemented a script to generate mock agents with random IDs, IPs, and MAC addresses
+  - Generate mock agents with random IDs, IPs, and MACs using go routine
 
 Fixed Bugs:
 - Resolved the issue of generating incorrect new agent IDs (without "-")
 - Enhanced task completion timing
 - Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
+- Fixed empty columns error of white, black, and hack list
 
 To-Do:
 - Implement feature flags
-
-### 1.0.1
-Fixed bugs:
-- Fixed empty columns error of white, black, and hack list

@@ -12,65 +12,65 @@ import (
 	"time"
 )
 
-func agentDetect(conn net.Conn) {
+func agentDetect(conn net.Conn, detectStatus *string, ip string, mac string, key string) {
 	for {
-		if detectStatus == "1|1" {
-			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "10924|192.168.200.109:56421|1695608694|0|1|7680\n11032|192.168.200.167:8080|1695608694|1695018229|0|59304\n", conn)
+		if *detectStatus == "1|1" {
+			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "10924|192.168.200.109:56421|1695608694|0|1|7680\n11032|192.168.200.167:8080|1695608694|1695018229|0|59304\n", conn, ip, mac, key)
 			time.Sleep(5 * time.Second)
-			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "13.exe|1694863834|\"fontdrvhost.exe\"|rrr|C:\\Windows\\application|1160|wininit.exe|null|vvvvvvvvvv|1496|0,0|0|0,0|0,0|null|null", conn)
+			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "13.exe|1694863834|\"fontdrvhost.exe\"|rrr|C:\\Windows\\application|1160|wininit.exe|null|vvvvvvvvvv|1496|0,0|0|0,0|0,0|null|null", conn, ip, mac, key)
 		}
 		time.Sleep(10 * time.Second)
 	}
 }
 
-func agentScan(conn net.Conn, dataRight chan int) {
-	SendTCPtoServer(task.GIVE_SCAN_INFO, "300", conn)
+func agentScan(conn net.Conn, dataRight chan int, ip string, mac string, key string) {
+	SendTCPtoServer(task.GIVE_SCAN_INFO, "300", conn, ip, mac, key)
 	<-dataRight
 	for i := 1; i <= 300; i++ {
-		SendTCPtoServer(task.GIVE_SCAN_PROGRESS, strconv.Itoa(i)+"/300", conn)
+		SendTCPtoServer(task.GIVE_SCAN_PROGRESS, strconv.Itoa(i)+"/300", conn, ip, mac, key)
 		<-dataRight
 	}
-	sendZipFile("scan.zip", task.GIVE_SCAN_DATA_INFO, task.GIVE_SCAN, task.GIVE_SCAN_END, conn, dataRight)
+	sendZipFile("scan.zip", task.GIVE_SCAN_DATA_INFO, task.GIVE_SCAN, task.GIVE_SCAN_END, conn, dataRight, ip, mac, key)
 }
 
-func agentCollect(conn net.Conn, dataRight chan int) {
+func agentCollect(conn net.Conn, dataRight chan int, ip string, mac string, key string) {
 	for i := 1; i <= 48; i++ {
-		SendTCPtoServer(task.GIVE_COLLECT_PROGRESS, strconv.Itoa(i)+"/48", conn)
+		SendTCPtoServer(task.GIVE_COLLECT_PROGRESS, strconv.Itoa(i)+"/48", conn, ip, mac, key)
 		<-dataRight
 	}
-	sendZipFile("collect.zip", task.GIVE_COLLECT_DATA_INFO, task.GIVE_COLLECT_DATA, task.GIVE_COLLECT_DATA_END, conn, dataRight)
+	sendZipFile("collect.zip", task.GIVE_COLLECT_DATA_INFO, task.GIVE_COLLECT_DATA, task.GIVE_COLLECT_DATA_END, conn, dataRight, ip, mac, key)
 }
 
-func agentDrive(conn net.Conn, dataRight chan int) {
-	SendTCPtoServer(task.EXPLORER, "C|NTFS", conn)
+func agentDrive(conn net.Conn, dataRight chan int, ip string, mac string, key string) {
+	SendTCPtoServer(task.EXPLORER, "C|NTFS", conn, ip, mac, key)
 	<-dataRight
 	for i := 1; i <= 7000; i = i + 100 {
-		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7000", conn)
+		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7000", conn, ip, mac, key)
 		<-dataRight
 	}
-	sendZipFile("explorer.zip", task.GIVE_EXPLORER_INFO, task.GIVE_EXPLORER_DATA, task.GIVE_EXPLORER_END, conn, dataRight)
+	sendZipFile("explorer.zip", task.GIVE_EXPLORER_INFO, task.GIVE_EXPLORER_DATA, task.GIVE_EXPLORER_END, conn, dataRight, ip, mac, key)
 }
 
-func sendZipFile(zipPath string, taskInfo task.TaskType, taskData task.TaskType, taskEnd task.TaskType, conn net.Conn, dataRight chan int) {
+func sendZipFile(zipPath string, taskInfo task.TaskType, taskData task.TaskType, taskEnd task.TaskType, conn net.Conn, dataRight chan int, ip string, mac string, key string) {
 	path := filepath.Join("mockFiles", zipPath)
 	fileLen, err := file.GetFileSize(path)
 	if err != nil {
-		logger.Error("Error getting file size: " + err.Error())
+		logger.Error(key + ":: Error getting file size: " + err.Error())
 	}
-	SendTCPtoServer(taskInfo, strconv.Itoa(fileLen), conn)
+	SendTCPtoServer(taskInfo, strconv.Itoa(fileLen), conn, ip, mac, key)
 	<-dataRight
 	content, err := os.ReadFile(path)
 	if err != nil {
-		logger.Error("Read file error: " + err.Error())
+		logger.Error(key + ":: Read file error: " + err.Error())
 	}
 	start := 0
 	for {
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
-		SendDataTCPtoServer(taskData, data, conn)
+		SendDataTCPtoServer(taskData, data, conn, ip, mac, key)
 		start += 65436
 		if start >= fileLen {
-			SendTCPtoServer(taskEnd, "", conn)
+			SendTCPtoServer(taskEnd, "", conn, ip, mac, key)
 			<-dataRight
 			break
 		}

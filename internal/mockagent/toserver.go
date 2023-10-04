@@ -9,12 +9,12 @@ import (
 	"net"
 )
 
-func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
-	logger.Info("SendTCPtoServer: " + string(worktype) + " " + msg)
+func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, ip string, mac string, key string) error {
+	logger.Info(key + ":: SendTCPtoServer: " + string(worktype) + " " + msg)
 	var send_packet = packet.WorkPacket{
-		MacAddress: mockagentIP,
-		IpAddress:  mockagentMAC,
-		Rkey:       mockagentKey,
+		MacAddress: ip,
+		IpAddress:  mac,
+		Rkey:       key,
 		Work:       worktype,
 		Message:    msg,
 	}
@@ -23,17 +23,17 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn) error {
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(encrypt_buf)
 	if err != nil {
-		logger.Error("Error sending data to server: " + err.Error())
+		logger.Error(key + ":: Error sending data to server: " + err.Error())
 	}
 	return nil
 }
 
-func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn) error {
-	logger.Debug("SendDataTCPtoServer: " + string(worktype))
+func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn, ip string, mac string, key string) error {
+	// logger.Debug(key+":: SendDataTCPtoServer: " + string(worktype))
 	var send_packet = packet.DataPacket{
-		MacAddress: mockagentIP,
-		IpAddress:  mockagentMAC,
-		Rkey:       mockagentKey,
+		MacAddress: ip,
+		IpAddress:  mac,
+		Rkey:       key,
 		Work:       worktype,
 		Message:    "",
 	}
@@ -43,7 +43,7 @@ func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn) erro
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(encrypt_buf)
 	if err != nil {
-		logger.Error("Error sending data to server: " + err.Error())
+		logger.Error(key + ":: Error sending data to server: " + err.Error())
 	}
 	return nil
 }

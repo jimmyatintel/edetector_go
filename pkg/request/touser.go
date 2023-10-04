@@ -57,7 +57,7 @@ func RequestToUser(id string) {
 	defer response.Body.Close()
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
-		logger.Error("Request failed with status code: " + string(response.StatusCode))
+		logger.Error("Request failed with status code: " + fmt.Sprint(response.StatusCode))
 		return
 	}
 }
