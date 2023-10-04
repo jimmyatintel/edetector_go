@@ -21,7 +21,7 @@ This repository contains four microservices :
 
 ## Version
 
-### 1.0.0 (2023/10/02)
+### 1.0.0 (2023/10/05)
 Finished tasks:
 - Handshake
 - Detect (process & memory)
