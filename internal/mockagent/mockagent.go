@@ -72,7 +72,8 @@ func createAgent() {
 	ip := "192.168.100." + fmt.Sprint(rand.Intn(101-1))
 	macBytes := []byte{byte(0x02), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256))}
 	mac := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
-	logger.Info("MockAgentData: " + key + "|" + ip + "|" + mac)
+	info := []string{key, ip, mac}
+	logger.Info("MockAgentData: " + info[0] + "|" + info[1] + "|" + info[2])
 	detectStatus := "0|0"
 
 	for {
@@ -85,9 +86,9 @@ func createAgent() {
 		logger.Info(key + ":: Connected to the server at " + serverAddr)
 		// handshake
 		timestamp := time.Now().Format("20060102150405")
-		info := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + key
-		SendTCPtoServer(task.GIVE_INFO, info, conn, ip, mac, key)
-		err = handleMainConn(conn, &detectStatus, ip, mac, key)
+		agentInfo := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + key
+		SendTCPtoServer(task.GIVE_INFO, agentInfo, conn, info)
+		err = handleMainConn(conn, &detectStatus, info)
 		if err != nil {
 			logger.Error(key + ":: Error handling main connection: " + err.Error())
 			time.Sleep(30 * time.Second)
@@ -101,7 +102,7 @@ func receive(buf []byte, conn net.Conn, key string) packet.Packet {
 	var NewPacket packet.Packet
 	reqLen, err := conn.Read(buf)
 	if err != nil {
-		logger.Error(key + ":: Error reading from server: " + err.Error())
+		logger.Warn(key + ":: Error reading from server: " + err.Error())
 		return nil
 	}
 	if reqLen == 1024 {
@@ -120,62 +121,62 @@ func receive(buf []byte, conn net.Conn, key string) packet.Packet {
 	return NewPacket
 }
 
-func handleMainConn(conn net.Conn, detectStatus *string, ip string, mac string, key string) error {
+func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 	defer conn.Close()
 	buf := make([]byte, 1024)
 	for {
-		NewPacket := receive(buf, conn, key)
+		NewPacket := receive(buf, conn, info[0])
 		if NewPacket == nil {
 			return errors.New("Main connection closed")
 		}
-		logger.Info(key + ":: Received task from server: " + string(NewPacket.GetTaskType()))
+		logger.Info(info[0] + ":: Received task from server: " + string(NewPacket.GetTaskType()))
 		if NewPacket.GetTaskType() == task.OPEN_CHECK_THREAD {
-			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, *detectStatus, conn, ip, mac, key)
+			SendTCPtoServer(task.GIVE_DETECT_INFO_FIRST, *detectStatus, conn, info)
 			new_conn, err := net.Dial("tcp", serverAddr)
 			if err != nil {
-				logger.Error(key + ":: Error connecting to the server:" + err.Error())
+				logger.Error(info[0] + ":: Error connecting to the server:" + err.Error())
 				return err
 			}
 			defer new_conn.Close()
-			go agentDetect(new_conn, detectStatus, ip, mac, key)
+			go agentDetect(new_conn, detectStatus, info)
 			go func() {
 				for {
-					SendTCPtoServer(task.CHECK_CONNECT, "", conn, ip, mac, key)
+					SendTCPtoServer(task.CHECK_CONNECT, "", conn, info)
 					time.Sleep(30 * time.Second)
 				}
 			}()
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
 			*detectStatus = NewPacket.GetMessage()
-			SendTCPtoServer(task.GIVE_DETECT_INFO, *detectStatus, conn, ip, mac, key)
+			SendTCPtoServer(task.GIVE_DETECT_INFO, *detectStatus, conn, info)
 		} else if NewPacket.GetTaskType() == task.GET_DRIVE {
-			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn, ip, mac, key)
+			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn, info)
 		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO {
-			go handleNewTask(NewPacket.GetTaskType(), ip, mac, key)
+			go handleNewTask(NewPacket.GetTaskType(), info)
 		} else if NewPacket.GetTaskType() != task.DATA_RIGHT {
-			logger.Error(key + ":: Undefined task type: " + string(NewPacket.GetTaskType()))
+			logger.Error(info[0] + ":: Undefined task type: " + string(NewPacket.GetTaskType()))
 		}
 	}
 }
 
-func handleNewTask(taskType task.TaskType, ip string, mac string, key string) {
+func handleNewTask(taskType task.TaskType, info []string) {
 	new_conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
-		logger.Error(key + ":: Error connecting to the server:" + err.Error())
+		logger.Error(info[0] + ":: Error connecting to the server:" + err.Error())
 		return
 	}
 	defer new_conn.Close()
 	dataRightFromServer := make(chan int)
 	switch taskType {
 	case task.GET_SCAN:
-		go agentScan(new_conn, dataRightFromServer, ip, mac, key)
+		go agentScan(new_conn, dataRightFromServer, info)
 	case task.GET_COLLECT_INFO:
-		go agentCollect(new_conn, dataRightFromServer, ip, mac, key)
+		go agentCollect(new_conn, dataRightFromServer, info)
 	case task.EXPLORER_INFO:
-		go agentDrive(new_conn, dataRightFromServer, ip, mac, key)
+		go agentDrive(new_conn, dataRightFromServer, info)
 	}
 	buf := make([]byte, 1024)
 	for {
-		NewPacket := receive(buf, new_conn, key)
+		NewPacket := receive(buf, new_conn, info[0])
 		if NewPacket == nil {
 			break
 		} else if NewPacket.GetTaskType() == task.DATA_RIGHT {

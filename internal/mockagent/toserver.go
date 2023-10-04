@@ -9,12 +9,12 @@ import (
 	"net"
 )
 
-func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, ip string, mac string, key string) error {
-	logger.Info(key + ":: SendTCPtoServer: " + string(worktype) + " " + msg)
+func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, info []string) error {
+	logger.Info(info[0] + ":: SendTCPtoServer: " + string(worktype) + " " + msg)
 	var send_packet = packet.WorkPacket{
-		MacAddress: ip,
-		IpAddress:  mac,
-		Rkey:       key,
+		MacAddress: info[1],
+		IpAddress:  info[2],
+		Rkey:       info[0],
 		Work:       worktype,
 		Message:    msg,
 	}
@@ -23,17 +23,17 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, ip strin
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(encrypt_buf)
 	if err != nil {
-		logger.Error(key + ":: Error sending data to server: " + err.Error())
+		logger.Error(info[0] + ":: Error sending data to server: " + err.Error())
 	}
 	return nil
 }
 
-func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn, ip string, mac string, key string) error {
+func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn, info []string) error {
 	// logger.Debug(key+":: SendDataTCPtoServer: " + string(worktype))
 	var send_packet = packet.DataPacket{
-		MacAddress: ip,
-		IpAddress:  mac,
-		Rkey:       key,
+		MacAddress: info[1],
+		IpAddress:  info[2],
+		Rkey:       info[0],
 		Work:       worktype,
 		Message:    "",
 	}
@@ -43,7 +43,7 @@ func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn, ip s
 	C_AES.Encryptbuffer(data, len(data), encrypt_buf)
 	_, err := conn.Write(encrypt_buf)
 	if err != nil {
-		logger.Error(key + ":: Error sending data to server: " + err.Error())
+		logger.Error(info[0] + ":: Error sending data to server: " + err.Error())
 	}
 	return nil
 }
