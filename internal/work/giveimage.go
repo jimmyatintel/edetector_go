@@ -26,6 +26,7 @@ func init() {
 func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageInfo: " + key + "::" + p.GetMessage())
+	redis.RedisSet(key+"-ImageProgress", 0)
 	go updateImageProgress(key)
 	// init image info
 	total, err := strconv.Atoi(p.GetMessage())

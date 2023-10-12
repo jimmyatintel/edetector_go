@@ -87,7 +87,7 @@ func createAgent() {
 		logger.Info(key + ":: Connected to the server at " + serverAddr)
 		// handshake
 		timestamp := time.Now().Format("20060102150405")
-		agentInfo := "x64|MockAgent|MockAgent|SYSTEM|1.0.0|" + timestamp + "|" + key
+		agentInfo := "x64|Windows 10 (VM)|DESKTOP|SYSTEM|1.0.0|" + timestamp + "|" + key
 		SendTCPtoServer(task.GIVE_INFO, agentInfo, conn, info)
 		err = handleMainConn(conn, &detectStatus, info)
 		if err != nil {
@@ -151,7 +151,7 @@ func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 			SendTCPtoServer(task.GIVE_DETECT_INFO, *detectStatus, conn, info)
 		} else if NewPacket.GetTaskType() == task.GET_DRIVE {
 			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn, info)
-		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO {
+		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO || NewPacket.GetTaskType() == task.GET_IMAGE {
 			go handleNewTask(NewPacket.GetTaskType(), info)
 		} else if NewPacket.GetTaskType() != task.DATA_RIGHT {
 			logger.Error(info[0] + ":: Undefined task type: " + string(NewPacket.GetTaskType()))
@@ -174,6 +174,8 @@ func handleNewTask(taskType task.TaskType, info []string) {
 		go agentCollect(new_conn, dataRightFromServer, info)
 	case task.EXPLORER_INFO:
 		go agentDrive(new_conn, dataRightFromServer, info)
+	case task.GET_IMAGE:
+		go agentImage(new_conn, dataRightFromServer, info)
 	}
 	buf := make([]byte, 1024)
 	for {

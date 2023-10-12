@@ -48,3 +48,15 @@ Fixed Bugs:
 
 To-Do:
 - Implement feature flags
+
+
+### 1.0.1 (2023/10/12)
+Enhancements:
+- Check the data format using the number of columns
+- Mock agent
+  - Added image task
+  - Sleep between each iteration
+
+Fixed Bugs:
+- GiveInfo steps: mySQL -> redis -> request
+- Changed the finish timing of collect

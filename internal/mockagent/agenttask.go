@@ -15,20 +15,21 @@ import (
 func agentDetect(conn net.Conn, detectStatus *string, info []string) {
 	for {
 		if *detectStatus == "1|1" {
-			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "10924|192.168.200.109:56421|1695608694|0|1|7680\n11032|192.168.200.167:8080|1695608694|1695018229|0|59304\n", conn, info)
-			time.Sleep(5 * time.Second)
-			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "13.exe|1694863834|\"fontdrvhost.exe\"|rrr|C:\\Windows\\application|1160|wininit.exe|null|MS|1496|0,0|0|0,0|0,0|null|null", conn, info)
+			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "3540|20.90.153.243:443|1697102451|1696964162|0|54806\n8864|142.251.42.238:443|1697102451|1696964389|0|59271\n", conn, info)
+			time.Sleep(30 * time.Second)
+			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "conhost.exe|1697099300|\\??\\C:\\Windows\\system32\\conhost.exe 0x4|9430b20076a19e6ed9084530ddcc8caa|C:\\Windows\\System32\\conhost.exe|43760|ClientSearch.exe|C:\\Program Files (x86)\\eDetectorClient\\ClientSearch.exe|null|43416|0,0|0|0,0|0,0|null|NlsAnsiCodePage:0x0000FFFD0000FDE9 -> 0x0000003F000003B6;", conn, info)
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(180 * time.Second)
 	}
 }
 
 func agentScan(conn net.Conn, dataRight chan int, info []string) {
-	SendTCPtoServer(task.GIVE_SCAN_INFO, "300", conn, info)
+	SendTCPtoServer(task.GIVE_SCAN_INFO, "187", conn, info)
 	<-dataRight
-	for i := 1; i <= 300; i++ {
-		SendTCPtoServer(task.GIVE_SCAN_PROGRESS, strconv.Itoa(i)+"/300", conn, info)
+	for i := 1; i <= 187; i++ {
+		SendTCPtoServer(task.GIVE_SCAN_PROGRESS, strconv.Itoa(i)+"/187", conn, info)
 		<-dataRight
+		time.Sleep(1 * time.Second)
 	}
 	sendZipFile("scan.zip", task.GIVE_SCAN_DATA_INFO, task.GIVE_SCAN, task.GIVE_SCAN_END, conn, dataRight, info)
 }
@@ -37,6 +38,7 @@ func agentCollect(conn net.Conn, dataRight chan int, info []string) {
 	for i := 1; i <= 48; i++ {
 		SendTCPtoServer(task.GIVE_COLLECT_PROGRESS, strconv.Itoa(i)+"/48", conn, info)
 		<-dataRight
+		time.Sleep(5 * time.Second)
 	}
 	sendZipFile("collect.zip", task.GIVE_COLLECT_DATA_INFO, task.GIVE_COLLECT_DATA, task.GIVE_COLLECT_DATA_END, conn, dataRight, info)
 }
@@ -44,11 +46,16 @@ func agentCollect(conn net.Conn, dataRight chan int, info []string) {
 func agentDrive(conn net.Conn, dataRight chan int, info []string) {
 	SendTCPtoServer(task.EXPLORER, "C|NTFS", conn, info)
 	<-dataRight
-	for i := 1; i <= 7000; i = i + 100 {
-		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7000", conn, info)
+	for i := 1; i <= 7501; i = i + 100 {
+		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7501", conn, info)
 		<-dataRight
+		time.Sleep(1 * time.Second)
 	}
 	sendZipFile("explorer.zip", task.GIVE_EXPLORER_INFO, task.GIVE_EXPLORER_DATA, task.GIVE_EXPLORER_END, conn, dataRight, info)
+}
+
+func agentImage(conn net.Conn, dataRight chan int, info []string) {
+	sendZipFile("explorer.zip", task.GIVE_IMAGE_INFO, task.GIVE_IMAGE, task.GIVE_IMAGE_END, conn, dataRight, info)
 }
 
 func sendZipFile(zipPath string, taskInfo task.TaskType, taskData task.TaskType, taskEnd task.TaskType, conn net.Conn, dataRight chan int, info []string) {
