@@ -39,7 +39,7 @@ func connector_init() {
 		panic(err)
 	}
 	if true {
-		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "CONNECTOR", "connector")
+		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "connector", "CONNECTOR")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("CONNECTOR_LOG_FILE"))
 	}
 	if true {

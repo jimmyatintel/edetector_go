@@ -89,7 +89,6 @@ func Warn(message string, fields ...zap.Field) {
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Warn(message, fields...)
-	StoreLogToDB("WARN", message)
 }
 
 func Error(message string, fields ...zap.Field) {
@@ -140,9 +139,11 @@ func GinLog() gin.HandlerFunc {
 }
 
 func StoreLogToDB(level string, message string) {
-	query := "INSERT INTO log (level, service, content, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)"
-	_, err := mariadb.DB.Exec(query, level, Service, message)
-	if err != nil {
-		Log.Error("Error storing log to database: " + err.Error())
+	if Service != "MOCKAGENT" {
+		query := "INSERT INTO log (level, service, content, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)"
+		_, err := mariadb.DB.Exec(query, level, Service, message)
+		if err != nil {
+			Log.Error("Error storing log to database: " + err.Error())
+		}
 	}
 }

@@ -27,26 +27,26 @@ var numberOfAgents int
 func init() {
 	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Panic("Error loading config file: " + err.Error())
+		fmt.Println("Error loading config file: " + err.Error())
 		panic(err)
+	}
+	if true {
+		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE"), "mockagent", "MOCKAGENT")
+		logger.Info("Logger is enabled please check all out info in log file")
 	}
 	if len(os.Args) != 3 {
 		err := errors.New("usage: go run mockagent/agent.go 192.168.200.163(serverIP) 10(number of agents)")
-		logger.Panic(err.Error())
+		logger.Error(err.Error())
 		panic(err)
 	}
 	serverAddr = os.Args[1] + ":" + config.Viper.GetString("WORKER_DEFAULT_WORKER_PORT")
 	numberOfAgents, err = strconv.Atoi(os.Args[2])
 	if err != nil {
-		logger.Panic("Error converting number of agents: " + err.Error())
-	}
-	if true {
-		logger.InitLogger(config.Viper.GetString("MOCK_AGENT_LOG_FILE"), "server", "SERVER")
-		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("MOCK_AGENT_LOG_FILE"))
+		logger.Error("Error converting number of agents: " + err.Error())
 	}
 	connString, err := mariadb.Connect_init()
 	if err != nil {
-		logger.Panic("Error connecting to mariadb: " + err.Error())
+		logger.Error("Error connecting to mariadb: " + err.Error())
 		panic(err)
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
@@ -61,6 +61,7 @@ func Main() {
 			defer wg.Done()
 			createAgent()
 		}()
+		time.Sleep(1 * time.Second)
 	}
 	wg.Wait()
 }

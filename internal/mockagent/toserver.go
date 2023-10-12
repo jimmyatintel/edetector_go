@@ -12,8 +12,8 @@ import (
 func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, info []string) error {
 	logger.Info(info[0] + ":: SendTCPtoServer: " + string(worktype) + " " + msg)
 	var send_packet = packet.WorkPacket{
-		MacAddress: info[1],
-		IpAddress:  info[2],
+		MacAddress: info[2],
+		IpAddress:  info[1],
 		Rkey:       info[0],
 		Work:       worktype,
 		Message:    msg,
@@ -31,8 +31,8 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, info []s
 func SendDataTCPtoServer(worktype task.TaskType, msg []byte, conn net.Conn, info []string) error {
 	// logger.Debug(key+":: SendDataTCPtoServer: " + string(worktype))
 	var send_packet = packet.DataPacket{
-		MacAddress: info[1],
-		IpAddress:  info[2],
+		MacAddress: info[2],
+		IpAddress:  info[1],
 		Rkey:       info[0],
 		Work:       worktype,
 		Message:    "",

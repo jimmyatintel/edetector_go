@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"fmt"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
@@ -103,4 +104,36 @@ func RedisGetInt(key string) int {
 		return 0
 	}
 	return val_int
+}
+
+func GetKeysByLength(length int) []string {
+	keys, err := RedisClient.Keys(context.Background(), "*").Result()
+	if err != nil {
+		fmt.Println("Error getting keys from redis:", err)
+		return nil
+	}
+
+	var keysWithLength []string
+	for _, key := range keys {
+		if len(key) == length {
+			keysWithLength = append(keysWithLength, key)
+		}
+	}
+
+	return keysWithLength
+}
+
+func GetValuesForKeys(keys []string) map[string]string {
+	values := make(map[string]string)
+
+	for _, key := range keys {
+		value, err := RedisClient.Get(context.Background(), key).Result()
+		if err != nil {
+			fmt.Println("Error getting value from redis:", err)
+		} else {
+			values[key] = value
+		}
+	}
+
+	return values
 }
