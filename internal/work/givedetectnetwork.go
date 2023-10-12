@@ -30,11 +30,14 @@ func detectNetworkElastic(p packet.Packet) {
 	networkSet := make(map[string]struct{})
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
 		uuid := uuid.NewString()
 		values := strings.Split(line, "|")
+		if len(values) != 6 {
+			if len(values) != 1 {
+				logger.Warn("Invalid line: " + line)
+			}
+			continue
+		}
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
 		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")

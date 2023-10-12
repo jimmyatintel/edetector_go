@@ -22,9 +22,9 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 		ClientInfo.KeyNum = strings.Replace(uuid.New().String(), "-", "", -1)
 		logger.Debug("new key: " + ClientInfo.KeyNum)
 	}
-	redis.Offline(ClientInfo.KeyNum, true)
 	query.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	query.Addmachine(ClientInfo)
+	redis.Offline(ClientInfo.KeyNum, true)
 	err := clientsearchsend.SendTCPtoClient(p, task.OPEN_CHECK_THREAD, ClientInfo.KeyNum, conn) // send ack(OPEN_CHECK_THREAD) to client
 	if err != nil {
 		return task.FAIL, err

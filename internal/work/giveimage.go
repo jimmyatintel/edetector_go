@@ -49,7 +49,7 @@ func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveImage: " + key + "::" + p.GetMessage())
+	logger.Debug("GiveImage: " + key)
 	// write file
 	path := filepath.Join(imageWorkingPath, (key + ".zip"))
 	err := file.WriteFile(path, p)

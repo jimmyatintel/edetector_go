@@ -91,10 +91,13 @@ func Main(version string) {
 			continue
 		}
 		for _, line := range lines {
-			if len(line) == 0 {
+			values := strings.Split(line, "|")
+			if len(values) != 10 {
+				if len(values) != 1 {
+					logger.Warn("Invalid line: " + line)
+				}
 				continue
 			}
-			values := strings.Split(line, "|")
 			parent, child, err := getRelation(values)
 			if err != nil {
 				logger.Error("Error getting relation: " + err.Error())
@@ -127,10 +130,13 @@ func Main(version string) {
 		}
 		// send to elastic (main & details)
 		for _, line := range lines {
-			if len(line) == 0 {
+			values := strings.Split(line, "|")
+			if len(values) != 10 {
+				if len(values) != 1 {
+					logger.Warn("Invalid line: " + line)
+				}
 				continue
 			}
-			values := strings.Split(line, "|")
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
 				logger.Error("Error getting child: " + err.Error())

@@ -37,10 +37,13 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	redis.RedisSet(key+"-DetectMsg", "")
 	// send to elasticsearch
 	for _, line := range lines {
-		if len(line) == 0 {
+		values := strings.Split(line, "|")
+		if len(values) != 16 {
+			if len(values) != 1 {
+				logger.Warn("Invalid line: " + line)
+			}
 			continue
 		}
-		values := strings.Split(line, "|")
 		values = append(values, "network", "risklevel", "detect")
 		query := fmt.Sprintf(`{
 			"query": {

@@ -169,11 +169,14 @@ func parseScan(path string, key string) error {
 	}
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
 		line = strings.ReplaceAll(line, "\r", "")
 		values := strings.Split(line, "|")
+		if len(values) != 17 {
+			if len(values) != 1 {
+				logger.Warn("Invalid line: " + line)
+			}
+			continue
+		}
 		if values[16] == "null" {
 			values[16] = "false"
 		} else {
@@ -206,14 +209,17 @@ func parseScan(path string, key string) error {
 func scanNetworkElastic(id string, time string, key string, data string, ip string, name string) {
 	lines := strings.Split(data, ";")
 	for _, line := range lines {
-		if len(line) == 0 {
-			continue
-		}
 		re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
 		line = re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
 		line = strings.ReplaceAll(line, ">", "")
 		line = id + "|" + time + "|" + line
 		values := strings.Split(line, "|")
+		if len(values) != 6 {
+			if len(values) != 1 {
+				logger.Warn("Invalid line: " + line)
+			}
+			continue
+		}
 		uuid := uuid.NewString()
 		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
