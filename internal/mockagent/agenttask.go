@@ -46,8 +46,8 @@ func agentCollect(conn net.Conn, dataRight chan int, info []string) {
 func agentDrive(conn net.Conn, dataRight chan int, info []string) {
 	SendTCPtoServer(task.EXPLORER, "C|NTFS", conn, info)
 	<-dataRight
-	for i := 1; i <= 7501; i = i + 100 {
-		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7501", conn, info)
+	for i := 1; i <= 7531; i = i + 100 {
+		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7531", conn, info)
 		<-dataRight
 		time.Sleep(1 * time.Second)
 	}

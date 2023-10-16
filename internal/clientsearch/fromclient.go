@@ -5,6 +5,7 @@ import (
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
 	"fmt"
+	"strconv"
 	"strings"
 
 	channelmap "edetector_go/internal/channelmap"
@@ -45,6 +46,13 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		var NewPacket packet.Packet
 		var decrypt_buf []byte
 		reqLen, err := conn.Read(buf)
+		// debug
+		// var temp_buf []byte
+		logger.Debug("Read len: " + strconv.Itoa(reqLen))
+		// temp_buf = bytes.Repeat([]byte{0}, reqLen)
+		// C_AES.Decryptbuffer(buf, reqLen, temp_buf)
+		// logger.Debug("Read tmp buffer: " + string(temp_buf))
+		// debug end
 		if err != nil {
 			connectionClosedByAgent(key, agentTaskType, lastTask, err)
 			return
@@ -60,6 +68,13 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					connectionClosedByAgent(key, agentTaskType, lastTask, err)
 					return
 				}
+				// debug
+				// var temp_buf []byte
+				logger.Debug("Read len: " + strconv.Itoa(reqLen))
+				// temp_buf = bytes.Repeat([]byte{0}, reqLen)
+				// C_AES.Decryptbuffer(buf[:reqLen], reqLen, temp_buf)
+				// logger.Debug("Read tmp buffer: " + string(temp_buf))
+				// debug end
 				Data_acache = append(Data_acache, buf[:reqLen]...)
 			}
 			NewPacket = new(packet.DataPacket)
