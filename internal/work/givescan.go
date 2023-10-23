@@ -25,10 +25,12 @@ var scanWorkingPath = "scanWorking"
 var scanUstagePath = "scanUnstage"
 var scanFirstPart float64
 var scanSecondPart float64
+var Re *regexp.Regexp
 
 func init() {
 	file.CheckDir(scanWorkingPath)
 	file.CheckDir(scanUstagePath)
+	Re = regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
 }
 
 // new scan
@@ -209,8 +211,8 @@ func parseScan(path string, key string) error {
 func scanNetworkElastic(id string, time string, key string, data string, ip string, name string) {
 	lines := strings.Split(data, ";")
 	for _, line := range lines {
-		re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
-		line = re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
+		// re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
+		line = Re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
 		line = strings.ReplaceAll(line, ">", "")
 		line = id + "|" + time + "|" + line
 		values := strings.Split(line, "|")

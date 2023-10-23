@@ -27,6 +27,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	agentTaskType := "unknown"
 	lastTask := "unknown"
 	var dataRightChan chan net.Conn
+	closeConn := make(chan bool)
 	if task_chan != nil {
 		go func() {
 			for {
@@ -38,6 +39,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					if err != nil {
 						logger.Error("Error Sending: " + err.Error())
 					}
+				case <-closeConn:
+                    return
 				}
 			}
 		}()
@@ -55,6 +58,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		// debug end
 		if err != nil {
 			connectionClosedByAgent(key, agentTaskType, lastTask, err)
+			close(closeConn)
 			return
 		}
 		Data_acache := make([]byte, 0)
@@ -66,6 +70,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				reqLen, err := conn.Read(buf)
 				if err != nil {
 					connectionClosedByAgent(key, agentTaskType, lastTask, err)
+					close(closeConn)
 					return
 				}
 				// debug
