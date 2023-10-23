@@ -54,7 +54,7 @@ func server_init() {
 	}
 }
 
-func Main(version string) {
+func Main(version string, f *os.File) {
 	server_init()
 	logger.Info("Welcome to edetector main server: " + version)
 	Quit := make(chan os.Signal, 1)
@@ -64,8 +64,10 @@ func Main(version string) {
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
+	// pprof.Lookup("heap").WriteTo(f, 0)
 	// taskservice.Stop()
 	logger.Info("Server is shutting down...")
+	// stop.Stop()
 	servershutdown()
 	select {
 	case <-Connection_close:

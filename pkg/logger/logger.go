@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"edetector_go/config"
 	"edetector_go/pkg/mariadb"
 	"fmt"
 	"os"
@@ -10,8 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	zapsyslog "github.com/imperfectgo/zap-syslog"
-	"github.com/imperfectgo/zap-syslog/syslog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -32,33 +29,33 @@ func InitLogger(path string, hostname string, app string) {
 	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
 	// system logger
-	syslogCfg := zapsyslog.SyslogEncoderConfig{
-		EncoderConfig: zapcore.EncoderConfig{
-			NameKey:        "logger",
-			CallerKey:      "caller",
-			MessageKey:     "msg",
-			StacktraceKey:  "stacktrace",
-			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-			EncodeTime:     zapcore.EpochTimeEncoder,
-			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-		},
-		Facility: syslog.LOG_LOCAL0,
-		Hostname: hostname,
-		PID:      os.Getpid(),
-		App:      app,
-	}
-	syslogEncoder := zapsyslog.NewSyslogEncoder(syslogCfg)
-	graylogPath := fmt.Sprintf("%s:%s", config.Viper.GetString("GRAYLOG_HOST"), config.Viper.GetString("GRAYLOG_SYSLOG_PORT"))
-	sync, err := zapsyslog.NewConnSyncer("tcp", graylogPath)
-	if err != nil {
-		fmt.Println(err)
-	}
+	// syslogCfg := zapsyslog.SyslogEncoderConfig{
+	// 	EncoderConfig: zapcore.EncoderConfig{
+	// 		NameKey:        "logger",
+	// 		CallerKey:      "caller",
+	// 		MessageKey:     "msg",
+	// 		StacktraceKey:  "stacktrace",
+	// 		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+	// 		EncodeTime:     zapcore.EpochTimeEncoder,
+	// 		EncodeDuration: zapcore.SecondsDurationEncoder,
+	// 		EncodeCaller:   zapcore.ShortCallerEncoder,
+	// 	},
+	// 	Facility: syslog.LOG_LOCAL0,
+	// 	Hostname: hostname,
+	// 	PID:      os.Getpid(),
+	// 	App:      app,
+	// }
+	// syslogEncoder := zapsyslog.NewSyslogEncoder(syslogCfg)
+	// graylogPath := fmt.Sprintf("%s:%s", config.Viper.GetString("GRAYLOG_HOST"), config.Viper.GetString("GRAYLOG_SYSLOG_PORT"))
+	// sync, err := zapsyslog.NewConnSyncer("tcp", graylogPath)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 	// set core
 	core := zapcore.NewTee(
 		zapcore.NewCore(consoleEncoder, stdout, zapcore.DebugLevel),
 		zapcore.NewCore(fileEncoder, fileWriteSyncer, zapcore.DebugLevel),
-		zapcore.NewCore(syslogEncoder, zapcore.Lock(sync), zapcore.DebugLevel),
+		// zapcore.NewCore(syslogEncoder, zapcore.Lock(sync), zapcore.DebugLevel),
 	)
 	Log = zap.New(core)
 	Service = app
