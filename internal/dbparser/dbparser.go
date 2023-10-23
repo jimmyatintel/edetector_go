@@ -95,7 +95,7 @@ outerloop:
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
 				logger.Error("Error sending to elastic: " + err.Error())
-				continue
+				break
 			}
 		}
 		closeParser(db, dbFile, agent)
