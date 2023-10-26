@@ -99,7 +99,7 @@ outerloop:
 			}
 		}
 		closeParser(db, dbFile, agent)
-		// query.Finish_task(agent, "StartCollect")
+		query.Finish_task(agent, "StartCollect")
 		logger.Info("DB parser task finished: " + agent)
 	}
 }

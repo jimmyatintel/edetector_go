@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func Getriskscore(info Memory) (string, error) {
+func Getriskscore(info Memory) (string, string, error) {
 	score := 0
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
 	// white list
@@ -18,7 +18,7 @@ func Getriskscore(info Memory) (string, error) {
 		for _, white := range whiteList {
 			if (white[0] == "" || info.ProcessName == white[0]) && (white[1] == "" || info.ProcessMD5 == white[1]) && strings.Contains(info.DigitalSign, white[2]) && strings.Contains(realPath, white[3]) {
 				logger.Debug("Hit white list")
-				return "0", nil
+				return "0", "0", nil
 			}
 		}
 	}
@@ -30,7 +30,7 @@ func Getriskscore(info Memory) (string, error) {
 		for _, black := range blackList {
 			if (black[0] == "" || info.ProcessName == black[0]) && (black[1] == "" || info.ProcessMD5 == black[1]) && strings.Contains(info.DigitalSign, black[2]) && strings.Contains(realPath, black[3]) {
 				logger.Debug("Hit black list")
-				return "3", nil
+				return "3", "150", nil
 			}
 		}
 	}
@@ -100,7 +100,7 @@ func Getriskscore(info Memory) (string, error) {
 		score = 0
 	}
 	level := scoretoLevel(score)
-	return level, nil
+	return level, strconv.Itoa(score), nil
 }
 
 func scoretoLevel(score int) string {

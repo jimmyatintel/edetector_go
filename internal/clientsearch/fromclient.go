@@ -5,7 +5,6 @@ import (
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
 	"fmt"
-	"strconv"
 	"strings"
 
 	channelmap "edetector_go/internal/channelmap"
@@ -40,7 +39,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 						logger.Error("Error Sending: " + err.Error())
 					}
 				case <-closeConn:
-                    return
+					return
 				}
 			}
 		}()
@@ -51,7 +50,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		reqLen, err := conn.Read(buf)
 		// debug
 		// var temp_buf []byte
-		logger.Debug("Read len: " + strconv.Itoa(reqLen))
+		// logger.Debug("Read len: " + strconv.Itoa(reqLen))
 		// temp_buf = bytes.Repeat([]byte{0}, reqLen)
 		// C_AES.Decryptbuffer(buf, reqLen, temp_buf)
 		// logger.Debug("Read tmp buffer: " + string(temp_buf))
@@ -75,7 +74,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				}
 				// debug
 				// var temp_buf []byte
-				logger.Debug("Read len: " + strconv.Itoa(reqLen))
+				// logger.Debug("Read len: " + strconv.Itoa(reqLen))
 				// temp_buf = bytes.Repeat([]byte{0}, reqLen)
 				// C_AES.Decryptbuffer(buf[:reqLen], reqLen, temp_buf)
 				// logger.Debug("Read tmp buffer: " + string(temp_buf))

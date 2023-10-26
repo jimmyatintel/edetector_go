@@ -5,6 +5,7 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"math"
+	"math/rand"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,12 +13,16 @@ import (
 	"time"
 )
 
+func init() {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
 func agentDetect(conn net.Conn, detectStatus *string, info []string) {
 	for {
 		if *detectStatus == "1|1" {
-			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "3540|20.90.153.243:443|1697102451|1696964162|0|54806\n8864|142.251.42.238:443|1697102451|1696964389|0|59271\n", conn, info)
+			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "3540|20.90.153.243:443|1698219996|1698219996|0|54806\n8864|142.251.42.238:443|1698219996|1698219996|0|59271\n", conn, info)
 			time.Sleep(30 * time.Second)
-			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "conhost.exe|1697099300|\\??\\C:\\Windows\\system32\\conhost.exe 0x4|9430b20076a19e6ed9084530ddcc8caa|C:\\Windows\\System32\\conhost.exe|43760|ClientSearch.exe|C:\\Program Files (x86)\\eDetectorClient\\ClientSearch.exe|null|43416|0,0|0|0,0|0,0|null|NlsAnsiCodePage:0x0000FFFD0000FDE9 -> 0x0000003F000003B6;", conn, info)
+			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "conhost.exe|1698219996|\\??\\C:\\Windows\\system32\\conhost.exe 0x4|9430b20076a19e6ed9084530ddcc8caa|C:\\Windows\\System32\\conhost.exe|43760|ClientSearch.exe|C:\\Program Files (x86)\\eDetectorClient\\ClientSearch.exe|null|43416|0,0|0|0,0|0,0|null|NlsAnsiCodePage:0x0000FFFD0000FDE9 -> 0x0000003F000003B6;", conn, info)
 		}
 		time.Sleep(180 * time.Second)
 	}
@@ -29,7 +34,8 @@ func agentScan(conn net.Conn, dataRight chan int, info []string) {
 	for i := 1; i <= 187; i++ {
 		SendTCPtoServer(task.GIVE_SCAN_PROGRESS, strconv.Itoa(i)+"/187", conn, info)
 		<-dataRight
-		time.Sleep(1 * time.Second)
+		randomSleep := (rand.Intn(10) + 1) * 100 // 0.1 ~ 1
+		time.Sleep(time.Duration(randomSleep) * time.Millisecond)
 	}
 	sendZipFile("scan.zip", task.GIVE_SCAN_DATA_INFO, task.GIVE_SCAN, task.GIVE_SCAN_END, conn, dataRight, info)
 }
@@ -38,7 +44,8 @@ func agentCollect(conn net.Conn, dataRight chan int, info []string) {
 	for i := 1; i <= 48; i++ {
 		SendTCPtoServer(task.GIVE_COLLECT_PROGRESS, strconv.Itoa(i)+"/48", conn, info)
 		<-dataRight
-		time.Sleep(5 * time.Second)
+		randomSleep := (rand.Intn(5) + 1) // 1 ~ 5
+		time.Sleep(time.Duration(randomSleep) * time.Second)
 	}
 	sendZipFile("collect.zip", task.GIVE_COLLECT_DATA_INFO, task.GIVE_COLLECT_DATA, task.GIVE_COLLECT_DATA_END, conn, dataRight, info)
 }
@@ -49,7 +56,8 @@ func agentDrive(conn net.Conn, dataRight chan int, info []string) {
 	for i := 1; i <= 7531; i = i + 100 {
 		SendTCPtoServer(task.GIVE_EXPLORER_PROGRESS, strconv.Itoa(i)+"/7531", conn, info)
 		<-dataRight
-		time.Sleep(1 * time.Second)
+		randomSleep := (rand.Intn(15) + 1) * 100 // 0.1 ~ 1.5
+		time.Sleep(time.Duration(randomSleep) * time.Millisecond)
 	}
 	sendZipFile("explorer.zip", task.GIVE_EXPLORER_INFO, task.GIVE_EXPLORER_DATA, task.GIVE_EXPLORER_END, conn, dataRight, info)
 }

@@ -44,7 +44,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			}
 			continue
 		}
-		values = append(values, "network", "risklevel", "detect")
+		values = append(values, "network", "risklevel", "riskscore", "detect")
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -71,7 +71,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
 		}
-		values[17], err = Getriskscore(m_tmp)
+		values[17], values[18], err = Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: " + err.Error())
 		}

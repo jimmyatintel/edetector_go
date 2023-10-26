@@ -30,7 +30,6 @@ var Re *regexp.Regexp
 func init() {
 	file.CheckDir(scanWorkingPath)
 	file.CheckDir(scanUstagePath)
-	Re = regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
 }
 
 // new scan
@@ -185,14 +184,14 @@ func parseScan(path string, key string) error {
 			scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
 			values[16] = "true"
 		}
-		values = append(values, "risklevel", "scan")
+		values = append(values, "risklevel", "riskscore", "scan")
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			return err
 		}
-		values[17], err = Getriskscore(m_tmp)
+		values[17], values[18], err = Getriskscore(m_tmp)
 		if err != nil {
 			return err
 		}
@@ -208,22 +207,32 @@ func parseScan(path string, key string) error {
 	return nil
 }
 
-func scanNetworkElastic(id string, time string, key string, data string, ip string, name string) {
+func scanNetworkElastic(pid string, pCreateTime string, key string, data string, ip string, name string) {
 	lines := strings.Split(data, ";")
 	for _, line := range lines {
-		// re := regexp.MustCompile(`([^,]+),([^,]+),([^,]+),([^,]+),([^>]+)`)
-		line = Re.ReplaceAllString(line, "$1:$2|$3:$4|$5|$6")
-		line = strings.ReplaceAll(line, ">", "")
-		line = id + "|" + time + "|" + line
-		values := strings.Split(line, "|")
-		if len(values) != 6 {
-			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
-			}
+		if len(line) == 0 {
 			continue
 		}
+		conns := strings.Split(line, ",")
+		if len(conns) != 5 {
+			logger.Warn("Invalid line: " + line)
+			continue
+		}
+		actionAndTime := strings.Split(conns[4], ">")
+		if len(actionAndTime) != 2 {
+			logger.Warn("Invalid line: " + line)
+			continue
+		}
+		var direction string
+		if ip == conns[0] { // i am src -> out
+			direction = "1"
+		} else { // i am dst -> in
+			direction = "0"
+		}
+		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction
+		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_scan", &MemoryNetworkScan{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}

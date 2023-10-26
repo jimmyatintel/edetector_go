@@ -165,6 +165,7 @@ func Main(version string) {
 			continue
 		}
 		clearBuilder(agent, explorerFile)
+		query.Finish_task(agent, "StartGetDrive")
 		logger.Info("Tree builder task finished: " + agent)
 	}
 }

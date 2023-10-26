@@ -40,7 +40,15 @@ func detectNetworkElastic(p packet.Packet) {
 		}
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network_detect", &(MemoryNetworkDetect{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
+		addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
+		var modifiedStr string
+		if values[4] == "0" { // in -> i am dst
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" + "unknown" + "|" + "0"
+		} else { // out -> i am src
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" + "unknown" + "|" + "1"
+		}
+		values = strings.Split(modifiedStr, "|")
+		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}

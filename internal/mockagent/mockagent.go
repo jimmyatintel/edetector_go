@@ -70,7 +70,7 @@ func createAgent() {
 	// mock data
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	key := strings.Replace(uuid.New().String(), "-", "", -1)
-	ip := "192.168.100." + fmt.Sprint(rand.Intn(101-1))
+	ip := fmt.Sprint(rand.Intn(256)) + "." + fmt.Sprint(rand.Intn(256)) + "." + fmt.Sprint(rand.Intn(256)) + "." + fmt.Sprint(rand.Intn(256))
 	macBytes := []byte{byte(0x02), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256))}
 	mac := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
 	info := []string{key, ip, mac}

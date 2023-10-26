@@ -15,3 +15,7 @@ scanStaged
 imageWorking
 imageUnstage
 agentFile
+heap*
+*.png
+*.pdf
+oldfile
