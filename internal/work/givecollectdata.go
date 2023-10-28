@@ -34,7 +34,7 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
-		collectSecondPart = 100 - collectFirstPart
+		collectSecondPart = 85 - collectFirstPart
 		go updateCollectProgress(key)
 	}
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
@@ -128,7 +128,7 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 
 func updateCollectProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-CollectProgress") >= 100 {
+		if redis.RedisGetInt(key+"-CollectProgress") >= 83 {
 			break
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")

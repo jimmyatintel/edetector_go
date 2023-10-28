@@ -80,6 +80,7 @@ func Main(version string) {
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
 			logger.Error("Read file error: " + err.Error())
+			query.Failed_task(agent, "StartGetDrive")
 			dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
 			err := file.MoveFile(explorerFile, dstPath)
 			if err != nil {
@@ -106,6 +107,7 @@ func Main(version string) {
 			parent, child, err := getRelation(values)
 			if err != nil {
 				logger.Error("Error getting relation: " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
 				break
 			}
 			generateUUID(agent, parent)
@@ -145,17 +147,20 @@ func Main(version string) {
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
 				logger.Error("Error getting child: " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
 				break
 			}
 			values = values[:len(values)-2]
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to rabbitMQ (main): " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
 				break
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to rabbitMQ (details): " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
 				break
 			}
 			time.Sleep(1 * time.Microsecond)
@@ -203,17 +208,18 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 	path = path + "/" + relation.Name
 	relation.Path = path
 	RelationMap[agent][ind] = relation
-	data := ExplorerRelation{
-		Agent:  agent,
-		IsRoot: isRoot,
-		Parent: relation.UUID,
-		Child:  relation.Child,
-	}
-	err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
-	if err != nil {
-		logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
-		return
-	}
+	// data := ExplorerRelation{
+	// 	Agent:  agent,
+	// 	IsRoot: isRoot,
+	// 	Parent: relation.UUID,
+	// 	Child:  relation.Child,
+	// }
+	// err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
+	// if err != nil {
+	// 	logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
+	// 	query.Failed_task(agent, "StartGetDrive")
+	// 	return
+	// }
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, UUIDMap[uuid], false, path)
 	}

@@ -110,7 +110,7 @@ func mid_speed() {
 		mid_mutex.Unlock()
 		msg.Ack(false)
 		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
-			time.Sleep(3 * time.Second)
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
@@ -136,7 +136,7 @@ func low_speed() {
 		low_mutex.Unlock()
 		msg.Ack(false)
 		for len(low_bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
-			time.Sleep(3 * time.Second)
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
@@ -157,6 +157,6 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			last_send = time.Now()
 		}
 		mutex.Unlock()
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }

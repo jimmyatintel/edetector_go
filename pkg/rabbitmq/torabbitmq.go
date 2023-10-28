@@ -5,8 +5,10 @@ import (
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"encoding/json"
+	"math/rand"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type Message struct {
@@ -43,9 +45,15 @@ func ToRabbitMQ_Main(index string, uuid string, agentID string, ip string, name 
 	if err != nil {
 		return err
 	}
-	err = Publish(priority, msgBytes)
-	if err != nil {
-		return err
+	for {
+		err = Publish(priority, msgBytes)
+		if err != nil {
+			logger.Error("Error sending to rabbitMQ (main), retrying... " + err.Error())
+			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
+			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
+		} else {
+			break
+		}
 	}
 	return nil
 }
@@ -67,9 +75,15 @@ func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, 
 	if err != nil {
 		return err
 	}
-	err = Publish(priority, msgBytes)
-	if err != nil {
-		return err
+	for {
+		err = Publish(priority, msgBytes)
+		if err != nil {
+			logger.Error("Error sending to rabbitMQ (details), retrying... " + err.Error())
+			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
+			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
+		} else {
+			break
+		}
 	}
 	return nil
 }
@@ -88,8 +102,15 @@ func ToRabbitMQ_Relation(template elastic.Request_data, priority string) error {
 		return err
 	}
 	err = Publish(priority, msgBytes)
-	if err != nil {
-		return err
+	for {
+		err = Publish(priority, msgBytes)
+		if err != nil {
+			logger.Error("Error sending to rabbitMQ (relation), retrying... " + err.Error())
+			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
+			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
+		} else {
+			break
+		}
 	}
 	return nil
 }

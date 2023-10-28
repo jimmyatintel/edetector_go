@@ -94,7 +94,7 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func updateImageProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-ImageProgress") >= 100 {
+		if redis.RedisGetInt(key+"-ImageProgress") >= 95 {
 			break
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")

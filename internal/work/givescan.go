@@ -152,7 +152,7 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func updateScanProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-ScanProgress") >= 100 {
+		if redis.RedisGetInt(key+"-ScanProgress") >= 95 {
 			break
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")

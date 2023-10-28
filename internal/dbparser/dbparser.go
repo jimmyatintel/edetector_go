@@ -71,6 +71,7 @@ outerloop:
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: " + err.Error())
+			query.Failed_task(agent, "StartCollect")
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
 				logger.Error("Error moving file: " + err.Error())
@@ -81,6 +82,7 @@ outerloop:
 		tableNames, err := getTableNames(db)
 		if err != nil {
 			logger.Error("Error getting table names: " + err.Error())
+			query.Failed_task(agent, "StartCollect")
 			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 			if err != nil {
 				logger.Error("Error moving file: " + err.Error())
@@ -94,7 +96,8 @@ outerloop:
 			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
-				logger.Error("Error sending to elastic: " + err.Error())
+				logger.Error("Error sending to rabbitMQ: " + err.Error())
+				query.Failed_task(agent, "StartCollect")
 				break
 			}
 		}

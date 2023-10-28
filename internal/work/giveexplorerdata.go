@@ -34,7 +34,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: " + key + "::" + p.GetMessage())
 	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
-	explorerSecondPart = 100 - explorerFirstPart
+	explorerSecondPart = 95 - explorerFirstPart
 	parts := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-Disk", parts[0])
 	// create or truncate the zip file
@@ -146,7 +146,7 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 func updateDriveProgress(key string) {
 	for {
 		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
-		if driveProgress >= 100 {
+		if driveProgress >= 93 {
 			break
 		}
 		query.Update_progress(driveProgress, key, "StartGetDrive")

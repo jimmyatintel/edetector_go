@@ -28,6 +28,7 @@ func CheckDir(path string) {
 }
 
 func GetOldestFile(dir string, extension string) (string, string) {
+	logCount := 0
 	for {
 		var oldestFile string
 		var oldestTime time.Time
@@ -50,8 +51,12 @@ func GetOldestFile(dir string, extension string) (string, string) {
 			continue
 		}
 		if oldestFile == "" {
-			logger.Info("No " + extension + " file to parse")
-			time.Sleep(30 * time.Second)
+			logCount += 1
+			if logCount == 10 {
+				logCount = 0
+				logger.Debug("No " + extension + " file to parse")
+			}
+			time.Sleep(10 * time.Second)
 			continue
 		}
 		element := strings.Split(strings.Split(oldestFile, extension)[0], "/")
