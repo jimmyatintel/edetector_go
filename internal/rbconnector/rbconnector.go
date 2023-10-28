@@ -157,6 +157,6 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			last_send = time.Now()
 		}
 		mutex.Unlock()
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
