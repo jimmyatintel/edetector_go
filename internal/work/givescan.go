@@ -13,7 +13,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -25,7 +24,6 @@ var scanWorkingPath = "scanWorking"
 var scanUstagePath = "scanUnstage"
 var scanFirstPart float64
 var scanSecondPart float64
-var Re *regexp.Regexp
 
 func init() {
 	file.CheckDir(scanWorkingPath)
@@ -224,12 +222,14 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			continue
 		}
 		var direction string
-		if ip == conns[0] { // i am src -> out
-			direction = "1"
-		} else { // i am dst -> in
-			direction = "0"
+		if conns[0] == ip { // i am src -> out
+			direction = "out"
+		} else if conns[2] == ip { // i am dst -> in
+			direction = "in"
+		} else {
+			direction = "internal"
 		}
-		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction
+		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction + "|scan"
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
 		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")

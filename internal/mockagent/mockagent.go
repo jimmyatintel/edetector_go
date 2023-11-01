@@ -61,7 +61,7 @@ func Main() {
 			defer wg.Done()
 			createAgent()
 		}()
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 	wg.Wait()
 }

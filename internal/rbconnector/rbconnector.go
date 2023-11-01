@@ -66,7 +66,7 @@ func Start(version string) {
 }
 
 func high_speed() {
-	msgs, err := rabbitmq.Consume("ed_high", 100)
+	msgs, err := rabbitmq.Consume("ed_high", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("High speed consumer error: " + err.Error())
 		return
@@ -90,7 +90,7 @@ func high_speed() {
 }
 
 func mid_speed() {
-	msgs, err := rabbitmq.Consume("ed_mid", config.Viper.GetInt("MID_TUNNEL_SIZE"))
+	msgs, err := rabbitmq.Consume("ed_mid", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("Mid speed consumer error: " + err.Error())
 		return
@@ -109,7 +109,7 @@ func mid_speed() {
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
 		msg.Ack(false)
-		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
+		for len(mid_bulkaction) > (config.Viper.GetInt("MID_TUNNEL_SIZE") * 2) {
 			time.Sleep(2 * time.Second)
 		}
 	}
@@ -135,7 +135,7 @@ func low_speed() {
 		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		low_mutex.Unlock()
 		msg.Ack(false)
-		for len(low_bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
+		for len(low_bulkaction) > (config.Viper.GetInt("LOW_TUNNEL_SIZE") * 2) {
 			time.Sleep(2 * time.Second)
 		}
 	}
@@ -157,6 +157,6 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			last_send = time.Now()
 		}
 		mutex.Unlock()
-		time.Sleep(2 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 }
