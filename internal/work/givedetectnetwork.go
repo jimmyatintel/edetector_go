@@ -26,7 +26,11 @@ func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 }
 
 func detectNetworkElastic(p packet.Packet) {
-	ip, name := query.GetMachineIPandName(p.GetRkey())
+	ip, name, err := query.GetMachineIPandName(p.GetRkey())
+	if err != nil {
+		logger.Error("Error getting machine ip and name: " + err.Error())
+		return
+	}
 	networkSet := make(map[string]struct{})
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {

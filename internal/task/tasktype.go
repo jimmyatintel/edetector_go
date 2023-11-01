@@ -64,7 +64,8 @@ const (
 	GIVE_UPDATE_END    TaskType = "GiveUpdateEnd"
 
 	// terminate
-	TERMINATE_ALL TaskType = "TerminateAll"
+	TERMINATE_ALL    TaskType = "TerminateAll"
+	FINISH_TERMINATE TaskType = "FinishTerminate"
 
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
@@ -124,6 +125,7 @@ var Worklist = []TaskType{
 	GIVE_UPDATE,
 	GIVE_UPDATE_END,
 	TERMINATE_ALL,
+	FINISH_TERMINATE,
 }
 
 var UserWorklist = []UserTaskType{

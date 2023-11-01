@@ -10,6 +10,7 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -74,26 +75,28 @@ func Main(version string) {
 	builder_init()
 	logger.Info("Welcome to edetector tree builder: " + version)
 	for {
-		explorerFile, agent := file.GetOldestFile(fileUnstagePath, ".txt")
-		ip, name := query.GetMachineIPandName(agent)
+		explorerFile, agent, disk := file.GetOldestFile(fileUnstagePath, ".txt")
+		ip, name, err := query.GetMachineIPandName(agent)
+		if err != nil {
+			logger.Error("Error getting machine ip and name: " + err.Error())
+			query.Failed_task(agent, "StartGetDrive")
+			clearBuilder(agent, disk, explorerFile)
+			continue
+		}
 		time.Sleep(3 * time.Second) // wait for fully copy
 		explorerContent, err := os.ReadFile(explorerFile)
 		if err != nil {
 			logger.Error("Read file error: " + err.Error())
 			query.Failed_task(agent, "StartGetDrive")
-			dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
-			err := file.MoveFile(explorerFile, dstPath)
-			if err != nil {
-				logger.Error("Error moving file: " + err.Error())
-			}
+			clearBuilder(agent, disk, explorerFile)
 			continue
 		}
-		RelationMap[agent] = make(map[int](Relation))
 		logger.Info("Open txt file: " + explorerFile)
 		// record the relation
-		var rootInd int
+		RelationMap[agent] = make(map[int](Relation))
+		rootInd := 0
 		lines := strings.Split(string(explorerContent), "\n")
-		if terminateDrive(agent, explorerFile) {
+		if terminateDrive(agent, disk, explorerFile) {
 			continue
 		}
 		for _, line := range lines {
@@ -114,7 +117,7 @@ func Main(version string) {
 			generateUUID(agent, child)
 			// record name
 			tmp := RelationMap[agent][child]
-			tmp.Name = values[1]
+			tmp.Name = values[0]
 			RelationMap[agent][child] = tmp
 			// record relation
 			if parent == child {
@@ -126,13 +129,13 @@ func Main(version string) {
 			}
 		}
 		logger.Info("Record the relation")
-		if terminateDrive(agent, explorerFile) {
+		if terminateDrive(agent, disk, explorerFile) {
 			continue
 		}
 		// tree traversal & send to elastic(relation)
-		treeTraversal(agent, rootInd, true, "")
+		treeTraversal(agent, rootInd, true, "", disk)
 		logger.Info("Tree traversal & send to elastic (relation)")
-		if terminateDrive(agent, explorerFile) {
+		if terminateDrive(agent, disk, explorerFile) {
 			continue
 		}
 		// send to elastic (main & details)
@@ -166,10 +169,10 @@ func Main(version string) {
 			time.Sleep(1 * time.Microsecond)
 		}
 		logger.Info("Send to elastic (main & details)")
-		if terminateDrive(agent, explorerFile) {
+		if terminateDrive(agent, disk, explorerFile) {
 			continue
 		}
-		clearBuilder(agent, explorerFile)
+		clearBuilder(agent, disk, explorerFile)
 		query.Finish_task(agent, "StartGetDrive")
 		logger.Info("Tree builder task finished: " + agent)
 	}
@@ -203,9 +206,22 @@ func generateUUID(agent string, ind int) {
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, disk string) {
 	relation := RelationMap[agent][ind]
-	path = path + "/" + relation.Name
+	if disk == "Linux" {
+		if path == "" {
+			path = relation.Name
+		} else {
+			path = path + "/" + relation.Name
+		}
+	} else {
+		if path == "" {
+			path = disk + ":"
+		} else {
+			path = path + "\\" + relation.Name
+		}
+	}
+
 	relation.Path = path
 	RelationMap[agent][ind] = relation
 	// data := ExplorerRelation{
@@ -221,32 +237,25 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 	// 	return
 	// }
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, UUIDMap[uuid], false, path)
+		treeTraversal(agent, UUIDMap[uuid], false, path, disk)
 	}
 }
 
-func terminateDrive(agent string, explorerFile string) bool {
+func terminateDrive(agent string, disk string, explorerFile string) bool {
 	var flag = false
-	if redis.RedisExists(agent+"-terminateFinishIteration") && redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
-		return flag
-	}
 	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisGetInt(agent+"-terminateDrive") == 1 {
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
 		redis.RedisSet(agent+"-terminateDrive", 0)
-		clearBuilder(agent, explorerFile)
-	}
-	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
-		query.Finish_task(agent, "Terminate")
+		clearBuilder(agent, disk, explorerFile)
 	}
 	return flag
 }
 
-func clearBuilder(agent string, explorerFile string) {
+func clearBuilder(agent string, disk string, explorerFile string) {
 	UUIDMap = make(map[string]int)
 	RelationMap[agent] = nil
-	dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
-	err := file.MoveFile(explorerFile, dstPath)
+	err := file.MoveFile(explorerFile, filepath.Join(fileStagedPath, agent+"."+disk+".txt"))
 	if err != nil {
 		logger.Error("Error moving file: " + err.Error())
 	}

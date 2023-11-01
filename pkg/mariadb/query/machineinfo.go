@@ -3,18 +3,19 @@ package query
 import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"errors"
 )
 
-func GetMachineIPandName(KeyNum string) (string, string) {
+func GetMachineIPandName(KeyNum string) (string, string, error) {
 	agentIP := GetMachineIP(KeyNum)
 	if agentIP == "" {
-		logger.Error("Error getting machine ip")
+		return "", "", errors.New("Error getting machine ip")
 	}
 	agentName := GetMachineName(KeyNum)
 	if agentName == "" {
-		logger.Error("Error getting machine name")
+		return "", "", errors.New("Error getting machine name")
 	}
-	return agentIP, agentName
+	return agentIP, agentName, nil
 }
 
 func GetMachineIP(KeyNum string) (ip string) {

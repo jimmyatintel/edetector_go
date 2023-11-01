@@ -65,17 +65,14 @@ func Main(version string) {
 	logger.Info("Welcome to edetector dbparser: " + version)
 outerloop:
 	for {
-		dbFile, agent := file.GetOldestFile(dbUnstagePath, ".db")
+		dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 		time.Sleep(3 * time.Second) // wait for fully copy
 		db, err := sql.Open("sqlite3", dbFile)
 		if err != nil {
 			logger.Error("Error opening database file: " + err.Error())
 			query.Failed_task(agent, "StartCollect")
-			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
-			if err != nil {
-				logger.Error("Error moving file: " + err.Error())
-			}
+			clearParser(db, dbFile, agent)
 			continue
 		}
 		logger.Info("Open db file: " + dbFile)
@@ -83,15 +80,11 @@ outerloop:
 		if err != nil {
 			logger.Error("Error getting table names: " + err.Error())
 			query.Failed_task(agent, "StartCollect")
-			err = file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
-			if err != nil {
-				logger.Error("Error moving file: " + err.Error())
-			}
+			clearParser(db, dbFile, agent)
 			continue
 		}
 		for _, tableName := range tableNames {
-			if terminateCollect(agent) {
-				closeParser(db, dbFile, agent)
+			if terminateCollect(db, dbFile, agent) {
 				continue outerloop
 			}
 			err = sendCollectToRabbitMQ(db, tableName, agent)
@@ -101,7 +94,10 @@ outerloop:
 				break
 			}
 		}
-		closeParser(db, dbFile, agent)
+		if terminateCollect(db, dbFile, agent) {
+			continue
+		}
+		clearParser(db, dbFile, agent)
 		query.Finish_task(agent, "StartCollect")
 		logger.Info("DB parser task finished: " + agent)
 	}
@@ -127,24 +123,18 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	return tableNames, nil
 }
 
-func terminateCollect(agent string) bool {
+func terminateCollect(db *sql.DB, dbFile string, agent string) bool {
 	var flag = false
-	if redis.RedisExists(agent+"-terminateFinishIteration") && redis.RedisGetInt(agent+"-terminateFinishIteration") == 0 {
-		return flag
-	}
 	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
-		query.Terminated_task(agent, "StartCollect")
 		redis.RedisSet(agent+"-terminateCollect", 0)
-	}
-	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateDrive") == 0 && redis.RedisGetInt(agent+"-terminateCollect") == 0 {
-		query.Finish_task(agent, "Terminate")
+		clearParser(db, dbFile, agent)
 	}
 	return flag
 }
 
-func closeParser(db *sql.DB, dbFile string, agent string) {
+func clearParser(db *sql.DB, dbFile string, agent string) {
 	db.Close()
 	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 	if err != nil {

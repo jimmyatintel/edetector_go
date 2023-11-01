@@ -147,9 +147,12 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 }
 
 func toRabbitMQ(index string, agent string, values []string, item string, date string, ttype string, etc string, st elastic.Request_data) error {
-	ip, name := query.GetMachineIPandName(agent)
+	ip, name, err := query.GetMachineIPandName(agent)
+	if err != nil {
+		return err
+	}
 	uuid := uuid.NewString()
-	err := rabbitmq.ToRabbitMQ_Main(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Main(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
 	if err != nil {
 		return err
 	}

@@ -150,8 +150,13 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func updateScanProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-ScanProgress") >= 95 {
-			break
+		result, err := query.Load_stored_task("nil", key, 2, "StartScan")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
+		}
+		if len(result) == 0 {
+			return
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
@@ -159,7 +164,10 @@ func updateScanProgress(key string) {
 }
 
 func parseScan(path string, key string) error {
-	ip, name := query.GetMachineIPandName(key)
+	ip, name, err := query.GetMachineIPandName(key)
+	if err != nil {
+		return err
+	}
 	logger.Info("ParseScan: " + key)
 	// send to elasticsearch
 	content, err := os.ReadFile(path)

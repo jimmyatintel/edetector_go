@@ -37,10 +37,15 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 		}
 		result = append(result, tmp)
 	}
-	if len(result) == 0 {
-		logger.Info("No handling tasks for:" + client_id)
-	}
 	return result, nil
+}
+
+func Update_progress(progress int, clientid string, tasktype string) {
+	qu := "update task set progress = ? where client_id = ? and type = ? and status = 2"
+	_, err := mariadb.DB.Exec(qu, progress, clientid, tasktype)
+	if err != nil {
+		logger.Error("Update failed: " + err.Error())
+	}
 }
 
 func Update_task_status(clientid string, tasktype string, old_status int, new_status int) int {

@@ -23,6 +23,7 @@ import (
 
 var serverAddr string
 var numberOfAgents int
+var connList = make(map[string]([]net.Conn))
 
 func init() {
 	vp, err := config.LoadConfig()
@@ -76,7 +77,6 @@ func createAgent() {
 	info := []string{key, ip, mac}
 	logger.Info("MockAgentData: " + info[0] + "|" + info[1] + "|" + info[2])
 	detectStatus := "0|0"
-
 	for {
 		conn, err := net.Dial("tcp", serverAddr)
 		if err != nil {
@@ -125,6 +125,12 @@ func receive(buf []byte, conn net.Conn, key string) packet.Packet {
 func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 	defer conn.Close()
 	buf := make([]byte, 1024)
+	go func() {
+		for {
+			SendTCPtoServer(task.CHECK_CONNECT, "", conn, info)
+			time.Sleep(30 * time.Second)
+		}
+	}()
 	for {
 		NewPacket := receive(buf, conn, info[0])
 		if NewPacket == nil {
@@ -140,12 +146,6 @@ func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 			}
 			defer new_conn.Close()
 			go agentDetect(new_conn, detectStatus, info)
-			go func() {
-				for {
-					SendTCPtoServer(task.CHECK_CONNECT, "", conn, info)
-					time.Sleep(30 * time.Second)
-				}
-			}()
 		} else if NewPacket.GetTaskType() == task.UPDATE_DETECT_MODE {
 			*detectStatus = NewPacket.GetMessage()
 			SendTCPtoServer(task.GIVE_DETECT_INFO, *detectStatus, conn, info)
@@ -153,6 +153,11 @@ func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 			SendTCPtoServer(task.GIVE_DRIVE_INFO, "C-NTFS,HDD|", conn, info)
 		} else if NewPacket.GetTaskType() == task.GET_SCAN || NewPacket.GetTaskType() == task.GET_COLLECT_INFO || NewPacket.GetTaskType() == task.EXPLORER_INFO || NewPacket.GetTaskType() == task.GET_IMAGE {
 			go handleNewTask(NewPacket.GetTaskType(), info)
+		} else if NewPacket.GetTaskType() == task.TERMINATE_ALL {
+			for _, conn := range connList[info[0]] {
+				conn.Close()
+			}
+			SendTCPtoServer(task.FINISH_TERMINATE, "", conn, info)
 		} else if NewPacket.GetTaskType() != task.DATA_RIGHT {
 			logger.Error(info[0] + ":: Undefined task type: " + string(NewPacket.GetTaskType()))
 		}
@@ -165,6 +170,7 @@ func handleNewTask(taskType task.TaskType, info []string) {
 		logger.Error(info[0] + ":: Error connecting to the server:" + err.Error())
 		return
 	}
+	connList[info[0]] = append(connList[info[0]], new_conn)
 	defer new_conn.Close()
 	dataRightFromServer := make(chan int)
 	switch taskType {

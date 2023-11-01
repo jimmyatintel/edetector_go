@@ -128,8 +128,13 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 
 func updateCollectProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-CollectProgress") >= 83 {
-			break
+		result, err := query.Load_stored_task("nil", key, 2, "StartCollect")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
+		}
+		if len(result) == 0 {
+			return
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)

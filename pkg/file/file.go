@@ -59,9 +59,13 @@ func GetOldestFile(dir string, extension string) (string, string, string) {
 			time.Sleep(10 * time.Second)
 			continue
 		}
-		element := strings.Split(strings.Split(oldestFile, extension)[0], "/")
-		info := strings.Split(element[len(element)-1], "-")
-		return oldestFile, info[0], info[1]
+		element := strings.Split(oldestFile, "/")
+		info := strings.Split(element[len(element)-1], ".")
+		err = MoveFile(oldestFile, oldestFile+".processing")
+		if err != nil {
+			logger.Error("Error renaming file: " + err.Error())
+		}
+		return oldestFile + ".processing", info[0], info[1]
 	}
 }
 

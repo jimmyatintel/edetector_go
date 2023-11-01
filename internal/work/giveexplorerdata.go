@@ -34,11 +34,11 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Explorer: " + key + "::" + p.GetMessage())
 	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
-	explorerSecondPart = 95 - explorerFirstPart
+	explorerSecondPart = 90 - explorerFirstPart
 	parts := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-Disk", parts[0])
 	// create or truncate the zip file
-	path := filepath.Join(fileWorkingPath, (key + "-" + parts[0] + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "." + parts[0] + ".zip"))
 	err := file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -91,7 +91,6 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
 	progress := int(explorerFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 65426, explorerSecondPart)
@@ -145,10 +144,15 @@ func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 
 func updateDriveProgress(key string) {
 	for {
-		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
-		if driveProgress >= 93 {
-			break
+		result, err := query.Load_stored_task("nil", key, 2, "StartGetDrive")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
 		}
+		if len(result) == 0 {
+			return
+		}
+		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
 		query.Update_progress(driveProgress, key, "StartGetDrive")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}

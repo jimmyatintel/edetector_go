@@ -20,8 +20,6 @@ func init() {
 func agentDetect(conn net.Conn, detectStatus *string, info []string) {
 	for {
 		if *detectStatus == "1|1" {
-			SendTCPtoServer(task.GIVE_DETECT_NETWORK, "3540|20.90.153.243:443|1698219996|1698219996|0|54806\n8864|142.251.42.238:443|1698219996|1698219996|0|59271\n", conn, info)
-			time.Sleep(30 * time.Second)
 			SendTCPtoServer(task.GIVE_DETECT_PROCESS, "conhost.exe|1698219996|\\??\\C:\\Windows\\system32\\conhost.exe 0x4|9430b20076a19e6ed9084530ddcc8caa|C:\\Windows\\System32\\conhost.exe|43760|ClientSearch.exe|C:\\Program Files (x86)\\eDetectorClient\\ClientSearch.exe|null|43416|0,0|0|0,0|0,0|null|NlsAnsiCodePage:0x0000FFFD0000FDE9 -> 0x0000003F000003B6;", conn, info)
 		}
 		time.Sleep(180 * time.Second)

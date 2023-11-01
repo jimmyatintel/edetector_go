@@ -30,7 +30,10 @@ func GiveDetectProcessFrag(p packet.Packet, conn net.Conn) (task.TaskResult, err
 
 func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	ip, name := query.GetMachineIPandName(key)
+	ip, name, err := query.GetMachineIPandName(key)
+	if err != nil {
+		return task.FAIL, err
+	}
 	logger.Info("GiveDetectProcess: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
@@ -84,7 +87,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
 	}
-	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}

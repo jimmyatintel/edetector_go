@@ -94,8 +94,13 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func updateImageProgress(key string) {
 	for {
-		if redis.RedisGetInt(key+"-ImageProgress") >= 95 {
-			break
+		result, err := query.Load_stored_task("nil", key, 2, "StartGetImage")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
+		}
+		if len(result) == 0 {
+			return
 		}
 		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
