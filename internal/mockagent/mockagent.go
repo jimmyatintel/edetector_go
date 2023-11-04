@@ -127,7 +127,10 @@ func handleMainConn(conn net.Conn, detectStatus *string, info []string) error {
 	buf := make([]byte, 1024)
 	go func() {
 		for {
-			SendTCPtoServer(task.CHECK_CONNECT, "", conn, info)
+			err := SendTCPtoServer(task.CHECK_CONNECT, "", conn, info)
+			if err != nil {
+				return
+			}
 			time.Sleep(30 * time.Second)
 		}
 	}()

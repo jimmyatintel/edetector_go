@@ -224,18 +224,18 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, disk string)
 
 	relation.Path = path
 	RelationMap[agent][ind] = relation
-	// data := ExplorerRelation{
-	// 	Agent:  agent,
-	// 	IsRoot: isRoot,
-	// 	Parent: relation.UUID,
-	// 	Child:  relation.Child,
-	// }
-	// err := rabbitmq.ToRabbitMQ_Relation(data, "ed_low")
-	// if err != nil {
-	// 	logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
-	// 	query.Failed_task(agent, "StartGetDrive")
-	// 	return
-	// }
+	data := ExplorerRelation{
+		Agent:  agent,
+		IsRoot: isRoot,
+		Parent: relation.UUID,
+		Child:  relation.Child,
+	}
+	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
+	if err != nil {
+		logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
+		query.Failed_task(agent, "StartGetDrive")
+		return
+	}
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, UUIDMap[uuid], false, path, disk)
 	}

@@ -209,6 +209,9 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
+		// build memory relation
+		BuildMemoryRelation(key, "parent", values[5], values[5], values[9])
+		BuildMemoryRelation(key, "child", values[9], values[5], values[9])
 	}
 	return nil
 }

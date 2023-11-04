@@ -24,6 +24,7 @@ func SendTCPtoServer(worktype task.TaskType, msg string, conn net.Conn, info []s
 	_, err := conn.Write(encrypt_buf)
 	if err != nil {
 		logger.Error(info[0] + ":: Error sending data to server: " + err.Error() + msg)
+		return err
 	}
 	return nil
 }

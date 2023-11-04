@@ -27,23 +27,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	lastTask := "unknown"
 	var dataRightChan chan net.Conn
 	closeConn := make(chan bool)
-	if task_chan != nil {
-		go func() {
-			for {
-				select {
-				case message := <-task_chan:
-					data := message.Fluent()
-					logger.Info("Get task msg: " + string(data))
-					err := clientsearchsend.SendTaskTCPtoClient(data, conn)
-					if err != nil {
-						logger.Error("Error Sending: " + err.Error())
-					}
-				case <-closeConn:
-					return
-				}
-			}
-		}()
-	}
 	for {
 		var NewPacket packet.Packet
 		var decrypt_buf []byte
@@ -108,6 +91,21 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO {
+			go func() {
+				for {
+					select {
+					case message := <-task_chan:
+						data := message.Fluent()
+						logger.Info("Get task msg: " + string(data))
+						err := clientsearchsend.SendTaskTCPtoClient(data, conn)
+						if err != nil {
+							logger.Error("Error Sending: " + err.Error())
+						}
+					case <-closeConn:
+						return
+					}
+				}
+			}()
 			// wait for key to join the packet
 			Clientlist = append(Clientlist, key)
 			channelmap.AssignTaskChannel(key, &task_chan)

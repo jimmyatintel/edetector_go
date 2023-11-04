@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/v6"
@@ -28,7 +27,7 @@ var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "Ch
 
 func flagcheck() bool {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		return true
+	return true
 	// }
 	// return false
 }
@@ -114,73 +113,72 @@ func BulkIndexRequest(action []string, work []string) error {
 	return nil
 }
 
-func UpdateRequest(agent string, id string, time string, index string) error {
+func UpdateByQueryRequest(query string, index string) (int, error) {
+	var updatedCount int
 	if !flagcheck() {
-		return nil
+		return 0, nil
 	}
-	query := fmt.Sprintf(`
-	{
-		"script": {
-			"source": "ctx._source.processConnectIP = params.processConnectIP",
-			"lang": "painless",
-			"params": {
-				"processConnectIP": "true"
-			}
-		},
-		"query": {
-			"bool": {
-				"must": [
-					{ "term": { "agent": "%s" } },
-					{ "term": { "processId": %s } },
-					{ "term": { "processCreateTime": %s } },
-					{ "term": { "mode": "detect" } }
-				]
-			}
-		}
-	}`, agent, id, time)
 	updateReq := esapi.UpdateByQueryRequest{
 		Index: []string{index},
 		Body:  strings.NewReader(query),
 	}
 	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer updateRes.Body.Close()
 	if updateRes.IsError() {
-		responseBytes, _ := ioutil.ReadAll(updateRes.Body)
-		errorMessage := string(responseBytes)
-		return errors.New(errorMessage)
+		return 0, errors.New(updateRes.String())
 	} else {
 		var response map[string]interface{}
 		if err := json.NewDecoder(updateRes.Body).Decode(&response); err != nil {
-			return err
+			return 0, err
 		}
-		updatedCount := int(response["updated"].(float64))
-		if updatedCount > 0 {
-			logger.Debug("Update network of the detect process: " + agent + "|" + id + "|" + time)
-		} else {
-			createBody := fmt.Sprintf(`
-			{
-				"agent": "%s",
-				"processId": %s,
-				"processCreateTime": %s,
-				"processConnectIP": "true",
-				"mode": "detect"
-			}`, agent, id, time)
-			err = IndexRequest(index, createBody)
-			if err != nil {
-				return err
-			}
-			logger.Debug("Create a new detect process: " + agent + "|" + id + "|" + time)
-		}
+		updatedCount = int(response["_updated"].(float64))
 	}
-	return nil
+	return updatedCount, nil
 }
 
-func SearchRequest(index string, body string) string {
+func UpdateByDocIDRequest(index string, docID string, newValue string, source string) (int, error) {
 	if !flagcheck() {
-		return ""
+		return 0, nil
+	}
+	var updatedCount int
+	script := map[string]interface{}{
+		"script": map[string]interface{}{
+			"source": source,
+			"lang":   "painless",
+			"params": map[string]interface{}{
+				"value": newValue,
+			},
+		},
+	}
+	scriptBytes, err := json.Marshal(script)
+	if err != nil {
+		logger.Error("Error converting scriptBytes to json: " + err.Error())
+	}
+	updateReq := esapi.UpdateRequest{
+		Index:      index,
+		DocumentID: docID,
+		Body:       strings.NewReader(string(scriptBytes)),
+	}
+
+	updateRes, err := updateReq.Do(context.Background(), es)
+	if err != nil {
+		return 0, err
+	}
+	defer updateRes.Body.Close()
+	if updateRes.IsError() {
+		return 0, errors.New(updateRes.String())
+	} else {
+		
+	}
+	return updatedCount, nil
+}
+
+func SearchRequest(index string, body string) []interface{} {
+	if !flagcheck() {
+		return nil
 	}
 	req := esapi.SearchRequest{
 		Index: []string{index},
@@ -191,38 +189,23 @@ func SearchRequest(index string, body string) string {
 		panic(err)
 	}
 	defer res.Body.Close()
-	// logger.Info(res.String())
+	logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		logger.Error("Error decoding response: " + err.Error())
-		return ""
+		return nil
 	}
 	hits, ok := result["hits"].(map[string]interface{})
 	if !ok {
 		logger.Error("Hits not found in response")
-		return ""
+		return nil
 	}
 	hitsArray, ok := hits["hits"].([]interface{})
 	if !ok {
 		logger.Error("Hits array not found in response")
-		return ""
+		return nil
 	}
-	var docID string
-	for _, hit := range hitsArray {
-		hitMap, ok := hit.(map[string]interface{})
-		if !ok {
-			logger.Error("Hit is not a map")
-			continue
-		}
-		docIDVal, ok := hitMap["_id"].(string)
-		if !ok {
-			logger.Error("Doc ID not found in hit")
-			continue
-		}
-		docID = docIDVal
-		break
-	}
-	return docID
+	return hitsArray
 }
 
 func DeleteByQueryRequest(field string, value string, ttype string) error {

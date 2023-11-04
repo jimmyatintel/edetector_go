@@ -88,13 +88,13 @@ func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, 
 	return nil
 }
 
-func ToRabbitMQ_Relation(template elastic.Request_data, priority string) error {
+func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority string) error {
 	request, err := template.Elastical()
 	if err != nil {
 		return err
 	}
 	var msg = Message{
-		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_explorer_relation",
+		Index: config.Viper.GetString("ELASTIC_PREFIX") + index,
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)

@@ -61,8 +61,8 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 				}
 			}
 		}`, p.GetRkey(), values[9], values[1])
-		doc := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
-		if doc == "" {
+		hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+		if len(hitsArray) == 0 {
 			values[16] = "detecting"
 		} else {
 			values[16] = "true"
