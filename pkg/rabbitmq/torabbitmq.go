@@ -103,7 +103,6 @@ func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority s
 	}
 	err = Publish(priority, msgBytes)
 	for {
-		err = Publish(priority, msgBytes)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (relation), retrying... " + err.Error())
 			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
