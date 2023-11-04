@@ -86,7 +86,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveExplorerData: " + key)
 	// write file
-	path := filepath.Join(fileWorkingPath, (key + "-" + redis.RedisGetString(key+"-Disk") + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk") + ".zip"))
 	err := file.WriteFile(path, p)
 	if err != nil {
 		return task.FAIL, err
@@ -107,7 +107,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: " + key + "::" + p.GetMessage())
 
-	filename := key + "-" + redis.RedisGetString(key+"-Disk")
+	filename := key + "." + redis.RedisGetString(key+"-Disk")
 	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))

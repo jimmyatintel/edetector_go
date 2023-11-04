@@ -6,7 +6,25 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
+	"strings"
+	"time"
 )
+
+func HandleRelation(lines []string, key string, count int) {
+	for _, line := range lines {
+		line = strings.ReplaceAll(line, "\r", "")
+		values := strings.Split(line, "|")
+		if len(values) != count {
+			if len(values) != 1 {
+				logger.Warn("Invalid line: " + line)
+			}
+			continue
+		}
+		BuildMemoryRelation(key, "parent", values[5], values[5], values[9])
+		BuildMemoryRelation(key, "child", values[9], values[5], values[9])
+		time.Sleep(1 * time.Second)
+	}
+}
 
 func BuildMemoryRelation(agent string, field string, value string, parent string, child string) {
 	index := config.Viper.GetString("ELASTIC_PREFIX") + "_memory_relation"
@@ -14,12 +32,12 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 			"query": {
 				"bool": {
 				  "must": [
-					{ "query_string": { "fields": ["agent"], "query": "%s" } },
-					{ "query_string": { "fields": ["%s"], "query": "%s" } }
+					{ "term": { "agent": "%s" } },
+					{ "term": { "parent": "%s" } }
 				  ]
 				}
 			  }
-			}`, agent, field, value)
+			}`, agent, value)
 	hitsArray := elastic.SearchRequest(index, searchQuery)
 	if len(hitsArray) == 0 { // not exists
 		data := MemoryRelation{}
@@ -41,6 +59,7 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 		err := rabbitmq.ToRabbitMQ_Relation("_memory_relation", data, "ed_high")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
+			return
 		}
 	} else if len(hitsArray) == 1 { // exists
 		hitMap, ok := hitsArray[0].(map[string]interface{})
@@ -54,18 +73,34 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 			return
 		}
 		if field == "parent" {
-			_, err := elastic.UpdateByDocIDRequest(index, docID, child, "ctx._source.child.add(params.value)")
+			source, ok := hitMap["_source"].(map[string]interface{})
+			if !ok {
+				logger.Error("source not found")
+				return
+			}
+			oldChild, ok := source["child"].([]interface{})
+			if !ok {
+				logger.Error("children not found")
+			}
+			for _, c := range oldChild {
+				if c.(string) == child {
+					return
+				}
+			}
+			err := elastic.UpdateByDocIDRequest(index, docID, child, "ctx._source.child.add(params.value)")
 			if err != nil {
 				logger.Error("Error updating parent: " + err.Error())
+				return
 			}
 		} else if field == "child" {
-			_, err := elastic.UpdateByDocIDRequest(index, docID, child, "ctx._source.isRoot = params.value")
+			err := elastic.UpdateByDocIDRequest(index, docID, "false", "ctx._source.isRoot = params.value")
 			if err != nil {
 				logger.Error("Error updating child: " + err.Error())
+				return
 			}
 		}
 
 	} else {
-		logger.Error("More than one relation found" + field + " " + parent + " " + child)
+		logger.Error("More than one relation found: " + field + " parent " + parent + " child " + child)
 	}
 }

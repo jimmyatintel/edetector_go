@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -175,6 +176,12 @@ func parseScan(path string, key string) error {
 		return err
 	}
 	lines := strings.Split(string(content), "\n")
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		HandleRelation(lines, key, 17)
+	}()
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "\r", "")
 		values := strings.Split(line, "|")
@@ -209,10 +216,8 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		// build memory relation
-		BuildMemoryRelation(key, "parent", values[5], values[5], values[9])
-		BuildMemoryRelation(key, "child", values[9], values[5], values[9])
 	}
+	wg.Wait()
 	return nil
 }
 

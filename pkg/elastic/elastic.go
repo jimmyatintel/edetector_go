@@ -114,7 +114,6 @@ func BulkIndexRequest(action []string, work []string) error {
 }
 
 func UpdateByQueryRequest(query string, index string) (int, error) {
-	var updatedCount int
 	if !flagcheck() {
 		return 0, nil
 	}
@@ -129,21 +128,26 @@ func UpdateByQueryRequest(query string, index string) (int, error) {
 	defer updateRes.Body.Close()
 	if updateRes.IsError() {
 		return 0, errors.New(updateRes.String())
-	} else {
-		var response map[string]interface{}
-		if err := json.NewDecoder(updateRes.Body).Decode(&response); err != nil {
-			return 0, err
-		}
-		updatedCount = int(response["_updated"].(float64))
 	}
-	return updatedCount, nil
+	var updateResponse map[string]interface{}
+	if err := json.NewDecoder(updateRes.Body).Decode(&updateResponse); err != nil {
+		return 0, err
+	}
+	updated, found := updateResponse["updated"]
+	if !found {
+		return 0, fmt.Errorf("updated count not found in the response")
+	}
+	updatedFloat, ok := updated.(float64)
+	if !ok {
+		return 0, fmt.Errorf("updated count is not a number")
+	}
+	return int(updatedFloat), nil
 }
 
-func UpdateByDocIDRequest(index string, docID string, newValue string, source string) (int, error) {
+func UpdateByDocIDRequest(index string, docID string, newValue string, source string) error {
 	if !flagcheck() {
-		return 0, nil
+		return nil
 	}
-	var updatedCount int
 	script := map[string]interface{}{
 		"script": map[string]interface{}{
 			"source": source,
@@ -155,7 +159,7 @@ func UpdateByDocIDRequest(index string, docID string, newValue string, source st
 	}
 	scriptBytes, err := json.Marshal(script)
 	if err != nil {
-		logger.Error("Error converting scriptBytes to json: " + err.Error())
+		return err
 	}
 	updateReq := esapi.UpdateRequest{
 		Index:      index,
@@ -165,15 +169,10 @@ func UpdateByDocIDRequest(index string, docID string, newValue string, source st
 
 	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer updateRes.Body.Close()
-	if updateRes.IsError() {
-		return 0, errors.New(updateRes.String())
-	} else {
-		
-	}
-	return updatedCount, nil
+	return nil
 }
 
 func SearchRequest(index string, body string) []interface{} {
@@ -189,7 +188,7 @@ func SearchRequest(index string, body string) []interface{} {
 		panic(err)
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	// logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		logger.Error("Error decoding response: " + err.Error())

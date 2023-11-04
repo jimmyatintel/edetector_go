@@ -39,6 +39,12 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
 	// send to elasticsearch
+	// var wg sync.WaitGroup
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	HandleRelation(lines, key, 16)
+	// }()
 	for _, line := range lines {
 		values := strings.Split(line, "|")
 		if len(values) != 16 {
@@ -91,5 +97,6 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	if err != nil {
 		return task.FAIL, err
 	}
+	// wg.Wait()
 	return task.SUCCESS, nil
 }
