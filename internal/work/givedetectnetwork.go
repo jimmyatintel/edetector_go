@@ -3,6 +3,7 @@ package work
 import (
 	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/ip2location"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/elastic"
@@ -45,14 +46,24 @@ func detectNetworkElastic(p packet.Packet) {
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
 		addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
+		selfCountry, err := ip2location.ToCountry(ip)
+		if err != nil {
+			logger.Error("Error getting self country: " + err.Error())
+			selfCountry = "-"
+		}
+		otherCountry, err := ip2location.ToCountry(addr)
+		if err != nil {
+			logger.Error("Error getting other country: " + err.Error())
+			otherCountry = "-"
+		}
 		var modifiedStr string
 		if values[4] == "0" { // in -> i am dst
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" + "unknown" + "|in|detect"
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" + "unknown" + "|in|detect|" + otherCountry + "|" + selfCountry
 		} else { // out -> i am src
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" + "unknown" + "|out|detect"
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" + "unknown" + "|out|detect|" + selfCountry + "|" + otherCountry
 		}
 		values = strings.Split(modifiedStr, "|")
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}

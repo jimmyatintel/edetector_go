@@ -59,6 +59,8 @@ type MemoryNetwork struct {
 	Action            string `json:"action"`
 	ConnectionINorOUT string `json:"connectionInOrOut"`
 	Mode              string `json:"mode"`
+	SrcCountry        string `json:"srcCountry"`
+	DstCountry        string `json:"dstCountry"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

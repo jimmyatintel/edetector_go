@@ -3,6 +3,7 @@ package work
 import (
 	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
+	"edetector_go/internal/ip2location"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	"edetector_go/pkg/file"
@@ -245,10 +246,20 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		} else {
 			direction = "internal"
 		}
-		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction + "|scan"
+		srcCountry, err := ip2location.ToCountry(conns[0])
+		if err != nil {
+			logger.Error("Error getting self country: " + err.Error())
+			srcCountry = "-"
+		}
+		dstCountry, err := ip2location.ToCountry(conns[2])
+		if err != nil {
+			logger.Error("Error getting other country: " + err.Error())
+			dstCountry = "-"
+		}
+		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction + "|scan|" + srcCountry + "|" + dstCountry
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
-		err := rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}

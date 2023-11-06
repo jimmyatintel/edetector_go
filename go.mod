@@ -4,6 +4,8 @@ go 1.20
 
 require github.com/gin-contrib/cors v1.4.0
 
+require lukechampine.com/uint128 v1.2.0 // indirect
+
 require (
 	github.com/Flagsmith/flagsmith-go-client v1.0.0
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
@@ -23,6 +25,7 @@ require (
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/ip2location/ip2location-go/v9 v9.6.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
