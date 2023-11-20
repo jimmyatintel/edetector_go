@@ -34,6 +34,7 @@ type Memory struct {
 	RiskLevel         int    `json:"riskLevel"`
 	RiskScore         int    `json:"riskScore"`
 	Mode              string `json:"mode"`
+	ProcessKey        string `json:"processKey"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`
@@ -59,8 +60,15 @@ type MemoryNetwork struct {
 	Action            string `json:"action"`
 	ConnectionINorOUT string `json:"connectionInOrOut"`
 	Mode              string `json:"mode"`
-	SrcCountry        string `json:"srcCountry"`
-	DstCountry        string `json:"dstCountry"`
+	AgentPort         int    `json:"agentPort"`
+	AgentCountry      string `json:"agentCountry"`
+	AgentLongitude    int    `json:"agentLongitude"`
+	AgentLatitude     int    `json:"agentLatitude"`
+	OtherIP           string `json:"otherIP"`
+	OtherPort         int    `json:"otherPort"`
+	OtherCountry      string `json:"otherCountry"`
+	OtherLongitude    int    `json:"otherLongitude"`
+	OtehrLatitude     int    `json:"otherLatitude"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

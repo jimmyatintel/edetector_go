@@ -11,6 +11,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -46,21 +47,33 @@ func detectNetworkElastic(p packet.Packet) {
 		key := values[0] + "," + values[3]
 		networkSet[key] = struct{}{}
 		addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
-		selfCountry, err := ip2location.ToCountry(ip)
+		agentCountry, err := ip2location.ToCountry(ip)
 		if err != nil {
 			logger.Error("Error getting self country: " + err.Error())
-			selfCountry = "-"
+		}
+		agentLa, agentLo, err := ip2location.ToLatitudeLongtitude(ip)
+		if err != nil {
+			logger.Error("Error getting latitude and longtitude: " + err.Error())
 		}
 		otherCountry, err := ip2location.ToCountry(addr)
 		if err != nil {
 			logger.Error("Error getting other country: " + err.Error())
-			otherCountry = "-"
+		}
+		otherLo, otherLa, err := ip2location.ToLatitudeLongtitude(addr)
+		if err != nil {
+			logger.Error("Error getting latitude and longtitude: " + err.Error())
 		}
 		var modifiedStr string
 		if values[4] == "0" { // in -> i am dst
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" + "unknown" + "|in|detect|" + otherCountry + "|" + selfCountry
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" +
+				"unknown" + "|in|detect|" +
+				values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
+				addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
 		} else { // out -> i am src
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" + "unknown" + "|out|detect|" + selfCountry + "|" + otherCountry
+			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" +
+				"unknown" + "|out|detect|" +
+				values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
+				addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
 		}
 		values = strings.Split(modifiedStr, "|")
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")

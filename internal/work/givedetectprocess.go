@@ -53,7 +53,8 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			}
 			continue
 		}
-		values = append(values, "network", "risklevel", "riskscore", "detect")
+		processKey := key + "##" + values[9] + "##" + values[1]
+		values = append(values, "network", "risklevel", "riskscore", "detect", processKey)
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {

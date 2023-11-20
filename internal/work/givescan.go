@@ -16,7 +16,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -177,12 +176,12 @@ func parseScan(path string, key string) error {
 		return err
 	}
 	lines := strings.Split(string(content), "\n")
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		HandleRelation(lines, key, 17)
-	}()
+	// var wg sync.WaitGroup
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	HandleRelation(lines, key, 17)
+	// }()
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "\r", "")
 		values := strings.Split(line, "|")
@@ -198,7 +197,8 @@ func parseScan(path string, key string) error {
 			scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
 			values[16] = "true"
 		}
-		values = append(values, "risklevel", "riskscore", "scan")
+		processKey := key + "##" + values[9] + "##" + values[1]
+		values = append(values, "risklevel", "riskscore", "scan", processKey)
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
@@ -218,7 +218,7 @@ func parseScan(path string, key string) error {
 			return err
 		}
 	}
-	wg.Wait()
+	// wg.Wait()
 	return nil
 }
 
@@ -239,24 +239,57 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			continue
 		}
 		var direction string
+		var agentPort string
+		var otherIP string
+		var otherPort string
+		var otherCountry string
+		var otherLa int
+		var otherLo int
+		agentCountry, err := ip2location.ToCountry(ip)
+		if err != nil {
+			logger.Error("Error getting country: " + err.Error())
+		}
+		agentLa, agentLo, err := ip2location.ToLatitudeLongtitude(ip)
+		if err != nil {
+			logger.Error("Error getting latitude and longtitude: " + err.Error())
+		}
 		if conns[0] == ip { // i am src -> out
 			direction = "out"
+			agentPort = conns[1]
+			otherIP = conns[2]
+			otherPort = conns[3]
+			otherCountry, err = ip2location.ToCountry(conns[2])
+			if err != nil {
+				logger.Error("Error getting country: " + err.Error())
+			}
+			otherLo, otherLa, err = ip2location.ToLatitudeLongtitude(conns[2])
+			if err != nil {
+				logger.Error("Error getting latitude and longtitude: " + err.Error())
+			}
 		} else if conns[2] == ip { // i am dst -> in
 			direction = "in"
+			agentPort = conns[3]
+			otherIP = conns[0]
+			otherPort = conns[1]
+			otherCountry, err = ip2location.ToCountry(conns[0])
+			if err != nil {
+				logger.Error("Error getting country: " + err.Error())
+			}
+			otherLo, otherLa, err = ip2location.ToLatitudeLongtitude(conns[0])
+			if err != nil {
+				logger.Error("Error getting latitude and longtitude: " + err.Error())
+			}
 		} else {
 			direction = "internal"
+			agentPort = "-1"
+			otherIP = "0.0.0.0"
+			otherPort = "-1"
+			otherCountry = "-"
 		}
-		srcCountry, err := ip2location.ToCountry(conns[0])
-		if err != nil {
-			logger.Error("Error getting self country: " + err.Error())
-			srcCountry = "-"
-		}
-		dstCountry, err := ip2location.ToCountry(conns[2])
-		if err != nil {
-			logger.Error("Error getting other country: " + err.Error())
-			dstCountry = "-"
-		}
-		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" + actionAndTime[0] + "|" + direction + "|scan|" + srcCountry + "|" + dstCountry
+		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" +
+			actionAndTime[0] + "|" + direction + "|scan|" +
+			agentPort + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
+			otherIP + "|" + otherPort + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")

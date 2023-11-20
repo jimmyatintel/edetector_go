@@ -19,3 +19,4 @@ heap*
 *.png
 *.pdf
 oldfile
+test.go

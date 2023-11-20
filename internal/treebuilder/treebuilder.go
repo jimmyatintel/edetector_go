@@ -154,6 +154,9 @@ func Main(version string) {
 				break
 			}
 			values = values[:len(values)-2]
+			if values[2] == "2" {
+				values[2] = "1"
+			}
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to rabbitMQ (main): " + err.Error())
