@@ -38,7 +38,7 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	parts := strings.Split(p.GetMessage(), "|")
 	redis.RedisSet(key+"-Disk", parts[0])
 	// create or truncate the zip file
-	path := filepath.Join(fileWorkingPath, (key + "." + parts[0] + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "." + parts[0]))
 	err := file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -58,6 +58,7 @@ func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	if err != nil {
 		return task.FAIL, err
 	}
+	logger.Debug("GiveExplorerProgress: " + key + "::" + strconv.Itoa(progress))
 	redis.RedisSet(key+"-ExplorerProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -86,7 +87,7 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveExplorerData: " + key)
 	// write file
-	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk") + ".zip"))
+	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk")))
 	err := file.WriteFile(path, p)
 	if err != nil {
 		return task.FAIL, err
@@ -108,11 +109,11 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveExplorerEnd: " + key + "::" + p.GetMessage())
 
 	filename := key + "." + redis.RedisGetString(key+"-Disk")
-	srcPath := filepath.Join(fileWorkingPath, (filename + ".zip"))
+	srcPath := filepath.Join(fileWorkingPath, filename)
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
 	// unzip data
-	err := file.UnzipFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
+	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -52,7 +52,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		t := NewPacket.GetTaskType()
-		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "DataRight" {
+		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "DataRight" && t != "GiveDriveInfo" {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {

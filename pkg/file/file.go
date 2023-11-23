@@ -1,8 +1,10 @@
 package file
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/pkg/logger"
@@ -150,6 +152,31 @@ func MoveFile(srcPath string, dstPath string) error {
 	return nil
 }
 
+func DecompressionFile(srcPath string, dstPath string, size int) error {
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	var firstByte [1]byte
+	_, err = file.Read(firstByte[:])
+	if err != nil {
+		return err
+	}
+	if firstByte[0] == 'P' {
+		err = UnzipFile(srcPath, dstPath, size)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = UnzipTarFile(srcPath, dstPath, size)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func UnzipFile(zipPath string, dstPath string, size int) error {
 	// truncate data
 	err := TruncateFile(zipPath, size)
@@ -185,6 +212,57 @@ func UnzipFile(zipPath string, dstPath string, size int) error {
 	}
 	reader.Close()
 	err = os.Remove(zipPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UnzipTarFile(tarPath string, dstPath string, size int) error {
+	// truncate data
+	err := TruncateFile(tarPath, size)
+	if err != nil {
+		return err
+	}
+	// open the tar.gz file for reading
+	file, err := os.Open(tarPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// create a gzip reader
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+	// create a tar reader
+	tarReader := tar.NewReader(gzipReader)
+	// extract the files from the tar archive
+outerloop:
+	for {
+		header, err := tarReader.Next()
+		switch {
+		case err == io.EOF:
+			break outerloop // End of archive
+		case err != nil:
+			return err
+		case header == nil:
+			continue // Skip if the header is nil
+		}
+		// Extract the file
+		destFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+		_, err = io.Copy(destFile, tarReader)
+		if err != nil {
+			return err
+		}
+	}
+	// Remove the original file
+	err = os.Remove(tarPath)
 	if err != nil {
 		return err
 	}

@@ -88,7 +88,7 @@ func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	redis.RedisSet(key+"-ScanTotal", total)
 	redis.RedisSet(key+"-ScanCount", 0)
 	// create or truncate the zip file
-	path := filepath.Join(scanWorkingPath, (p.GetRkey() + ".zip"))
+	path := filepath.Join(scanWorkingPath, p.GetRkey())
 	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -104,7 +104,7 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveScan: " + key)
 	// write file
-	path := filepath.Join(scanWorkingPath, (key + ".zip"))
+	path := filepath.Join(scanWorkingPath, key)
 	err := file.WriteFile(path, p)
 	if err != nil {
 		return task.FAIL, err
@@ -124,11 +124,11 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanEnd: " + key + "::" + p.GetMessage())
 
-	srcPath := filepath.Join(scanWorkingPath, (key + ".zip"))
+	srcPath := filepath.Join(scanWorkingPath, key)
 	workPath := filepath.Join(scanWorkingPath, key+".txt")
 	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))
 	// unzip data
-	err := file.UnzipFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
+	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

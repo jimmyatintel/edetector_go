@@ -10,6 +10,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -36,7 +37,7 @@ func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	redis.RedisSet(key+"-ImageTotal", total)
 	redis.RedisSet(key+"-ImageCount", 0)
 	// create or truncate the zip file
-	path := filepath.Join(imageWorkingPath, (p.GetRkey() + ".zip"))
+	path := filepath.Join(imageWorkingPath, p.GetRkey())
 	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -52,7 +53,7 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveImage: " + key)
 	// write file
-	path := filepath.Join(imageWorkingPath, (key + ".zip"))
+	path := filepath.Join(imageWorkingPath, key)
 	err := file.WriteFile(path, p)
 	if err != nil {
 		return task.FAIL, err
@@ -71,11 +72,24 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageEnd: " + key + "::" + p.GetMessage())
-
-	workPath := filepath.Join(imageWorkingPath, key+".zip")
-	unstagePath := filepath.Join(imageUstagePath, (key + ".zip"))
+	workPath := filepath.Join(imageWorkingPath, key)
+	extension := ".tar.gz"
+	f, err := os.Open(workPath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	defer f.Close()
+	var firstByte [1]byte
+	_, err = f.Read(firstByte[:])
+	if err != nil {
+		return task.FAIL, err
+	}
+	if firstByte[0] == 'P' {
+		extension = ".zip"
+	}
+	unstagePath := filepath.Join(imageUstagePath, (key + extension))
 	// truncate data
-	err := file.TruncateFile(workPath, redis.RedisGetInt(key+"-ImageTotal"))
+	err = file.TruncateFile(workPath, redis.RedisGetInt(key+"-ImageTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

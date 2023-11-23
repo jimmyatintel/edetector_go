@@ -19,4 +19,4 @@ heap*
 *.png
 *.pdf
 oldfile
-test.go
+cmd/test.go
