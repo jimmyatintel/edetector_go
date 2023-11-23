@@ -4,7 +4,13 @@ go 1.20
 
 require github.com/gin-contrib/cors v1.4.0
 
-require lukechampine.com/uint128 v1.2.0 // indirect
+require (
+	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/tklauser/go-sysconf v0.3.12 // indirect
+	github.com/tklauser/numcpus v0.6.1 // indirect
+	github.com/yusufpapurcu/wmi v1.2.3 // indirect
+	lukechampine.com/uint128 v1.2.0 // indirect
+)
 
 require (
 	github.com/Flagsmith/flagsmith-go-client v1.0.0
@@ -37,6 +43,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/redis/go-redis/v9 v9.0.5
+	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -53,7 +60,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

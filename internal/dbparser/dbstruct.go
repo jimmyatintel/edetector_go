@@ -814,6 +814,16 @@ type Process struct {
 	FileDescription   string `json:"filedescription"`
 	CompanyName       string `json:"companyname"`
 	Priority          string `json:"priority"`
+	ProcessMD5        string `json:"processMD5"`
+	ParentProcessName string `json:"parentProcessName"`
+	ParentProcessPath string `json:"parentProcessPath"`
+	InjectActive      string `json:"injectActive"`
+	ProcessBeInjected int    `json:"processBeInjected"`
+	Boot              string `json:"boot"`
+	Hide              string `json:"hide"`
+	ImportOtherDLL    string `json:"importOtherDLL"`
+	Hook              string `json:"hook"`
+	ProcessConnectIP  string `json:"processConnectIP"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

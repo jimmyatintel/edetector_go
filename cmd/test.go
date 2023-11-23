@@ -2,7 +2,6 @@ package main
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/ip2location"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -46,12 +45,13 @@ func main() {
 		elastic.Elastic_init()
 		logger.Info("Elastic is enabled.")
 	}
+	//////////////////////////////////////////////////////////////////////////////////
 
-	country, err := ip2location.ToCountry("127.0.0.1")
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	logger.Info(country)
+	// country, err := ip2location.ToCountry("127.0.0.1")
+	// if err != nil {
+	// 	logger.Error(err.Error())
+	// }
+	// logger.Info(country)
 	// unstagePath := filepath.Join("scanUnstage", ("0a741ef4fe8747178b7076e1e0161e04.txt"))
 	// err = work.ParseScan(unstagePath, "0a741ef4fe8747178b7076e1e0161e04")
 	// if err != nil {

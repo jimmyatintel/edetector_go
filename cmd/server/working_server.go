@@ -7,7 +7,7 @@ import (
 var version string
 
 func main() {
-	// go pprof_test.Pprof_service()
+	// go pprof.Pprof_service()
 	server.Main(version, nil)
 	// stop.Stop()
 }

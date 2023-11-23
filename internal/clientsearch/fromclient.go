@@ -21,7 +21,7 @@ var Clientlist []string
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	defer conn.Close()
-	buf := make([]byte, 2048)
+	buf := make([]byte, 1024)
 	key := "unknown"
 	agentTaskType := "unknown"
 	lastTask := "unknown"
@@ -31,23 +31,28 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		var NewPacket packet.Packet
 		var decrypt_buf []byte
 		reqLen, err := conn.Read(buf)
-		// debug
-		// var temp_buf []byte
-		// logger.Debug("Read len: " + strconv.Itoa(reqLen))
-		// temp_buf = bytes.Repeat([]byte{0}, reqLen)
-		// C_AES.Decryptbuffer(buf, reqLen, temp_buf)
-		// logger.Debug("Read tmp buffer: " + string(temp_buf))
-		// debug end
 		if err != nil {
 			connectionClosedByAgent(key, agentTaskType, lastTask, err)
 			close(closeConn)
 			return
 		}
+		if reqLen < 1024 {
+			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", buf[:reqLen]))
+			continue
+		}
 		Data_acache := make([]byte, 0)
 		Data_acache = append(Data_acache, buf[:reqLen]...)
-		if reqLen == 1024 {
-			NewPacket = new(packet.WorkPacket)
-		} else if reqLen > 1024 {
+		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
+		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+		NewPacket = new(packet.WorkPacket)
+		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
+		if err != nil {
+			logger.Error("Error reading: " + err.Error())
+			logger.Info("Content: " + fmt.Sprintf("%x", decrypt_buf))
+			continue
+		}
+		t := NewPacket.GetTaskType()
+		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "DataRight" {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
@@ -55,26 +60,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					close(closeConn)
 					return
 				}
-				// debug
-				// var temp_buf []byte
-				// logger.Debug("Read len: " + strconv.Itoa(reqLen))
-				// temp_buf = bytes.Repeat([]byte{0}, reqLen)
-				// C_AES.Decryptbuffer(buf[:reqLen], reqLen, temp_buf)
-				// logger.Debug("Read tmp buffer: " + string(temp_buf))
-				// debug end
 				Data_acache = append(Data_acache, buf[:reqLen]...)
 			}
 			NewPacket = new(packet.DataPacket)
-		} else {
-			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", decrypt_buf))
-			continue
-		}
-		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
-		C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
-		err = NewPacket.NewPacket(decrypt_buf, Data_acache)
-		if err != nil {
-			logger.Error("Error reading: " + err.Error() + ", Content: " + fmt.Sprintf("%x", decrypt_buf))
-			continue
+			decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
+			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+			err = NewPacket.NewPacket(decrypt_buf, Data_acache)
+			if err != nil {
+				logger.Error("Error reading: " + err.Error())
+				logger.Info("Content: " + fmt.Sprintf("%x", decrypt_buf))
+				continue
+			}
 		}
 		if key == "unknown" {
 			key = NewPacket.GetRkey()

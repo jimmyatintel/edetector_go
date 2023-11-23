@@ -1,4 +1,4 @@
-package pprof_test
+package pprof
 
 import (
 	"net/http"

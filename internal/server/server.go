@@ -14,6 +14,8 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/shirou/gopsutil/cpu"
 )
 
 func server_init() {
@@ -61,12 +63,23 @@ func Main(version string, f *os.File) {
 	Connection_close := make(chan int, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	go Client.Main(ctx, Connection_close)
+	go func() {
+		for {
+			percentages, err := cpu.Percent(time.Second, false)
+			if err != nil {
+				logger.Error("Error getting CPU usage: " + err.Error())
+				return
+			}
+			redis.RedisSet("server_cpu_usage", int(percentages[0]))
+			time.Sleep(10 * time.Second)
+		}
+	}()
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
 	// pprof.Lookup("heap").WriteTo(f, 0)
 	// taskservice.Stop()
-	logger.Info("Server is shutting down...")
+	logger.Error("Server is shutting down...")
 	// stop.Stop()
 	servershutdown()
 	select {
