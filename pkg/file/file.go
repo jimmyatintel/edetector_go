@@ -29,6 +29,11 @@ func CheckDir(path string) {
 	}
 }
 
+func FileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
+}
+
 func GetOldestFile(dir string, extension string) (string, string, string) {
 	logCount := 0
 	for {

@@ -246,15 +246,16 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, disk string)
 func terminateDrive(agent string, disk string, explorerFile string) bool {
 	var flag = false
 	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisGetInt(agent+"-terminateDrive") == 1 {
+		logger.Info("Terminate drive: " + agent)
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
-		redis.RedisSet(agent+"-terminateDrive", 0)
 		clearBuilder(agent, disk, explorerFile)
 	}
 	return flag
 }
 
 func clearBuilder(agent string, disk string, explorerFile string) {
+	redis.RedisSet(agent+"-terminateDrive", 0)
 	UUIDMap = make(map[string]int)
 	RelationMap[agent] = nil
 	err := file.MoveFile(explorerFile, filepath.Join(fileStagedPath, agent+"."+disk+".txt"))

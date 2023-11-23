@@ -126,15 +126,16 @@ func getTableNames(db *sql.DB) ([]string, error) {
 func terminateCollect(db *sql.DB, dbFile string, agent string) bool {
 	var flag = false
 	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
+		logger.Info("Terminate collect: " + agent)
 		flag = true
 		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
-		redis.RedisSet(agent+"-terminateCollect", 0)
 		clearParser(db, dbFile, agent)
 	}
 	return flag
 }
 
 func clearParser(db *sql.DB, dbFile string, agent string) {
+	redis.RedisSet(agent+"-terminateCollect", 0)
 	db.Close()
 	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 	if err != nil {

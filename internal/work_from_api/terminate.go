@@ -4,6 +4,7 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
@@ -25,22 +26,32 @@ func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 			query.Terminated_task(key, t[3])
 		}
 		if t[3] == "StartGetDrive" {
-			redis.RedisSet(key+"-terminateDrive", 1)
 			for disk := 'A'; disk <= 'Z'; disk++ {
 				path := filepath.Join("fileUnstage", key+"."+string(disk)+".txt")
-				if _, err := os.Stat(path); err == nil {
+				if file.FileExists(path) {
 					os.Remove(path)
+				}
+				processingPath := filepath.Join("fileUnstage", key+"."+string(disk)+".txt.processing")
+				if file.FileExists(processingPath) {
+					redis.RedisSet(key+"-terminateDrive", 1)
 				}
 			}
 			path := filepath.Join("fileUnstage", key+".Linux.txt")
-			if _, err := os.Stat(path); err == nil {
+			if file.FileExists(path) {
 				os.Remove(path)
 			}
+			processingPath := filepath.Join("fileUnstage", key+".Linux.txt.processing")
+			if file.FileExists(processingPath) {
+				redis.RedisSet(key+"-terminateDrive", 1)
+			}
 		} else if t[3] == "StartCollect" {
-			redis.RedisSet(key+"-terminateCollect", 1)
 			path := filepath.Join("dbUnstage", key+".db")
-			if _, err := os.Stat(path); err == nil {
+			if file.FileExists(path) {
 				os.Remove(path)
+			}
+			processingPath := filepath.Join("dbUnstage", key+".db.processing")
+			if file.FileExists(processingPath) {
+				redis.RedisSet(key+"-terminateCollect", 1)
 			}
 		}
 	}

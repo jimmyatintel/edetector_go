@@ -58,7 +58,6 @@ func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 	if err != nil {
 		return task.FAIL, err
 	}
-	logger.Debug("GiveExplorerProgress: " + key + "::" + strconv.Itoa(progress))
 	redis.RedisSet(key+"-ExplorerProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
