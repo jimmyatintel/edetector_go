@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 )
-
+//To-Do
 func getProgressByMsg(msg string, max float64) (int, error) {
 	parts := strings.Split(msg, "/")
 	if len(parts) != 2 {

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 )
-
+//To-Do
 func Getriskscore(info Memory) (string, string, error) {
 	score := 0
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
