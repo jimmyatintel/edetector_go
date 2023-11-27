@@ -14,5 +14,9 @@ func init() {
 		task.START_SCAN:         StartScan,
 		task.START_GET_DRIVE:    StartGetDrive,
 		task.START_COLLECTION:   StartCollect,
+		task.START_GET_IMAGE:    StartGetImage,
+		task.START_UPDATE:       StartUpdate,
+		task.START_REMOVE:       StartRemove,
+		task.TERMINATE:          Terminate,
 	}
 }

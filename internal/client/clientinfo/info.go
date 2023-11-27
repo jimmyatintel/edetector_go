@@ -3,8 +3,6 @@ package clientinfo
 import (
 	logger "edetector_go/pkg/logger"
 	"encoding/json"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"strings"
 )
 
@@ -32,16 +30,12 @@ func (c *ClientInfo) Load_data(data string) {
 	c.FileVersion = data_splited[4]
 	c.BootTime = data_splited[5]
 	c.KeyNum = data_splited[6]
-	if c.KeyNum == "null" {
-		uuid := uuid.New()
-		c.KeyNum = uuid.String()
-	}
 }
 
 func (c *ClientInfo) Marshal() string {
 	json, err := json.Marshal(c)
 	if err != nil {
-		logger.Error("Error in json marshal", zap.Any("error", err.Error()))
+		logger.Error("Error in json marshal: " + err.Error())
 	}
 	return string(json)
 }
@@ -50,7 +44,7 @@ func UnMarshal(data string) ClientInfo {
 	clientinfo := ClientInfo{}
 	err := json.Unmarshal([]byte(data), &clientinfo)
 	if err != nil {
-		logger.Error("Error in json unmarshal", zap.Any("error", err.Error()))
+		logger.Error("Error in json unmarshal: " + err.Error())
 	}
 	return clientinfo
 }

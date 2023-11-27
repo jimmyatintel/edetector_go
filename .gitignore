@@ -1,6 +1,7 @@
 *.log
 *.txt
 *.env
+*.exe
 log_history
 dbWorking
 dbUnstage
@@ -8,4 +9,14 @@ dbStaged
 fileWorking
 fileUnstage
 fileStaged
-*.exe
+scanWorking
+scanUnstage
+scanStaged
+imageWorking
+imageUnstage
+agentFile
+heap*
+*.png
+*.pdf
+oldfile
+cmd/test.go

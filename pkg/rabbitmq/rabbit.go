@@ -41,13 +41,16 @@ func Rabbit_init() {
 	Url := "amqp://" + username + ":" + password + "@" + hostname + ":" + port + "/"
 	Connection, err = NewRabbitMQ(Url)
 	if err != nil {
-		logger.Error("Failed to connect to RabbitMQ")
+		logger.Panic("Failed to connect to RabbitMQ")
+		panic(err)
 	}
 	channel, err = Connection.Channel()
 	if err != nil {
+		logger.Panic("Failed to connect to RabbitMQ")
 		panic(err)
 	}
 }
+
 func Declare(name string) (amqp.Queue, error) {
 	if channel == nil {
 		return amqp.Queue{}, errors.New("failed to declare queue: channel is nil")
@@ -70,20 +73,26 @@ func Publish(queue string, body []byte) error {
 		},
 	)
 }
-func Consume(queue string) (<-chan amqp.Delivery, error) {
+
+func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
 	if channel == nil {
 		return nil, errors.New("failed to consume message: channel is nil")
+	}
+	err := channel.Qos(count, 0, false)
+	if err != nil {
+		logger.Error("Error setting consume messages")
 	}
 	return channel.Consume(
 		queue,
 		"",
-		true,
+		false,
 		false,
 		false,
 		false,
 		nil,
 	)
 }
+
 func Connection_close() {
 	if Connection != nil {
 		Connection.Close()

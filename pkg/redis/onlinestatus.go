@@ -2,10 +2,10 @@ package redis
 
 import (
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/request"
 	"encoding/json"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 type ClientOnlineStatus struct {
@@ -21,29 +21,62 @@ func (c *ClientOnlineStatus) Marshal() string {
 	return string(json)
 }
 
-func Online(KeyNum string) error {
+func Online(KeyNum string) {
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 1,
 		Time:   currentTime,
 	}
-	return Redis_set(KeyNum, onlineStatusInfo.Marshal())
+	err := RedisSet(KeyNum, onlineStatusInfo.Marshal())
+	if err != nil {
+		logger.Error("Update online failed:" + err.Error())
+		return
+	}
 }
 
-func Offline(KeyNum string) error {
+func Offline(KeyNum string, GiveInfo bool) {
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
 		Time:   currentTime,
 	}
-	return Redis_set(KeyNum, onlineStatusInfo.Marshal())
+	err := RedisSet(KeyNum, onlineStatusInfo.Marshal())
+	if err != nil {
+		logger.Error("Update offline failed:" + err.Error())
+		return
+	}
+	if !GiveInfo {
+		handlingTasks1, err := query.Load_stored_task("nil", KeyNum, 1, "nil")
+		if err != nil {
+			logger.Error("Get handling tasks1 failed: " + err.Error())
+			return
+		}
+		handlingTasks2, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
+		if err != nil {
+			logger.Error("Get handling tasks2 failed: " + err.Error())
+			return
+		}
+
+		if len(handlingTasks1) == 0 && len(handlingTasks2) == 0 {
+			logger.Info("Offline:" + KeyNum)
+		} else {
+			for _, t := range handlingTasks1 {
+				query.Failed_task(KeyNum, t[3])
+			}
+			for _, t := range handlingTasks2 {
+				query.Failed_task(KeyNum, t[3])
+			}
+			logger.Info("Offline and let all task fail: " + KeyNum)
+		}
+	}
+	request.RequestToUser(KeyNum)
 }
 
 func GetStatus(content string) int {
 	var clientStatus ClientOnlineStatus
 	err := json.Unmarshal([]byte(content), &clientStatus)
 	if err != nil {
-		logger.Error("Get status failed:", zap.Any("error", err.Error()))
+		logger.Error("Get status failed: " + err.Error())
 		return -1
 	}
 	return clientStatus.Status

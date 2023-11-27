@@ -2,19 +2,20 @@ package treebuilder
 
 import (
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
-	"edetector_go/internal/file"
-	elasticquery "edetector_go/pkg/elastic/query"
+	"edetector_go/pkg/elastic"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 var RelationMap = make(map[string](map[int](Relation)))
@@ -29,64 +30,94 @@ type Relation struct {
 	Child []string
 }
 
-func init() {
+func builder_init() {
 	file.CheckDir(fileUnstagePath)
 	file.CheckDir(fileStagedPath)
 
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
-	}
-	vp := config.LoadConfig()
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Panic("Error loading feature flag")
+	// 	panic("Error loading feature flag")
+	// }
+	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file")
-		return
+		logger.Panic("Error loading config file: " + err.Error())
+		panic(err)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("BUILDER_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("BUILDER_LOG_FILE")))
+	if true {
+		logger.InitLogger(config.Viper.GetString("BUILDER_LOG_FILE"), "treebuilder", "TREEBUILDER")
+		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("BUILDER_LOG_FILE"))
 	}
-	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
+	connString, err := mariadb.Connect_init()
+	if err != nil {
+		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+	if true {
+		if db := redis.Redis_init(); db == nil {
+			logger.Panic("Error connecting to redis")
+			panic(err)
+		}
+	}
+	if true {
 		rabbitmq.Rabbit_init()
-		logger.Info("rabbit is enabled.")
+		logger.Info("Rabbit is enabled.")
+	}
+	if true {
+		elastic.Elastic_init()
+		logger.Info("Elastic is enabled.")
 	}
 }
 
 func Main(version string) {
-	logger.Info("Welcome to edetector connector", zap.Any("version", version))
+	builder_init()
+	logger.Info("Welcome to edetector tree builder: " + version)
 	for {
-		explorerFile := file.GetOldestFile(fileUnstagePath, ".txt")
-		path := strings.Split(strings.Split(explorerFile, ".txt")[0], "/")
-		agent := strings.Split(path[len(path)-1], "-")[0]
-		explorerContent, err := os.ReadFile(explorerFile)
+		explorerFile, agent, disk := file.GetOldestFile(fileUnstagePath, ".txt")
+		ip, name, err := query.GetMachineIPandName(agent)
 		if err != nil {
-			logger.Error("Read file error", zap.Any("message", err.Error()))
+			logger.Error("Error getting machine ip and name: " + err.Error())
+			query.Failed_task(agent, "StartGetDrive")
+			clearBuilder(agent, disk, explorerFile)
 			continue
 		}
-		RelationMap[agent] = make(map[int](Relation))
-		logger.Info("Open txt file: ", zap.Any("message", explorerFile))
+		time.Sleep(3 * time.Second) // wait for fully copy
+		explorerContent, err := os.ReadFile(explorerFile)
+		if err != nil {
+			logger.Error("Read file error: " + err.Error())
+			query.Failed_task(agent, "StartGetDrive")
+			clearBuilder(agent, disk, explorerFile)
+			continue
+		}
+		logger.Info("Open txt file: " + explorerFile)
 		// record the relation
-		var rootInd int
+		RelationMap[agent] = make(map[int](Relation))
+		rootInd := 0
 		lines := strings.Split(string(explorerContent), "\n")
+		if terminateDrive(agent, disk, explorerFile) {
+			continue
+		}
 		for _, line := range lines {
-			if len(line) == 0 {
+			values := strings.Split(line, "|")
+			if len(values) != 10 {
+				if len(values) != 1 {
+					logger.Warn("Invalid line: " + line)
+				}
 				continue
 			}
-			original := strings.Split(line, "|")
-			parent, child, err := getRelation(original)
+			parent, child, err := getRelation(values)
 			if err != nil {
-				logger.Error("error getting relation: ", zap.Any("message", err))
-				continue
+				logger.Error("Error getting relation: " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
+				break
 			}
 			generateUUID(agent, parent)
 			generateUUID(agent, child)
 			// record name
 			tmp := RelationMap[agent][child]
-			tmp.Name = original[1]
+			tmp.Name = values[0]
 			RelationMap[agent][child] = tmp
 			// record relation
 			if parent == child {
@@ -97,63 +128,67 @@ func Main(version string) {
 				RelationMap[agent][parent] = tmp
 			}
 		}
-		logger.Info("record the relation")
+		logger.Info("Record the relation")
+		if terminateDrive(agent, disk, explorerFile) {
+			continue
+		}
 		// tree traversal & send to elastic(relation)
-		treeTraversal(agent, rootInd, true, "")
-		logger.Info("tree traversal & send to elastic (relation)")
+		treeTraversal(agent, rootInd, true, "", disk)
+		logger.Info("Tree traversal & send to elastic (relation)")
+		if terminateDrive(agent, disk, explorerFile) {
+			continue
+		}
 		// send to elastic (main & details)
 		for _, line := range lines {
-			if len(line) == 0 {
-				continue
+			values := strings.Split(line, "|")
+			if len(values) != 10 {
+				if len(values) != 1 {
+					logger.Warn("Invalid line: " + line)
+				}
+				break
 			}
-			original := strings.Split(line, "|")
-			// ! tmp version: new explorer struct
-			create_time, write_time, access_time, entry_modified_time, err := tmpGetTime(original)
+			child, err := strconv.Atoi(values[8])
 			if err != nil {
-				logger.Error("error parsing time: ", zap.Any("message", err))
-				continue
+				logger.Error("Error getting child: " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
+				break
 			}
-			line = original[1] + "@|@" + original[3] + "@|@" + original[4] + "@|@" + create_time + "@|@" + write_time + "@|@" + access_time + "@|@" + entry_modified_time + "@|@" + original[9]
-			values := strings.Split(line, "@|@")
-			c_time, err := strconv.Atoi(create_time)
+			values = values[:len(values)-2]
+			if values[2] == "2" {
+				values[2] = "1"
+			}
+			values = append(values, RelationMap[agent][child].Path)
+			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("error converting time")
+				logger.Error("Error sending to rabbitMQ (main): " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
+				break
 			}
-			_, child, err := getRelation(original)
+			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[agent][child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[agent][child].Path, "ed_low")
 			if err != nil {
-				logger.Error("error getting relation: ", zap.Any("message", err))
-				continue
+				logger.Error("Error sending to rabbitMQ (details): " + err.Error())
+				query.Failed_task(agent, "StartGetDrive")
+				break
 			}
-			// err = elasticquery.SendToMainElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, values[0], c_time, "file_table", RelationMap[agent][child].Path, "ed_low")
-			// if err != nil {
-			// 	logger.Error("Error sending to main elastic: ", zap.Any("error", err.Error()))
-			// 	continue
-			// }
-			err = elasticquery.SendToDetailsElastic(RelationMap[agent][child].UUID, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", agent, line, &ExplorerDetails{}, "ed_low", values[0], c_time, "file_table", RelationMap[agent][child].Path)
-			if err != nil {
-				logger.Error("Error sending to details elastic: ", zap.Any("error", err.Error()))
-				continue
-			}
+			time.Sleep(1 * time.Microsecond)
 		}
-		logger.Info("send to elastic (main & details)")
-		// clear
-		UUIDMap = nil
-		RelationMap[agent] = nil
-		dstPath := strings.ReplaceAll(explorerFile, fileUnstagePath, fileStagedPath)
-		err = file.MoveFile(explorerFile, dstPath)
-		if err != nil {
-			logger.Error("Error moving file: ", zap.Any("error", err.Error()))
+		logger.Info("Send to elastic (main & details)")
+		if terminateDrive(agent, disk, explorerFile) {
+			continue
 		}
-		logger.Info("Task finished: ", zap.Any("message", agent))
+		clearBuilder(agent, disk, explorerFile)
+		query.Finish_task(agent, "StartGetDrive")
+		logger.Info("Tree builder task finished: " + agent)
 	}
 }
 
-func getRelation(original []string) (int, int, error) {
-	parent, err := strconv.Atoi(original[2])
+func getRelation(values []string) (int, int, error) {
+	values[9] = strings.TrimSpace(values[9])
+	parent, err := strconv.Atoi(values[9])
 	if err != nil {
 		return -1, -1, err
 	}
-	child, err := strconv.Atoi(original[0])
+	child, err := strconv.Atoi(values[8])
 	if err != nil {
 		return -1, -1, err
 	}
@@ -172,14 +207,27 @@ func generateUUID(agent string, ind int) {
 		}
 		RelationMap[agent][ind] = relation
 		UUIDMap[uuid] = ind
-		// logger.Debug("uuid", zap.Any("message", strconv.Itoa(ind)+": "+uuid))
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, disk string) {
 	relation := RelationMap[agent][ind]
-	path = path + "/" + relation.Name
-	relation.Path = path
+	if disk == "Linux" {
+		if !isRoot {
+			path = path + "/" + relation.Name
+		}
+	} else {
+		if path == "" {
+			path = disk + ":"
+		} else {
+			path = path + "\\" + relation.Name
+		}
+	}
+	if disk == "Linux" && isRoot {
+		relation.Path = "/"
+	} else {
+		relation.Path = path
+	}
 	RelationMap[agent][ind] = relation
 	data := ExplorerRelation{
 		Agent:  agent,
@@ -187,37 +235,34 @@ func treeTraversal(agent string, ind int, isRoot bool, path string) {
 		Parent: relation.UUID,
 		Child:  relation.Child,
 	}
-	err := elasticquery.SendToRelationElastic(data, "ed_low")
+	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 	if err != nil {
-		logger.Error("Error sending to relation elastic: ", zap.Any("error", err.Error()))
+		logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
+		query.Failed_task(agent, "StartGetDrive")
+		return
 	}
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, UUIDMap[uuid], false, path)
+		treeTraversal(agent, UUIDMap[uuid], false, path, disk)
 	}
 }
 
-func tmpGetTime(original []string) (string, string, string, string, error) { //!tmp version
-	layout := "2006/01/02 15:04:05"
-	t, err := time.Parse(layout, original[5])
-	if err != nil {
-		return "", "", "", "", err
+func terminateDrive(agent string, disk string, explorerFile string) bool {
+	var flag = false
+	if redis.RedisExists(agent+"-terminateDrive") && redis.RedisGetInt(agent+"-terminateDrive") == 1 {
+		logger.Info("Terminate drive: " + agent)
+		flag = true
+		elastic.DeleteByQueryRequest("agent", agent, "StartGetDrive")
+		clearBuilder(agent, disk, explorerFile)
 	}
-	create_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[6])
-	if err != nil {
-		return "", "", "", "", err
-	}
-	write_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[7])
-	if err != nil {
-		return "", "", "", "", err
-	}
-	access_time := strconv.FormatInt(t.Unix(), 10)
-	t, err = time.Parse(layout, original[8])
-	if err != nil {
-		return "", "", "", "", err
-	}
-	entry_modified_time := strconv.FormatInt(t.Unix(), 10)
+	return flag
+}
 
-	return create_time, write_time, access_time, entry_modified_time, err
+func clearBuilder(agent string, disk string, explorerFile string) {
+	redis.RedisSet(agent+"-terminateDrive", 0)
+	UUIDMap = make(map[string]int)
+	RelationMap[agent] = nil
+	err := file.MoveFile(explorerFile, filepath.Join(fileStagedPath, agent+"."+disk+".txt"))
+	if err != nil {
+		logger.Error("Error moving file: " + err.Error())
+	}
 }

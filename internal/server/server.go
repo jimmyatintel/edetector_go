@@ -4,8 +4,6 @@ import (
 	"context"
 	config "edetector_go/config"
 	Client "edetector_go/internal/clientsearch"
-	fflag "edetector_go/internal/fflag"
-	"edetector_go/internal/taskservice"
 	"edetector_go/pkg/elastic"
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -17,57 +15,72 @@ import (
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/shirou/gopsutil/cpu"
 )
 
 func server_init() {
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
-	}
-	vp := config.LoadConfig()
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Panic("Error loading feature flag")
+	// 	panic("Error loading feature flag")
+	// }
+	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file")
-		return
+		logger.Panic("Error loading config file: " + err.Error())
+		panic(err)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("WORKER_LOG_FILE")))
+	if true {
+		logger.InitLogger(config.Viper.GetString("WORKER_LOG_FILE"), "server", "SERVER")
+		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("WORKER_LOG_FILE"))
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("redis_enable"); enable && err == nil {
+	connString, err := mariadb.Connect_init()
+	if err != nil {
+		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
+	}
+	if true {
 		if db := redis.Redis_init(); db == nil {
-			logger.Error("Error connecting to redis")
+			logger.Panic("Error connecting to redis")
+			panic(err)
 		}
 	}
-	if err := mariadb.Connect_init(); err != nil {
-		logger.Error("Error connecting to mariadb: " + err.Error())
-	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("rabbit_enable"); enable && err == nil {
+	if true {
 		rabbitmq.Rabbit_init()
-		logger.Info("rabbit is enabled.")
+		logger.Info("Rabbit is enabled.")
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
-		logger.Info("elastic is enabled.")
+	if true {
+		elastic.Elastic_init()
+		logger.Info("Elastic is enabled.")
 	}
 }
 
-func Main(version string) {
+func Main(version string, f *os.File) {
 	server_init()
-	logger.Info("Welcome to edetector main server", zap.Any("version", version))
+	logger.Info("Welcome to edetector main server: " + version)
 	Quit := make(chan os.Signal, 1)
 	Connection_close := make(chan int, 1)
 	ctx, cancel := context.WithCancel(context.Background())
 	go Client.Main(ctx, Connection_close)
+	go func() {
+		for {
+			percentages, err := cpu.Percent(time.Second, false)
+			if err != nil {
+				logger.Error("Error getting CPU usage: " + err.Error())
+				return
+			}
+			redis.RedisSet("server_cpu_usage", int(percentages[0]))
+			time.Sleep(10 * time.Second)
+		}
+	}()
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
+	// pprof.Lookup("heap").WriteTo(f, 0)
 	// taskservice.Stop()
-	logger.Info("Server is shutting down...")
+	logger.Error("Server is shutting down...")
+	// stop.Stop()
 	servershutdown()
 	select {
 	case <-Connection_close:
@@ -78,15 +91,11 @@ func Main(version string) {
 	logger.Info("Server shutdown complete")
 	defer cancel()
 }
+
 func servershutdown() {
 	// rabbitmq.Connection_close()
 	for _, client := range Client.Clientlist {
-		err := redis.Offline(client)
-		if err != nil {
-			logger.Error("Update offline failed:", zap.Any("error", err.Error()))
-		}
-		logger.Info("offline ", zap.Any("message", client))
-		taskservice.RequestToUser(client)
+		redis.Offline(client, false)
 	}
-	redis.Redis_close()
+	redis.RedisClose()
 }

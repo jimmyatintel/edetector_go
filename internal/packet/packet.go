@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"errors"
+	"strconv"
 
 	"edetector_go/internal/task"
 	"edetector_go/pkg/mariadb/query"
@@ -51,7 +52,7 @@ type TaskPacket struct {
 	// Packet is a struct that contains the packet data
 	Key     string            `json:"key"`
 	Work    task.UserTaskType `json:"work"`
-	User    string            `json:"user"`
+	User    int               `json:"user"`
 	Message string            `json:"message"`
 	Data    []byte            `json:"data"`
 }
@@ -184,15 +185,15 @@ func (p *DataPacket) Fluent() []byte {
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
 	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	// data = append(data, ljust(p.Message, 65436, " ")...)
-	data = append(data, ljust(p.Message, 924, " ")...)
+	data = append(data, ljust(p.Message, 65436, " ")...)
+	// data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
 func (p *TaskPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.Key, 32, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.User, 20, " ")...)
+	data = append(data, ljust(strconv.Itoa(p.User), 20, " ")...)
 	data = append(data, ljust(p.Message, 948, " ")...)
 	return data
 }
