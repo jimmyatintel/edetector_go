@@ -135,6 +135,8 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[2], &UserProfiles{})
 		case "WindowsActivity":
 			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &WindowsActivity{})
+		case "Wireless":
+			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Wireless{})
 		default:
 			logger.Error("Unknown table name: " + tableName)
 			return nil

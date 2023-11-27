@@ -1042,3 +1042,27 @@ type WindowsActivity struct {
 func (n WindowsActivity) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
+
+type Wireless struct {
+	ProfileName          string `json:"profilename"`
+	Authentication       string `json:"authentication"`
+	Encryption           string `json:"encryption"`
+	ConnectionType       string `json:"connectiontype"`
+	Password             string `json:"password"`
+	Interfacedescription string `json:"interfacedescription"`
+	Adapterguid          string `json:"adapterguid"`
+	FileName             string `json:"filename"`
+	LastModifiedTime     int    `json:"lastmodifiedtime"`
+	UUID                 string `json:"uuid"`
+	Agent                string `json:"agent"`
+	AgentIP              string `json:"agentIP"`
+	AgentName            string `json:"agentName"`
+	ItemMain             string `json:"item_main"`
+	DateMain             int    `json:"date_main"`
+	TypeMain             string `json:"type_main"`
+	EtcMain              string `json:"etc_main"`
+}
+
+func (n Wireless) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}

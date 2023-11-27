@@ -23,7 +23,7 @@ var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "Ch
 	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
 	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
 	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
-	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity"}
+	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless"}
 
 func flagcheck() bool {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
