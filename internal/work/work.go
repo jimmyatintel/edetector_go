@@ -49,6 +49,7 @@ func init() {
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
 
 		// image
+		task.READY_IMAGE:     ReadyImage,
 		task.GIVE_IMAGE_INFO: GiveImageInfo,
 		task.GIVE_IMAGE:      GiveImage,
 		task.GIVE_IMAGE_END:  GiveImageEnd,

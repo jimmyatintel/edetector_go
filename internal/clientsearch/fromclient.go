@@ -20,6 +20,7 @@ import (
 var Clientlist []string
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
+	logger.Info("Worker port accepted, IP: " + conn.RemoteAddr().String())
 	defer conn.Close()
 	buf := make([]byte, 1024)
 	key := "unknown"
@@ -149,6 +150,19 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			query.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
-		redis.Offline(key, false)
+		removeTasks, err := query.Load_stored_task("nil", key, 2, "StartRemove")
+		if err != nil {
+			logger.Error("Get StartRemove tasks failed: " + err.Error())
+		}
+		if len(removeTasks) == 0 {
+			redis.Offline(key, false)
+		} else {
+			query.DeleteAgent(key)
+			err = redis.RedisDelete(key)
+			if err != nil {
+				logger.Error("Error deleting key from redis: " + err.Error())
+			}
+			logger.Info("Finish remove agent: " + key)
+		}
 	}
 }

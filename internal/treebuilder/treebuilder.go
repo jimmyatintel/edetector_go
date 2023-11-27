@@ -223,8 +223,11 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, disk string)
 			path = path + "\\" + relation.Name
 		}
 	}
-
-	relation.Path = path
+	if disk == "Linux" && isRoot {
+		relation.Path = "/"
+	} else {
+		relation.Path = path
+	}
 	RelationMap[agent][ind] = relation
 	data := ExplorerRelation{
 		Agent:  agent,

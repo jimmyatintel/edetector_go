@@ -46,15 +46,24 @@ func Offline(KeyNum string, GiveInfo bool) {
 		return
 	}
 	if !GiveInfo {
-		handlingTasks, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
+		handlingTasks1, err := query.Load_stored_task("nil", KeyNum, 1, "nil")
 		if err != nil {
-			logger.Error("Get handling tasks failed: " + err.Error())
+			logger.Error("Get handling tasks1 failed: " + err.Error())
 			return
 		}
-		if len(handlingTasks) == 0 {
+		handlingTasks2, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
+		if err != nil {
+			logger.Error("Get handling tasks2 failed: " + err.Error())
+			return
+		}
+
+		if len(handlingTasks1) == 0 && len(handlingTasks2) == 0 {
 			logger.Info("Offline:" + KeyNum)
 		} else {
-			for _, t := range handlingTasks {
+			for _, t := range handlingTasks1 {
+				query.Failed_task(KeyNum, t[3])
+			}
+			for _, t := range handlingTasks2 {
 				query.Failed_task(KeyNum, t[3])
 			}
 			logger.Info("Offline and let all task fail: " + KeyNum)

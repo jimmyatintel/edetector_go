@@ -18,7 +18,7 @@ func init() {
 		GIVE_COLLECT_PROGRESS:  "CollectProgress",
 		GIVE_COLLECT_DATA_INFO: "StartCollect",
 
-		GIVE_IMAGE_INFO: "StartGetImage",
+		READY_IMAGE: "StartGetImage",
 
 		READY_UPDATE_AGENT: "StartUpdate",
 	}
@@ -30,6 +30,7 @@ func init() {
 		START_COLLECTION:   "StartCollect",
 		START_GET_IMAGE:    "StartGetImage",
 		START_UPDATE:       "StartUpdate",
+		START_REMOVE:       "StartRemove",
 		TERMINATE:          "Terminate",
 	}
 }

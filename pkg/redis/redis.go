@@ -106,6 +106,13 @@ func RedisGetInt(key string) int {
 	return val_int
 }
 
+func RedisDelete(key string) error {
+	if !checkflag() {
+		return nil
+	}
+	return RedisClient.Del(context.Background(), key).Err()
+}
+
 func GetKeysByLength(length int) []string {
 	keys, err := RedisClient.Keys(context.Background(), "*").Result()
 	if err != nil {

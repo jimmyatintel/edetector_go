@@ -62,7 +62,6 @@ func Conn_TCP_start(c chan string, wg *sync.WaitGroup) {
 				logger.Error("Error accepting: " + err.Error())
 				c <- err.Error()
 			}
-			logger.Info("Worker port accepted")
 			new_task_chan := make(chan packet.Packet)
 			go handleTCPRequest(conn, new_task_chan, "worker")
 		}

@@ -24,6 +24,16 @@ func init() {
 	file.CheckDir(imageUstagePath)
 }
 
+func ReadyImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("ReadyImage: " + key + "::" + p.GetMessage())
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
 func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageInfo: " + key + "::" + p.GetMessage())

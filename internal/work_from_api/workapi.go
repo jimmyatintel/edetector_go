@@ -16,6 +16,7 @@ func init() {
 		task.START_COLLECTION:   StartCollect,
 		task.START_GET_IMAGE:    StartGetImage,
 		task.START_UPDATE:       StartUpdate,
+		task.START_REMOVE:       StartRemove,
 		task.TERMINATE:          Terminate,
 	}
 }
