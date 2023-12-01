@@ -60,3 +60,65 @@ Enhancements:
 Fixed Bugs:
 - GiveInfo steps: mySQL -> redis -> request
 - Changed the finish timing of collect
+
+### 1.0.2 (2023/11/27)
+
+Enhancements:
+- ToDo
+
+Fixed Bugs:
+- ToDo
+
+To-Do:
+- Implement feature flags
+
+## Directory Structure
+```
+.
+├── agentFile                     # Agent executions files for updating
+│   └── agent.exe
+├── cmd                           # Entry point of the services
+│   ├── builder
+│   │   ├── builder.go            # Entry point of the builder
+│   │   └── log_builder.log       # Log file for the builder
+│   ├── connector
+│   │   ├── connector.go          # Entry point of the connector
+│   │   └── log_conn.log          # Log file for the connector
+│   ├── mockagent
+│   │   ├── agent.go
+│   │   └── log_agent.log
+│   ├── parser
+│   │   ├── log_parser.log        # Entry point of the parser
+│   │   └── parser.go             # Log file for the parser
+│   └── server
+│       ├── log_gin.log           # Log file for gin
+│       ├── log_server.log        # Log file for server
+│       └── working_server.go     # Entry point of the server
+├── commit_example.md
+├── config                        # Config files
+│   ├── app.env
+│   ├── config.go
+│   └── container.yml
+├── dbStaged                      # DB files that have finished parsing
+├── dbUnstage                     # DB files that are parsing
+├── dbWorking                     # DB files that are receiving data from agents
+├── docs
+├── fileStaged                    # File txt files that have finished building
+├── fileUnstage                   # File txt files that are bulilding
+├── fileWorking                   # File txt files that are receiving data from agents
+├── go.mod
+├── go.sum
+├── imageUnstage                  # Image files that have finished received
+├── imageWorking                  # Image files that are receiving data from agents
+├── internal                      # Private library code
+├── mockFiles                     # Mock agent files
+├── pkg                           # Public library code
+├── README.md
+├── scanUnstage                   # _Scan txt files that have finished received
+├── scanWorking                   # _Scan txt files that are receiving data from agents
+├── static
+│   └── IP2LOCATION-LITE-DB5.BIN
+└── test
+    ├── tcp_test.py
+    └── udp_test.py
+```
