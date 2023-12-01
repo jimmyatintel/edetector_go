@@ -114,8 +114,8 @@ To-Do:
 ├── mockFiles                     # Mock agent files
 ├── pkg                           # Public library code
 ├── README.md
-├── scanUnstage                   # _Scan txt files that have finished received
-├── scanWorking                   # _Scan txt files that are receiving data from agents
+├── scanUnstage                   # Scan txt files that have finished received
+├── scanWorking                   # Scan txt files that are receiving data from agents
 ├── static
 │   └── IP2LOCATION-LITE-DB5.BIN
 └── test
