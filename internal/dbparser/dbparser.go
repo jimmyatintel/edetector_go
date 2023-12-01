@@ -1,6 +1,7 @@
 package dbparser
 
 import (
+	"context"
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
@@ -18,6 +19,8 @@ import (
 
 var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
+var limit int
+var count int
 
 func parser_init() {
 	file.CheckDir(dbUnstagePath)
@@ -57,18 +60,43 @@ func parser_init() {
 		elastic.Elastic_init()
 		logger.Info("elastic is enabled.")
 	}
+	limit = config.Viper.GetInt("PARSER_BUILDER_LIMIT")
 }
 
 func Main(version string) {
 	parser_init()
 	logger.Info("Welcome to edetector dbparser: " + version)
+	count = 0
 	for {
-		dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
-		go newParser(dbFile, agent)
+		if count < limit {
+			dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
+			count++
+			go newParser(dbFile, agent)
+		}
+		time.Sleep(10 * time.Second)
 	}
 }
 
 func newParser(dbFile string, agent string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	go dbParser(ctx, dbFile, agent)
+	// terminate collect
+	for {
+		time.Sleep(10 * time.Second)
+		handlingTasks, err := query.Load_stored_task("nil", agent, 2, "StartCollect")
+		if err != nil {
+			logger.Error("Error loading stored task: " + err.Error())
+			continue
+		}
+		if len(handlingTasks) != 0 {
+			count--
+			cancel()
+		}
+	}
+}
+
+func dbParser(ctx context.Context, dbFile string, agent string) {
+	elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 	time.Sleep(3 * time.Second) // wait for fully copy
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
@@ -77,38 +105,6 @@ func newParser(dbFile string, agent string) {
 		clearParser(db, dbFile, agent)
 		return
 	}
-	terminateParser := make(chan struct{})
-	go terminateCollect(agent, terminateParser)
-	go dbParser(db, dbFile, agent)
-	for {
-		select {
-		case <-terminateParser:
-			logger.Info("Terminate collect: " + agent)
-			clearParser(db, dbFile, agent)
-			return
-		default:
-			time.Sleep(1 * time.Second)
-		}
-	}
-}
-
-func terminateCollect(agent string, terminateParser chan<- struct{}) {
-	for {
-		handlingTasks, err := query.Load_stored_task("nil", agent, 2, "StartCollect")
-		if err != nil {
-			logger.Error("Error loading stored task: " + err.Error())
-			return
-		}
-		if len(handlingTasks) != 0 {
-			query.Terminated_task(agent, "StartCollect")
-			terminateParser <- struct{}{}
-		}
-		time.Sleep(10 * time.Second)
-	}
-}
-
-func dbParser(db *sql.DB, dbFile string, agent string) {
-	elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
 	logger.Info("Open db file: " + dbFile)
 	tableNames, err := getTableNames(db)
 	if err != nil {
@@ -118,15 +114,24 @@ func dbParser(db *sql.DB, dbFile string, agent string) {
 		return
 	}
 	for _, tableName := range tableNames {
-		err = sendCollectToRabbitMQ(db, tableName, agent)
-		if err != nil {
-			logger.Error("Error sending to rabbitMQ: " + err.Error())
-			query.Failed_task(agent, "StartCollect")
-			break
+		select {
+		case <-ctx.Done():
+			logger.Info("Terminate collect: " + agent)
+			query.Terminated_task(agent, "StartCollect")
+			clearParser(db, dbFile, agent)
+			return
+		default:
+			err = sendCollectToRabbitMQ(db, tableName, agent)
+			if err != nil {
+				logger.Error("Error sending to rabbitMQ: " + err.Error())
+				query.Failed_task(agent, "StartCollect")
+				return
+			}
 		}
 	}
 	clearParser(db, dbFile, agent)
 	query.Finish_task(agent, "StartCollect")
+	count--
 	logger.Info("DB parser task finished: " + agent)
 }
 
