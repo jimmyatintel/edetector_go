@@ -14,7 +14,7 @@ import (
 )
 
 func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
-	logger.Info("Handling table (" + agent + "): " + tableName)
+	logger.Debug("Handling table (" + agent + "): " + tableName)
 	rows, err := db.Query("SELECT * FROM " + tableName)
 	if err != nil {
 		logger.Error("Error getting rows (" + agent + "): " + err.Error())

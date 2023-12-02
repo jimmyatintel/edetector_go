@@ -11,6 +11,15 @@ import (
 	"path/filepath"
 )
 
+var disks []string
+
+func init() {
+	for i := 'A'; i <= 'Z'; i++ {
+		disks = append(disks, string(i))
+	}
+	disks = append(disks, "Linux")
+}
+
 func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("Terminate: " + key + "::" + p.GetMessage())
@@ -20,22 +29,13 @@ func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 	}
 	for _, t := range handlingTasks {
 		if t[3] == "StartGetDrive" {
-			for disk := 'A'; disk <= 'Z'; disk++ {
+			for _, disk := range disks {
 				path := filepath.Join("fileUnstage", key+"."+string(disk)+".txt")
 				if file.FileExists(path) {
 					os.Remove(path)
 				}
-				processingPath := filepath.Join("fileUnstage", key+"."+string(disk)+".txt.processing")
-				if file.FileExists(processingPath) {
-				}
 			}
-			path := filepath.Join("fileUnstage", key+".Linux.txt")
-			if file.FileExists(path) {
-				os.Remove(path)
-			}
-			processingPath := filepath.Join("fileUnstage", key+".Linux.txt.processing")
-			if file.FileExists(processingPath) {
-			}
+			query.Terminate_handling_task(key, t[3])
 		} else if t[3] == "StartCollect" {
 			path := filepath.Join("dbUnstage", key+".db")
 			if file.FileExists(path) {
