@@ -21,6 +21,7 @@ var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
 var limit int
 var count int
+var cancelMapping = map[string]context.CancelFunc{}
 
 func parser_init() {
 	file.CheckDir(dbUnstagePath)
@@ -67,30 +68,33 @@ func Main(version string) {
 	parser_init()
 	logger.Info("Welcome to edetector dbparser: " + version)
 	count = 0
+	go TerminateCollect()
 	for {
 		if count < limit {
 			dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
 			count++
-			go newParser(dbFile, agent)
+			ctx, cancel := context.WithCancel(context.Background())
+			cancelMapping[agent] = cancel
+			go dbParser(ctx, dbFile, agent)
 		}
 		time.Sleep(10 * time.Second)
 	}
 }
 
-func newParser(dbFile string, agent string) {
-	ctx, cancel := context.WithCancel(context.Background())
-	go dbParser(ctx, dbFile, agent)
-	// terminate collect
+func TerminateCollect() {
 	for {
 		time.Sleep(10 * time.Second)
-		handlingTasks, err := query.Load_stored_task("nil", agent, 2, "StartCollect")
+		handlingTasks, err := query.Load_stored_task("nil", "nil", 6, "StartCollect")
 		if err != nil {
 			logger.Error("Error loading stored task: " + err.Error())
 			continue
 		}
-		if len(handlingTasks) != 0 {
-			count--
-			cancel()
+		for _, t := range handlingTasks {
+			logger.Info("Received terminate collect: " + t[1])
+			if cancelMapping[t[1]] != nil {
+				cancelMapping[t[1]]()
+			}
+			query.Terminated_task(t[1], "StartCollect", 6)
 		}
 	}
 }
@@ -100,7 +104,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	time.Sleep(3 * time.Second) // wait for fully copy
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
-		logger.Error("Error opening database file: " + err.Error())
+		logger.Error("Error opening database file (" + agent + "): " + err.Error())
 		query.Failed_task(agent, "StartCollect")
 		clearParser(db, dbFile, agent)
 		return
@@ -108,7 +112,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	logger.Info("Open db file: " + dbFile)
 	tableNames, err := getTableNames(db)
 	if err != nil {
-		logger.Error("Error getting table names: " + err.Error())
+		logger.Error("Error getting table names (" + agent + "): " + err.Error())
 		query.Failed_task(agent, "StartCollect")
 		clearParser(db, dbFile, agent)
 		return
@@ -117,13 +121,12 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		select {
 		case <-ctx.Done():
 			logger.Info("Terminate collect: " + agent)
-			query.Terminated_task(agent, "StartCollect")
 			clearParser(db, dbFile, agent)
 			return
 		default:
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
-				logger.Error("Error sending to rabbitMQ: " + err.Error())
+				logger.Error("Error sending to rabbitMQ (" + agent + "): " + err.Error())
 				query.Failed_task(agent, "StartCollect")
 				return
 			}
@@ -131,7 +134,6 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	}
 	clearParser(db, dbFile, agent)
 	query.Finish_task(agent, "StartCollect")
-	count--
 	logger.Info("DB parser task finished: " + agent)
 }
 
@@ -156,9 +158,12 @@ func getTableNames(db *sql.DB) ([]string, error) {
 }
 
 func clearParser(db *sql.DB, dbFile string, agent string) {
+	count--
 	db.Close()
 	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 	if err != nil {
-		logger.Error("Error moving file: " + err.Error())
+		logger.Error("Error moving file (" + agent + "): " + err.Error())
+	} else {
+		logger.Info("Move db file to staged: " + dbFile)
 	}
 }

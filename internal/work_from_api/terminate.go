@@ -41,11 +41,9 @@ func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 			if file.FileExists(path) {
 				os.Remove(path)
 			}
-			if !file.FileExists(filepath.Join(path, ".processing")) { // terminate directly
-				query.Terminated_task(key, t[3])
-			}
+			query.Terminate_handling_task(key, t[3])
 		} else if t[3] != "Terminate" {
-			query.Terminated_task(key, t[3])
+			query.Terminated_task(key, t[3], 2)
 		}
 	}
 	err = clientsearchsend.SendUserTCPtoClient(p, task.TERMINATE_ALL, p.GetMessage())

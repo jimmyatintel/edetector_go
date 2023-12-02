@@ -91,8 +91,16 @@ func Finish_task(clientid string, tasktype string) {
 	}
 }
 
-func Terminated_task(clientid string, tasktype string) {
-	rowsAffected := Update_task_status(clientid, tasktype, 2, 4)
+func Terminated_task(clientid string, tasktype string, status int) {
+	rowsAffected := Update_task_status(clientid, tasktype, status, 4)
+	if rowsAffected > 0 {
+		Update_task_timestamp(clientid, tasktype)
+		request.RequestToUser(clientid)
+	}
+}
+
+func Terminate_handling_task(clientid string, tasktype string) {
+	rowsAffected := Update_task_status(clientid, tasktype, 2, 6)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
 		request.RequestToUser(clientid)
