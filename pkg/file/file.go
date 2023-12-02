@@ -22,8 +22,7 @@ func CheckDir(path string) {
 	if os.IsNotExist(err) {
 		err := os.Mkdir(path, 0755)
 		if err != nil {
-			logger.Panic("Error creating working dir: " + err.Error())
-			panic(err)
+			logger.Error("Error creating working dir: " + err.Error())
 		}
 		logger.Info("Create dir: " + path)
 	}

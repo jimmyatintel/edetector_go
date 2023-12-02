@@ -185,7 +185,8 @@ func SearchRequest(index string, body string) []interface{} {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		panic(err)
+		logger.Error("Error getting response: " + err.Error())
+		return nil
 	}
 	defer res.Body.Close()
 	// logger.Info(res.String())
