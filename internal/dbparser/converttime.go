@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 )
-
+//To-Do
 func RFCToTimestamp(values *[]string) {
 	date := (*values)[8]
 	expires := (*values)[9]
@@ -29,7 +29,7 @@ func RFCToTimestamp(values *[]string) {
 		(*values)[10] = last_modified
 	}
 }
-
+//To-Do
 func DigitToTimestamp(values *[]string) {
 	date := (*values)[3]
 	date = date + "000000"

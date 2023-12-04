@@ -137,7 +137,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	query.Finish_task(agent, "StartCollect")
 	logger.Info("DB parser task finished: " + agent)
 }
-
+//To-Do
 func getTableNames(db *sql.DB) ([]string, error) {
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
 	if err != nil {

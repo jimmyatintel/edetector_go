@@ -26,7 +26,7 @@ func GiveDetectNetwork(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	}
 	return task.SUCCESS, nil
 }
-
+//To-Do
 func detectNetworkElastic(p packet.Packet) {
 	ip, name, err := query.GetMachineIPandName(p.GetRkey())
 	if err != nil {
