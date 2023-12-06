@@ -61,7 +61,9 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "ChromeBookmarks":
 			err = toRabbitMQ(index, agent, values, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
 		case "ChromeCache":
-			RFCToTimestamp(&values)
+			values[8] = RFCToTimestamp(values[8])
+			values[9] = RFCToTimestamp(values[9])
+			values[10] = RFCToTimestamp(values[10])
 			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
 		case "ChromeDownload":
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
@@ -76,7 +78,9 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "EdgeBookmarks":
 			err = toRabbitMQ(index, agent, values, values[3], values[7], "website_bookmark", values[4], &EdgeBookmarks{})
 		case "EdgeCache":
-			RFCToTimestamp(&values)
+			values[8] = RFCToTimestamp(values[8])
+			values[9] = RFCToTimestamp(values[9])
+			values[10] = RFCToTimestamp(values[10])
 			err = toRabbitMQ(index, agent, values, values[1], values[10], "cookie_cache", values[2], &EdgeCache{})
 		case "EdgeCookies":
 			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &EdgeCookies{})
@@ -101,7 +105,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "IEHistory":
 			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &IEHistory{})
 		case "InstalledSoftware":
-			DigitToTimestamp(&values)
+			values[3] = RFCToTimestamp(values[3])
 			err = toRabbitMQ(index, agent, values, values[0], values[17], "network_record", values[6], &InstalledSoftware{})
 		case "JumpList":
 			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[1], &JumpList{})

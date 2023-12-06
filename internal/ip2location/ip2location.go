@@ -5,7 +5,6 @@ import (
 
 	"github.com/ip2location/ip2location-go/v9"
 )
-//To-Do
 func ToCountry(ip string) (string, error) {
 	db, err := ip2location.OpenDB(config.Viper.GetString("IP2LOCATION_PATH"))
 	if err != nil {
@@ -16,9 +15,11 @@ func ToCountry(ip string) (string, error) {
 	if err != nil {
 		return "-", err
 	}
+	if code.Country_short == "Invalid IP address." {
+		return "invalid IP", nil
+	}
 	return code.Country_short, nil
 }
-//To-Do
 func ToLatitudeLongtitude(ip string) (int, int, error) {
 	db, err := ip2location.OpenDB(config.Viper.GetString("IP2LOCATION_PATH"))
 	if err != nil {
@@ -36,21 +37,4 @@ func ToLatitudeLongtitude(ip string) (int, int, error) {
 	}
 	la := int(latitude.Latitude)
 	return lo, la, nil
-}
-//To-Do
-func ToCountries(ips []string) ([]string, error) {
-	db, err := ip2location.OpenDB(config.Viper.GetString("IP2LOCATION_PATH"))
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-	country_codes := []string{}
-	for _, ip := range ips {
-		code, err := db.Get_country_short(ip)
-		if err != nil {
-			return nil, err
-		}
-		country_codes = append(country_codes, code.Country_short)
-	}
-	return country_codes, nil
 }

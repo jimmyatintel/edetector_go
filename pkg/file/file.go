@@ -3,10 +3,7 @@ package file
 import (
 	"archive/tar"
 	"archive/zip"
-	"bytes"
 	"compress/gzip"
-	"edetector_go/internal/C_AES"
-	"edetector_go/internal/packet"
 	"edetector_go/pkg/logger"
 	"errors"
 	"fmt"
@@ -25,6 +22,18 @@ func CheckDir(path string) {
 			logger.Error("Error creating working dir: " + err.Error())
 		}
 		logger.Info("Create dir: " + path)
+	}
+}
+
+func MoveToParentDir() {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parentDir := filepath.Dir(currentDir)
+	err = os.Chdir(parentDir)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -84,11 +93,7 @@ func CreateFile(path string) error {
 	return nil
 }
 
-func WriteFile(path string, p packet.Packet) error {
-	dp := packet.CheckIsData(p)
-	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
-	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
-	decrypt_buf = decrypt_buf[100:]
+func WriteFile(path string, content []byte) error {
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
@@ -98,7 +103,7 @@ func WriteFile(path string, p packet.Packet) error {
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(decrypt_buf)
+	_, err = file.Write(content)
 	if err != nil {
 		return err
 	}

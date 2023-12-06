@@ -1,49 +1,28 @@
 package dbparser
 
 import (
+	"edetector_go/pkg/logger"
 	"fmt"
 	"time"
 )
-//To-Do
-func RFCToTimestamp(values *[]string) {
-	date := (*values)[8]
-	expires := (*values)[9]
-	last_modified := (*values)[10]
-	layout := "Mon, 02 Jan 2006 15:04:05 MST"
 
-	t1, err1 := time.Parse(layout, date)
-	if err1 == nil {
-		date = fmt.Sprintf("%d", t1.Unix())
-		(*values)[8] = date
+func RFCToTimestamp(original string) string {
+	layout := "Mon, 02 Jan 2006 15:04:05 GMT"
+	t, err := time.Parse(layout, original)
+	if err != nil {
+		logger.Error("Error parsing time: " + err.Error())
+		return "0"
 	}
-
-	t2, err2 := time.Parse(layout, expires)
-	if err2 == nil {
-		expires = fmt.Sprintf("%d", t2.Unix())
-		(*values)[9] = expires
-	}
-
-	t3, err3 := time.Parse(layout, last_modified)
-	if err3 == nil {
-		last_modified = fmt.Sprintf("%d", t3.Unix())
-		(*values)[10] = last_modified
-	}
+	return fmt.Sprintf("%d", t.Unix())
 }
-//To-Do
-func DigitToTimestamp(values *[]string) {
-	date := (*values)[3]
-	date = date + "000000"
-	layout := "20060102150405"
 
-	t, err := time.Parse(layout, date)
+func DigitToTimestamp(original string) string {
+	original = original + "000000"
+	layout := "20060102150405"
+	t, err := time.Parse(layout, original)
 	if err != nil {
-		return
+		logger.Error("Error parsing time: " + err.Error())
+		return "0"
 	}
-	location, err := time.LoadLocation("MST")
-	if err != nil {
-		return
-	}
-	t = t.In(location)
-	installdate := fmt.Sprintf("%d", t.Unix())
-	(*values)[3] = installdate
+	return fmt.Sprintf("%d", t.Unix())
 }

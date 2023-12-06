@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 )
-//To-Do
+
 func Getriskscore(info Memory) (string, string, error) {
 	score := 0
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
@@ -62,16 +62,16 @@ func Getriskscore(info Memory) (string, string, error) {
 	if info.ProcessBeInjected == 1 {
 		score += 30
 	}
-	if info.InjectActive[0] == '1' && info.DigitalSign == "null" {
+	if len(info.InjectActive) > 0 && info.InjectActive[0] == '1' && info.DigitalSign == "null" {
 		score += 60
 	}
-	if info.InjectActive[2] == '1' && info.DigitalSign == "null" {
+	if len(info.InjectActive) > 2 && info.InjectActive[2] == '1' && info.DigitalSign == "null" {
 		score += 30
 	}
-	if info.Boot[0] == '1' && info.DigitalSign == "null" {
+	if len(info.Boot) > 0 && info.Boot[0] == '1' && info.DigitalSign == "null" {
 		score += 30
 	}
-	if info.Boot[2] == '1' && info.DigitalSign == "null" {
+	if len(info.Boot) > 2 && info.Boot[2] == '1' && info.DigitalSign == "null" {
 		score += 30
 	}
 	if info.ProcessConnectIP != "false" {
@@ -80,10 +80,10 @@ func Getriskscore(info Memory) (string, string, error) {
 	if info.ImportOtherDLL != "null" {
 		score += 60
 	}
-	if info.Hide[0] == '1' {
+	if len(info.Hide) > 0 && info.Hide[0] == '1' {
 		score += 150
 	}
-	if info.Hide[2] == '1' {
+	if len(info.Hide) > 2 && info.Hide[2] == '1' {
 		score += 60
 	}
 	if strings.Contains(info.Hook, "NtQuerySystemInformation") || strings.Contains(info.Hook, "RtlGetNativeSystemInformation") || strings.Contains(info.Hook, "ZwQuerySystemInformation") {

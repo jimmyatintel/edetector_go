@@ -66,6 +66,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			NewPacket = new(packet.DataPacket)
 			decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+			// rand := fmt.Sprint(rand.Intn(256))
+			// tmpPath := "test/encrypted_long_" + rand
+			// file.WriteFile(tmpPath, Data_acache)
+			// tmpPath = "test/decrypted_long_" + rand
+			// file.WriteFile(tmpPath, decrypt_buf)
 			err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
 				logger.Error("Error reading: " + err.Error())
@@ -138,18 +143,19 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("UDP")
 }
-//To-Do
+
+// To-Do (TBD)
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
-	if agentTaskType != "CollectProgress" {
-		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-	}
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
+		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 		query.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
+			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 			query.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
+		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 		removeTasks, err := query.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())

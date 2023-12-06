@@ -4,20 +4,9 @@ package C_AES
 // #include <stdlib.h>
 // #include "warp_AES.hxx"
 import "C"
-import "unsafe"
-
-//To-do
-
-func Testdecryptbuffer(t *testing.T) {
-	// cipherText := []byte("1234567890123456")
-	// size := len(cipherText)
-	// out := make([]byte, size)
-	// Decryptbuffer(cipherText, size, out)
-	// if string(out) != "1234567890123456" {
-	// 	T.Errorf("Testdecryptbuffer failed")
-	// }
-	
-}
+import (
+	"unsafe"
+)
 
 func Decryptbuffer(cipherText []byte, size int, out []byte) {
 	cChars := (*C.char)(C.malloc(C.size_t(size) * C.sizeof_char))
@@ -35,7 +24,6 @@ func Decryptbuffer(cipherText []byte, size int, out []byte) {
 	// return str
 }
 
-//To-do
 func Encryptbuffer(Text []byte, size int, out []byte) {
 	cChars := (*C.char)(C.malloc(C.size_t(size) * C.sizeof_char))
 	defer C.free(unsafe.Pointer(cChars))
