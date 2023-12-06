@@ -33,13 +33,13 @@ func GetTaskChannel(key string) (chan packet.Packet, error) {
 	TaskMu.Unlock()
 	return task_chan, nil
 }
-//To-Do
+
 func AssignDiskChannel(key string, disk_chan *chan string) {
 	DiskMu.Lock()
 	UserDiskChannel[key] = disk_chan
 	DiskMu.Unlock()
 }
-//To-Do
+
 func GetDiskChannel(key string) (chan string, error) {
 	DiskMu.Lock()
 	_, exists := UserDiskChannel[key]

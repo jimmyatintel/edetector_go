@@ -102,7 +102,7 @@ outerloop:
 		logger.Info("DB parser task finished: " + agent)
 	}
 }
-//To-Do
+
 func getTableNames(db *sql.DB) ([]string, error) {
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
 	if err != nil {
@@ -122,7 +122,7 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	}
 	return tableNames, nil
 }
-//To-Do
+//To-Do (changed)
 func terminateCollect(db *sql.DB, dbFile string, agent string) bool {
 	var flag = false
 	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
@@ -133,7 +133,7 @@ func terminateCollect(db *sql.DB, dbFile string, agent string) bool {
 	}
 	return flag
 }
-//To-Do
+//To-Do (changed)
 func clearParser(db *sql.DB, dbFile string, agent string) {
 	redis.RedisSet(agent+"-terminateCollect", 0)
 	db.Close()

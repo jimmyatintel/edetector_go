@@ -64,7 +64,8 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveImage: " + key)
 	// write file
 	path := filepath.Join(imageWorkingPath, key)
-	err := file.WriteFile(path, p)
+	content := getDataPacketContent(p)
+	err := file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}

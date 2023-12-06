@@ -17,11 +17,11 @@ type ClientInfo struct {
 }
 
 func (c *ClientInfo) Load_data(data string) {
-	var data_splited []string
-	if data == "" {
-		data_splited = []string{"", "", "", "", "", "", ""}
-	} else {
-		data_splited = strings.Split(data, "|")
+	data_splited := strings.Split(data, "|")
+	if len(data_splited) < 7 {
+		for i := len(data_splited); i < 7; i++ {
+			data_splited = append(data_splited, "")
+		}
 	}
 	c.SysInfo = data_splited[0]
 	c.OsInfo = data_splited[1]

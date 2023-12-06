@@ -105,7 +105,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveScan: " + key)
 	// write file
 	path := filepath.Join(scanWorkingPath, key)
-	err := file.WriteFile(path, p)
+	content := getDataPacketContent(p)
+	err := file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}

@@ -1,6 +1,8 @@
 package work
 
 import (
+	"bytes"
+	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 
@@ -57,4 +59,12 @@ func init() {
 		// terminate
 		task.FINISH_TERMINATE: FinishTerminate,
 	}
+}
+
+func getDataPacketContent(p packet.Packet) []byte {
+	dp := packet.CheckIsData(p)
+	decrypt_buf := bytes.Repeat([]byte{0}, len(dp.Raw_data))
+	C_AES.Decryptbuffer(dp.Raw_data, len(dp.Raw_data), decrypt_buf)
+	decrypt_buf = decrypt_buf[100:]
+	return decrypt_buf
 }
