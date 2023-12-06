@@ -1,6 +1,7 @@
 package dbparser
 
 import (
+	"context"
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
@@ -18,11 +19,13 @@ import (
 
 var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
+var limit int
+var count int
+var cancelMap = map[string]context.CancelFunc{}
 
 func parser_init() {
 	file.CheckDir(dbUnstagePath)
 	file.CheckDir(dbStagedPath)
-
 	// fflag.Get_fflag()
 	// if fflag.FFLAG == nil {
 	// 	logger.Panic("Error loading feature flag")
@@ -58,51 +61,83 @@ func parser_init() {
 		elastic.Elastic_init()
 		logger.Info("elastic is enabled.")
 	}
+	limit = config.Viper.GetInt("PARSER_BUILDER_LIMIT")
 }
 
 func Main(version string) {
 	parser_init()
 	logger.Info("Welcome to edetector dbparser: " + version)
-outerloop:
+	count = 0
+	go terminateCollect()
 	for {
-		dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
-		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
-		time.Sleep(3 * time.Second) // wait for fully copy
-		db, err := sql.Open("sqlite3", dbFile)
-		if err != nil {
-			logger.Error("Error opening database file: " + err.Error())
-			query.Failed_task(agent, "StartCollect")
-			clearParser(db, dbFile, agent)
-			continue
+		if count < limit {
+			dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
+			count++
+			ctx, cancel := context.WithCancel(context.Background())
+			cancelMap[agent] = cancel
+			go dbParser(ctx, dbFile, agent)
 		}
-		logger.Info("Open db file: " + dbFile)
-		tableNames, err := getTableNames(db)
-		if err != nil {
-			logger.Error("Error getting table names: " + err.Error())
-			query.Failed_task(agent, "StartCollect")
-			clearParser(db, dbFile, agent)
-			continue
-		}
-		for _, tableName := range tableNames {
-			if terminateCollect(db, dbFile, agent) {
-				continue outerloop
-			}
-			err = sendCollectToRabbitMQ(db, tableName, agent)
-			if err != nil {
-				logger.Error("Error sending to rabbitMQ: " + err.Error())
-				query.Failed_task(agent, "StartCollect")
-				break
-			}
-		}
-		if terminateCollect(db, dbFile, agent) {
-			continue
-		}
-		clearParser(db, dbFile, agent)
-		query.Finish_task(agent, "StartCollect")
-		logger.Info("DB parser task finished: " + agent)
+		time.Sleep(10 * time.Second)
 	}
 }
 
+func terminateCollect() {
+	for {
+		time.Sleep(10 * time.Second)
+		handlingTasks, err := query.Load_stored_task("nil", "nil", 6, "StartCollect")
+		if err != nil {
+			logger.Error("Error loading stored task: " + err.Error())
+			continue
+		}
+		for _, t := range handlingTasks {
+			logger.Info("Received terminate collect: " + t[1])
+			if cancelMap[t[1]] != nil {
+				cancelMap[t[1]]()
+			}
+			query.Terminated_task(t[1], "StartCollect", 6)
+		}
+	}
+}
+
+func dbParser(ctx context.Context, dbFile string, agent string) {
+	elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
+	time.Sleep(3 * time.Second) // wait for fully copy
+	db, err := sql.Open("sqlite3", dbFile)
+	if err != nil {
+		logger.Error("Error opening database file (" + agent + "): " + err.Error())
+		query.Failed_task(agent, "StartCollect")
+		clearParser(db, dbFile, agent)
+		return
+	}
+	logger.Info("Open db file: " + dbFile)
+	tableNames, err := getTableNames(db)
+	if err != nil {
+		logger.Error("Error getting table names (" + agent + "): " + err.Error())
+		query.Failed_task(agent, "StartCollect")
+		clearParser(db, dbFile, agent)
+		return
+	}
+	for _, tableName := range tableNames {
+		select {
+		case <-ctx.Done():
+			logger.Info("Terminate collect: " + agent)
+			clearParser(db, dbFile, agent)
+			return
+		default:
+			err = sendCollectToRabbitMQ(db, tableName, agent)
+			if err != nil {
+				logger.Error("Error sending to rabbitMQ (" + agent + "): " + err.Error())
+				query.Failed_task(agent, "StartCollect")
+				clearParser(db, dbFile, agent)
+				return
+			}
+		}
+	}
+	clearParser(db, dbFile, agent)
+	query.Finish_task(agent, "StartCollect")
+	logger.Info("DB parser task finished: " + agent)
+}
+//To-Do
 func getTableNames(db *sql.DB) ([]string, error) {
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
 	if err != nil {
@@ -123,22 +158,14 @@ func getTableNames(db *sql.DB) ([]string, error) {
 	return tableNames, nil
 }
 
-func terminateCollect(db *sql.DB, dbFile string, agent string) bool {
-	var flag = false
-	if redis.RedisExists(agent+"-terminateCollect") && redis.RedisGetInt(agent+"-terminateCollect") == 1 {
-		logger.Info("Terminate collect: " + agent)
-		flag = true
-		elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
-		clearParser(db, dbFile, agent)
-	}
-	return flag
-}
-
 func clearParser(db *sql.DB, dbFile string, agent string) {
-	redis.RedisSet(agent+"-terminateCollect", 0)
+	count--
+	cancelMap[agent] = nil
 	db.Close()
 	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
 	if err != nil {
-		logger.Error("Error moving file: " + err.Error())
+		logger.Error("Error moving file (" + agent + "): " + err.Error())
+	} else {
+		logger.Info("Move db file to staged: " + dbFile)
 	}
 }

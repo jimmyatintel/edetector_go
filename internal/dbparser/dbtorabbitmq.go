@@ -14,10 +14,10 @@ import (
 )
 
 func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
-	logger.Info("Handling table: " + tableName)
+	logger.Debug("Handling table (" + agent + "): " + tableName)
 	rows, err := db.Query("SELECT * FROM " + tableName)
 	if err != nil {
-		logger.Error("Error getting rows: " + err.Error())
+		logger.Error("Error getting rows (" + agent + "): " + err.Error())
 		return err
 	}
 	defer rows.Close()
@@ -138,7 +138,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "Wireless":
 			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Wireless{})
 		default:
-			logger.Error("Unknown table name: " + tableName)
+			logger.Error("Unknown table name (" + agent + "): " + tableName)
 			return nil
 		}
 		if err != nil {

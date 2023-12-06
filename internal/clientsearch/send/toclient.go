@@ -38,7 +38,7 @@ func SendTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn n
 	}
 	return nil
 }
-
+//To-Do
 func AppendByteMsg(data []byte, msg []byte) []byte {
 	length := 65436
 	if len(msg) > length {

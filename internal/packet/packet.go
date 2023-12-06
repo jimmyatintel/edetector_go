@@ -136,6 +136,7 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	p.Raw_data = buf
 	return nil
 }
+//To-Do
 func (p *TaskPacket) NewPacket(data []byte) error {
 	err := json.Unmarshal(data, p)
 	if err != nil {
@@ -170,6 +171,7 @@ func ljust(s string, width int, fillChar string) []byte {
 	data = append(data, []byte(strings.Repeat(string(fillChar), width-len(s)-1))...)
 	return data
 }
+//To-Do
 func (p *WorkPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
@@ -179,6 +181,7 @@ func (p *WorkPacket) Fluent() []byte {
 	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
+//To-Do
 func (p *DataPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
@@ -189,6 +192,7 @@ func (p *DataPacket) Fluent() []byte {
 	// data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
+//To-Do
 func (p *TaskPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.Key, 32, " ")...)

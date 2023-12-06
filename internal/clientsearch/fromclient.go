@@ -138,7 +138,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("UDP")
 }
-
+//To-Do
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
 	if agentTaskType != "CollectProgress" {
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
