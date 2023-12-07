@@ -69,6 +69,8 @@ type MemoryNetwork struct {
 	OtherCountry      string `json:"otherCountry"`
 	OtherLongitude    int    `json:"otherLongitude"`
 	OtehrLatitude     int    `json:"otherLatitude"`
+	Malicious         int    `json:"malicious"`
+	VirusTotal        int    `json:"virusTotal"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`
