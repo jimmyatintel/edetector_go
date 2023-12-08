@@ -1,4 +1,5 @@
 package treebuilder
+
 //TBD
 import (
 	"context"
@@ -80,11 +81,11 @@ func Main(version string) {
 	go terminateDrive()
 	for {
 		if count < limit {
-			explorerFile, agent, disk := file.GetOldestFile(fileUnstagePath, ".txt")
+			explorerFile, agent, diskInfo := file.GetOldestFile(fileUnstagePath, ".txt")
 			count++
 			ctx, cancel := context.WithCancel(context.Background())
 			cancelMap[agent] = append(cancelMap[agent], cancel)
-			go treeBuilder(ctx, explorerFile, agent, disk)
+			go treeBuilder(ctx, explorerFile, agent, diskInfo)
 		}
 		time.Sleep(10 * time.Second)
 	}
@@ -110,22 +111,22 @@ func terminateDrive() {
 	}
 }
 
-func treeBuilder(ctx context.Context, explorerFile string, agent string, disk string) {
+func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInfo string) {
 	time.Sleep(3 * time.Second) // wait for fully copy
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
 	ip, name, err := query.GetMachineIPandName(agent)
 	if err != nil {
-		logger.Error("Error getting machine ip and name (" + agent + "-" + disk + "): " + err.Error())
+		logger.Error("Error getting machine ip and name (" + agent + "-" + diskInfo + "): " + err.Error())
 		query.Failed_task(agent, "StartGetDrive")
-		clearBuilder(agent, disk, explorerFile)
+		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
 	explorerContent, err := os.ReadFile(explorerFile)
 	if err != nil {
-		logger.Error("Read file error (" + agent + "-" + disk + "): " + err.Error())
+		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
 		query.Failed_task(agent, "StartGetDrive")
-		clearBuilder(agent, disk, explorerFile)
+		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
 	logger.Info("Open txt file: " + explorerFile)
@@ -135,22 +136,22 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, disk st
 	for _, line := range lines {
 		select {
 		case <-ctx.Done():
-			logger.Info("Terminate drive (" + disk + "): " + agent)
-			clearBuilder(agent, disk, explorerFile)
+			logger.Info("Terminate drive (" + diskInfo + "): " + agent)
+			clearBuilder(agent, diskInfo, explorerFile)
 			return
 		default:
 			values := strings.Split(line, "|")
 			if len(values) != 10 {
 				if len(values) != 1 {
-					logger.Warn("Invalid line (" + agent + "-" + disk + "): " + line)
+					logger.Warn("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
 				continue
 			}
 			parent, child, err := getRelation(values)
 			if err != nil {
-				logger.Error("Error getting relation (" + agent + "-" + disk + "): " + err.Error())
+				logger.Error("Error getting relation (" + agent + "-" + diskInfo + "): " + err.Error())
 				query.Failed_task(agent, "StartGetDrive")
-				clearBuilder(agent, disk, explorerFile)
+				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			generateUUID(agent, parent, &UUIDMap, &RelationMap)
@@ -169,30 +170,30 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, disk st
 			}
 		}
 	}
-	logger.Info("Record the relation (" + agent + "-" + disk + ")")
+	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
 	// tree traversal & send to elastic(relation)
-	treeTraversal(agent, rootInd, true, "", disk, &UUIDMap, &RelationMap)
-	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + disk + ")")
+	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap)
+	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 	// send to elastic (main & details)
 	for _, line := range lines {
 		select {
 		case <-ctx.Done():
-			logger.Info("Terminate drive (" + disk + "): " + agent)
-			clearBuilder(agent, disk, explorerFile)
+			logger.Info("Terminate drive (" + diskInfo + "): " + agent)
+			clearBuilder(agent, diskInfo, explorerFile)
 			return
 		default:
 			values := strings.Split(line, "|")
 			if len(values) != 10 {
 				if len(values) != 1 {
-					logger.Warn("Invalid line (" + agent + "-" + disk + "): " + line)
+					logger.Warn("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
 				continue
 			}
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
-				logger.Error("Error getting child (" + agent + "-" + disk + "): " + err.Error())
+				logger.Error("Error getting child (" + agent + "-" + diskInfo + "): " + err.Error())
 				query.Failed_task(agent, "StartGetDrive")
-				clearBuilder(agent, disk, explorerFile)
+				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			values = values[:len(values)-2]
@@ -200,27 +201,36 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, disk st
 				values[2] = "1"
 			}
 			values = append(values, RelationMap[child].Path)
+			values = append(values, diskInfo)
+			if d := strings.Split(diskInfo, "|"); len(d) > 1 {
+				if d[1] == "FAT32" {
+					values = append(values, values[6])
+					values[6] = "0"
+				} else if d[1] == "NTFS" {
+					values = append(values, "")
+				}
+			}
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + disk + "): " + err.Error())
+				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				query.Failed_task(agent, "StartGetDrive")
-				clearBuilder(agent, disk, explorerFile)
+				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
-				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + disk + "): " + err.Error())
+				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				query.Failed_task(agent, "StartGetDrive")
-				clearBuilder(agent, disk, explorerFile)
+				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			time.Sleep(1 * time.Microsecond)
 		}
 	}
-	logger.Info("Send main & details to elastic (" + agent + "-" + disk + ")")
+	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
 	query.Finish_task(agent, "StartGetDrive")
-	clearBuilder(agent, disk, explorerFile)
-	logger.Info("Tree builder task finished: " + agent + "-" + disk)
+	clearBuilder(agent, diskInfo, explorerFile)
+	logger.Info("Tree builder task finished: " + agent + "-" + diskInfo)
 }
 
 func getRelation(values []string) (int, int, error) {
@@ -251,7 +261,8 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string, disk string, UUIDMap *map[string]int, RelationMap *map[int](Relation)) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation)) {
+	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
 	if disk == "Linux" {
 		if !isRoot {
@@ -278,13 +289,13 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, disk string,
 	}
 	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 	if err != nil {
-		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + disk + "): " + err.Error())
+		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 		query.Failed_task(agent, "StartGetDrive")
-		clearBuilder(agent, disk, "")
+		clearBuilder(agent, diskInfo, "")
 		return
 	}
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, (*UUIDMap)[uuid], false, path, disk, UUIDMap, RelationMap)
+		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap)
 	}
 }
 
