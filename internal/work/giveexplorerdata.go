@@ -17,7 +17,6 @@ import (
 	"path/filepath"
 
 	"net"
-	"strings"
 )
 
 var fileWorkingPath = "fileWorking"
@@ -35,10 +34,9 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("Explorer: " + key + "::" + p.GetMessage())
 	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
 	explorerSecondPart = 90 - explorerFirstPart
-	parts := strings.Split(p.GetMessage(), "|")
-	redis.RedisSet(key+"-Disk", parts[0])
+	redis.RedisSet(key+"-Disk", p.GetMessage())
 	// create or truncate the zip file
-	path := filepath.Join(fileWorkingPath, (key + "." + parts[0]))
+	path := filepath.Join(fileWorkingPath, (key + "." + p.GetMessage()))
 	err := file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
