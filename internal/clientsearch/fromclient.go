@@ -147,7 +147,7 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 // To-Do (TBD)
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
-		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
+		logger.Error("Scan failed: " + string(key))
 		query.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
