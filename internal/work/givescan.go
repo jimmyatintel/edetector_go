@@ -11,6 +11,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
+	"edetector_go/pkg/virustotal"
 	"net"
 	"os"
 	"path/filepath"
@@ -105,7 +106,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug("GiveScan: " + key)
 	// write file
 	path := filepath.Join(scanWorkingPath, key)
-	err := file.WriteFile(path, p)
+	content := getDataPacketContent(p)
+	err := file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -187,7 +189,7 @@ func parseScan(path string, key string) error {
 		values := strings.Split(line, "|")
 		if len(values) != 17 {
 			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
+				logger.Error("Invalid line: " + line)
 			}
 			continue
 		}
@@ -198,10 +200,10 @@ func parseScan(path string, key string) error {
 			values[16] = "true"
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "risklevel", "riskscore", "scan", processKey)
+		values = append(values, "0", "0", "scan", processKey)
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			return err
 		}
@@ -230,12 +232,12 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		}
 		conns := strings.Split(line, ",")
 		if len(conns) != 5 {
-			logger.Warn("Invalid line: " + line)
+			logger.Error("Invalid line: " + line)
 			continue
 		}
 		actionAndTime := strings.Split(conns[4], ">")
 		if len(actionAndTime) != 2 {
-			logger.Warn("Invalid line: " + line)
+			logger.Error("Invalid line: " + line)
 			continue
 		}
 		var direction string
@@ -245,6 +247,8 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		var otherCountry string
 		var otherLa int
 		var otherLo int
+		malicious := 0
+		total := 0
 		agentCountry, err := ip2location.ToCountry(ip)
 		if err != nil {
 			logger.Error("Error getting country: " + err.Error())
@@ -258,38 +262,33 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			agentPort = conns[1]
 			otherIP = conns[2]
 			otherPort = conns[3]
-			otherCountry, err = ip2location.ToCountry(conns[2])
-			if err != nil {
-				logger.Error("Error getting country: " + err.Error())
-			}
-			otherLo, otherLa, err = ip2location.ToLatitudeLongtitude(conns[2])
-			if err != nil {
-				logger.Error("Error getting latitude and longtitude: " + err.Error())
-			}
 		} else if conns[2] == ip { // i am dst -> in
 			direction = "in"
 			agentPort = conns[3]
 			otherIP = conns[0]
 			otherPort = conns[1]
-			otherCountry, err = ip2location.ToCountry(conns[0])
-			if err != nil {
-				logger.Error("Error getting country: " + err.Error())
-			}
-			otherLo, otherLa, err = ip2location.ToLatitudeLongtitude(conns[0])
-			if err != nil {
-				logger.Error("Error getting latitude and longtitude: " + err.Error())
-			}
 		} else {
 			direction = "internal"
 			agentPort = "-1"
 			otherIP = "0.0.0.0"
 			otherPort = "-1"
-			otherCountry = "-"
+		}
+		otherCountry, err = ip2location.ToCountry(otherIP)
+		if err != nil {
+			logger.Error("Error getting country: " + err.Error())
+		}
+		otherLo, otherLa, err = ip2location.ToLatitudeLongtitude(otherIP)
+		if err != nil {
+			logger.Error("Error getting latitude and longtitude: " + err.Error())
+		}
+		malicious, total, err = virustotal.ScanIP(otherIP)
+		if err != nil {
+			logger.Error("Error getting virustotal: " + err.Error())
 		}
 		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" +
 			actionAndTime[0] + "|" + direction + "|scan|" +
 			agentPort + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
-			otherIP + "|" + otherPort + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
+			otherIP + "|" + otherPort + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid")

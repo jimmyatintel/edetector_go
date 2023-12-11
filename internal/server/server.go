@@ -8,8 +8,8 @@ import (
 	logger "edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
-
 	"edetector_go/pkg/redis"
+	"edetector_go/pkg/redis/query"
 	"os"
 	"os/signal"
 	"syscall"
@@ -95,7 +95,7 @@ func Main(version string, f *os.File) {
 func servershutdown() {
 	// rabbitmq.Connection_close()
 	for _, client := range Client.Clientlist {
-		redis.Offline(client, false)
+		query.Offline(client, false)
 	}
 	redis.RedisClose()
 }

@@ -23,6 +23,8 @@ type ExplorerDetails struct {
 	EntryModifiedTime int    `json:"entryModifiedTime"`
 	Datalen           int    `json:"dataLen"`
 	Path              string `json:"path"`
+	Disk			  string `json:"disk"`
+	MD5_Sig           string `json:"md5_sig"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

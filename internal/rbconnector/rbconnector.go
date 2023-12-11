@@ -1,5 +1,5 @@
 package rbconnector
-
+//TBD
 import (
 	"context"
 	"edetector_go/config"
@@ -150,7 +150,6 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error("Bulk index request error: " + err.Error())
-				continue
 			}
 			*bulkdata = nil
 			*bulkaction = nil

@@ -6,7 +6,6 @@ import (
 	"edetector_go/internal/channelmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	"edetector_go/pkg/logger"
 	"strings"
 
 	"net"
@@ -40,18 +39,16 @@ func SendTCPtoClient(p packet.Packet, worktype task.TaskType, msg string, conn n
 }
 
 func AppendByteMsg(data []byte, msg []byte) []byte {
-	length := 65436
-	if len(msg) > length {
-		logger.Error("Error msg length of DataPacket")
-		return data
-	} else if len(msg) == length {
-		msg = msg[:length]
-	} else {
-		msg = append(msg, []byte(strings.Repeat(string(" "), length-len(msg)))...)
+	header := 100
+	length := 65536
+	if len(data) < header {
+		data = append(data, []byte(strings.Repeat(string(" "), header-len(data)))...)
 	}
-	data = data[:100]
-	data = append(data, msg...)
-	return data
+	data = append(data[:100], msg...)
+	if len(data) < length {
+		data = append(data, []byte(strings.Repeat(string(" "), length-len(data)))...)
+	}
+	return data[:length]
 }
 
 func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, conn net.Conn) error {
@@ -74,6 +71,21 @@ func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, co
 
 func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error {
 	var send_packet = packet.WorkPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       workType,
+		Message:    msg,
+	}
+	task_chan, err := channelmap.GetTaskChannel(p.GetRkey())
+	if err != nil {
+		return err
+	}
+	task_chan <- &send_packet
+	return nil
+}
+
+func SendUserDataTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error {
+	var send_packet = packet.DataPacket{
 		MacAddress: p.GetMacAddress(),
 		IpAddress:  p.GetipAddress(),
 		Work:       workType,

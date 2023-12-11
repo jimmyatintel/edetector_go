@@ -1,8 +1,9 @@
-package redis
+package query
 
 import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"edetector_go/pkg/request"
 	"encoding/json"
 	"time"
@@ -27,7 +28,7 @@ func Online(KeyNum string) {
 		Status: 1,
 		Time:   currentTime,
 	}
-	err := RedisSet(KeyNum, onlineStatusInfo.Marshal())
+	err := redis.RedisSet(KeyNum, onlineStatusInfo.Marshal())
 	if err != nil {
 		logger.Error("Update online failed:" + err.Error())
 		return
@@ -40,7 +41,7 @@ func Offline(KeyNum string, GiveInfo bool) {
 		Status: 0,
 		Time:   currentTime,
 	}
-	err := RedisSet(KeyNum, onlineStatusInfo.Marshal())
+	err := redis.RedisSet(KeyNum, onlineStatusInfo.Marshal())
 	if err != nil {
 		logger.Error("Update offline failed:" + err.Error())
 		return

@@ -10,6 +10,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/virustotal"
 	"net"
 	"strconv"
 	"strings"
@@ -37,49 +38,61 @@ func detectNetworkElastic(p packet.Packet) {
 	lines := strings.Split(p.GetMessage(), "\n")
 	for _, line := range lines {
 		uuid := uuid.NewString()
-		values := strings.Split(line, "|")
-		if len(values) != 6 {
-			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
-			}
+		values := parseNetowrk(line, &networkSet, ip)
+		if values == nil {
 			continue
 		}
-		key := values[0] + "," + values[3]
-		networkSet[key] = struct{}{}
-		addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
-		agentCountry, err := ip2location.ToCountry(ip)
-		if err != nil {
-			logger.Error("Error getting self country: " + err.Error())
-		}
-		agentLa, agentLo, err := ip2location.ToLatitudeLongtitude(ip)
-		if err != nil {
-			logger.Error("Error getting latitude and longtitude: " + err.Error())
-		}
-		otherCountry, err := ip2location.ToCountry(addr)
-		if err != nil {
-			logger.Error("Error getting other country: " + err.Error())
-		}
-		otherLo, otherLa, err := ip2location.ToLatitudeLongtitude(addr)
-		if err != nil {
-			logger.Error("Error getting latitude and longtitude: " + err.Error())
-		}
-		var modifiedStr string
-		if values[4] == "0" { // in -> i am dst
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" +
-				"unknown" + "|in|detect|" +
-				values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
-				addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
-		} else { // out -> i am src
-			modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" +
-				"unknown" + "|out|detect|" +
-				values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
-				addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa)
-		}
-		values = strings.Split(modifiedStr, "|")
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
 	}
 	elastic.UpdateNetworkInfo(p.GetRkey(), networkSet)
+}
+
+func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) []string {
+	values := strings.Split(line, "|")
+	if len(values) != 6 {
+		if len(values) != 1 {
+			logger.Error("Invalid line: " + line)
+		}
+		return nil
+	}
+	key := values[0] + "," + values[3]
+	(*networkSet)[key] = struct{}{}
+	addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
+	agentCountry, err := ip2location.ToCountry(ip)
+	if err != nil {
+		logger.Error("Error getting self country: " + err.Error())
+	}
+	agentLa, agentLo, err := ip2location.ToLatitudeLongtitude(ip)
+	if err != nil {
+		logger.Error("Error getting latitude and longtitude: " + err.Error())
+	}
+	otherCountry, err := ip2location.ToCountry(addr)
+	if err != nil {
+		logger.Error("Error getting other country: " + err.Error())
+	}
+	otherLo, otherLa, err := ip2location.ToLatitudeLongtitude(addr)
+	if err != nil {
+		logger.Error("Error getting latitude and longtitude: " + err.Error())
+	}
+	malicious, total, err := virustotal.ScanIP(addr)
+	if err != nil {
+		logger.Error("Error getting virustotal: " + err.Error())
+	}
+	var modifiedStr string
+	if values[4] == "0" { // in -> i am dst
+		modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + addr + "|" + port + "|" + ip + "|" + values[5] + "|" +
+			"unknown" + "|in|detect|" +
+			values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
+			addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
+	} else { // out -> i am src
+		modifiedStr = values[0] + "|" + values[3] + "|" + values[2] + "|" + ip + "|" + values[5] + "|" + addr + "|" + port + "|" +
+			"unknown" + "|out|detect|" +
+			values[5] + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
+			addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
+	}
+	values = strings.Split(modifiedStr, "|")
+	return values
 }

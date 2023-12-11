@@ -12,8 +12,9 @@ import (
 	packet "edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
+	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	rq "edetector_go/pkg/redis/query"
 	"net"
 )
 
@@ -38,7 +39,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			return
 		}
 		if reqLen < 1024 {
-			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", buf[:reqLen]))
+			logger.Error("Invalid packet (too short): " + string(buf[:100]))
+			logger.Debug("Content: " + string(buf[:reqLen]))
 			continue
 		}
 		Data_acache := make([]byte, 0)
@@ -66,6 +68,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			NewPacket = new(packet.DataPacket)
 			decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
+			// rand := fmt.Sprint(rand.Intn(256))
+			// tmpPath := "test/encrypted_long_" + rand
+			// file.WriteFile(tmpPath, Data_acache)
+			// tmpPath = "test/decrypted_long_" + rand
+			// file.WriteFile(tmpPath, decrypt_buf)
 			err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
 				logger.Error("Error reading: " + err.Error())
@@ -88,6 +95,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO {
+			if len(Clientlist) > 1000 {
+				logger.Error("Too many clients, reject: " + string(key))
+				clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
+				close(closeConn)
+				return
+			}
 			go func() {
 				for {
 					select {
@@ -108,7 +121,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
 		} else {
-			redis.Online(key)
+			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
 			dataRightChan = make(chan net.Conn)
@@ -126,9 +139,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
+					mq.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
-				continue
 			}
 		}
 		lastTask = string(NewPacket.GetTaskType())
@@ -139,25 +151,33 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 	logger.Info("UDP")
 }
 
+// To-Do (TBD)
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
-	if agentTaskType != "CollectProgress" {
-		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-	}
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
-		query.Update_task_status(key, agentTaskType, 2, 0)
+		logger.Error("Scan failed: " + string(key))
+		mq.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
-			query.Failed_task(key, agentTaskType)
+			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
+			mq.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
-		removeTasks, err := query.Load_stored_task("nil", key, 2, "StartRemove")
+		// remove key from Clientlist
+		for i, v := range Clientlist {
+			if v == key {
+				Clientlist = append(Clientlist[:i], Clientlist[i+1:]...)
+				break
+			}
+		}
+		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
+		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
 		if len(removeTasks) == 0 {
-			redis.Offline(key, false)
+			rq.Offline(key, false)
 		} else {
-			query.DeleteAgent(key)
+			mq.DeleteAgent(key)
 			err = redis.RedisDelete(key)
 			if err != nil {
 				logger.Error("Error deleting key from redis: " + err.Error())

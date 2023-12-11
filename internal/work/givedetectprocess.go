@@ -49,12 +49,12 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		values := strings.Split(line, "|")
 		if len(values) != 16 {
 			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
+				logger.Error("Invalid line: " + line)
 			}
 			continue
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "network", "risklevel", "riskscore", "detect", processKey)
+		values = append(values, "network", "0", "0", "detect", processKey)
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -77,21 +77,25 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		}
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
+			return task.FAIL, err
 		}
 		values[17], values[18], err = Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: " + err.Error())
+			return task.FAIL, err
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (main): " + err.Error())
+			return task.FAIL, err
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
+			return task.FAIL, err
 		}
 	}
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)

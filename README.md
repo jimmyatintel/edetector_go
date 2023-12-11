@@ -36,19 +36,15 @@ Finished tasks:
 - White, black, and hack list (temporary version)
 
 Enhancements:
-- Introduced Mock agent
-  - Completed functions: handshake, detect, scan, collect, and explorer
+- Introduce Mock agent
+  - Complete functions: handshake, detect, scan, collect, and explorer
   - Generate mock agents with random IDs, IPs, and MACs using go routine
 
 Fixed Bugs:
-- Resolved the issue of generating incorrect new agent IDs (without "-")
-- Enhanced task completion timing
+- Fix the issue of generating incorrect new agent IDs (without "-")
+- Enhance task completion timing
 - Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
-- Fixed empty columns error of white, black, and hack list
-
-To-Do:
-- Implement feature flags
-
+- Fix empty columns error of white, black, and hack list
 
 ### 1.0.1 (2023/10/12)
 Enhancements:
@@ -59,4 +55,92 @@ Enhancements:
 
 Fixed Bugs:
 - GiveInfo steps: mySQL -> redis -> request
-- Changed the finish timing of collect
+- Change the finish timing of collect
+
+### 1.0.2 (2023/11/27)
+Compatible Agent Version: Agent_1.0.4
+
+Enhancements:
+- Add collect table: wireless
+- Modify collect table: process (add columns from the scan)
+- Introduce RemoveAgent
+- Introduce .tar.gz for linux agents
+- Introduce ip2location
+- Adjust prefetchCount to rabbitMQ
+
+Fixed Bugs:
+- Remove unnecessary panic()
+- Fix read buffer error
+- Close unused go routines
+
+To-Do:
+- Implement feature flags
+
+### 1.0.3 (2023/12/11)
+Compatible Agent Version: Agent_1.0.5
+
+Enhancements:
+- Introduce virustotal
+- Introduce FAT32
+- Log the error when the scan crashes because of the agent
+- Implement better terminate method for builder/parser
+  - add new status "terminating"
+- Implement go unit test
+- Add RejectAgent TaskType
+
+Fixed Bugs:
+- Fix the issue of Error storing log to database: Data too long for column 'content'
+- Fix the deadlock issues
+- Change the log level of "Invalid line" from 'Warn' to 'Error'
+
+To-Do:
+- Implement feature flags
+
+## Directory Structure
+```
+.
+├── agentFile                     # Agent executions files for updating
+│   └── agent.exe
+├── cmd                           # Entry point of the services
+│   ├── builder
+│   │   ├── builder.go            # Entry point of the builder
+│   │   └── log_builder.log       # Log file for the builder
+│   ├── connector
+│   │   ├── connector.go          # Entry point of the connector
+│   │   └── log_conn.log          # Log file for the connector
+│   ├── mockagent
+│   │   ├── agent.go
+│   │   └── log_agent.log
+│   ├── parser
+│   │   ├── log_parser.log        # Entry point of the parser
+│   │   └── parser.go             # Log file for the parser
+│   └── server
+│       ├── log_gin.log           # Log file for gin
+│       ├── log_server.log        # Log file for server
+│       └── working_server.go     # Entry point of the server
+├── commit_example.md
+├── config                        # Config files
+│   ├── app.env
+│   ├── config.go
+│   └── container.yml
+├── dbStaged                      # DB files that have finished parsing
+├── dbUnstage                     # DB files that are parsing
+├── dbWorking                     # DB files that are receiving data from agents
+├── docs
+├── fileStaged                    # File txt files that have finished building
+├── fileUnstage                   # File txt files that are bulilding
+├── fileWorking                   # File txt files that are receiving data from agents
+├── go.mod
+├── go.sum
+├── imageUnstage                  # Image files that have finished received
+├── imageWorking                  # Image files that are receiving data from agents
+├── internal                      # Private library code
+├── mockFiles                     # Mock agent files
+├── pkg                           # Public library code
+├── README.md
+├── scanUnstage                   # Scan txt files that have finished received
+├── scanWorking                   # Scan txt files that are receiving data from agents
+├── static
+│   └── IP2LOCATION-LITE-DB5.BIN  # IP2LOCATION reference
+└── test                          # Files for go test
+```
