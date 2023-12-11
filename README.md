@@ -72,6 +72,22 @@ Fixed Bugs:
 To-Do:
 - Implement feature flags
 
+### 1.0.03
+Enhancements:
+- Introduced virustotal
+- Introduced FAT32
+- Logged the error when scan crashed because of agent
+- Implemented better terminate method for builder/parser
+  - add new status "terminating"
+- Implemented go unit test
+
+Fixed Bugs:
+- Error storing log to database: Data too long for column 'content'
+- Removed unnecessary panic()
+
+To-Do:
+- Implement feature flags
+
 ## Directory Structure
 ```
 .
@@ -80,45 +96,43 @@ To-Do:
 ├── cmd                           # Entry point of the services
 │   ├── builder
 │   │   ├── builder.go            # Entry point of the builder
-│   │   └── log_builder.log       @ Log file for the builder
+│   │   └── log_builder.log       # Log file for the builder
 │   ├── connector
 │   │   ├── connector.go          # Entry point of the connector
-│   │   └── log_conn.log          @ Log file for the connector
+│   │   └── log_conn.log          # Log file for the connector
 │   ├── mockagent
 │   │   ├── agent.go
 │   │   └── log_agent.log
 │   ├── parser
 │   │   ├── log_parser.log        # Entry point of the parser
-│   │   └── parser.go             @ Log file for the parser
+│   │   └── parser.go             # Log file for the parser
 │   └── server
-│       ├── log_gin.log           @ Log file for gin
-│       ├── log_server.log        @ Log file for server
+│       ├── log_gin.log           # Log file for gin
+│       ├── log_server.log        # Log file for server
 │       └── working_server.go     # Entry point of the server
 ├── commit_example.md
 ├── config                        # Config files
 │   ├── app.env
 │   ├── config.go
 │   └── container.yml
-├── dbStaged                      @ DB files that have finished parsing
-├── dbUnstage                     @ DB files that are parsing
-├── dbWorking                     @ DB files that are receiving data from agents
+├── dbStaged                      # DB files that have finished parsing
+├── dbUnstage                     # DB files that are parsing
+├── dbWorking                     # DB files that are receiving data from agents
 ├── docs
-├── fileStaged                    @ File txt files that have finished building
-├── fileUnstage                   @ File txt files that are bulilding
-├── fileWorking                   @ File txt files that are receiving data from agents
+├── fileStaged                    # File txt files that have finished building
+├── fileUnstage                   # File txt files that are bulilding
+├── fileWorking                   # File txt files that are receiving data from agents
 ├── go.mod
 ├── go.sum
-├── imageUnstage                  @ Image files that have finished received
-├── imageWorking                  @ Image files that are receiving data from agents
+├── imageUnstage                  # Image files that have finished received
+├── imageWorking                  # Image files that are receiving data from agents
 ├── internal                      # Private library code
 ├── mockFiles                     # Mock agent files
 ├── pkg                           # Public library code
 ├── README.md
-├── scanUnstage                   @ Scan txt files that have finished received
-├── scanWorking                   @ Scan txt files that are receiving data from agents
+├── scanUnstage                   # Scan txt files that have finished received
+├── scanWorking                   # Scan txt files that are receiving data from agents
 ├── static
-│   └── IP2LOCATION-LITE-DB5.BIN  @ IP2LOCATION reference
-└── test
-    ├── tcp_test.py
-    └── udp_test.py
+│   └── IP2LOCATION-LITE-DB5.BIN  # IP2LOCATION reference
+└── test                          # Files for go test
 ```
