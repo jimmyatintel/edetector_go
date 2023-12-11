@@ -10,7 +10,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
-	"edetector_go/pkg/redis"
 	"edetector_go/pkg/virustotal"
 	"net"
 	"strconv"
@@ -78,15 +77,9 @@ func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) []str
 	if err != nil {
 		logger.Error("Error getting latitude and longtitude: " + err.Error())
 	}
-	malicious := 0
-	total := 0
-	if apiKey := redis.RedisGetString("vt_key"); apiKey != "null" && apiKey != "" {
-		if addr != "0.0.0.0" && addr != "8.8.8.8" {
-			malicious, total, err = virustotal.ScanIP(addr, apiKey)
-			if err != nil {
-				logger.Error("Error getting virustotal: " + err.Error())
-			}
-		}
+	malicious, total, err := virustotal.ScanIP(addr)
+	if err != nil {
+		logger.Error("Error getting virustotal: " + err.Error())
 	}
 	var modifiedStr string
 	if values[4] == "0" { // in -> i am dst

@@ -281,13 +281,9 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		if err != nil {
 			logger.Error("Error getting latitude and longtitude: " + err.Error())
 		}
-		if apiKey := redis.RedisGetString("vt_key"); apiKey != "null" && apiKey != "" {
-			if otherIP != "0.0.0.0" && otherIP != "8.8.8.8" {
-				malicious, total, err = virustotal.ScanIP(otherIP, apiKey)
-				if err != nil {
-					logger.Error("Error getting virustotal: " + err.Error())
-				}
-			}
+		malicious, total, err = virustotal.ScanIP(otherIP)
+		if err != nil {
+			logger.Error("Error getting virustotal: " + err.Error())
 		}
 		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" +
 			actionAndTime[0] + "|" + direction + "|scan|" +

@@ -12,8 +12,9 @@ import (
 	packet "edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
+	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	rq "edetector_go/pkg/redis/query"
 	"net"
 )
 
@@ -114,7 +115,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
 		} else {
-			redis.Online(key)
+			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
 			dataRightChan = make(chan net.Conn)
@@ -132,7 +133,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-					query.Failed_task(NewPacket.GetRkey(), agentTaskType)
+					mq.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
 				continue
 			}
@@ -149,22 +150,22 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		logger.Error("Scan failed: " + string(key))
-		query.Update_task_status(key, agentTaskType, 2, 0)
+		mq.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
 			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-			query.Failed_task(key, agentTaskType)
+			mq.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-		removeTasks, err := query.Load_stored_task("nil", key, 2, "StartRemove")
+		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
 		if len(removeTasks) == 0 {
-			redis.Offline(key, false)
+			rq.Offline(key, false)
 		} else {
-			query.DeleteAgent(key)
+			mq.DeleteAgent(key)
 			err = redis.RedisDelete(key)
 			if err != nil {
 				logger.Error("Error deleting key from redis: " + err.Error())

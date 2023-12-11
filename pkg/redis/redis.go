@@ -77,6 +77,13 @@ func RedisSet_AddInteger(key string, value int) error {
 	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
 }
 
+func RedisGet(key string) (string, error) {
+	if !checkflag() {
+		return "", nil
+	}
+	return RedisClient.Get(context.Background(), key).Result()
+}
+
 func RedisGetString(key string) string {
 	if !checkflag() {
 		return ""
