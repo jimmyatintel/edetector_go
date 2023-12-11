@@ -97,9 +97,9 @@ func BulkIndexRequest(action []string, work []string) error {
 	defer res.Body.Close()
 	output := res.String()
 	if output[:8] == "[200 OK]" {
-		logger.Info("BulkIndexRequest Res: " + output)
+		logger.Info("BulkIndexRequest Res: " + output[:100])
 	} else {
-		return errors.New("Error BulkIndexRequest Res: " + output)
+		return errors.New("Error BulkIndexRequest Res: " + output[:100])
 	}
 	return nil
 }

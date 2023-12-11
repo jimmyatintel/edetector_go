@@ -80,18 +80,22 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
+			return task.FAIL, err
 		}
 		values[17], values[18], err = Getriskscore(m_tmp)
 		if err != nil {
 			logger.Error("Error getting risk level: " + err.Error())
+			return task.FAIL, err
 		}
 		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (main): " + err.Error())
+			return task.FAIL, err
 		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
+			return task.FAIL, err
 		}
 	}
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)

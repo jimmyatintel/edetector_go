@@ -46,10 +46,6 @@ Fixed Bugs:
 - Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
 - Fix empty columns error of white, black, and hack list
 
-To-Do:
-- Implement feature flags
-
-
 ### 1.0.1 (2023/10/12)
 Enhancements:
 - Check the data format using the number of columns
@@ -61,16 +57,20 @@ Fixed Bugs:
 - GiveInfo steps: mySQL -> redis -> request
 - Change the finish timing of collect
 
-To-Do:
-- Implement feature flags
-
 ### 1.0.2 (2023/11/27)
 
 Enhancements:
-- ToDo
+- Add collect table: wireless
+- Modify collect table: process
+- Introduce RemoveAgent
+- Introduce .tar.gz for linux agents
+- Introduce ip2location
+- Add prefetchCount to rabbitMQ
 
 Fixed Bugs:
-- ToDo
+- Remove unnecessary panic()
+- Fix read buffer error
+- Close unused go routines
 
 To-Do:
 - Implement feature flags
@@ -82,12 +82,12 @@ Enhancements:
 - Log the error when the scan crashes because of the agent
 - Implement better terminate method for builder/parser
   - add new status "terminating"
-- Implement go unit test
+- Implement go unit test1
+- Add RejectAgent TaskType
 
 Fixed Bugs:
 - Fix the issue of Error storing log to database: Data too long for column 'content'
 - Fix the deadlock issues
-- Remove unnecessary panic()
 
 To-Do:
 - Implement feature flags
