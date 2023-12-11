@@ -143,7 +143,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			values := strings.Split(line, "|")
 			if len(values) != 10 {
 				if len(values) != 1 {
-					logger.Warn("Invalid line (" + agent + "-" + diskInfo + "): " + line)
+					logger.Error("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
 				continue
 			}
@@ -185,7 +185,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			values := strings.Split(line, "|")
 			if len(values) != 10 {
 				if len(values) != 1 {
-					logger.Warn("Invalid line (" + agent + "-" + diskInfo + "): " + line)
+					logger.Error("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
 				continue
 			}

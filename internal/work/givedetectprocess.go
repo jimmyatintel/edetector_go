@@ -49,7 +49,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		values := strings.Split(line, "|")
 		if len(values) != 16 {
 			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
+				logger.Error("Invalid line: " + line)
 			}
 			continue
 		}

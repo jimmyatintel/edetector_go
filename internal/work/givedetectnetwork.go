@@ -54,7 +54,7 @@ func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) []str
 	values := strings.Split(line, "|")
 	if len(values) != 6 {
 		if len(values) != 1 {
-			logger.Warn("Invalid line: " + line)
+			logger.Error("Invalid line: " + line)
 		}
 		return nil
 	}

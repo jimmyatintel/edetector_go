@@ -61,11 +61,11 @@ Fixed Bugs:
 
 Enhancements:
 - Add collect table: wireless
-- Modify collect table: process
+- Modify collect table: process (add columns from the scan)
 - Introduce RemoveAgent
 - Introduce .tar.gz for linux agents
 - Introduce ip2location
-- Add prefetchCount to rabbitMQ
+- Adjust prefetchCount to rabbitMQ
 
 Fixed Bugs:
 - Remove unnecessary panic()
@@ -82,12 +82,13 @@ Enhancements:
 - Log the error when the scan crashes because of the agent
 - Implement better terminate method for builder/parser
   - add new status "terminating"
-- Implement go unit test1
+- Implement go unit test
 - Add RejectAgent TaskType
 
 Fixed Bugs:
 - Fix the issue of Error storing log to database: Data too long for column 'content'
 - Fix the deadlock issues
+- Change the log level of "Invalid line" from 'Warn' to 'Error'
 
 To-Do:
 - Implement feature flags

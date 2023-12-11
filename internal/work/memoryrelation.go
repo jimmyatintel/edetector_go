@@ -16,7 +16,7 @@ func HandleRelation(lines []string, key string, count int) {
 		values := strings.Split(line, "|")
 		if len(values) != count {
 			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
+				logger.Error("Invalid line: " + line)
 			}
 			continue
 		}

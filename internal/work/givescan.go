@@ -189,7 +189,7 @@ func parseScan(path string, key string) error {
 		values := strings.Split(line, "|")
 		if len(values) != 17 {
 			if len(values) != 1 {
-				logger.Warn("Invalid line: " + line)
+				logger.Error("Invalid line: " + line)
 			}
 			continue
 		}
@@ -232,12 +232,12 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		}
 		conns := strings.Split(line, ",")
 		if len(conns) != 5 {
-			logger.Warn("Invalid line: " + line)
+			logger.Error("Invalid line: " + line)
 			continue
 		}
 		actionAndTime := strings.Split(conns[4], ">")
 		if len(actionAndTime) != 2 {
-			logger.Warn("Invalid line: " + line)
+			logger.Error("Invalid line: " + line)
 			continue
 		}
 		var direction string
