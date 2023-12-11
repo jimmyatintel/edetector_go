@@ -76,7 +76,7 @@ Fixed Bugs:
 To-Do:
 - Implement feature flags
 
-### 1.0.3
+### 1.0.3 (2023/12/11)
 Compatible Agent Version: Agent_1.0.5
 
 Enhancements:
