@@ -95,20 +95,11 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
-	index := 0
-	for {
-		ind := strings.Index(res.String()[index:], "error")
-		if ind == -1 {
-			break
-		}
-		output := ""
-		if ind+300 > len(res.String()) {
-			output = res.String()[index:]
-		} else {
-			output = res.String()[index : index+300]
-		}
+	output := res.String()
+	if output[:8] == "[200 OK]" {
 		logger.Info("BulkIndexRequest Res: " + output)
-		index = ind + 1
+	} else {
+		return errors.New("Error BulkIndexRequest Res: " + output)
 	}
 	return nil
 }

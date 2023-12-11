@@ -36,15 +36,15 @@ Finished tasks:
 - White, black, and hack list (temporary version)
 
 Enhancements:
-- Introduced Mock agent
-  - Completed functions: handshake, detect, scan, collect, and explorer
+- Introduce Mock agent
+  - Complete functions: handshake, detect, scan, collect, and explorer
   - Generate mock agents with random IDs, IPs, and MACs using go routine
 
 Fixed Bugs:
-- Resolved the issue of generating incorrect new agent IDs (without "-")
-- Enhanced task completion timing
+- Fix the issue of generating incorrect new agent IDs (without "-")
+- Enhance task completion timing
 - Let agent go offline when receiving GiveInfo (to create redis key in the beginning)
-- Fixed empty columns error of white, black, and hack list
+- Fix empty columns error of white, black, and hack list
 
 To-Do:
 - Implement feature flags
@@ -59,7 +59,10 @@ Enhancements:
 
 Fixed Bugs:
 - GiveInfo steps: mySQL -> redis -> request
-- Changed the finish timing of collect
+- Change the finish timing of collect
+
+To-Do:
+- Implement feature flags
 
 ### 1.0.2 (2023/11/27)
 
@@ -72,18 +75,19 @@ Fixed Bugs:
 To-Do:
 - Implement feature flags
 
-### 1.0.03
+### 1.0.3
 Enhancements:
-- Introduced virustotal
-- Introduced FAT32
-- Logged the error when scan crashed because of agent
-- Implemented better terminate method for builder/parser
+- Introduce virustotal
+- Introduce FAT32
+- Log the error when the scan crashes because of the agent
+- Implement better terminate method for builder/parser
   - add new status "terminating"
-- Implemented go unit test
+- Implement go unit test
 
 Fixed Bugs:
-- Error storing log to database: Data too long for column 'content'
-- Removed unnecessary panic()
+- Fix the issue of Error storing log to database: Data too long for column 'content'
+- Fix the deadlock issues
+- Remove unnecessary panic()
 
 To-Do:
 - Implement feature flags
