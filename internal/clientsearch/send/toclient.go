@@ -83,3 +83,18 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 	task_chan <- &send_packet
 	return nil
 }
+
+func SendUserDataTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string) error {
+	var send_packet = packet.DataPacket{
+		MacAddress: p.GetMacAddress(),
+		IpAddress:  p.GetipAddress(),
+		Work:       workType,
+		Message:    msg,
+	}
+	task_chan, err := channelmap.GetTaskChannel(p.GetRkey())
+	if err != nil {
+		return err
+	}
+	task_chan <- &send_packet
+	return nil
+}

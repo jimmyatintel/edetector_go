@@ -58,6 +58,7 @@ Fixed Bugs:
 - Change the finish timing of collect
 
 ### 1.0.2 (2023/11/27)
+Compatible Agent Version: Agent_1.0.4
 
 Enhancements:
 - Add collect table: wireless
@@ -76,6 +77,8 @@ To-Do:
 - Implement feature flags
 
 ### 1.0.3
+Compatible Agent Version: Agent_1.0.5
+
 Enhancements:
 - Introduce virustotal
 - Introduce FAT32

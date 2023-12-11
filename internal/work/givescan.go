@@ -200,10 +200,10 @@ func parseScan(path string, key string) error {
 			values[16] = "true"
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "risklevel", "riskscore", "scan", processKey)
+		values = append(values, "0", "0", "scan", processKey)
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			return err
 		}

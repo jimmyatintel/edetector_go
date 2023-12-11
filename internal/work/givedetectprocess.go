@@ -54,7 +54,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			continue
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "network", "risklevel", "riskscore", "detect", processKey)
+		values = append(values, "network", "0", "0", "detect", processKey)
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -77,7 +77,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		}
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "date", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
 			return task.FAIL, err

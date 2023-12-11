@@ -123,7 +123,8 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 		case reflect.Int:
 			value, err := strconv.Atoi(values[i])
 			if err != nil {
-				return nil, err
+				logger.Error("Error converting to int: " + err.Error())
+				break
 			}
 			field.Set(reflect.ValueOf(value))
 		case reflect.String:
@@ -131,7 +132,8 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 		case reflect.Bool:
 			value, err := strconv.ParseBool(values[i])
 			if err != nil {
-				return nil, err
+				logger.Error("Error converting to bool: " + err.Error())
+				break
 			}
 			field.Set(reflect.ValueOf(value))
 		}
