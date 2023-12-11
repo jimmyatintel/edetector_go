@@ -10,6 +10,7 @@ const (
 	OPEN_CHECK_THREAD      TaskType = "OpenCheckthread"
 	GIVE_DETECT_INFO_FIRST TaskType = "GiveDetectInfoFirst"
 	GIVE_DETECT_INFO       TaskType = "GiveDetectInfo"
+	REJECT_AGENT           TaskType = "RejectAgent"
 	UNDEFINE               TaskType = "Undefine"
 
 	// check connect & ack

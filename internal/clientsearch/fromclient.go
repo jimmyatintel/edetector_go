@@ -39,8 +39,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			return
 		}
 		if reqLen < 1024 {
-			logger.Error("Invalid packet (too short): " + fmt.Sprintf("%x", buf[:100]))
-			logger.Debug("Content: " + fmt.Sprintf("%x", buf[:reqLen]))
+			logger.Error("Invalid packet (too short): " + string(buf[:100]))
+			logger.Debug("Content: " + string(buf[:reqLen]))
 			continue
 		}
 		Data_acache := make([]byte, 0)
@@ -95,6 +95,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO {
+			if len(Clientlist) > 1000 {
+				logger.Error("Too many clients, reject: " + string(key))
+				clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
+				close(closeConn)
+				return
+			}
 			go func() {
 				for {
 					select {
@@ -135,7 +141,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 					mq.Failed_task(NewPacket.GetRkey(), agentTaskType)
 				}
-				continue
 			}
 		}
 		lastTask = string(NewPacket.GetTaskType())
@@ -157,6 +162,13 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			mq.Failed_task(key, agentTaskType)
 		}
 	} else if agentTaskType == "Main" {
+		// remove key from Clientlist
+		for i, v := range Clientlist {
+			if v == key {
+				Clientlist = append(Clientlist[:i], Clientlist[i+1:]...)
+				break
+			}
+		}
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
