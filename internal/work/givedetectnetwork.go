@@ -59,9 +59,9 @@ func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) ([]st
 	values := strings.Split(line, "|")
 	if len(values) != 6 {
 		if len(values) != 1 {
-			return nil, nil
+			return nil, errors.New("invalid line" + line)
 		}
-		return nil, errors.New("invalid line" + line)
+		return nil, nil
 	}
 	addr, port := strings.Split(values[1], ":")[0], strings.Split(values[1], ":")[1]
 	agentCountry, err := ip2location.ToCountry(ip)

@@ -202,14 +202,14 @@ func parseScan(path string, key string) error {
 			values[16] = "true"
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "0", "0", "scan", processKey)
+		values = append(values, "0", "0", "scan", processKey, "0", "0")
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			return err
 		}
-		values[17], values[18], err = Getriskscore(m_tmp, (networkMalicious * 20))
+		values[17], values[18], values[21], values[22], err = Getriskscore(m_tmp, (networkMalicious * 20))
 		if err != nil {
 			return err
 		}

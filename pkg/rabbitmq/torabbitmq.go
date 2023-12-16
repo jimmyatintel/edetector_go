@@ -117,12 +117,6 @@ func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority s
 func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (elastic.Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(st))
 	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc)
-	// log all values iterate
-	str := ""
-	for _, v := range values {
-		str += v + "|"
-	}
-	logger.Info(str)
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {

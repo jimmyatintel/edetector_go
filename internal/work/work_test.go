@@ -145,7 +145,7 @@ func TestGetriskscore(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotLevel, gotScore, _ := Getriskscore(*tt.memory, 0)
+			gotLevel, gotScore, _, _, _ := Getriskscore(*tt.memory, 0)
 			if gotLevel != tt.wantLevel {
 				t.Errorf("Getriskscore() gotLevel = %v, want %v", gotLevel, tt.wantLevel)
 			}

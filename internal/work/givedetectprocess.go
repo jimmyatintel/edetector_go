@@ -93,13 +93,14 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
 		}
 		uuid := uuid.NewString()
+		values = append(values, "0", "0")
 		m_tmp := Memory{}
 		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
 			return task.FAIL, err
 		}
-		values[17], values[18], err = Getriskscore(m_tmp, int(score))
+		values[17], values[18], values[21], values[22], err = Getriskscore(m_tmp, int(score))
 		if err != nil {
 			logger.Error("Error getting risk level: " + err.Error())
 			return task.FAIL, err

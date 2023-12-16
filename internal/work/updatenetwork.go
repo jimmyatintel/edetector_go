@@ -35,6 +35,19 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 			  }
 			}`, agent, id, time)
 		hitsArray := elastic.SearchRequest(index, searchQuery)
+		deleteQuery := fmt.Sprintf(`{
+			"query": {
+				"bool": {
+				  "must": [
+					{ "term": { "agent": "%s" } },
+					{ "term": { "processId": %s } },
+					{ "term": { "processCreateTime": %s } },
+					{ "term": { "mode": "OnlyNetwork" } }
+				  ]
+				}
+			  }
+			}`, agent, id, time)
+		elastic.DeleteByQueryRequest(deleteQuery, "Memory")
 		if len(hitsArray) == 0 { // detect process not exists
 			risklevel := scoretoLevel(malicious * 20)
 			createBody := fmt.Sprintf(`

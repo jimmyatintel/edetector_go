@@ -35,6 +35,8 @@ type Memory struct {
 	RiskScore         int    `json:"riskScore"`
 	Mode              string `json:"mode"`
 	ProcessKey        string `json:"processKey"`
+	Malicious         int    `json:"malicious"`
+	VirusTotal        int    `json:"virusTotal"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

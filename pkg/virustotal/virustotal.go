@@ -4,9 +4,7 @@ import (
 	"edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
 	rq "edetector_go/pkg/redis/query"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -42,78 +40,153 @@ func APIKeyExist() (bool, error) {
 }
 
 func ScanIP(ip string) (int, int, error) {
+	return -1, -1, nil
 	// check if api key exists
-	apikey, err := mq.LoadVTKey()
-	if err != nil {
-		return 0, 0, err
-	}
-	if apikey == "null" {
-		return -1, -1, nil
-	}
-	// check cache
-	maliciousCache, totalCache, err := loadCache(ip)
-	if err != nil {
-		return 0, 0, err
-	}
-	if maliciousCache != -1 && totalCache != -1 {
-		return maliciousCache, totalCache, nil
-	}
-	// scan ip
-	url := "https://www.virustotal.com/api/v3/ip_addresses/" + ip
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("x-apikey", apikey)
+	// apikey, err := mq.LoadVTKey()
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// if apikey == "null" {
+	// 	return -1, -1, nil
+	// }
+	// // check cache
+	// maliciousCache, totalCache, err := loadCache(ip)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// if maliciousCache != -1 && totalCache != -1 {
+	// 	return maliciousCache, totalCache, nil
+	// }
+	// // scan ip
+	// url := "https://www.virustotal.com/api/v3/ip_addresses/" + ip
+	// req, _ := http.NewRequest("GET", url, nil)
+	// req.Header.Add("accept", "application/json")
+	// req.Header.Add("x-apikey", apikey)
 
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return 0, 0, err
-	}
-	if res.StatusCode != 200 {
-		return 0, 0, fmt.Errorf("returned with status code %d", res.StatusCode)
-	}
-	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
-	// fmt.Println(string(body))
+	// res, err := http.DefaultClient.Do(req)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// if res.StatusCode != 200 {
+	// 	return 0, 0, fmt.Errorf("returned with status code %d", res.StatusCode)
+	// }
+	// defer res.Body.Close()
+	// body, _ := io.ReadAll(res.Body)
+	// // fmt.Println(string(body))
 
-	var report map[string]interface{}
-	err = json.Unmarshal([]byte(body), &report)
-	if err != nil {
-		return 0, 0, err
-	}
-	stats, ok := report["data"].(map[string]interface{})["attributes"].(map[string]interface{})["last_analysis_stats"].(map[string]interface{})
-	if !ok {
-		return 0, 0, fmt.Errorf("last_analysis_stats not found in response")
-	}
-	harmless, ok := stats["harmless"].(float64)
-	if !ok {
-		return 0, 0, fmt.Errorf("harmless not found in response")
-	}
-	malicious, ok := stats["malicious"].(float64)
-	if !ok {
-		return 0, 0, fmt.Errorf("malicious not found in response")
-	}
-	suspicious, ok := stats["suspicious"].(float64)
-	if !ok {
-		return 0, 0, fmt.Errorf("suspicious not found in response")
-	}
-	undetected, ok := stats["undetected"].(float64)
-	if !ok {
-		return 0, 0, fmt.Errorf("undetected not found in response")
-	}
-	timeout, ok := stats["timeout"].(float64)
-	if !ok {
-		return 0, 0, fmt.Errorf("timeout not found in response")
-	}
+	// var report map[string]interface{}
+	// err = json.Unmarshal([]byte(body), &report)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// stats, ok := report["data"].(map[string]interface{})["attributes"].(map[string]interface{})["last_analysis_stats"].(map[string]interface{})
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("last_analysis_stats not found in response")
+	// }
+	// harmless, ok := stats["harmless"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("harmless not found in response")
+	// }
+	// malicious, ok := stats["malicious"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("malicious not found in response")
+	// }
+	// suspicious, ok := stats["suspicious"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("suspicious not found in response")
+	// }
+	// undetected, ok := stats["undetected"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("undetected not found in response")
+	// }
+	// timeout, ok := stats["timeout"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("timeout not found in response")
+	// }
 
-	total := int(harmless + malicious + suspicious + undetected + timeout)
+	// total := int(harmless + malicious + suspicious + undetected + timeout)
 
-	// update cache
-	err = updateCache(ip, int(malicious), total)
-	if err != nil {
-		return 0, 0, err
-	}
+	// // update cache
+	// err = updateCache(ip, int(malicious), total)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
 
-	return int(malicious), total, nil
+	// return int(malicious), total, nil
+}
+
+func ScanFile(hash string) (int, int, error) {
+	return -1, -1, nil
+	// check if api key exists
+	// apikey, err := mq.LoadVTKey()
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// if apikey == "null" {
+	// 	return -1, -1, nil
+	// }
+	// url := "https://www.virustotal.com/api/v3/files/" + hash
+	// req, _ := http.NewRequest("GET", url, nil)
+	// req.Header.Add("accept", "application/json")
+	// req.Header.Add("x-apikey", apikey)
+
+	// res, err := http.DefaultClient.Do(req)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// defer res.Body.Close()
+	// body, _ := io.ReadAll(res.Body)
+	// var report map[string]interface{}
+	// err = json.Unmarshal([]byte(body), &report)
+	// if err != nil {
+	// 	return 0, 0, err
+	// }
+	// reportData, ok := report["data"].(map[string]interface{})
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("data not found in response")
+	// }
+	// attributes, ok := reportData["attributes"].(map[string]interface{})
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("attributes not found in response")
+	// }
+	// stats, ok := attributes["last_analysis_stats"].(map[string]interface{})
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("last_analysis_stats not found in response")
+	// }
+	// harmless, ok := stats["harmless"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("harmless not found in response")
+	// }
+	// typeunsupported, ok := stats["type-unsupported"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("type-unsupported not found in response")
+	// }
+	// malicious, ok := stats["malicious"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("malicious not found in response")
+	// }
+	// suspicious, ok := stats["suspicious"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("suspicious not found in response")
+	// }
+	// confirmedtimeout, ok := stats["confirmed-timeout"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("confirmed-timeout not found in response")
+	// }
+	// timeout, ok := stats["timeout"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("timeout not found in response")
+	// }
+	// undetected, ok := stats["undetected"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("undetected not found in response")
+	// }
+	// failure, ok := stats["failure"].(float64)
+	// if !ok {
+	// 	return 0, 0, fmt.Errorf("failure not found in response")
+	// }
+	// total := int(harmless + typeunsupported + malicious + suspicious + confirmedtimeout + timeout + undetected + failure)
+	// return int(malicious), total, nil
 }
 
 func loadCache(ip string) (int, int, error) {
