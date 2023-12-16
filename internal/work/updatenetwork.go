@@ -42,7 +42,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 					{ "term": { "agent": "%s" } },
 					{ "term": { "processId": %s } },
 					{ "term": { "processCreateTime": %s } },
-					{ "term": { "mode": "OnlyNetwork" } }
+					{ "term": { "mode": "detectNetwork" } }
 				  ]
 				}
 			  }
@@ -58,7 +58,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"processConnectIP": "true",
 				"riskLevel": %d,
 				"riskScore": %d,
-				"mode": "OnlyNetwork"
+				"mode": "detectNetwork"
 			}`, agent, id, time, risklevel, malicious*20)
 			err := elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
 			if err != nil {
