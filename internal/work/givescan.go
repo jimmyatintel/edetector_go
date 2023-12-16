@@ -193,10 +193,12 @@ func parseScan(path string, key string) error {
 			}
 			continue
 		}
+		var networkMalicious int
 		if values[16] == "null" {
+			networkMalicious = 0
 			values[16] = "false"
 		} else {
-			scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
+			networkMalicious = scanNetworkElastic(values[9], values[1], key, values[16], ip, name)
 			values[16] = "true"
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
@@ -207,7 +209,7 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		values[17], values[18], err = Getriskscore(m_tmp)
+		values[17], values[18], err = Getriskscore(m_tmp, (networkMalicious * 20))
 		if err != nil {
 			return err
 		}
@@ -224,7 +226,8 @@ func parseScan(path string, key string) error {
 	return nil
 }
 
-func scanNetworkElastic(pid string, pCreateTime string, key string, data string, ip string, name string) {
+func scanNetworkElastic(pid string, pCreateTime string, key string, data string, ip string, name string) int {
+	totalMalicious := 0
 	lines := strings.Split(data, ";")
 	for _, line := range lines {
 		if len(line) == 0 {
@@ -295,5 +298,9 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
+		if malicious > 0 {
+			totalMalicious += malicious
+		}
 	}
+	return totalMalicious
 }

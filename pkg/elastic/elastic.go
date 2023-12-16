@@ -135,33 +135,20 @@ func UpdateByQueryRequest(query string, index string) (int, error) {
 	return int(updatedFloat), nil
 }
 
-func UpdateByDocIDRequest(index string, docID string, newValue string, source string) error {
+func UpdateByDocIDRequest(index string, docID string, script string) error {
 	if !flagcheck() {
 		return nil
-	}
-	script := map[string]interface{}{
-		"script": map[string]interface{}{
-			"source": source,
-			"lang":   "painless",
-			"params": map[string]interface{}{
-				"value": newValue,
-			},
-		},
-	}
-	scriptBytes, err := json.Marshal(script)
-	if err != nil {
-		return err
 	}
 	updateReq := esapi.UpdateRequest{
 		Index:      index,
 		DocumentID: docID,
-		Body:       strings.NewReader(string(scriptBytes)),
+		Body:       strings.NewReader(script),
 	}
-
 	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
 		return err
 	}
+	logger.Info("Update response" + updateRes.String())
 	defer updateRes.Body.Close()
 	return nil
 }
@@ -180,7 +167,7 @@ func SearchRequest(index string, body string) []interface{} {
 		return nil
 	}
 	defer res.Body.Close()
-	// logger.Info(res.String())
+	logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		logger.Error("Error decoding response: " + err.Error())
@@ -188,7 +175,7 @@ func SearchRequest(index string, body string) []interface{} {
 	}
 	hits, ok := result["hits"].(map[string]interface{})
 	if !ok {
-		logger.Error("Hits not found in response")
+		logger.Error("Hits not found in response: "+ res.String())
 		return nil
 	}
 	hitsArray, ok := hits["hits"].([]interface{})
@@ -199,19 +186,19 @@ func SearchRequest(index string, body string) []interface{} {
 	return hitsArray
 }
 
-func DeleteByQueryRequest(field string, value string, ttype string) error {
+func DeleteByQueryRequest(deleteQuery string, ttype string) error {
 	if !flagcheck() {
 		return errors.New("elastic is not enabled")
 	}
-	deleteQuery := fmt.Sprintf(`
-	{
-		"query": {
-			"term": {
-				"%s": "%s"
-			}
-		}
-	}
-	`, field, value)
+	// deleteQuery := fmt.Sprintf(`
+	// {
+	// 	"query": {
+	// 		"term": {
+	// 			"%s": "%s"
+	// 		}
+	// 	}
+	// }
+	// `, field, value)
 	req := esapi.DeleteByQueryRequest{
 		Index: getIndexes(ttype),
 		Body:  strings.NewReader(deleteQuery),
@@ -230,7 +217,7 @@ func DeleteByQueryRequest(field string, value string, ttype string) error {
 		if err != nil {
 			return err
 		}
-		logger.Info("Deleted repeated data ("+field+"-"+value+"): ", zap.Any("message", responseJSON["deleted"]))
+		logger.Info("Deleted repeated data: ", zap.Any("message", responseJSON["deleted"]))
 
 		conflictCount := responseJSON["version_conflicts"].(float64)
 		if conflictCount != 0 {
@@ -256,6 +243,8 @@ func getIndexes(ttype string) []string {
 		for _, ind := range dbIndex {
 			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
 		}
+	case "Memory":
+		indexes = append(indexes, prefix+"_memory")
 	}
 	return indexes
 }

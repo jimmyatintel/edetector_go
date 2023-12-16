@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func Getriskscore(info Memory) (string, string, error) {
-	score := 0
+func Getriskscore(info Memory, initScore int) (string, string, error) {
+	score := initScore
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
 	// white list
 	whiteList, err := query.Load_white_list()
@@ -100,17 +100,17 @@ func Getriskscore(info Memory) (string, string, error) {
 		score = 0
 	}
 	level := scoretoLevel(score)
-	return level, strconv.Itoa(score), nil
+	return strconv.Itoa(level), strconv.Itoa(score), nil
 }
 
-func scoretoLevel(score int) string {
+func scoretoLevel(score int) int {
 	if score >= 150 {
-		return "3"
+		return 3
 	} else if score > 90 {
-		return "2"
+		return 2
 	} else if score > 30 {
-		return "1"
+		return 1
 	} else {
-		return "0"
+		return 0
 	}
 }

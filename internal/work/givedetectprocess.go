@@ -63,16 +63,33 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 						{ "term": { "processId": %s } },
 						{ "term": { "processCreateTime": %s } },
 						{ "term": { "processConnectIP": "true" } },
-						{ "term": { "mode": "detect" } }
+						{ "term": { "mode": "OnlyNetwork" } }
 					]
 				}
 			}
 		}`, p.GetRkey(), values[9], values[1])
 		hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+		score := 0.0
 		if len(hitsArray) == 0 {
 			values[16] = "detecting"
 		} else {
 			values[16] = "true"
+			hitMap, ok := hitsArray[0].(map[string]interface{})
+			if !ok {
+				logger.Error("Hit is not a map")
+				continue
+			}
+			source, ok := hitMap["_source"].(map[string]interface{})
+			if !ok {
+				logger.Error("source not found")
+				continue
+			}
+			score, ok = source["riskScore"].(float64)
+			if !ok {
+				logger.Error("riskScore not found")
+				continue
+			}
+			elastic.DeleteByQueryRequest(query, "Memory")
 			logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
 		}
 		uuid := uuid.NewString()
@@ -82,7 +99,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error converting to struct: " + err.Error())
 			return task.FAIL, err
 		}
-		values[17], values[18], err = Getriskscore(m_tmp)
+		values[17], values[18], err = Getriskscore(m_tmp, int(score))
 		if err != nil {
 			logger.Error("Error getting risk level: " + err.Error())
 			return task.FAIL, err

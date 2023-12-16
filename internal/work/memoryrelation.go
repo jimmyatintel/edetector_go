@@ -87,13 +87,33 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 					return
 				}
 			}
-			err := elastic.UpdateByDocIDRequest(index, docID, child, "ctx._source.child.add(params.value)")
+			script := fmt.Sprintf(`
+			{
+				"script": {
+					"source": "ctx._source.child.add(params.value)",
+					"lang": "painless",
+					"params": {
+						"value": "%s"
+					}
+				}
+			}`, child)
+			err := elastic.UpdateByDocIDRequest(index, docID, script)
 			if err != nil {
 				logger.Error("Error updating parent: " + err.Error())
 				return
 			}
 		} else if field == "child" {
-			err := elastic.UpdateByDocIDRequest(index, docID, "false", "ctx._source.isRoot = params.value")
+			script := `
+			{
+				"script": {
+					"source": "ctx._source.isRoot = params.value",
+					"lang": "painless",
+					"params": {
+						"value": "false"
+					}
+				}
+			}`
+			err := elastic.UpdateByDocIDRequest(index, docID, script)
 			if err != nil {
 				logger.Error("Error updating child: " + err.Error())
 				return

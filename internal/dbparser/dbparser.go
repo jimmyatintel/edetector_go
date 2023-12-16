@@ -11,6 +11,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -100,7 +101,16 @@ func terminateCollect() {
 }
 
 func dbParser(ctx context.Context, dbFile string, agent string) {
-	elastic.DeleteByQueryRequest("agent", agent, "StartCollect")
+	deleteQuery := fmt.Sprintf(`
+	{
+		"query": {
+			"term": {
+				"agent": "%s"
+			}
+		}
+	}
+	`, agent)
+	elastic.DeleteByQueryRequest(deleteQuery, "StartCollect")
 	time.Sleep(3 * time.Second) // wait for fully copy
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
