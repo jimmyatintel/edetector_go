@@ -4,6 +4,7 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 		}
 		// search for the detect process
 		index := config.Viper.GetString("ELASTIC_PREFIX") + "_memory"
-		searchQuery := fmt.Sprintf(`{
+		searchDetectQuery := fmt.Sprintf(`{
 			"query": {
 				"bool": {
 				  "must": [
@@ -34,8 +35,8 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		hitsArray := elastic.SearchRequest(index, searchQuery)
-		deleteQuery := fmt.Sprintf(`{
+		hitsDetectArray := elastic.SearchRequest(index, searchDetectQuery)
+		searchNetworkQuery := fmt.Sprintf(`{
 			"query": {
 				"bool": {
 				  "must": [
@@ -47,9 +48,18 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		elastic.DeleteByQueryRequest(deleteQuery, "Memory")
-		if len(hitsArray) == 0 { // detect process not exists
-			risklevel := scoretoLevel(malicious * 20)
+		hitsNetworktArray := elastic.SearchRequest(index, searchNetworkQuery)
+		previousScore := 0.0
+		if len(hitsNetworktArray) > 0 {
+			previousScore, _, err = getScore(hitsNetworktArray[0])
+			if err != nil {
+				logger.Error("Error getting score: " + err.Error())
+			}
+			elastic.DeleteByQueryRequest(searchNetworkQuery, "Memory")
+		}
+		if len(hitsDetectArray) == 0 { // detect process not exists
+			riskscore := int(previousScore) + malicious*20
+			risklevel := scoretoLevel(riskscore)
 			createBody := fmt.Sprintf(`
 			{
 				"agent": "%s",
@@ -59,40 +69,24 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"riskLevel": %d,
 				"riskScore": %d,
 				"mode": "detectNetwork"
-			}`, agent, id, time, risklevel, malicious*20)
+			}`, agent, id, time, risklevel, riskscore)
 			err := elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
 			if err != nil {
 				logger.Error("Error creating detect process: " + err.Error())
 				continue
 			}
 			logger.Debug("Create a new detect process: " + agent + "|" + id + "|" + time)
-		} else if len(hitsArray) > 0 { // update the detect process
-			if len(hitsArray) > 1 {
+		} else if len(hitsDetectArray) > 0 { // update the detect process
+			if len(hitsDetectArray) > 1 {
 				logger.Warn("More than one detect process: " + agent + "|" + id + "|" + time)
 			}
-			for _, hit := range hitsArray {
-				hitMap, ok := hit.(map[string]interface{})
-				if !ok {
-					logger.Error("Hit is not a map")
+			for _, hit := range hitsDetectArray {
+				score, docID, error := getScore(hit)
+				if error != nil {
+					logger.Error("Error getting score: " + error.Error())
 					continue
 				}
-				docID, ok := hitMap["_id"].(string)
-				if !ok {
-					logger.Error("docID not found")
-					continue
-				}
-				// get the risklevel of the detect process
-				source, ok := hitMap["_source"].(map[string]interface{})
-				if !ok {
-					logger.Error("source not found")
-					continue
-				}
-				score, ok := source["riskScore"].(float64)
-				if !ok {
-					logger.Error("riskScore not found")
-					continue
-				}
-				riskscore := int(score) + (malicious * 20)
+				riskscore := int(previousScore) + int(score) + (malicious * 20)
 				risklevel := scoretoLevel(riskscore)
 				script := fmt.Sprintf(`
 				{
@@ -113,4 +107,25 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 			}
 		}
 	}
+}
+
+func getScore(hit interface{}) (float64, string, error) {
+	hitMap, ok := hit.(map[string]interface{})
+	if !ok {
+		return 0, "", errors.New("hit is not a map")
+	}
+	docID, ok := hitMap["_id"].(string)
+	if !ok {
+		return 0, "", errors.New("docID not found")
+	}
+	// get the risklevel of the detect process
+	source, ok := hitMap["_source"].(map[string]interface{})
+	if !ok {
+		return 0, "", errors.New("source not found")
+	}
+	score, ok := source["riskScore"].(float64)
+	if !ok {
+		return 0, "", errors.New("riskScore not found")
+	}
+	return score, docID, nil
 }

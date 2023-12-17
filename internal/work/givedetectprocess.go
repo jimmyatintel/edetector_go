@@ -62,7 +62,6 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 						{ "term": { "agent": "%s" } },
 						{ "term": { "processId": %s } },
 						{ "term": { "processCreateTime": %s } },
-						{ "term": { "processConnectIP": "true" } },
 						{ "term": { "mode": "OnlyNetwork" } }
 					]
 				}
@@ -74,19 +73,9 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			values[16] = "detecting"
 		} else {
 			values[16] = "true"
-			hitMap, ok := hitsArray[0].(map[string]interface{})
-			if !ok {
-				logger.Error("Hit is not a map")
-				continue
-			}
-			source, ok := hitMap["_source"].(map[string]interface{})
-			if !ok {
-				logger.Error("source not found")
-				continue
-			}
-			score, ok = source["riskScore"].(float64)
-			if !ok {
-				logger.Error("riskScore not found")
+			score, _, err = getScore(hitsArray[0])
+			if err != nil {
+				logger.Error("Error getting score: " + err.Error())
 				continue
 			}
 			elastic.DeleteByQueryRequest(query, "Memory")
