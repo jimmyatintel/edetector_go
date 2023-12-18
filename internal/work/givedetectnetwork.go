@@ -82,7 +82,8 @@ func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) ([]st
 	}
 	malicious, total, err := virustotal.ScanIP(addr)
 	if err != nil {
-		return nil, errors.New("Error scanning ip: " + err.Error())
+		logger.Warn("Error scanning ip: " + err.Error())
+		return nil, nil
 	}
 	var modifiedStr string
 	if values[4] == "0" { // in -> i am dst

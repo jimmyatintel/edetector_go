@@ -73,11 +73,12 @@ Fixed Bugs:
 - Fix read buffer error
 - Close unused go routines
 
-### 1.0.3 (2023/12/11)
+### 1.0.3 (2023/12/18)
 Compatible Agent Version: Agent_1.0.5
 
 Enhancements:
-- Introduce virustotal
+- Introduce VirusTotal for network ip & process hash
+  - Update riskScoure using VirusTotal
 - Introduce FAT32
 - Log the error when the scan crashes because of the agent
 - Implement better terminate method for builder/parser
@@ -87,21 +88,12 @@ Enhancements:
 
 Fixed Bugs:
 - Fix the issue of Error storing log to database: Data too long for column 'content'
-- Fix the deadlock issues
+- Fix bugs of parser format
+- Fix the deadlock issues in rbconnector service
+- Connect MariaDB in rbconnector service
 - Change the log level of "Invalid line" from 'Warn' to 'Error'
 
-
-### 1.0.4
-Compatible Agent Version: Agent_1.0.?
-
-Enhancements:
-- Introduce VirusTotal for process hash
-- Update riskScoure using VirusTotal (process hash & network ip)
-
-Fixed Bugs:
-- 
-
-To-Do:
+Working in progress:
 - Implement feature flags
 
 ## Directory Structure

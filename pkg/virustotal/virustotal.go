@@ -42,7 +42,6 @@ func APIKeyExist() (bool, error) {
 }
 
 func ScanIP(ip string) (int, int, error) {
-	return -1, -1, nil
 	// check if api key exists
 	apikey, err := mq.LoadVTKey()
 	if err != nil {
@@ -70,6 +69,9 @@ func ScanIP(ip string) (int, int, error) {
 		return 0, 0, err
 	}
 	if res.StatusCode != 200 {
+		if res.StatusCode == 429 {
+			return 0, 0, fmt.Errorf("quota limit exceeded")
+		}
 		return 0, 0, fmt.Errorf("returned with status code %d", res.StatusCode)
 	}
 	defer res.Body.Close()
@@ -118,7 +120,6 @@ func ScanIP(ip string) (int, int, error) {
 }
 
 func ScanFile(hash string) (int, int, error) {
-	return -1, -1, nil
 	// check if api key exists
 	apikey, err := mq.LoadVTKey()
 	if err != nil {
@@ -136,22 +137,23 @@ func ScanFile(hash string) (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
+	if res.StatusCode != 200 {
+		if res.StatusCode == 429 {
+			return 0, 0, fmt.Errorf("quota limit exceeded")
+		}
+		return 0, 0, fmt.Errorf("returned with status code %d", res.StatusCode)
+	}
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
+	// fmt.Println(string(body))
+
 	var report map[string]interface{}
 	err = json.Unmarshal([]byte(body), &report)
 	if err != nil {
 		return 0, 0, err
 	}
-	reportData, ok := report["data"].(map[string]interface{})
-	if !ok {
-		return 0, 0, fmt.Errorf("data not found in response")
-	}
-	attributes, ok := reportData["attributes"].(map[string]interface{})
-	if !ok {
-		return 0, 0, fmt.Errorf("attributes not found in response")
-	}
-	stats, ok := attributes["last_analysis_stats"].(map[string]interface{})
+	fmt.Println(report)
+	stats, ok := report["data"].(map[string]interface{})["attributes"].(map[string]interface{})["last_analysis_stats"].(map[string]interface{})
 	if !ok {
 		return 0, 0, fmt.Errorf("last_analysis_stats not found in response")
 	}
@@ -204,6 +206,10 @@ func loadCache(ip string) (int, int, error) {
 	_, err = fmt.Sscanf(result, "%d|%d|%d", &malicious, &total, &timestamp)
 	if err != nil {
 		return 0, 0, err
+	}
+	// localhost
+	if timestamp == 0 {
+		return malicious, total, nil
 	}
 	// check if cache is expired (1 day)
 	if timestamp+86400 < int(time.Now().Unix()) {
