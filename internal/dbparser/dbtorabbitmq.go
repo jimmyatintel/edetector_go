@@ -68,6 +68,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			values[10] = RFCToTimestamp(values[10])
 			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &ChromeCache{})
 		case "ChromeDownload":
+			values[11] = toBoolean(values[11])
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{})
 		case "ChromeHistory":
 			err = toRabbitMQ(index, agent, values, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{})
@@ -174,10 +175,9 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 }
 
 func toBoolean(b string) string {
-	if b == "No" {
-		return "0"
-	} else if b == "Yes" {
+	if b == "Yes" {
 		return "1"
+	} else {
+		return "0"
 	}
-	return b
 }
