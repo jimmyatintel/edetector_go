@@ -73,9 +73,6 @@ Fixed Bugs:
 - Fix read buffer error
 - Close unused go routines
 
-To-Do:
-- Implement feature flags
-
 ### 1.0.3 (2023/12/11)
 Compatible Agent Version: Agent_1.0.5
 
@@ -92,6 +89,17 @@ Fixed Bugs:
 - Fix the issue of Error storing log to database: Data too long for column 'content'
 - Fix the deadlock issues
 - Change the log level of "Invalid line" from 'Warn' to 'Error'
+
+
+### 1.0.4
+Compatible Agent Version: Agent_1.0.?
+
+Enhancements:
+- Introduce VirusTotal for process hash
+- Update riskScoure using VirusTotal (process hash & network ip)
+
+Fixed Bugs:
+- 
 
 To-Do:
 - Implement feature flags
