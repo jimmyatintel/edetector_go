@@ -83,6 +83,7 @@ const (
 	START_UPDATE            UserTaskType = "StartUpdate"
 	TERMINATE               UserTaskType = "Terminate"
 	START_REMOVE            UserTaskType = "StartRemove"
+	START_MEMORY_TREE       UserTaskType = "StartMemoryTree"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
@@ -146,6 +147,7 @@ var UserWorklist = []UserTaskType{
 	START_GET_IMAGE,
 	START_UPDATE,
 	START_REMOVE,
+	START_MEMORY_TREE,
 	TERMINATE,
 	USER_UNDEFINE,
 }

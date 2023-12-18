@@ -57,6 +57,8 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "ARPCache":
 			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[2], &ARPCache{})
 		case "BaseService":
+			values[14] = toBoolean(values[14])
+			values[15] = toBoolean(values[15])
 			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &BaseService{})
 		case "ChromeBookmarks":
 			err = toRabbitMQ(index, agent, values, values[4], values[6], "website_bookmark", values[3], &ChromeBookmarks{})
@@ -105,7 +107,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "IEHistory":
 			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &IEHistory{})
 		case "InstalledSoftware":
-			values[3] = RFCToTimestamp(values[3])
+			values[3] = DigitToTimestamp(values[3])
 			err = toRabbitMQ(index, agent, values, values[0], values[17], "network_record", values[6], &InstalledSoftware{})
 		case "JumpList":
 			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[1], &JumpList{})
@@ -126,6 +128,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "Service":
 			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &Service{})
 		case "Shortcuts":
+			values[7] = toBoolean(values[7])
 			err = toRabbitMQ(index, agent, values, values[0], values[10], "document", values[2], &Shortcuts{})
 		case "StartRun":
 			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[1], &StartRun{})
@@ -136,6 +139,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "UserAssist":
 			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[2], &UserAssist{})
 		case "UserProfiles":
+			values[3] = toBoolean(values[3])
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[2], &UserProfiles{})
 		case "WindowsActivity":
 			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &WindowsActivity{})
@@ -167,4 +171,13 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 		return err
 	}
 	return nil
+}
+
+func toBoolean(b string) string {
+	if b == "No" {
+		return "0"
+	} else if b == "Yes" {
+		return "1"
+	}
+	return b
 }

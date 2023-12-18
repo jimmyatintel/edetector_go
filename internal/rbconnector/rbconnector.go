@@ -1,10 +1,12 @@
 package rbconnector
+
 //TBD
 import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"fmt"
@@ -41,6 +43,13 @@ func connector_init() {
 	if true {
 		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "connector", "CONNECTOR")
 		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("CONNECTOR_LOG_FILE"))
+	}
+	connString, err := mariadb.Connect_init()
+	if err != nil {
+		logger.Panic("Error connecting to mariadb: " + err.Error())
+		panic(err)
+	} else {
+		logger.Info("Mariadb connectionString: " + connString)
 	}
 	if true {
 		elastic.Elastic_init()
@@ -150,10 +159,12 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error("Bulk index request error: " + err.Error())
+				time.Sleep(10 * time.Second)
+			} else {
+				*bulkdata = nil
+				*bulkaction = nil
+				last_send = time.Now()
 			}
-			*bulkdata = nil
-			*bulkaction = nil
-			last_send = time.Now()
 		}
 		mutex.Unlock()
 		time.Sleep(100 * time.Millisecond)
