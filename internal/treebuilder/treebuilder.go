@@ -203,11 +203,11 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			values = append(values, RelationMap[child].Path)
 			values = append(values, diskInfo)
 			if d := strings.Split(diskInfo, "|"); len(d) > 1 {
-				if d[1] == "FAT32" {
+				if d[1] == "NTFS" {
+					values = append(values, "")
+				} else {
 					values = append(values, values[6])
 					values[6] = "0"
-				} else if d[1] == "NTFS" {
-					values = append(values, "")
 				}
 			}
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")

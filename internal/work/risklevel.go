@@ -103,7 +103,7 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 	// virus total
 	maliciluos, total, err := virustotal.ScanFile(info.ProcessMD5)
 	if err != nil {
-		logger.Error("Error getting virustotal: " + err.Error())
+		logger.Warn("Error getting virustotal: " + err.Error())
 	} else {
 		if maliciluos > 0 {
 			score += maliciluos * 20

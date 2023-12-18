@@ -286,7 +286,7 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		}
 		malicious, total, err = virustotal.ScanIP(otherIP)
 		if err != nil {
-			logger.Error("Error getting virustotal: " + err.Error())
+			logger.Warn("Error getting virustotal: " + err.Error())
 		}
 		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" +
 			actionAndTime[0] + "|" + direction + "|scan|" +
