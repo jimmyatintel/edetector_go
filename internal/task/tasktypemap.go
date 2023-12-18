@@ -31,6 +31,7 @@ func init() {
 		START_GET_IMAGE:    "StartGetImage",
 		START_UPDATE:       "StartUpdate",
 		START_REMOVE:       "StartRemove",
+		START_MEMORY_TREE:  "StartMemoryTree",
 		TERMINATE:          "Terminate",
 	}
 }

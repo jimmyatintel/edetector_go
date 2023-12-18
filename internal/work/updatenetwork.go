@@ -4,6 +4,7 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"errors"
 	"fmt"
 	"strconv"
@@ -60,6 +61,11 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 		if len(hitsDetectArray) == 0 { // detect process not exists
 			riskscore := int(previousScore) + malicious*20
 			risklevel := scoretoLevel(riskscore)
+			ip, name, err := query.GetMachineIPandName(agent)
+			if err != nil {
+				logger.Error("Error getting agent ip and name: " + err.Error())
+				continue
+			}
 			createBody := fmt.Sprintf(`
 			{
 				"agent": "%s",
@@ -68,9 +74,12 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"processConnectIP": "true",
 				"riskLevel": %d,
 				"riskScore": %d,
+				"processName": "Unknown",
+				"agentIP": %s,
+				"agentName": "%s",
 				"mode": "detectNetwork"
-			}`, agent, id, time, risklevel, riskscore)
-			err := elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
+			}`, agent, id, time, risklevel, riskscore, ip, name)
+			err = elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
 			if err != nil {
 				logger.Error("Error creating detect process: " + err.Error())
 				continue
