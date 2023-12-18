@@ -152,7 +152,7 @@ func ScanFile(hash string) (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	fmt.Println(report)
+	// logger.Debug("VirusTotal report: " + fmt.Sprintf("%v", report))
 	stats, ok := report["data"].(map[string]interface{})["attributes"].(map[string]interface{})["last_analysis_stats"].(map[string]interface{})
 	if !ok {
 		return 0, 0, fmt.Errorf("last_analysis_stats not found in response")

@@ -10,7 +10,6 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -82,7 +81,7 @@ func high_speed() {
 	}
 	logger.Info("Connected to high speed queue")
 	for msg := range msgs {
-		log.Printf("Received a message: %s", msg.Body)
+		logger.Info("Received a message: " + string(msg.Body))
 		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {

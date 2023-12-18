@@ -143,7 +143,7 @@ func GetValuesForKeys(keys []string) map[string]string {
 	for _, key := range keys {
 		value, err := RedisClient.Get(context.Background(), key).Result()
 		if err != nil {
-			fmt.Println("Error getting value from redis:", err)
+			logger.Error("Error getting value from redis: " + err.Error())
 		} else {
 			values[key] = value
 		}
