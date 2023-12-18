@@ -17,6 +17,7 @@ func init() {
 		task.START_GET_IMAGE:    StartGetImage,
 		task.START_UPDATE:       StartUpdate,
 		task.START_REMOVE:       StartRemove,
+		task.START_MEMORY_TREE:  StartMemoryTree,
 		task.TERMINATE:          Terminate,
 	}
 }
