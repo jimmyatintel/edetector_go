@@ -1,32 +1,28 @@
 package work
 
 import (
+	"edetector_go/config"
+	"edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
-	"edetector_go/internal/file"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
-	taskservice "edetector_go/internal/taskservice"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"errors"
-	"path/filepath"
 	"strconv"
+	"time"
+
+	"path/filepath"
 
 	"net"
-	"strings"
-	"sync"
-
-	"go.uber.org/zap"
 )
 
-var driveMu sync.Mutex
-var ExplorerTotalMap = make(map[string]int)
-
-var explorerCountMap = make(map[string]int)
-var driveProgressMap = make(map[string]int)
-var diskMap = make(map[string]string)
 var fileWorkingPath = "fileWorking"
 var fileUnstagePath = "fileUnstage"
+var explorerFirstPart float64
+var explorerSecondPart float64
 
 func init() {
 	file.CheckDir(fileWorkingPath)
@@ -35,32 +31,49 @@ func init() {
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("Explorer: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	parts := strings.Split(p.GetMessage(), "|")
-	if len(parts) == 4 {
-		total, err := strconv.Atoi(parts[1])
-		if err != nil {
-			return task.FAIL, err
-		}
-		ExplorerTotalMap[key] = total
-		diskMap[key] = parts[2]
-		// create or truncate the db file
-		path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
-		err = file.CreateFile(path)
-		if err != nil {
-			return task.FAIL, err
-		}
-	} else {
-		err := errors.New("invalid msg format")
+	logger.Info("Explorer: " + key + "::" + p.GetMessage())
+	explorerFirstPart = float64(config.Viper.GetInt("EXPLORER_FIRST_PART"))
+	explorerSecondPart = 90 - explorerFirstPart
+	redis.RedisSet(key+"-Disk", p.GetMessage())
+	// create or truncate the zip file
+	path := filepath.Join(fileWorkingPath, (key + "." + p.GetMessage()))
+	err := file.CreateFile(path)
+	if err != nil {
 		return task.FAIL, err
 	}
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	return task.SUCCESS, nil
+}
+
+func GiveExplorerProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Debug("GiveExplorerProgress: " + key + "::" + p.GetMessage())
+	// update progress
+	progress, err := getProgressByMsg(p.GetMessage(), explorerFirstPart)
+	if err != nil {
+		return task.FAIL, err
+	}
+	redis.RedisSet(key+"-ExplorerProgress", progress)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveExplorerInfo: " + key + "::" + p.GetMessage())
+	total, err := strconv.Atoi(p.GetMessage())
+	if err != nil {
+		return task.FAIL, err
+	}
+	redis.RedisSet(key+"-ExplorerTotal", total)
+	redis.RedisSet(key+"-ExplorerCount", 0)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -69,32 +82,20 @@ func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerData: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-
-	path := filepath.Join(fileWorkingPath, (key + "-" + diskMap[key] + ".txt"))
-	err := file.WriteFile(path, []byte(p.GetMessage()))
+	logger.Debug("GiveExplorerData: " + key)
+	// write file
+	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk")))
+	content := getDataPacketContent(p)
+	err := file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}
-
 	// update progress
-	parts := strings.Split(p.GetMessage(), "|")
-	count, err := strconv.Atoi(parts[0])
-	if err != nil {
-		return task.FAIL, err
-	}
-	explorerCountMap[key] = count
-	driveMu.Lock()
-	driveProgressMap[key] = int(((float64(driveCountMap[key]) / float64(driveTotalMap[key])) + (float64(explorerCountMap[key]) / float64(ExplorerTotalMap[key]) / float64(driveTotalMap[key]))) * 100)
-	driveMu.Unlock()
+	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
+	progress := int(explorerFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 65426, explorerSecondPart)
+	redis.RedisSet(key+"-ExplorerProgress", progress)
 
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -103,57 +104,55 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveExplorerEnd: ", zap.Any("message", key+", Msg: "+p.GetMessage()))
-	filename := key + "-" + diskMap[key]
-	path := filepath.Join(fileWorkingPath, (filename + ".txt"))
-	err := file.TruncateFile(path, ExplorerTotalMap[key])
-	if err != nil {
-		return task.FAIL, err
-	}
-	err = file.MoveFile(filepath.Join(fileWorkingPath, (filename+".txt")), filepath.Join(fileUnstagePath, (filename+".txt")))
-	if err != nil {
-		return task.FAIL, err
-	}
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
-	}
-	err = clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
-	<-user_explorer[key]
-	return task.SUCCESS, nil
-}
+	logger.Info("GiveExplorerEnd: " + key + "::" + p.GetMessage())
 
-func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveExplorerError: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "",
+	filename := key + "." + redis.RedisGetString(key+"-Disk")
+	srcPath := filepath.Join(fileWorkingPath, filename)
+	workPath := filepath.Join(fileWorkingPath, filename+".txt")
+	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
+	// unzip data
+	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
+	if err != nil {
+		return task.FAIL, err
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	// move to Unstage
+	err = file.MoveFile(workPath, unstagePath)
+	if err != nil {
+		return task.FAIL, err
+	}
+	inject_chan, err := channelmap.GetDiskChannel(key)
+	if err != nil {
+		return task.FAIL, err
+	}
+	<-inject_chan
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
 	return task.SUCCESS, nil
 }
 
-func driveProgress(clientid string) {
+func GiveExplorerError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Error("GiveExplorerError: " + p.GetRkey() + "::" + p.GetMessage())
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.FAIL, errors.New(p.GetMessage())
+}
+
+func updateDriveProgress(key string) {
 	for {
-		driveMu.Lock()
-		if driveProgressMap[clientid] >= 100 {
-			break
+		result, err := query.Load_stored_task("nil", key, 2, "StartGetDrive")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
 		}
-		rowsAffected := query.Update_progress(driveProgressMap[clientid], clientid, "StartGetDrive")
-		driveMu.Unlock()
-		if rowsAffected != 0 {
-			go taskservice.RequestToUser(clientid)
+		if len(result) == 0 {
+			return
 		}
-
+		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
+		query.Update_progress(driveProgress, key, "StartGetDrive")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

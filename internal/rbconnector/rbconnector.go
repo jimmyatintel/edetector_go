@@ -1,9 +1,8 @@
 package rbconnector
-
+//TBD
 import (
 	"context"
 	"edetector_go/config"
-	"edetector_go/internal/fflag"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/rabbitmq"
@@ -15,14 +14,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 )
-
-type Message struct {
-	Index string `json:"index"`
-	Data  string `json:"data"`
-}
 
 var mid_mutex *sync.Mutex
 var low_mutex *sync.Mutex
@@ -35,31 +27,30 @@ var low_bulkaction []string
 func connector_init() {
 	mid_mutex = &sync.Mutex{}
 	low_mutex = &sync.Mutex{}
-	fflag.Get_fflag()
-	if fflag.FFLAG == nil {
-		logger.Error("Error loading feature flag")
-		return
-	}
-	vp := config.LoadConfig()
+
+	// fflag.Get_fflag()
+	// if fflag.FFLAG == nil {
+	// 	logger.Panic("Error loading feature flag")
+	// 	panic("error loading feature flag")
+	// }
+	vp, err := config.LoadConfig()
 	if vp == nil {
-		logger.Error("Error loading config file")
-		return
+		logger.Panic("Error loading config file: " + err.Error())
+		panic(err)
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("logger_enable"); enable && err == nil {
-		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"))
-		logger.Info("logger is enabled please check all out info in log file: ", zap.Any("message", config.Viper.GetString("CONNECTOR_LOG_FILE")))
+	if true {
+		logger.InitLogger(config.Viper.GetString("CONNECTOR_LOG_FILE"), "connector", "CONNECTOR")
+		logger.Info("Logger is enabled please check all out info in log file: " + config.Viper.GetString("CONNECTOR_LOG_FILE"))
 	}
-	if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-		err := elastic.SetElkClient()
-		if err != nil {
-			logger.Error("Error connecting to elastic: " + err.Error())
-		}
-		logger.Info("elastic is enabled.")
+	if true {
+		elastic.Elastic_init()
+		logger.Info("Elastic is enabled.")
 	}
 }
 
-func Start() {
+func Start(version string) {
 	connector_init()
+	logger.Info("Welcome to edetector connector: " + version)
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()
@@ -75,7 +66,7 @@ func Start() {
 }
 
 func high_speed() {
-	msgs, err := rabbitmq.Consume("ed_high")
+	msgs, err := rabbitmq.Consume("ed_high", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("High speed consumer error: " + err.Error())
 		return
@@ -83,22 +74,23 @@ func high_speed() {
 	logger.Info("Connected to high speed queue")
 	for msg := range msgs {
 		log.Printf("Received a message: %s", msg.Body)
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		err = elastic.IndexRequest(m.Index, m.Data)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Index request error: " + err.Error())
 			continue
 		}
+		msg.Ack(false)
 	}
 }
 
 func mid_speed() {
-	msgs, err := rabbitmq.Consume("ed_mid")
+	msgs, err := rabbitmq.Consume("ed_mid", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("Mid speed consumer error: " + err.Error())
 		return
@@ -106,24 +98,25 @@ func mid_speed() {
 	logger.Info("Connected to mid speed queue")
 	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		mid_mutex.Lock()
 		mid_bulkdata = append(mid_bulkdata, m.Data)
 		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		mid_mutex.Unlock()
-		for len(mid_bulkaction) > config.Viper.GetInt("MID_TUNNEL_SIZE") {
-			time.Sleep(3 * time.Second)
+		msg.Ack(false)
+		for len(mid_bulkaction) > (config.Viper.GetInt("MID_TUNNEL_SIZE") * 2) {
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
 
 func low_speed() {
-	msgs, err := rabbitmq.Consume("ed_low")
+	msgs, err := rabbitmq.Consume("ed_low", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("Low speed consumer error: " + err.Error())
 		return
@@ -131,18 +124,19 @@ func low_speed() {
 	logger.Info("Connected to low speed queue")
 	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
-		var m Message
+		var m rabbitmq.Message
 		err := json.Unmarshal(msg.Body, &m)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
 		low_mutex.Lock()
 		low_bulkdata = append(low_bulkdata, m.Data)
 		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
 		low_mutex.Unlock()
-		for len(low_bulkaction) > config.Viper.GetInt("LOW_TUNNEL_SIZE") {
-			time.Sleep(3 * time.Second)
+		msg.Ack(false)
+		for len(low_bulkaction) > (config.Viper.GetInt("LOW_TUNNEL_SIZE") * 2) {
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
@@ -155,14 +149,13 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
 			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
 			if err != nil {
-				logger.Error(err.Error())
-				continue
+				logger.Error("Bulk index request error: " + err.Error())
 			}
 			*bulkdata = nil
 			*bulkaction = nil
 			last_send = time.Now()
 		}
 		mutex.Unlock()
-		time.Sleep(3 * time.Second)
+		time.Sleep(100 * time.Millisecond)
 	}
 }

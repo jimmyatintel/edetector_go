@@ -1,70 +1,34 @@
 package dbparser
 
 import (
+	"edetector_go/pkg/logger"
 	"fmt"
-	"strings"
 	"time"
 )
 
-func convertTime(tableName string, line string) string {
-	values := strings.Split(line, "@|@")
-	switch tableName {
-	case "EdgeCache":
-		// parse to unix timestamp
-		RFCToTimestamp(&values)
-		line = strings.Join(values[:], "@|@")
-		return line
-	case "InstalledSoftware":
-		DigitToTimestamp(&values)
-		line = strings.Join(values[:], "@|@")
-		return line
-
-	default:
-		return line
+func RFCToTimestamp(original string) string {
+	if original == "0" {
+		return "0"
 	}
+	layout := "Mon, 02 Jan 2006 15:04:05 GMT"
+	t, err := time.Parse(layout, original)
+	if err != nil {
+		logger.Error("Error parsing time: " + err.Error())
+		return "0"
+	}
+	return fmt.Sprintf("%d", t.Unix())
 }
 
-func RFCToTimestamp(values *[]string) {
-	date := (*values)[8]
-	expires := (*values)[9]
-	last_modified := (*values)[10]
-	layout := "Mon, 02 Jan 2006 15:04:05 MST"
-
-	t1, err1 := time.Parse(layout, date)
-	if err1 == nil {
-		date = fmt.Sprintf("%d", t1.Unix())
-		(*values)[8] = date
+func DigitToTimestamp(original string) string {
+	if original == "0" {
+		return "0"
 	}
-
-	t2, err2 := time.Parse(layout, expires)
-	if err2 == nil {
-		expires = fmt.Sprintf("%d", t2.Unix())
-		(*values)[9] = expires
-	}
-
-	t3, err3 := time.Parse(layout, last_modified)
-	if err3 == nil {
-		last_modified = fmt.Sprintf("%d", t3.Unix())
-		(*values)[10] = last_modified
-	}
-}
-
-func DigitToTimestamp(values *[]string) {
-	date := (*values)[3]
-	date = date + "000000"
+	original = original + "000000"
 	layout := "20060102150405"
-
-	t, err := time.Parse(layout, date)
+	t, err := time.Parse(layout, original)
 	if err != nil {
-		return
+		logger.Error("Error parsing time: " + err.Error())
+		return "0"
 	}
-	location, err := time.LoadLocation("MST")
-	if err != nil {
-		return
-	}
-	t = t.In(location)
-	// 	outputFormat := "2006-01-02 15:04:05 MST"
-	// 	formattedDateTime := t.Format(outputFormat)
-	installdate := fmt.Sprintf("%d", t.Unix())
-	(*values)[3] = installdate
+	return fmt.Sprintf("%d", t.Unix())
 }

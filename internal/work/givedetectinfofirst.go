@@ -6,22 +6,19 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
+	"edetector_go/pkg/request"
 	"net"
-
-	"go.uber.org/zap"
 )
 
 func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
 	// front process back netowork
-	logger.Info("GiveDetectInfoFirst: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectInfoFirst: " + key + "::" + p.GetMessage())
+	redis.RedisSet(key+"-DetectMsg", "")
 	rt := query.First_detect_info(p.GetRkey(), p.GetMessage())
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.UPDATE_DETECT_MODE,
-		Message:    rt,
-	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
+	request.RequestToUser(key) // online
+	err := clientsearchsend.SendTCPtoClient(p, task.UPDATE_DETECT_MODE, rt, conn)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -29,6 +26,6 @@ func GiveDetectInfoFirst(p packet.Packet, conn net.Conn) (task.TaskResult, error
 }
 
 func GiveDetectInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDetectInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
+	logger.Info("GiveDetectInfo: " + p.GetRkey() + "::" + p.GetMessage())
 	return task.SUCCESS, nil
 }

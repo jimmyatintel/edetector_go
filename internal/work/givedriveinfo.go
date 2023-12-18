@@ -1,28 +1,27 @@
 package work
 
 import (
-	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
+	"fmt"
 
 	"net"
-
-	"go.uber.org/zap"
 )
 
 func GiveDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	logger.Info("GiveDriveInfo: ", zap.Any("message", p.GetRkey()+", Msg: "+p.GetMessage()))
-	var send_packet = packet.WorkPacket{
-		MacAddress: p.GetMacAddress(),
-		IpAddress:  p.GetipAddress(),
-		Work:       task.DATA_RIGHT,
-		Message:    "null",
+	logger.Info("GiveDriveInfo: " + p.GetRkey() + "::" + p.GetMessage())
+	deleteQuery := fmt.Sprintf(`
+	{
+		"query": {
+			"term": {
+				"agent": "%s"
+			}
+		}
 	}
-	err := clientsearchsend.SendTCPtoClient(send_packet.Fluent(), conn)
-	if err != nil {
-		return task.FAIL, err
-	}
+	`, p.GetRkey())
+	elastic.DeleteByQueryRequest(deleteQuery, "StartGetDrive")
 	go HandleExpolorer(p)
 	return task.SUCCESS, nil
 }

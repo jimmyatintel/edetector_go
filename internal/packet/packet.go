@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"edetector_go/internal/task"
+	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"net"
@@ -51,7 +52,7 @@ type TaskPacket struct {
 	// Packet is a struct that contains the packet data
 	Key     string            `json:"key"`
 	Work    task.UserTaskType `json:"work"`
-	User    string            `json:"user"`
+	User    int               `json:"user"`
 	Message string            `json:"message"`
 	Data    []byte            `json:"data"`
 }
@@ -71,7 +72,6 @@ func CheckIsData(p Packet) DataPacket {
 	return *NewPacket
 }
 
-// commit
 func (p *WorkPacket) NewPacket(data []byte, buf []byte) error {
 	error := errors.New("invalid data packet")
 	nullIndex := bytes.IndexByte(data[0:20], 0)
@@ -103,6 +103,7 @@ func (p *WorkPacket) NewPacket(data []byte, buf []byte) error {
 	}
 	return nil
 }
+
 func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	error := errors.New("invalid data packet")
 	nullIndex := bytes.IndexByte(data[0:20], 0)
@@ -135,13 +136,13 @@ func (p *DataPacket) NewPacket(data []byte, buf []byte) error {
 	p.Raw_data = buf
 	return nil
 }
+
 func (p *TaskPacket) NewPacket(data []byte) error {
 	err := json.Unmarshal(data, p)
 	if err != nil {
 		return err
 	}
 	p.Work = task.UserTaskType(p.Work)
-
 	// fmt.Println("parse: ", string(p.Key), string(p.Work), string(p.User), string(p.Message))
 	return nil
 }
@@ -169,6 +170,8 @@ func ljust(s string, width int, fillChar string) []byte {
 	data = append(data, []byte(strings.Repeat(string(fillChar), width-len(s)-1))...)
 	return data
 }
+
+// To-do (unnecessary)
 func (p *WorkPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
@@ -178,22 +181,25 @@ func (p *WorkPacket) Fluent() []byte {
 	data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
+
+// To-do (unnecessary)
 func (p *DataPacket) Fluent() []byte {
 	data := []byte("")
 	data = append(data, ljust(p.MacAddress, 20, " ")...)
 	data = append(data, ljust(p.IpAddress, 20, " ")...)
 	data = append(data, ljust(p.Rkey, 36, " ")...)
 	data = append(data, ljust(string(p.Work), 24, " ")...)
-	// data = append(data, ljust(p.Message, 65436, " ")...)
-	data = append(data, ljust(p.Message, 924, " ")...)
+	data = append(data, ljust(p.Message, 65436, " ")...)
+	// data = append(data, ljust(p.Message, 924, " ")...)
 	return data
 }
+
 func (p *TaskPacket) Fluent() []byte {
-	data := []byte("")
-	data = append(data, ljust(p.Key, 32, " ")...)
-	data = append(data, ljust(string(p.Work), 24, " ")...)
-	data = append(data, ljust(p.User, 20, " ")...)
-	data = append(data, ljust(p.Message, 948, " ")...)
+	data, err := json.Marshal(p)
+	if err != nil {
+		logger.Error("json.Marshal error: " + err.Error())
+		return nil
+	}
 	return data
 }
 func (p *WorkPacket) GetMessage() string {

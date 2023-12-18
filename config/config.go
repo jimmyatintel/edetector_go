@@ -7,9 +7,12 @@ import (
 var Viper *viper.Viper
 
 // Config is a struct that holds the configuration for the application
-func LoadConfig() *viper.Viper {
+func LoadConfig() (*viper.Viper, error) {
 	vp := viper.New()
 	vp.AutomaticEnv()
+	if err := vp.ReadInConfig(); err != nil {
+		return nil, err
+	}
 	Viper = vp
-	return vp
+	return vp, nil
 }

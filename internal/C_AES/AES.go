@@ -4,7 +4,9 @@ package C_AES
 // #include <stdlib.h>
 // #include "warp_AES.hxx"
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 func Decryptbuffer(cipherText []byte, size int, out []byte) {
 	cChars := (*C.char)(C.malloc(C.size_t(size) * C.sizeof_char))

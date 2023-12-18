@@ -4,6 +4,10 @@ import (
 	server "edetector_go/internal/server"
 )
 
+var version string
+
 func main() {
-	server.Main()
+	// go pprof.Pprof_service()
+	server.Main(version, nil)
+	// stop.Stop()
 }

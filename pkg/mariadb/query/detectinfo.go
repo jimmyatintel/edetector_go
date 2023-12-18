@@ -11,7 +11,7 @@ import (
 func First_detect_info(KeyNum string, message string) string {
 	res, err := mariadb.DB.Query("SELECT EXISTS(SELECT * FROM client_setting WHERE client_id = ?)", KeyNum)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error("Error first detect info query: " + err.Error())
 		return ""
 	}
 	defer res.Close()
@@ -19,7 +19,7 @@ func First_detect_info(KeyNum string, message string) string {
 	for res.Next() {
 		err := res.Scan(&check)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error scan:" + err.Error())
 			return ""
 		}
 	}
@@ -33,13 +33,13 @@ func First_detect_info(KeyNum string, message string) string {
 			KeyNum, data_splited[1], data_splited[0], KeyNum,
 		)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error insert client_setting: " + err.Error())
 		}
 		return message
 	} else {
 		res2, err := mariadb.DB.Query("SELECT networkreport, processreport FROM client_setting WHERE client_id=?", KeyNum)
 		if err != nil {
-			logger.Error(err.Error())
+			logger.Error("Error select client_setting: " + err.Error())
 			return ""
 		}
 		defer res2.Close()
@@ -48,11 +48,10 @@ func First_detect_info(KeyNum string, message string) string {
 		for res2.Next() {
 			err := res2.Scan(&network, &process)
 			if err != nil {
-				logger.Error(err.Error())
+				logger.Error("Error scan: " + err.Error())
 				return ""
 			}
 		}
 		return strconv.Itoa(process) + "|" + strconv.Itoa(network)
 	}
-
 }
