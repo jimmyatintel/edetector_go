@@ -54,8 +54,13 @@ func CreateIndex(name string) {
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
 		logger.Error("Error creating index: " + err.Error())
+		return
 	}
 	defer res.Body.Close()
+	if res.IsError() {
+		logger.Error("Error creating index: " + res.String())
+		return
+	}
 	logger.Info("Created index: " + res.String())
 }
 
@@ -72,6 +77,9 @@ func IndexRequest(name string, body string) error {
 		return err
 	}
 	defer res.Body.Close()
+	if res.IsError() {
+		return errors.New("Error indexing: " + res.String())
+	}
 	logger.Debug("Index request: " + res.String())
 	return nil
 }
@@ -95,11 +103,14 @@ func BulkIndexRequest(action []string, work []string) error {
 		return err
 	}
 	defer res.Body.Close()
+	if res.IsError() {
+		return errors.New("Error BulkIndexRequest: " + res.String())
+	}
 	output := res.String()
 	if output[:8] == "[200 OK]" {
 		logger.Info("BulkIndexRequest Res: " + output[:100])
 	} else {
-		return errors.New("Error BulkIndexRequest Res: " + output[:100])
+		return errors.New("Error BulkIndexRequest Res: " + output[:500])
 	}
 	return nil
 }
@@ -118,7 +129,7 @@ func UpdateByQueryRequest(query string, index string) (int, error) {
 	}
 	defer updateRes.Body.Close()
 	if updateRes.IsError() {
-		return 0, errors.New(updateRes.String())
+		return 0, errors.New("Error UpdateByQueryRequest:" + updateRes.String())
 	}
 	var updateResponse map[string]interface{}
 	if err := json.NewDecoder(updateRes.Body).Decode(&updateResponse); err != nil {
@@ -148,8 +159,11 @@ func UpdateByDocIDRequest(index string, docID string, script string) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("Update response" + updateRes.String())
 	defer updateRes.Body.Close()
+	if updateRes.IsError() {
+		return errors.New("Error UpdateByDocIDRequest:" + updateRes.String())
+	}
+	logger.Debug("Update response" + updateRes.String())
 	return nil
 }
 
@@ -167,7 +181,11 @@ func SearchRequest(index string, body string) []interface{} {
 		return nil
 	}
 	defer res.Body.Close()
-	logger.Info(res.String())
+	if res.IsError() {
+		logger.Error("Error SearchRequest: " + res.String())
+		return nil
+	}
+	// logger.Info(res.String())
 	var result map[string]interface{}
 	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 		logger.Error("Error decoding response: " + err.Error())
@@ -175,7 +193,7 @@ func SearchRequest(index string, body string) []interface{} {
 	}
 	hits, ok := result["hits"].(map[string]interface{})
 	if !ok {
-		logger.Error("Hits not found in response: "+ res.String())
+		logger.Error("Hits not found in response: " + res.String())
 		return nil
 	}
 	hitsArray, ok := hits["hits"].([]interface{})
@@ -208,9 +226,8 @@ func DeleteByQueryRequest(deleteQuery string, ttype string) error {
 		return err
 	}
 	defer res.Body.Close()
-
 	if res.IsError() {
-		return errors.New("error response")
+		return errors.New("Error DeleteByQueryRequest:" + res.String())
 	} else {
 		var responseJSON map[string]interface{}
 		err := json.NewDecoder(res.Body).Decode(&responseJSON)

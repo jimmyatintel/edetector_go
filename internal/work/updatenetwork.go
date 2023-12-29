@@ -75,7 +75,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"riskLevel": %d,
 				"riskScore": %d,
 				"processName": "Unknown",
-				"agentIP": %s,
+				"agentIP": "%s",
 				"agentName": "%s",
 				"mode": "detectNetwork"
 			}`, agent, id, time, risklevel, riskscore, ip, name)
