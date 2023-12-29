@@ -62,7 +62,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 						{ "term": { "agent": "%s" } },
 						{ "term": { "processId": %s } },
 						{ "term": { "processCreateTime": %s } },
-						{ "term": { "mode": "OnlyNetwork" } }
+						{ "term": { "mode": "detectNetwork" } }
 					]
 				}
 			}

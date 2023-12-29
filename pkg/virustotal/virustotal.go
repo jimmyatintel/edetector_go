@@ -120,6 +120,7 @@ func ScanIP(ip string) (int, int, error) {
 }
 
 func ScanFile(hash string) (int, int, error) {
+	return -1, -1, nil
 	// check if api key exists
 	apikey, err := mq.LoadVTKey()
 	if err != nil {

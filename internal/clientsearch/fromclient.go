@@ -39,8 +39,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			return
 		}
 		if reqLen < 1024 {
-			logger.Error("Invalid packet (too short): " + string(buf[:100]))
-			logger.Debug("Content: " + string(buf[:reqLen]))
+			logger.Error("Invalid packet (too short): " + string(buf[:reqLen]))
 			continue
 		}
 		Data_acache := make([]byte, 0)
