@@ -96,6 +96,13 @@ Fixed Bugs:
 Working in progress:
 - Implement feature flags
 
+### 1.0.4
+Compatible Agent Version: Agent_1.0.5
+
+Fixed Bugs:
+- Error creating new detectNetwork process
+- Catch elastic response error
+
 ## Directory Structure
 ```
 .
