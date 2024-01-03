@@ -21,6 +21,11 @@ var dstPath = filepath.Join("static", "yaraRule.zip")
 var ruleMatchWorkingPath = "ruleMatchWorking"
 var ruleMatchUnstaged = "ruleMatchUnstaged"
 
+func init() {
+	file.CheckDir(ruleMatchWorkingPath)
+	file.CheckDir(ruleMatchUnstaged)
+}
+
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
 	// zip the file
