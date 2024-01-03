@@ -10,6 +10,15 @@ import (
 
 func Getriskscore(info Memory, initScore int) (string, string, string, string, error) {
 	score := initScore
+	// virus total
+	maliciluos, total, err := virustotal.ScanFile(info.ProcessMD5)
+	if err != nil {
+		logger.Warn("Error getting virustotal: " + err.Error())
+	} else {
+		if maliciluos > 0 {
+			score += maliciluos * 20
+		}
+	}
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
 	// white list
 	whiteList, err := query.Load_white_list()
@@ -19,7 +28,7 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 		for _, white := range whiteList {
 			if (white[0] == "" || info.ProcessName == white[0]) && (white[1] == "" || info.ProcessMD5 == white[1]) && strings.Contains(info.DigitalSign, white[2]) && strings.Contains(realPath, white[3]) {
 				logger.Debug("Hit white list")
-				return "0", "0", "0", "0", nil
+				return "0", "0", strconv.Itoa(maliciluos), strconv.Itoa(total), nil
 			}
 		}
 	}
@@ -31,7 +40,7 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 		for _, black := range blackList {
 			if (black[0] == "" || info.ProcessName == black[0]) && (black[1] == "" || info.ProcessMD5 == black[1]) && strings.Contains(info.DigitalSign, black[2]) && strings.Contains(realPath, black[3]) {
 				logger.Debug("Hit black list")
-				return "0", "0", "0", "0", nil
+				return "3", "300", strconv.Itoa(maliciluos), strconv.Itoa(total), nil
 			}
 		}
 	}
@@ -99,15 +108,6 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 	}
 	if info.DigitalSign == "null" && info.ProcessBeInjected == 0 && info.Hook == "null" {
 		score = 0
-	}
-	// virus total
-	maliciluos, total, err := virustotal.ScanFile(info.ProcessMD5)
-	if err != nil {
-		logger.Warn("Error getting virustotal: " + err.Error())
-	} else {
-		if maliciluos > 0 {
-			score += maliciluos * 20
-		}
 	}
 	level := scoretoLevel(score)
 	return strconv.Itoa(level), strconv.Itoa(score), strconv.Itoa(maliciluos), strconv.Itoa(total), nil
