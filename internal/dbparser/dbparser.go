@@ -95,7 +95,7 @@ func terminateCollect() {
 			if cancelMap[t[1]] != nil {
 				cancelMap[t[1]]()
 			}
-			query.Terminated_task(t[1], "StartCollect", 6)
+			query.Terminated_task(t[1], "StartCollect", 5)
 		}
 	}
 }

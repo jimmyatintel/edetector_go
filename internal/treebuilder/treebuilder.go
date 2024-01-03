@@ -106,7 +106,7 @@ func terminateDrive() {
 					cancelMap[t[1]][i]()
 				}
 			}
-			query.Terminated_task(t[1], "StartGetDrive", 6)
+			query.Terminated_task(t[1], "StartGetDrive", 5)
 		}
 	}
 }
