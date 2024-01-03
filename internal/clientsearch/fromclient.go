@@ -145,7 +145,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
-					mq.Failed_task(NewPacket.GetRkey(), agentTaskType)
+					mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 				}
 			}
 		}
@@ -165,7 +165,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
 		if !strings.Contains(lastTask, "End") {
 			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-			mq.Failed_task(key, agentTaskType)
+			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "Main" {
 		// remove key from Clientlist

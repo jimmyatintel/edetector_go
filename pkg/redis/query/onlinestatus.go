@@ -62,10 +62,10 @@ func Offline(KeyNum string, GiveInfo bool) {
 			logger.Info("Offline:" + KeyNum)
 		} else {
 			for _, t := range handlingTasks1 {
-				query.Failed_task(KeyNum, t[3])
+				query.Failed_task(KeyNum, t[3], 7)
 			}
 			for _, t := range handlingTasks2 {
-				query.Failed_task(KeyNum, t[3])
+				query.Failed_task(KeyNum, t[3], 7)
 			}
 			logger.Info("Offline and let all task fail: " + KeyNum)
 		}

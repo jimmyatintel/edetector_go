@@ -118,14 +118,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	ip, name, err := query.GetMachineIPandName(agent)
 	if err != nil {
 		logger.Error("Error getting machine ip and name (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive")
+		query.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
 	explorerContent, err := os.ReadFile(explorerFile)
 	if err != nil {
 		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive")
+		query.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
@@ -150,7 +150,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			parent, child, err := getRelation(values)
 			if err != nil {
 				logger.Error("Error getting relation (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive")
+				query.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -192,7 +192,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
 				logger.Error("Error getting child (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive")
+				query.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -213,14 +213,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive")
+				query.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive")
+				query.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -290,7 +290,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 	if err != nil {
 		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive")
+		query.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, "")
 		return
 	}

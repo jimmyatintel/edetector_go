@@ -115,7 +115,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		logger.Error("Error opening database file (" + agent + "): " + err.Error())
-		query.Failed_task(agent, "StartCollect")
+		query.Failed_task(agent, "StartCollect", 6)
 		clearParser(db, dbFile, agent)
 		return
 	}
@@ -123,7 +123,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	tableNames, err := getTableNames(db)
 	if err != nil {
 		logger.Error("Error getting table names (" + agent + "): " + err.Error())
-		query.Failed_task(agent, "StartCollect")
+		query.Failed_task(agent, "StartCollect", 6)
 		clearParser(db, dbFile, agent)
 		return
 	}
@@ -137,7 +137,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
 				logger.Error("Error sending to rabbitMQ (" + agent + "): " + err.Error())
-				query.Failed_task(agent, "StartCollect")
+				query.Failed_task(agent, "StartCollect", 6)
 				clearParser(db, dbFile, agent)
 				return
 			}

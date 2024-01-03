@@ -100,15 +100,15 @@ func Terminated_task(clientid string, tasktype string, status int) {
 }
 
 func Terminate_handling_task(clientid string, tasktype string) {
-	rowsAffected := Update_task_status(clientid, tasktype, 2, 6)
+	rowsAffected := Update_task_status(clientid, tasktype, 2, 5)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
 		request.RequestToUser(clientid)
 	}
 }
 
-func Failed_task(clientid string, tasktype string) {
-	rowsAffected := Update_task_status(clientid, tasktype, 2, 5)
+func Failed_task(clientid string, tasktype string, status int) {
+	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
 	if tasktype == "ChangeDetectMode" {
 		return
 	}

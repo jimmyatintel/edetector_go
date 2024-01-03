@@ -88,7 +88,7 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 		logger.Error("Task " + string(NewPacket.GetUserTaskType()) + " failed: " + err.Error())
 		UsertaskType, ok := task.UserTaskTypeMap[NewPacket.GetUserTaskType()]
 		if ok {
-			query.Failed_task(NewPacket.GetRkey(), UsertaskType)
+			query.Failed_task(NewPacket.GetRkey(), UsertaskType, 6)
 		}
 		return
 	}
