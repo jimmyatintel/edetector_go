@@ -19,11 +19,11 @@ import (
 var srcPath = filepath.Join("static", "yaraRule")
 var dstPath = filepath.Join("static", "yaraRule.zip")
 var ruleMatchWorkingPath = "ruleMatchWorking"
-var ruleMatchUnstaged = "ruleMatchUnstaged"
+var ruleMatchUnstage = "ruleMatchUnstage"
 
 func init() {
 	file.CheckDir(ruleMatchWorkingPath)
-	file.CheckDir(ruleMatchUnstaged)
+	file.CheckDir(ruleMatchUnstage)
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
@@ -112,7 +112,7 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveRuleMatchEnd: " + key)
 	srcPath := filepath.Join(ruleMatchWorkingPath, key)
 	workPath := filepath.Join(ruleMatchWorkingPath, key+".txt")
-	dstPath := filepath.Join(ruleMatchUnstaged, key+".txt")
+	dstPath := filepath.Join(ruleMatchUnstage, key+".txt")
 	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
 	if err != nil {
 		return task.FAIL, err
