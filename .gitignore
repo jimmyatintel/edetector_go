@@ -14,6 +14,10 @@ scanUnstage
 scanStaged
 imageWorking
 imageUnstage
+yaraWorking
+yaraUnstage
+ruleMatchWorking
+ruleMatchUnstage
 agentFile
 heap*
 *.png

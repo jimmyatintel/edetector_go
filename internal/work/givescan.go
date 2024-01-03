@@ -193,6 +193,9 @@ func parseScan(path string, key string) error {
 			}
 			continue
 		}
+		if values[8] == "null" {
+			values[8] = "false"
+		}
 		var networkMalicious int
 		if values[16] == "null" {
 			networkMalicious = 0
