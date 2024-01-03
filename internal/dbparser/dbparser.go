@@ -83,9 +83,10 @@ func Main(version string) {
 }
 
 func terminateCollect() {
+	terminating := 5
 	for {
 		time.Sleep(10 * time.Second)
-		handlingTasks, err := query.Load_stored_task("nil", "nil", 6, "StartCollect")
+		handlingTasks, err := query.Load_stored_task("nil", "nil", terminating, "StartCollect")
 		if err != nil {
 			logger.Error("Error loading stored task: " + err.Error())
 			continue
@@ -95,7 +96,7 @@ func terminateCollect() {
 			if cancelMap[t[1]] != nil {
 				cancelMap[t[1]]()
 			}
-			query.Terminated_task(t[1], "StartCollect", 5)
+			query.Terminated_task(t[1], "StartCollect", terminating)
 		}
 	}
 }
