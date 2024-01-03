@@ -68,6 +68,16 @@ const (
 	// remove
 	REMOVE_AGENT TaskType = "RemoveAgent"
 
+	// yara rule
+	YARA_RULE            TaskType = "YaraRule"
+	READY_YARA_RULE      TaskType = "ReadyYaraRule"
+	GIVE_YARA_RULE_INFO  TaskType = "GiveYaraRuleInfo"
+	GIVE_YARA_RULE       TaskType = "GiveYaraRule"
+	GIVE_YARA_RULE_END   TaskType = "GiveYaraRuleEnd"
+	GIVE_RULE_MATCH_INFO TaskType = "GiveRuleMatchInfo"
+	GIVE_RULE_MATCH      TaskType = "GiveRuleMatch"
+	GIVE_RULE_MATCH_END  TaskType = "GiveRuleMatchEnd"
+
 	// terminate
 	TERMINATE_ALL    TaskType = "TerminateAll"
 	FINISH_TERMINATE TaskType = "FinishTerminate"
@@ -83,6 +93,7 @@ const (
 	START_UPDATE            UserTaskType = "StartUpdate"
 	TERMINATE               UserTaskType = "Terminate"
 	START_REMOVE            UserTaskType = "StartRemove"
+	START_YARA_RULE         UserTaskType = "StartYaraRule"
 	START_MEMORY_TREE       UserTaskType = "StartMemoryTree"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
@@ -133,6 +144,14 @@ var Worklist = []TaskType{
 	GIVE_UPDATE,
 	GIVE_UPDATE_END,
 	REMOVE_AGENT,
+	YARA_RULE,
+	READY_YARA_RULE,
+	GIVE_YARA_RULE_INFO,
+	GIVE_YARA_RULE,
+	GIVE_YARA_RULE_END,
+	GIVE_RULE_MATCH_INFO,
+	GIVE_RULE_MATCH,
+	GIVE_RULE_MATCH_END,
 	TERMINATE_ALL,
 	FINISH_TERMINATE,
 }
@@ -148,6 +167,7 @@ var UserWorklist = []UserTaskType{
 	START_UPDATE,
 	START_REMOVE,
 	START_MEMORY_TREE,
+	START_YARA_RULE,
 	TERMINATE,
 	USER_UNDEFINE,
 }

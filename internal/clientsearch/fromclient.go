@@ -27,7 +27,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	key := "unknown"
 	agentTaskType := "unknown"
 	lastTask := "unknown"
-	var dataRightChan chan net.Conn
+	var updateDataRightChan chan net.Conn
+	var yaraDataRightChan chan net.Conn
 	closeConn := make(chan bool)
 	for {
 		var NewPacket packet.Packet
@@ -54,7 +55,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		t := NewPacket.GetTaskType()
-		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "DataRight" && t != "GiveDriveInfo" {
+		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "DataRight" && t != "GiveDriveInfo" {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
@@ -123,11 +124,17 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
-			dataRightChan = make(chan net.Conn)
-			work.ReadyUpdateAgent(NewPacket, conn, dataRightChan)
+			updateDataRightChan = make(chan net.Conn)
+			work.ReadyUpdateAgent(NewPacket, conn, updateDataRightChan)
+		} else if NewPacket.GetTaskType() == task.READY_YARA_RULE {
+			yaraDataRightChan = make(chan net.Conn)
+			work.ReadyYaraRule(NewPacket, conn, yaraDataRightChan)
 		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			logger.Info("DataRight: " + key)
-			dataRightChan <- conn
+			logger.Info("UpdateDataRight: " + key)
+			updateDataRightChan <- conn
+		} else if agentTaskType == "StartYaraRule" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+			logger.Info("YaraDataRight: " + key)
+			yaraDataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {

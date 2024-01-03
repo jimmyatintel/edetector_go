@@ -18,6 +18,7 @@ func init() {
 		task.START_UPDATE:       StartUpdate,
 		task.START_REMOVE:       StartRemove,
 		task.START_MEMORY_TREE:  StartMemoryTree,
+		task.START_YARA_RULE:    StartYaraRule,
 		task.TERMINATE:          Terminate,
 	}
 }

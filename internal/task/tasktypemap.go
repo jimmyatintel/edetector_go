@@ -21,6 +21,8 @@ func init() {
 		READY_IMAGE: "StartGetImage",
 
 		READY_UPDATE_AGENT: "StartUpdate",
+
+		READY_YARA_RULE: "StartYaraRule",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{
@@ -31,6 +33,7 @@ func init() {
 		START_GET_IMAGE:    "StartGetImage",
 		START_UPDATE:       "StartUpdate",
 		START_REMOVE:       "StartRemove",
+		START_YARA_RULE:    "StartYaraRule",
 		START_MEMORY_TREE:  "StartMemoryTree",
 		TERMINATE:          "Terminate",
 	}

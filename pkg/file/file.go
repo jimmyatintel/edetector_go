@@ -277,3 +277,49 @@ outerloop:
 	}
 	return nil
 }
+
+func ZipFile(srcPath string, dstPath string) error {
+	// create a zip file
+	zipFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+	// create a zip writer
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+	// open the source file for reading
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+	// get the file information
+	info, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+	// get the file header
+	header, err := zip.FileInfoHeader(info)
+	if err != nil {
+		return err
+	}
+	// change to deflate to gain better compression
+	header.Method = zip.Deflate
+	// create a writer for the file header
+	writer, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	// copy the file data to the zip writer
+	_, err = io.Copy(writer, srcFile)
+	if err != nil {
+		return err
+	}
+	// flush the zip writer
+	err = zipWriter.Flush()
+	if err != nil {
+		return err
+	}
+	return nil
+}

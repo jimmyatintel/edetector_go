@@ -56,6 +56,11 @@ func init() {
 		task.GIVE_IMAGE:      GiveImage,
 		task.GIVE_IMAGE_END:  GiveImageEnd,
 
+		// rule match
+		task.GIVE_RULE_MATCH_INFO: GiveRuleMatchInfo,
+		task.GIVE_RULE_MATCH:      GiveRuleMatch,
+		task.GIVE_RULE_MATCH_END:  GiveRuleMatchEnd,
+		
 		// terminate
 		task.FINISH_TERMINATE: FinishTerminate,
 	}
