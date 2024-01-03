@@ -92,9 +92,10 @@ func Main(version string) {
 }
 
 func terminateDrive() {
+	terminating := 5
 	for {
 		time.Sleep(10 * time.Second)
-		handlingTasks, err := query.Load_stored_task("nil", "nil", 6, "StartGetDrive")
+		handlingTasks, err := query.Load_stored_task("nil", "nil", terminating, "StartGetDrive")
 		if err != nil {
 			logger.Error("Error loading stored task: " + err.Error())
 			continue
@@ -106,7 +107,7 @@ func terminateDrive() {
 					cancelMap[t[1]][i]()
 				}
 			}
-			query.Terminated_task(t[1], "StartGetDrive", 5)
+			query.Terminated_task(t[1], "StartGetDrive", terminating)
 		}
 	}
 }
