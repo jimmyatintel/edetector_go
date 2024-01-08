@@ -99,9 +99,15 @@ Working in progress:
 ### 1.0.4
 Compatible Agent Version: Agent_1.0.5
 
+Enhancements:
+- Introduce YaraRule
+- New task type (terminating, different error types)
+
 Fixed Bugs:
 - Error creating new detectNetwork process
 - Catch elastic response error
+- Fix bugs of blacklist
+- Fix online errors due to "NoKey" at the beginning.
 
 ## Directory Structure
 ```
