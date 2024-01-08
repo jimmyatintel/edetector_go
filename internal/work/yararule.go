@@ -29,7 +29,7 @@ func init() {
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
 	// zip the file
-	err := file.ZipFile(srcPath, dstPath)
+	err := file.ZipDirectory(srcPath, dstPath)
 	if err != nil {
 		return task.FAIL, err
 	}

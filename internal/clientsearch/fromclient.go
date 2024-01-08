@@ -80,7 +80,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				continue
 			}
 		}
-		if key == "unknown" {
+		if key == "unknown" || key == "NoKey" || key == "" || key == "null" || len(key) != 32{
 			key = NewPacket.GetRkey()
 		}
 		if agentTaskType == "unknown" {
@@ -94,13 +94,16 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.GIVE_INFO {
-			if len(Clientlist) > 1000 {
-				logger.Error("Too many clients, reject: " + string(key))
-				clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
-				close(closeConn)
-				return
-			}
+		if NewPacket.GetTaskType() == task.GIVE_INFO && len(Clientlist) > 1000 {
+			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
+			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
+			close(closeConn)
+			return
+		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
+			// wait for key to join the packet
+			Clientlist = append(Clientlist, key)
+			channelmap.AssignTaskChannel(key, &task_chan)
+			logger.Info("Set key-channel mapping: " + key)
 			go func() {
 				for {
 					select {
@@ -116,24 +119,29 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					}
 				}
 			}()
-			// wait for key to join the packet
-			Clientlist = append(Clientlist, key)
-			channelmap.AssignTaskChannel(key, &task_chan)
-			logger.Info("Set key-channel mapping: " + key)
-		} else {
+		}
+		if NewPacket.GetTaskType() != task.GIVE_INFO {
 			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
 			updateDataRightChan = make(chan net.Conn)
-			work.ReadyUpdateAgent(NewPacket, conn, updateDataRightChan)
+			_, err = work.ReadyUpdateAgent(NewPacket, conn, updateDataRightChan)
+			if err != nil {
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
+				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
+			}
 		} else if NewPacket.GetTaskType() == task.READY_YARA_RULE {
 			yaraDataRightChan = make(chan net.Conn)
-			work.ReadyYaraRule(NewPacket, conn, yaraDataRightChan)
+			_, err = work.ReadyYaraRule(NewPacket, conn, yaraDataRightChan)
+			if err != nil {
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
+				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
+			}
 		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			logger.Info("UpdateDataRight: " + key)
+			logger.Info("UpdateDataRight: " + NewPacket.GetRkey())
 			updateDataRightChan <- conn
 		} else if agentTaskType == "StartYaraRule" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			logger.Info("YaraDataRight: " + key)
+			logger.Info("YaraDataRight: " + NewPacket.GetRkey())
 			yaraDataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
