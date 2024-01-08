@@ -124,6 +124,7 @@ func ReceiveUpdateLists(c *gin.Context, ctx context.Context) {
 		ErrorResponse(c, nil, "Invalid list type")
 		return
 	}
+
 	res := TaskResponse{
 		IsSuccess: true,
 		Message:   "Success",
