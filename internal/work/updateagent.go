@@ -45,6 +45,7 @@ func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Co
 			if err != nil {
 				logger.Error("Send GiveUpdateEnd error: " + err.Error())
 			}
+			<-dataRight
 			query.Finish_task(p.GetRkey(), "StartScan")
 			break
 		}

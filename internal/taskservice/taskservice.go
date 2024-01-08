@@ -43,6 +43,9 @@ func Start(ctx context.Context) {
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
+	router.PATCH("/listscore", func(c *gin.Context) {
+		ReceiveUpdateLists(c, ctx)
+	})
 	router.Run(":5055")
 }
 
@@ -95,4 +98,17 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
 		query.Finish_task(NewPacket.GetRkey(), "ChangeDetectMode")
 	}
+}
+
+func ReceiveUpdateLists(c *gin.Context, ctx context.Context) {
+	go updateLists()
+	res := TaskResponse{
+		IsSuccess: true,
+		Message:   "Success",
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func updateLists() {
+	
 }

@@ -61,7 +61,7 @@ func GiveYaraRule(p packet.Packet, fileLen int, path string, dataRight chan net.
 			if err != nil {
 				logger.Error("Send GiveYaraRuleEnd error: " + err.Error())
 			}
-			query.Finish_task(p.GetRkey(), "StartYaraRule")
+			<-dataRight
 			break
 		}
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
@@ -111,13 +111,18 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveRuleMatchEnd: " + key)
 	srcPath := filepath.Join(ruleMatchWorkingPath, key)
-	workPath := filepath.Join(ruleMatchWorkingPath, key+".txt")
-	dstPath := filepath.Join(ruleMatchUnstage, key+".txt")
-	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
+	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
-	err = file.MoveFile(workPath, dstPath)
+	// workPath := filepath.Join(ruleMatchWorkingPath, key+".txt")
+	dstPath := filepath.Join(ruleMatchUnstage, key+".txt")
+	// err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
+	// if err != nil {
+	// 	return task.FAIL, err
+	// }
+	// err = file.MoveFile(workPath, dstPath)
+	err = file.MoveFile(srcPath, dstPath)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -129,6 +134,7 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	query.Finish_task(p.GetRkey(), "StartYaraRule")
 	return task.SUCCESS, nil
 }
 
@@ -146,8 +152,6 @@ func parseRuleMatch(path string, key string) error {
 			rules := strings.Split(values[0], ";")
 			hits := len(rules)
 			updateRuleMatch(key, values[0], values[1], hits)
-		} else if line != "" {
-			logger.Error("Error format: " + line)
 		}
 	}
 	return nil
