@@ -46,7 +46,7 @@ func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Co
 				logger.Error("Send GiveUpdateEnd error: " + err.Error())
 			}
 			<-dataRight
-			query.Finish_task(p.GetRkey(), "StartScan")
+			query.Finish_task(p.GetRkey(), "StartUpdate")
 			break
 		}
 		end := int(math.Min(float64(fileLen), float64(start+65436)))

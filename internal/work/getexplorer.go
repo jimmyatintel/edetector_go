@@ -13,6 +13,12 @@ import (
 func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")
+	// get the last drive
+	lastDrive := drives[len(drives)-2 : len(drives)-1]
+	parts := strings.Split(lastDrive[0], "-")
+	logger.Debug("lastDrive of " + key + ": " + parts[0])
+	redis.RedisSet(key+"-LastDrive", parts[0])
+
 	redis.RedisSet(key+"-ExplorerProgress", 0)
 	redis.RedisSet(key+"-DriveCount", 0)
 	redis.RedisSet(key+"-DriveTotal", len(drives)-1)
@@ -24,10 +30,6 @@ func HandleExpolorer(p packet.Packet) {
 		if len(parts) == 2 {
 			drive := parts[0]
 			driveInfo := strings.Split(parts[1], ",")[0]
-			// if driveInfo == "FAT" { // tmp version: skip FAT
-			// 	logger.Info("Skipping FAT")
-			// 	continue
-			// }
 			msg := drive + "|" + driveInfo
 			redis.RedisSet(key+"-DriveCount", ind)
 			var user_packet = packet.TaskPacket{
@@ -47,7 +49,6 @@ func HandleExpolorer(p packet.Packet) {
 			logger.Info("Next round")
 		}
 	}
-	// query.Finish_task(key, "StartGetDrive")
 	logger.Info("Finish all drives: " + key)
 }
 

@@ -145,7 +145,12 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		}
 	}
 	clearParser(db, dbFile, agent)
-	query.Finish_task(agent, "StartCollect")
+	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low")
+	if err != nil {
+		logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
+		query.Failed_task(agent, "StartCollect", 6)
+		return
+	}
 	logger.Info("DB parser task finished: " + agent)
 }
 

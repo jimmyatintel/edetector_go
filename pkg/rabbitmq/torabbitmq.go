@@ -114,6 +114,36 @@ func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority s
 	return nil
 }
 
+func ToRabbitMQ_FinishSignal(agent string, taskType string, priority string) error {
+	template := elastic.FinishSignal{
+		Agent:    agent,
+		TaskType: taskType,
+	}
+	request, err := template.Elastical()
+	if err != nil {
+		return err
+	}
+	var msg = Message{
+		Index: "Finish",
+		Data:  string(request),
+	}
+	msgBytes, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	for {
+		err = Publish(priority, msgBytes)
+		if err != nil {
+			logger.Error("Error sending to rabbitMQ (main), retrying... " + err.Error())
+			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
+			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
+		} else {
+			break
+		}
+	}
+	return nil
+}
+
 func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (elastic.Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(st))
 	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc)

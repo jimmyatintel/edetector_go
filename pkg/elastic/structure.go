@@ -23,3 +23,12 @@ type MainSource struct {
 func (s *MainSource) Elastical() ([]byte, error) {
 	return json.Marshal(s)
 }
+
+type FinishSignal struct {
+	Agent    string `json:"agent"`
+	TaskType string `json:"taskType"`
+}
+
+func (s *FinishSignal) Elastical() ([]byte, error) {
+	return json.Marshal(s)
+}
