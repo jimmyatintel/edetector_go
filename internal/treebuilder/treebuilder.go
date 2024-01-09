@@ -113,6 +113,14 @@ func terminateDrive() {
 }
 
 func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInfo string) {
+	parts := strings.Split(diskInfo, "|")
+	if len(parts) != 2 {
+		logger.Error("Invalid diskInfo: " + diskInfo)
+		query.Failed_task(agent, "StartGetDrive", 6)
+		return
+	}
+	drive := parts[0]
+	fileSystem := parts[1]
 	time.Sleep(3 * time.Second) // wait for fully copy
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
@@ -203,13 +211,11 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			}
 			values = append(values, RelationMap[child].Path)
 			values = append(values, diskInfo)
-			if d := strings.Split(diskInfo, "|"); len(d) > 1 {
-				if d[1] == "NTFS" {
-					values = append(values, "")
-				} else {
-					values = append(values, values[6])
-					values[6] = "0"
-				}
+			if fileSystem == "NTFS" {
+				values = append(values, "")
+			} else {
+				values = append(values, values[6])
+				values[6] = "0"
 			}
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
@@ -229,8 +235,15 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		}
 	}
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
-	query.Finish_task(agent, "StartGetDrive")
 	clearBuilder(agent, diskInfo, explorerFile)
+	if redis.RedisGetString(agent+"-LastDrive") == drive { // last drive -> send finish signal
+		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low")
+		if err != nil {
+			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
+			query.Failed_task(agent, "StartGetDrive", 6)
+			return
+		}		
+	}
 	logger.Info("Tree builder task finished: " + agent + "-" + diskInfo)
 }
 

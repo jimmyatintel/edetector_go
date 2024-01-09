@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +25,11 @@ var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "Ch
 	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
 	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
 	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless"}
+
+type IndexInfo struct {
+	Index string `json:"_index"`
+	Type  string `json:"_type"`
+}
 
 func flagcheck() bool {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
@@ -90,10 +96,24 @@ func BulkIndexRequest(action []string, work []string) error {
 	}
 	var buf strings.Builder
 	for i, doc := range action {
+		if isFinish(doc) {
+			var data FinishSignal
+			err := json.Unmarshal([]byte(work[i]), &data)
+			if err != nil {
+				logger.Error("Error unmarshaling finish signal: " + err.Error())
+				continue
+			}
+			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
+			query.Finish_task(data.Agent, data.TaskType)
+			continue
+		}
 		buf.WriteString(doc)
 		buf.WriteByte('\n')
 		buf.WriteString(work[i])
 		buf.WriteByte('\n')
+	}
+	if buf.Len() == 0 {
+		return nil
 	}
 	res, err := es.Bulk(
 		strings.NewReader(buf.String()),
@@ -208,15 +228,6 @@ func DeleteByQueryRequest(deleteQuery string, ttype string) error {
 	if !flagcheck() {
 		return errors.New("elastic is not enabled")
 	}
-	// deleteQuery := fmt.Sprintf(`
-	// {
-	// 	"query": {
-	// 		"term": {
-	// 			"%s": "%s"
-	// 		}
-	// 	}
-	// }
-	// `, field, value)
 	req := esapi.DeleteByQueryRequest{
 		Index: getIndexes(ttype),
 		Body:  strings.NewReader(deleteQuery),
@@ -264,4 +275,19 @@ func getIndexes(ttype string) []string {
 		indexes = append(indexes, prefix+"_memory")
 	}
 	return indexes
+}
+
+func isFinish(jsonString string) bool {
+	var indexInfo struct {
+		IndexInfo `json:"index"`
+	}
+	err := json.Unmarshal([]byte(jsonString), &indexInfo)
+	if err != nil {
+		logger.Error("Error parsing action: " + err.Error())
+		return false
+	}
+	if indexInfo.Index == "Finish" {
+		return true
+	}
+	return false
 }

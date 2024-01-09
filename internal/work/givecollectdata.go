@@ -114,7 +114,6 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
-	// query.Finish_task(key, "StartCollect")
 	return task.SUCCESS, nil
 }
 

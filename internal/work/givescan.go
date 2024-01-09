@@ -147,7 +147,6 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	query.Finish_task(key, "StartScan")
 	return task.SUCCESS, nil
 }
 
@@ -224,6 +223,12 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
+	}
+	err = rabbitmq.ToRabbitMQ_FinishSignal(key, "StartScan", "ed_mid")
+	if err != nil {
+		logger.Error("Error sending to rabbitMQ (finish signal): " + err.Error())
+		query.Failed_task(key, "StartScan", 6)
+		return err
 	}
 	// wg.Wait()
 	return nil
