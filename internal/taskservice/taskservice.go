@@ -10,6 +10,7 @@ import (
 	"edetector_go/config"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
@@ -43,7 +44,7 @@ func Start(ctx context.Context) {
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
-	router.PATCH("/listscore", func(c *gin.Context) {
+	router.PATCH("/listscore/:type", func(c *gin.Context) {
 		ReceiveUpdateLists(c, ctx)
 	})
 	router.Run(":5055")
@@ -101,14 +102,40 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 }
 
 func ReceiveUpdateLists(c *gin.Context, ctx context.Context) {
-	go updateLists()
+	listType := c.Param("type")
+	redis.RedisSet("update_"+listType+"_list", "0")
+	var req interface{}
+
+	if listType == "hack" {
+		var hackReq work.HackReq
+		if err := c.ShouldBindJSON(&hackReq); err != nil {
+			ErrorResponse(c, err, "Invalid request format")
+			return
+		}
+		req = hackReq
+	} else if listType == "white" || listType == "black" {
+		var wbReq work.WhiteBlackReq
+		if err := c.ShouldBindJSON(&wbReq); err != nil {
+			ErrorResponse(c, err, "Invalid request format")
+			return
+		}
+		req = wbReq
+	} else {
+		ErrorResponse(c, nil, "Invalid list type")
+		return
+	}
 	res := TaskResponse{
 		IsSuccess: true,
 		Message:   "Success",
 	}
 	c.JSON(http.StatusOK, res)
+	go work.UpdateLists(listType, req)
 }
 
-func updateLists() {
-	
+func ErrorResponse(c *gin.Context, err error, msg string) {
+	c.JSON(http.StatusOK, gin.H{
+		"isSuccess": false,
+		"message":   msg + ": " + err.Error(),
+	})
+	logger.Error(msg + ": " + err.Error())
 }

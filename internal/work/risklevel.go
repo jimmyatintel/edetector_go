@@ -1,12 +1,44 @@
 package work
 
 import (
+	"edetector_go/config"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"edetector_go/pkg/virustotal"
+	"fmt"
 	"strconv"
 	"strings"
 )
+
+type hack_list struct {
+	ID          int    `json:"id"`
+	ProcessName string `json:"processName"`
+	Cmd         string `json:"cmd"`
+	Path        string `json:"path"`
+	AddingPoint int    `json:"addingPoint"`
+}
+
+type white_black_list struct {
+	ID        int    `json:"id"`
+	FileName  string `json:"filename"`
+	MD5       string `json:"md5"`
+	Sign      string `json:"signature"`
+	Path      string `json:"path"`
+	SetupUser string `json:"setupUser"`
+	Reason    string `json:"reason"`
+}
+
+type HackReq struct {
+	Added   []hack_list `json:"added"`
+	Removed []hack_list `json:"removed"`
+}
+
+type WhiteBlackReq struct {
+	Added   []white_black_list `json:"added"`
+	Removed []white_black_list `json:"removed"`
+}
 
 func Getriskscore(info Memory, initScore int) (string, string, string, string, error) {
 	score := initScore
@@ -123,4 +155,110 @@ func scoretoLevel(score int) int {
 	} else {
 		return 0
 	}
+}
+
+func buildHackQuery(name, cmd, path string) string {
+	return fmt.Sprintf(`{
+		"query": {
+		  "bool": {
+			"must": [
+			  {
+				"query_string": {
+				  "fields": ["processName"],
+				  "query": "*%s*"
+				}
+			  },
+			  {
+				"query_string": {
+				  "fields": ["dynamicCommand"],
+				  "query": "*%s*"
+				}
+			  },
+			  {
+				"query_string": {
+				  "fields": ["processPath"],
+				  "query": "*%s*"
+				}
+			  }
+			]
+		  }
+		}
+	  }`, name, cmd, path)
+}
+
+func UpdateLists(listType string, req interface{}) {
+	switch listType {
+	case "hack":
+		hackReq := req.(HackReq)
+		for _, add := range hackReq.Added {
+			query := buildHackQuery(add.ProcessName, add.Cmd, add.Path)
+			hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+			for _, h := range hitsArray {
+				recalculateScore(h)
+			}
+		}
+		for _, removed := range hackReq.Removed {
+			query := buildHackQuery(removed.ProcessName, removed.Cmd, removed.Path)
+			hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+			for _, h := range hitsArray {
+				recalculateScore(h)
+			}
+		}
+	case "white":
+		break
+	case "black":
+		break
+	}
+	redis.RedisSet("update_"+listType+"_list", "1")
+}
+
+func recalculateScore(hit interface{}) {
+	hitMap, ok := hit.(map[string]interface{})
+	if !ok {
+		logger.Error("Error converting hit to map")
+		return
+	}
+	// convert hitMap to Memory struct
+	var info Memory
+	info.Mode = hitMap["_source"].(map[string]interface{})["mode"].(string)
+	if info.Mode != "scan" && info.Mode != "detect" {
+		return
+	}
+	info.ProcessName = hitMap["_source"].(map[string]interface{})["processName"].(string)
+	info.ProcessCreateTime = hitMap["_source"].(map[string]interface{})["processCreateTime"].(int)
+	info.DynamicCommand = hitMap["_source"].(map[string]interface{})["dynamicCommand"].(string)
+	info.ProcessMD5 = hitMap["_source"].(map[string]interface{})["processMD5"].(string)
+	info.ProcessPath = hitMap["_source"].(map[string]interface{})["processPath"].(string)
+	info.ParentProcessId = hitMap["_source"].(map[string]interface{})["parentProcessId"].(int)
+	info.ParentProcessName = hitMap["_source"].(map[string]interface{})["parentProcessName"].(string)
+	info.ParentProcessPath = hitMap["_source"].(map[string]interface{})["parentProcessPath"].(string)
+	info.DigitalSign = hitMap["_source"].(map[string]interface{})["digitalSign"].(string)
+	info.ProcessId = hitMap["_source"].(map[string]interface{})["processId"].(int)
+	info.InjectActive = hitMap["_source"].(map[string]interface{})["injectActive"].(string)
+	info.ProcessBeInjected = hitMap["_source"].(map[string]interface{})["processBeInjected"].(int)
+	info.Boot = hitMap["_source"].(map[string]interface{})["boot"].(string)
+	info.Hide = hitMap["_source"].(map[string]interface{})["hide"].(string)
+	info.ImportOtherDLL = hitMap["_source"].(map[string]interface{})["importOtherDLL"].(string)
+	info.Hook = hitMap["_source"].(map[string]interface{})["hook"].(string)
+	info.ProcessConnectIP = hitMap["_source"].(map[string]interface{})["processConnectIP"].(string)
+	
+	// update the score
+	initScore := 0
+	level, score, _, _, err := Getriskscore(info, initScore)
+	if err != nil {
+		logger.Error("Error getting risk score: " + err.Error())
+		return
+	}
+	docID := hitMap["_id"].(string)
+	query := fmt.Sprintf(`{
+			"script": {
+				"source": "ctx._source.riskLevel = params.level; ctx._source.riskScore = params.score",
+				"lang": "painless",
+				"params": {
+					"level": %s,
+					"score": %s
+				}
+			}
+		}`, level, score)
+	err = elastic.UpdateByDocIDRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", docID, query)
 }
