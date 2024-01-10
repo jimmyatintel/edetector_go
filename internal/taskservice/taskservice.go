@@ -44,7 +44,7 @@ func Start(ctx context.Context) {
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
-	router.PATCH("/listscore/:type", func(c *gin.Context) {
+	router.POST("/listscore/:type", func(c *gin.Context) {
 		ReceiveUpdateLists(c, ctx)
 	})
 	router.Run(":5055")
