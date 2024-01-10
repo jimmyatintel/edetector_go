@@ -74,6 +74,9 @@ const (
 	GIVE_YARA_RULE_INFO  TaskType = "GiveYaraRuleInfo"
 	GIVE_YARA_RULE       TaskType = "GiveYaraRule"
 	GIVE_YARA_RULE_END   TaskType = "GiveYaraRuleEnd"
+	GIVE_PATH_INFO       TaskType = "GivePathInfo"
+	GIVE_PATH            TaskType = "GivePath"
+	GIVE_PATH_END        TaskType = "GivePathEnd"
 	GIVE_RULE_MATCH_INFO TaskType = "GiveRuleMatchInfo"
 	GIVE_RULE_MATCH      TaskType = "GiveRuleMatch"
 	GIVE_RULE_MATCH_END  TaskType = "GiveRuleMatchEnd"
@@ -149,6 +152,9 @@ var Worklist = []TaskType{
 	GIVE_YARA_RULE_INFO,
 	GIVE_YARA_RULE,
 	GIVE_YARA_RULE_END,
+	GIVE_PATH_INFO,
+	GIVE_PATH,
+	GIVE_PATH_END,
 	GIVE_RULE_MATCH_INFO,
 	GIVE_RULE_MATCH,
 	GIVE_RULE_MATCH_END,
