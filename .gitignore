@@ -18,6 +18,7 @@ yaraWorking
 yaraUnstage
 ruleMatchWorking
 ruleMatchUnstage
+pathWorking
 agentFile
 heap*
 *.png
