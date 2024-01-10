@@ -190,7 +190,7 @@ func buildHackQuery(name, cmd, path string) string {
 	path = strings.ReplaceAll(path, "\\", "\\\\")
 	path = strings.ReplaceAll(path, "/", "//")
 	return fmt.Sprintf(`{
-		"size": 10,
+		"size": 10000,
 		"query": {
 			"bool": {
 				"must": [
@@ -229,7 +229,7 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 	path = strings.ReplaceAll(path, "\\", "\\\\")
 	path = strings.ReplaceAll(path, "/", "//")
 	return fmt.Sprintf(`{
-		"size": 10,
+		"size": 10000,
 		"query": {
 			"bool": {
 				"must": [
