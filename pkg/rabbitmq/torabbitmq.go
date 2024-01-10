@@ -157,6 +157,13 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 				break
 			}
 			field.Set(reflect.ValueOf(value))
+		case reflect.Int64:
+			value, err := strconv.ParseInt(values[i], 10, 64)
+			if err != nil {
+				logger.Error("Error converting to int64: " + err.Error())
+				break
+			}
+			field.Set(reflect.ValueOf(value))
 		case reflect.String:
 			field.Set(reflect.ValueOf(values[i]))
 		case reflect.Bool:
