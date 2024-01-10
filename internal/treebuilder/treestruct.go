@@ -21,9 +21,9 @@ type ExplorerDetails struct {
 	WriteTime         int    `json:"writeTime"`
 	AccessTime        int    `json:"accessTime"`
 	EntryModifiedTime int    `json:"entryModifiedTime"`
-	Datalen           int    `json:"dataLen"`
+	Datalen           int64  `json:"dataLen"`
 	Path              string `json:"path"`
-	Disk			  string `json:"disk"`
+	Disk              string `json:"disk"`
 	MD5_Sig           string `json:"md5_sig"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
