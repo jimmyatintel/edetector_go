@@ -112,6 +112,7 @@ func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net
 	// 	}
 	// 	path := hitMap["_source"].(map[string]interface{})["path"].(string)
 	// 	path = strings.ReplaceAll(path, "\\\\", "\\")
+	// 	path = strings.ReplaceAll(path, "////", "//")
 	// 	pathByte := []byte(path + "\n")
 	// 	err := file.WriteFile(srcPath, pathByte)
 	// 	if err != nil {
