@@ -217,6 +217,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				values = append(values, values[6])
 				values[6] = "0"
 			}
+			values = append(values, "0", "") // yara rule hit count & yara rule hit
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
@@ -242,7 +243,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
 			query.Failed_task(agent, "StartGetDrive", 6)
 			return
-		}		
+		}
 	}
 	logger.Info("Tree builder task finished: " + agent + "-" + diskInfo)
 }

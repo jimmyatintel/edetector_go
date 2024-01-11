@@ -8,7 +8,8 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
-	"edetector_go/pkg/mariadb/query"
+	elasticquery "edetector_go/pkg/elastic/query"
+	mariadbquery "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"fmt"
@@ -86,7 +87,7 @@ func terminateCollect() {
 	terminating := 5
 	for {
 		time.Sleep(10 * time.Second)
-		handlingTasks, err := query.Load_stored_task("nil", "nil", terminating, "StartCollect")
+		handlingTasks, err := mariadbquery.Load_stored_task("nil", "nil", terminating, "StartCollect")
 		if err != nil {
 			logger.Error("Error loading stored task: " + err.Error())
 			continue
@@ -96,7 +97,7 @@ func terminateCollect() {
 			if cancelMap[t[1]] != nil {
 				cancelMap[t[1]]()
 			}
-			query.Terminated_task(t[1], "StartCollect", terminating)
+			mariadbquery.Terminated_task(t[1], "StartCollect", terminating)
 		}
 	}
 }
@@ -111,12 +112,12 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		}
 	}
 	`, agent)
-	elastic.DeleteByQueryRequest(deleteQuery, "StartCollect")
+	elasticquery.DeleteRepeat(deleteQuery, "StartCollect")
 	time.Sleep(3 * time.Second) // wait for fully copy
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {
 		logger.Error("Error opening database file (" + agent + "): " + err.Error())
-		query.Failed_task(agent, "StartCollect", 6)
+		mariadbquery.Failed_task(agent, "StartCollect", 6)
 		clearParser(db, dbFile, agent)
 		return
 	}
@@ -124,7 +125,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	tableNames, err := getTableNames(db)
 	if err != nil {
 		logger.Error("Error getting table names (" + agent + "): " + err.Error())
-		query.Failed_task(agent, "StartCollect", 6)
+		mariadbquery.Failed_task(agent, "StartCollect", 6)
 		clearParser(db, dbFile, agent)
 		return
 	}
@@ -138,7 +139,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 			err = sendCollectToRabbitMQ(db, tableName, agent)
 			if err != nil {
 				logger.Error("Error sending to rabbitMQ (" + agent + "): " + err.Error())
-				query.Failed_task(agent, "StartCollect", 6)
+				mariadbquery.Failed_task(agent, "StartCollect", 6)
 				clearParser(db, dbFile, agent)
 				return
 			}
@@ -148,7 +149,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low")
 	if err != nil {
 		logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
-		query.Failed_task(agent, "StartCollect", 6)
+		mariadbquery.Failed_task(agent, "StartCollect", 6)
 		return
 	}
 	logger.Info("DB parser task finished: " + agent)
