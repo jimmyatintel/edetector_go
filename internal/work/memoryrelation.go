@@ -119,7 +119,6 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 				return
 			}
 		}
-
 	} else {
 		logger.Error("More than one relation found: " + field + " parent " + parent + " child " + child)
 	}
