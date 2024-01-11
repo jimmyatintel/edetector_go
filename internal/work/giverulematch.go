@@ -1,13 +1,16 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -90,13 +93,38 @@ func parseRuleMatch(path string, key string) error {
 		values := strings.Split(line, "|")
 		if len(values) == 2 {
 			rules := strings.Split(values[0], ";")
-			hits := len(rules)
-			updateRuleMatch(key, values[0], values[1], hits)
+			count := len(rules)
+			updateRuleMatch(key, values[0], values[1], count)
 		}
 	}
 	return nil
 }
 
-func updateRuleMatch(key string, rule string, path string, hits int) {
-	logger.Info("UpdateRuleMatch: " + key + "|" + rule + "|" + path + "|" + strconv.Itoa(hits))
+func updateRuleMatch(key string, rule string, path string, count int) {
+	logger.Info("UpdateRuleMatch: " + key + "|" + rule + "|" + path + "|" + strconv.Itoa(count))
+	query := fmt.Sprintf(`{
+	{
+		"script": {
+			"source": "ctx._source.yaraRuleHitCount = params.count ; ctx._source.yaraRuleHit = params.hit",
+			"lang": "painless",
+			"params": {
+				"count": %d,
+				"hit": "%s"
+			}
+		},
+		"query": {
+			"bool": {
+				"must": [
+					{ "term": { "agent": "%s" } },
+					{ "term": { "path": "%s" } }
+				]
+			}
+		}
+	}`, count, rule, key, path)
+	updateCount, err := elastic.UpdateByQueryRequest(query, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer")
+	if err != nil {
+		logger.Error("UpdateRuleMatch error: " + err.Error())
+		return
+	}
+	logger.Info("UpdateCount: " + strconv.Itoa(updateCount))
 }
