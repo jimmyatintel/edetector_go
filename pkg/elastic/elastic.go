@@ -191,37 +191,67 @@ func SearchRequest(index string, body string) []interface{} {
 	if !flagcheck() {
 		return nil
 	}
+	var result map[string]interface{}
 	req := esapi.SearchRequest{
 		Index: []string{index},
 		Body:  strings.NewReader(body),
 	}
-	res, err := req.Do(context.Background(), es)
-	if err != nil {
-		logger.Error("Error getting response: " + err.Error())
-		return nil
+	for {
+		res, err := req.Do(context.Background(), es)
+		if err != nil {
+			logger.Error("Error getting response: " + err.Error())
+			return nil
+		}
+		defer res.Body.Close()
+		if res.IsError() {
+			logger.Error("Error SearchRequest: " + res.String())
+			return nil
+		}
+		if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+			logger.Error("Error decoding response: " + err.Error())
+			return nil
+		}
+		hits, ok := result["hits"].(map[string]interface{})
+		if !ok {
+			logger.Error("Hits not found in response: " + res.String())
+			return nil
+		}
+		hitsArray, ok := hits["hits"].([]interface{})
+		if !ok {
+			logger.Error("Hits array not found in response")
+			return nil
+		}
+		if len(hitsArray) == 0 {
+			return hitsArray
+		}
+		lastHit, ok := hitsArray[len(hitsArray)-1].(map[string]interface{}) // use search_after
+		if !ok {
+			logger.Error("Last hit not found")
+			return hitsArray
+		}
+		sort, ok := lastHit["sort"].([]interface{})
+		if !ok {
+			logger.Debug("Not use search_after")
+			return hitsArray
+		} else {
+			logger.Debug("Use search_after")
+		}
+		searchAfter := sort[0]
+		// remove the last } in body
+		lastBraceIndex := strings.LastIndex(body, "}")
+		var searchAfterBody string
+		if lastBraceIndex != -1 {
+			searchAfterBody = body[:lastBraceIndex]
+		} else {
+			logger.Error("No closing brace found in the string.")
+			return hitsArray
+		}
+		searchAfterBody += fmt.Sprintf(`,"search_after":"%s"}`, searchAfter)
+		req = esapi.SearchRequest{
+			Index: []string{index},
+			Body:  strings.NewReader(searchAfterBody),
+		}
 	}
-	defer res.Body.Close()
-	if res.IsError() {
-		logger.Error("Error SearchRequest: " + res.String())
-		return nil
-	}
-	// logger.Info(res.String())
-	var result map[string]interface{}
-	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-		logger.Error("Error decoding response: " + err.Error())
-		return nil
-	}
-	hits, ok := result["hits"].(map[string]interface{})
-	if !ok {
-		logger.Error("Hits not found in response: " + res.String())
-		return nil
-	}
-	hitsArray, ok := hits["hits"].([]interface{})
-	if !ok {
-		logger.Error("Hits array not found in response")
-		return nil
-	}
-	return hitsArray
 }
 
 func DeleteByQueryRequest(deleteQuery string, ttype string) error {
