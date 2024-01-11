@@ -25,6 +25,8 @@ type ExplorerDetails struct {
 	Path              string `json:"path"`
 	Disk              string `json:"disk"`
 	MD5_Sig           string `json:"md5_sig"`
+	YaraRuleHitCount  int    `json:"yaraRuleHitCount"`
+	YaraRuleHit       string `json:"yaraRuleHit"`
 	UUID              string `json:"uuid"`
 	Agent             string `json:"agent"`
 	AgentIP           string `json:"agentIP"`

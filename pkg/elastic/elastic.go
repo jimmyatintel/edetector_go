@@ -4,7 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
+	mariadbquery "edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,15 +16,6 @@ import (
 )
 
 var es *elasticsearch.Client
-
-var diskIndex = []string{"explorer", "explorer_relation"}
-
-var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
-	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
-	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
-	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
-	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
-	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless"}
 
 type IndexInfo struct {
 	Index string `json:"_index"`
@@ -96,7 +87,7 @@ func BulkIndexRequest(action []string, work []string) error {
 	}
 	var buf strings.Builder
 	for i, doc := range action {
-		if isFinish(doc) {
+		if IsFinish(doc) {
 			var data FinishSignal
 			err := json.Unmarshal([]byte(work[i]), &data)
 			if err != nil {
@@ -104,7 +95,7 @@ func BulkIndexRequest(action []string, work []string) error {
 				continue
 			}
 			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
-			query.Finish_task(data.Agent, data.TaskType)
+			mariadbquery.Finish_task(data.Agent, data.TaskType)
 			continue
 		}
 		buf.WriteString(doc)
@@ -235,12 +226,12 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	}
 }
 
-func DeleteByQueryRequest(deleteQuery string, ttype string) error {
+func DeleteByQueryRequest(indexes []string, deleteQuery string) error {
 	if !flagcheck() {
 		return errors.New("elastic is not enabled")
 	}
 	req := esapi.DeleteByQueryRequest{
-		Index: getIndexes(ttype),
+		Index: indexes,
 		Body:  strings.NewReader(deleteQuery),
 	}
 	res, err := req.Do(context.Background(), es)
@@ -270,25 +261,7 @@ func DeleteByQueryRequest(deleteQuery string, ttype string) error {
 	return nil
 }
 
-func getIndexes(ttype string) []string {
-	prefix := config.Viper.GetString("ELASTIC_PREFIX")
-	indexes := []string{}
-	switch ttype {
-	case "StartGetDrive":
-		for _, ind := range diskIndex {
-			indexes = append(indexes, prefix+"_"+ind)
-		}
-	case "StartCollect":
-		for _, ind := range dbIndex {
-			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
-		}
-	case "Memory":
-		indexes = append(indexes, prefix+"_memory")
-	}
-	return indexes
-}
-
-func isFinish(jsonString string) bool {
+func IsFinish(jsonString string) bool {
 	var indexInfo struct {
 		IndexInfo `json:"index"`
 	}
