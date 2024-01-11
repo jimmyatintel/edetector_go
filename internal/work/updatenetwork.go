@@ -25,6 +25,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 		// search for the detect process
 		index := config.Viper.GetString("ELASTIC_PREFIX") + "_memory"
 		searchDetectQuery := fmt.Sprintf(`{
+			"size": 10000,
 			"query": {
 				"bool": {
 				  "must": [
