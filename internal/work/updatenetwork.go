@@ -37,7 +37,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		hitsDetectArray := elastic.SearchRequest(index, searchDetectQuery)
+		hitsDetectArray := elastic.SearchRequest(index, searchDetectQuery, "uuid")
 		searchNetworkQuery := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -50,7 +50,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		hitsNetworktArray := elastic.SearchRequest(index, searchNetworkQuery)
+		hitsNetworktArray := elastic.SearchRequest(index, searchNetworkQuery, "uuid")
 		previousScore := 0.0
 		if len(hitsNetworktArray) > 0 {
 			previousScore, _, err = getScore(hitsNetworktArray[0])
