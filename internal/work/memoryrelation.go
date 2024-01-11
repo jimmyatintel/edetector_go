@@ -38,7 +38,7 @@ func BuildMemoryRelation(agent string, field string, value string, parent string
 				}
 			  }
 			}`, agent, value)
-	hitsArray := elastic.SearchRequest(index, searchQuery)
+	hitsArray := elastic.SearchRequest(index, searchQuery, "uuid")
 	if len(hitsArray) == 0 { // not exists
 		data := MemoryRelation{}
 		if field == "parent" {

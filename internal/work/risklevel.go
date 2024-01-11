@@ -190,7 +190,6 @@ func buildHackQuery(name, cmd, path string) string {
 	path = strings.ReplaceAll(path, "\\", "\\\\")
 	path = strings.ReplaceAll(path, "/", "//")
 	return fmt.Sprintf(`{
-		"size": 10,
 		"query": {
 			"bool": {
 				"must": [
@@ -214,14 +213,7 @@ func buildHackQuery(name, cmd, path string) string {
 				}
 				]
 			}
-		},
-		"sort": [
-			{
-				"uuid": {
-					"order": "asc"
-				}
-			}
-		]
+		}
 	}`, name, cmd, path)
 }
 
@@ -229,7 +221,6 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 	path = strings.ReplaceAll(path, "\\", "\\\\")
 	path = strings.ReplaceAll(path, "/", "//")
 	return fmt.Sprintf(`{
-		"size": 10,
 		"query": {
 			"bool": {
 				"must": [
@@ -260,20 +251,13 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 				]
 			  }
 			}
-		  },
-		  "sort": [
-			  {
-				  "uuid": {
-					  "order": "asc"
-				  }
-			  }
-		  ]
+		  }
 	  }`, name, md5, sign, path)
 }
 
 func recalculateScore(query string) {
 	logger.Debug("query: " + query)
-	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query)
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
 	logger.Debug("Hits len: " + strconv.Itoa(len(hitsArray)))
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
@@ -346,7 +330,7 @@ func getNetworkMalicious(agent string, pid int, ctime int) int {
 			}
 		}
 	}`, agent, strconv.Itoa(pid), strconv.Itoa(ctime))
-	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", query)
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", query, "uuid")
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
 		if !ok {

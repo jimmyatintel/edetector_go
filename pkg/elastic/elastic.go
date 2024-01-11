@@ -187,16 +187,22 @@ func UpdateByDocIDRequest(index string, docID string, script string) error {
 	return nil
 }
 
-func SearchRequest(index string, body string) []interface{} {
+func SearchRequest(index string, body string, sortItem string) []interface{} {
 	if !flagcheck() {
 		return nil
 	}
+	from := 0
+	size := 10
+	hitsArray := []interface{}{}
 	var result map[string]interface{}
-	req := esapi.SearchRequest{
-		Index: []string{index},
-		Body:  strings.NewReader(body),
-	}
 	for {
+		req := esapi.SearchRequest{
+			Index: []string{index},
+			Body:  strings.NewReader(body),
+			From:  &from,
+			Size:  &size,
+			Sort:  []string{sortItem},
+		}
 		res, err := req.Do(context.Background(), es)
 		if err != nil {
 			logger.Error("Error getting response: " + err.Error())
@@ -216,41 +222,16 @@ func SearchRequest(index string, body string) []interface{} {
 			logger.Error("Hits not found in response: " + res.String())
 			return nil
 		}
-		hitsArray, ok := hits["hits"].([]interface{})
+		newHitsArray, ok := hits["hits"].([]interface{})
 		if !ok {
 			logger.Error("Hits array not found in response")
 			return nil
 		}
-		if len(hitsArray) == 0 {
+		hitsArray = append(hitsArray, newHitsArray...)
+		if len(newHitsArray) == 0 || sortItem == "" {
 			return hitsArray
 		}
-		lastHit, ok := hitsArray[len(hitsArray)-1].(map[string]interface{}) // use search_after
-		if !ok {
-			logger.Error("Last hit not found")
-			return hitsArray
-		}
-		sort, ok := lastHit["sort"].([]interface{})
-		if !ok {
-			logger.Debug("Not use search_after")
-			return hitsArray
-		} else {
-			logger.Debug("Use search_after")
-		}
-		searchAfter := sort[0]
-		// remove the last } in body
-		lastBraceIndex := strings.LastIndex(body, "}")
-		var searchAfterBody string
-		if lastBraceIndex != -1 {
-			searchAfterBody = body[:lastBraceIndex]
-		} else {
-			logger.Error("No closing brace found in the string.")
-			return hitsArray
-		}
-		searchAfterBody += fmt.Sprintf(`,"search_after":"%s"}`, searchAfter)
-		req = esapi.SearchRequest{
-			Index: []string{index},
-			Body:  strings.NewReader(searchAfterBody),
-		}
+		from += 10
 	}
 }
 
