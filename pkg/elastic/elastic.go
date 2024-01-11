@@ -309,18 +309,3 @@ func IsFinish(jsonString string) bool {
 	}
 	return false
 }
-
-func isFinish(jsonString string) bool {
-	var indexInfo struct {
-		IndexInfo `json:"index"`
-	}
-	err := json.Unmarshal([]byte(jsonString), &indexInfo)
-	if err != nil {
-		logger.Error("Error parsing action: " + err.Error())
-		return false
-	}
-	if indexInfo.Index == "Finish" {
-		return true
-	}
-	return false
-}
