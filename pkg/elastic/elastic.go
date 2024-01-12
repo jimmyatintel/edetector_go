@@ -183,7 +183,7 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 		return nil
 	}
 	from := 0
-	size := 10
+	size := 10000
 	hitsArray := []interface{}{}
 	var result map[string]interface{}
 	for {

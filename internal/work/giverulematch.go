@@ -92,9 +92,11 @@ func parseRuleMatch(path string, key string) error {
 	for _, line := range lines {
 		values := strings.Split(line, "|")
 		if len(values) == 2 {
-			rules := strings.Split(values[0], ";")
+			allRule := values[0][1:len(values[0])-1]
+			allRule = strings.ReplaceAll(allRule, " ", "")
+			rules := strings.Split(allRule, ",")
 			count := len(rules)
-			updateRuleMatch(key, values[0], values[1], count)
+			updateRuleMatch(key, allRule, values[1], count)
 		}
 	}
 	return nil
