@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/elastic/go-elasticsearch/v6"
 	"github.com/elastic/go-elasticsearch/v6/esapi"
@@ -182,48 +183,79 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	if !flagcheck() {
 		return nil
 	}
-	from := 0
-	size := 10000
-	hitsArray := []interface{}{}
 	var result map[string]interface{}
+	size := 10000
+	req := esapi.SearchRequest{
+		Index:  []string{index},
+		Body:   strings.NewReader(body),
+		Scroll: 60*time.Second,
+		Size:   &size,
+		Sort:   []string{sortItem},
+	}
+	res, err := req.Do(context.Background(), es)
+	if err != nil {
+		logger.Error("Error getting response: " + err.Error())
+		return nil
+	}
+	defer res.Body.Close()
+	if res.IsError() {
+		logger.Error("Error SearchRequest: " + res.String())
+		return nil
+	}
+	if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
+		logger.Error("Error decoding response: " + err.Error())
+		return nil
+	}
+	scrollID, ok := result["_scroll_id"].(string)
+	if !ok {
+		logger.Error("ScrollID not found in response: " + res.String())
+		return nil
+	}
+	hits, ok := result["hits"].(map[string]interface{})
+	if !ok {
+		logger.Error("Hits not found in response: " + res.String())
+		return nil
+	}
+	hitsArray, ok := hits["hits"].([]interface{})
+	if !ok {
+		logger.Error("Hits array not found in response")
+		return nil
+	}
 	for {
-		req := esapi.SearchRequest{
-			Index: []string{index},
-			Body:  strings.NewReader(body),
-			From:  &from,
-			Size:  &size,
-			Sort:  []string{sortItem},
+		req := esapi.ScrollRequest{
+			Scroll:   60*time.Second,
+			ScrollID: scrollID,
 		}
 		res, err := req.Do(context.Background(), es)
 		if err != nil {
 			logger.Error("Error getting response: " + err.Error())
-			return nil
+			return hitsArray
 		}
 		defer res.Body.Close()
 		if res.IsError() {
-			logger.Error("Error SearchRequest: " + res.String())
-			return nil
+			logger.Error("Error ScrollRequest: " + res.String())
+			return hitsArray
 		}
 		if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
 			logger.Error("Error decoding response: " + err.Error())
-			return nil
+			return hitsArray
 		}
-		hits, ok := result["hits"].(map[string]interface{})
+		hits, ok = result["hits"].(map[string]interface{})
 		if !ok {
 			logger.Error("Hits not found in response: " + res.String())
-			return nil
+			return hitsArray
 		}
 		newHitsArray, ok := hits["hits"].([]interface{})
 		if !ok {
 			logger.Error("Hits array not found in response")
-			return nil
-		}
-		hitsArray = append(hitsArray, newHitsArray...)
-		if len(newHitsArray) == 0 || sortItem == "" {
 			return hitsArray
 		}
-		from += 10
+		if len(newHitsArray) == 0 {
+			break
+		}
+		hitsArray = append(hitsArray, newHitsArray...)
 	}
+	return hitsArray
 }
 
 func DeleteByQueryRequest(indexes []string, deleteQuery string) error {

@@ -60,6 +60,7 @@ func init() {
 		task.GIVE_RULE_MATCH_INFO: GiveRuleMatchInfo,
 		task.GIVE_RULE_MATCH:      GiveRuleMatch,
 		task.GIVE_RULE_MATCH_END:  GiveRuleMatchEnd,
+		task.GIVE_YARA_PROGRESS:   GiveYaraProgress,
 		
 		// terminate
 		task.FINISH_TERMINATE: FinishTerminate,

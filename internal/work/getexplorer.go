@@ -14,10 +14,7 @@ func HandleExpolorer(p packet.Packet) {
 	key := p.GetRkey()
 	drives := strings.Split(p.GetMessage(), "|")
 	// get the last drive
-	lastDrive := drives[len(drives)-2 : len(drives)-1]
-	parts := strings.Split(lastDrive[0], "-")
-	logger.Debug("lastDrive of " + key + ": " + parts[0])
-	redis.RedisSet(key+"-LastDrive", parts[0])
+	redis.RedisSet(key+"-DriveUnfinished", len(drives)-1)
 
 	redis.RedisSet(key+"-ExplorerProgress", 0)
 	redis.RedisSet(key+"-DriveCount", 0)
