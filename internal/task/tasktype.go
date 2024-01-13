@@ -80,6 +80,7 @@ const (
 	GIVE_RULE_MATCH_INFO TaskType = "GiveRuleMatchInfo"
 	GIVE_RULE_MATCH      TaskType = "GiveRuleMatch"
 	GIVE_RULE_MATCH_END  TaskType = "GiveRuleMatchEnd"
+	GIVE_YARA_PROGRESS   TaskType = "GiveYaraProgress"
 
 	// terminate
 	TERMINATE_ALL    TaskType = "TerminateAll"
@@ -158,6 +159,7 @@ var Worklist = []TaskType{
 	GIVE_RULE_MATCH_INFO,
 	GIVE_RULE_MATCH,
 	GIVE_RULE_MATCH_END,
+	GIVE_YARA_PROGRESS,
 	TERMINATE_ALL,
 	FINISH_TERMINATE,
 }

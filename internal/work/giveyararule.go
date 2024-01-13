@@ -1,17 +1,20 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"math"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 var ruleMatchWorkingPath = "ruleMatchWorking"
@@ -43,6 +46,8 @@ func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (tas
 	if err != nil {
 		return task.FAIL, err
 	}
+	redis.RedisSet(p.GetRkey()+"-YaraProgress", 0)
+	go updateYaraRuleProgress(p.GetRkey())
 	go GiveYaraRule(p, fileLen, dstPath, dataRight)
 	return task.SUCCESS, nil
 }
@@ -89,6 +94,7 @@ func GiveYaraRule(p packet.Packet, fileLen int, path string, dataRight chan net.
 func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net.Conn) error {
 	srcPath := filepath.Join(pathWorkingPath, key)
 	dstPath := filepath.Join(pathWorkingPath, key+".zip")
+	// get the path from elasticsearch
 	// q := fmt.Sprintf(`{
 	// 	"query": {
 	// 		"bool": {
@@ -98,7 +104,8 @@ func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net
 	// 		}
 	// 	}
 	// }`, key)
-	// hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", q)
+	// hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", q, "uuid")
+	// logger.Debug("len of hitsArray: " + strconv.Itoa(len(hitsArray)))
 	// err := file.CreateFile(srcPath)
 	// if err != nil {
 	// 	logger.Error("Create file error: " + err.Error())
@@ -111,8 +118,6 @@ func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net
 	// 		return err
 	// 	}
 	// 	path := hitMap["_source"].(map[string]interface{})["path"].(string)
-	// 	path = strings.ReplaceAll(path, "\\\\", "\\")
-	// 	path = strings.ReplaceAll(path, "////", "//")
 	// 	pathByte := []byte(path + "\n")
 	// 	err := file.WriteFile(srcPath, pathByte)
 	// 	if err != nil {
@@ -120,7 +125,6 @@ func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net
 	// 		return err
 	// 	}
 	// }
-
 	file.ZipFile(srcPath, dstPath)
 	fileInfo, err := os.Stat(dstPath)
 	if err != nil {
@@ -171,4 +175,34 @@ func GivePath(p packet.Packet, fileLen int, path string, dataRight chan net.Conn
 		start += 65436
 	}
 	return nil
+}
+
+func GiveYaraProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveYaraProgress: " + key + "::" + p.GetMessage())
+	progress, err := getProgressByMsg(p.GetMessage(), 95)
+	if err != nil {
+		return task.FAIL, err
+	}
+	redis.RedisSet(key+"-YaraProgress", progress)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
+func updateYaraRuleProgress(key string) {
+	for {
+		result, err := query.Load_stored_task("nil", key, 2, "StartYaraRule")
+		if err != nil {
+			logger.Error("Get handling tasks failed: " + err.Error())
+			return
+		}
+		if len(result) == 0 {
+			return
+		}
+		query.Update_progress(redis.RedisGetInt(key+"-YaraProgress"), key, "StartYaraRule")
+		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
+	}
 }

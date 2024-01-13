@@ -92,20 +92,23 @@ func parseRuleMatch(path string, key string) error {
 	for _, line := range lines {
 		values := strings.Split(line, "|")
 		if len(values) == 2 {
-			allRule := values[0][1:len(values[0])-1]
-			allRule = strings.ReplaceAll(allRule, " ", "")
-			rules := strings.Split(allRule, ",")
+			allRule := values[0][1 : len(values[0])-1]
+			allRule = strings.TrimRight(allRule, "\r")
+			rules := strings.Split(allRule, ", ")
+			path := strings.TrimRight(values[1], "\r")
+			path = strings.ReplaceAll(path, "\\", "_backslash_")
+			path = strings.ReplaceAll(path, ":", "_colon_")
 			count := len(rules)
-			updateRuleMatch(key, allRule, values[1], count)
+			UpdateRuleMatch(key, allRule, path, count)
 		}
 	}
 	return nil
 }
 
-func updateRuleMatch(key string, rule string, path string, count int) {
+func UpdateRuleMatch(key string, rule string, path string, count int) {
 	logger.Info("UpdateRuleMatch: " + key + "|" + rule + "|" + path + "|" + strconv.Itoa(count))
-	query := fmt.Sprintf(`{
-	{
+	query := fmt.Sprintf(`
+		{
 		"script": {
 			"source": "ctx._source.yaraRuleHitCount = params.count ; ctx._source.yaraRuleHit = params.hit",
 			"lang": "painless",
@@ -118,7 +121,11 @@ func updateRuleMatch(key string, rule string, path string, count int) {
 			"bool": {
 				"must": [
 					{ "term": { "agent": "%s" } },
-					{ "term": { "path": "%s" } }
+					{
+						"match_phrase": {
+						  "path": "%s"
+						}
+					}
 				]
 			}
 		}
