@@ -5,10 +5,12 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"fmt"
 	"math"
 	"net"
 	"os"
@@ -95,36 +97,36 @@ func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net
 	srcPath := filepath.Join(pathWorkingPath, key)
 	dstPath := filepath.Join(pathWorkingPath, key+".zip")
 	// get the path from elasticsearch
-	// q := fmt.Sprintf(`{
-	// 	"query": {
-	// 		"bool": {
-	// 			"must": [
-	// 				{ "term": { "agent": "%s" } }
-	// 			]
-	// 		}
-	// 	}
-	// }`, key)
-	// hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", q, "uuid")
-	// logger.Debug("len of hitsArray: " + strconv.Itoa(len(hitsArray)))
-	// err := file.CreateFile(srcPath)
-	// if err != nil {
-	// 	logger.Error("Create file error: " + err.Error())
-	// 	return err
-	// }
-	// for _, hit := range hitsArray {
-	// 	hitMap, ok := hit.(map[string]interface{})
-	// 	if !ok {
-	// 		logger.Error("Assert hitMap error")
-	// 		return err
-	// 	}
-	// 	path := hitMap["_source"].(map[string]interface{})["path"].(string)
-	// 	pathByte := []byte(path + "\n")
-	// 	err := file.WriteFile(srcPath, pathByte)
-	// 	if err != nil {
-	// 		logger.Error("Write file error: " + err.Error())
-	// 		return err
-	// 	}
-	// }
+	q := fmt.Sprintf(`{
+		"query": {
+			"bool": {
+				"must": [
+					{ "term": { "agent": "%s" } }
+				]
+			}
+		}
+	}`, key)
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", q, "uuid")
+	logger.Debug("len of hitsArray: " + strconv.Itoa(len(hitsArray)))
+	err := file.CreateFile(srcPath)
+	if err != nil {
+		logger.Error("Create file error: " + err.Error())
+		return err
+	}
+	for _, hit := range hitsArray {
+		hitMap, ok := hit.(map[string]interface{})
+		if !ok {
+			logger.Error("Assert hitMap error")
+			return err
+		}
+		path := hitMap["_source"].(map[string]interface{})["path"].(string)
+		pathByte := []byte(path + "\n")
+		err := file.WriteFile(srcPath, pathByte)
+		if err != nil {
+			logger.Error("Write file error: " + err.Error())
+			return err
+		}
+	}
 	file.ZipFile(srcPath, dstPath)
 	fileInfo, err := os.Stat(dstPath)
 	if err != nil {
