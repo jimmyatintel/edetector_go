@@ -79,8 +79,13 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 				continue
 			}
 			memoryInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_memory"}
-			elastic.DeleteByQueryRequest(memoryInd, query)
-			logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
+			err = elastic.DeleteByQueryRequest(memoryInd, query)
+			if err != nil {
+				logger.Error("Error deleting by query: " + err.Error())
+			} else {
+				logger.Debug("Update information of the detect process: " + values[9] + " " + values[1])
+
+			}
 		}
 		uuid := uuid.NewString()
 		values = append(values, "0", "0")
