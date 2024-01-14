@@ -3,6 +3,7 @@ package query
 import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
+	"edetector_go/pkg/logger"
 	"fmt"
 	"strings"
 )
@@ -44,16 +45,26 @@ func DeleteRepeat(key string, ttype string) {
 			}
 		}
 	}`, key)
-	elastic.DeleteByQueryRequest(indexes, query)
+	err := elastic.DeleteByQueryRequest(indexes, query)
+	if err != nil {
+		logger.Error("Error deleting by query: " + err.Error())
+	}
 	// main
 	for _, ind := range indexes {
-		query = fmt.Sprintf(`{
+		query := fmt.Sprintf(`{
 			"query": {
-				"term": { "agent": "%s"},
-				"term": { "index": "%s"}
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "index": "%s" } }
+					]
+				}
 			}
 		}`, key, ind)
 		mainInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_main"}
-		elastic.DeleteByQueryRequest(mainInd, query)
+		err = elastic.DeleteByQueryRequest(mainInd, query)
+		if err != nil {
+			logger.Error("Error deleting by query: " + err.Error())
+		}
 	}
 }

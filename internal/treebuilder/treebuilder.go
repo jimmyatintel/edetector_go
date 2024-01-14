@@ -8,7 +8,8 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
-	"edetector_go/pkg/mariadb/query"
+	mariadbquery "edetector_go/pkg/mariadb/query"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"os"
@@ -95,7 +96,7 @@ func terminateDrive() {
 	terminating := 5
 	for {
 		time.Sleep(10 * time.Second)
-		handlingTasks, err := query.Load_stored_task("nil", "nil", terminating, "StartGetDrive")
+		handlingTasks, err := mariadbquery.Load_stored_task("nil", "nil", terminating, "StartGetDrive")
 		if err != nil {
 			logger.Error("Error loading stored task: " + err.Error())
 			continue
@@ -107,7 +108,7 @@ func terminateDrive() {
 					cancelMap[t[1]][i]()
 				}
 			}
-			query.Terminated_task(t[1], "StartGetDrive", terminating)
+			mariadbquery.Terminated_task(t[1], "StartGetDrive", terminating)
 		}
 	}
 }
@@ -116,24 +117,27 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	parts := strings.Split(diskInfo, "|")
 	if len(parts) != 2 {
 		logger.Error("Invalid diskInfo: " + diskInfo)
-		query.Failed_task(agent, "StartGetDrive", 6)
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 		return
 	}
 	fileSystem := parts[1]
+	if redis.RedisGetString(agent+"-DriveUnfinished") == redis.RedisGetString(agent+"-DriveTotal") {
+		elasticquery.DeleteRepeat(agent, "StartGetDrive")
+	}
 	time.Sleep(3 * time.Second) // wait for fully copy
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
-	ip, name, err := query.GetMachineIPandName(agent)
+	ip, name, err := mariadbquery.GetMachineIPandName(agent)
 	if err != nil {
 		logger.Error("Error getting machine ip and name (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive", 6)
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
 	explorerContent, err := os.ReadFile(explorerFile)
 	if err != nil {
 		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive", 6)
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
@@ -158,7 +162,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			parent, child, err := getRelation(values)
 			if err != nil {
 				logger.Error("Error getting relation (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive", 6)
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -200,7 +204,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			child, err := strconv.Atoi(values[8])
 			if err != nil {
 				logger.Error("Error getting child (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive", 6)
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -220,14 +224,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive", 6)
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-				query.Failed_task(agent, "StartGetDrive", 6)
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
@@ -241,7 +245,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low")
 		if err != nil {
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
-			query.Failed_task(agent, "StartGetDrive", 6)
+			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 			return
 		}
 	}
@@ -305,7 +309,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 	if err != nil {
 		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-		query.Failed_task(agent, "StartGetDrive", 6)
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, "")
 		return
 	}

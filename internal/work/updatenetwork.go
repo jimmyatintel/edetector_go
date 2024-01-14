@@ -58,7 +58,10 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				logger.Error("Error getting score: " + err.Error())
 			}
 			memoryInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_memory"}
-			elastic.DeleteByQueryRequest(memoryInd, searchNetworkQuery)
+			err = elastic.DeleteByQueryRequest(memoryInd, searchNetworkQuery)
+			if err != nil {
+				logger.Error("Error deleting by query: " + err.Error())
+			}
 		}
 		if len(hitsDetectArray) == 0 { // detect process not exists
 			riskscore := int(previousScore) + malicious*20

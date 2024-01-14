@@ -262,6 +262,8 @@ func DeleteByQueryRequest(indexes []string, deleteQuery string) error {
 	if !flagcheck() {
 		return errors.New("elastic is not enabled")
 	}
+	logger.Debug("Index: " + strings.Join(indexes, ", "))
+	logger.Debug("Delete query:" + deleteQuery)
 	req := esapi.DeleteByQueryRequest{
 		Index: indexes,
 		Body:  strings.NewReader(deleteQuery),
