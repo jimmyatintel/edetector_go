@@ -50,21 +50,21 @@ func DeleteRepeat(key string, ttype string) {
 		logger.Error("Error deleting by query: " + err.Error())
 	}
 	// main
-	for _, ind := range indexes {
-		query := fmt.Sprintf(`{
-			"query": {
-				"bool": {
-					"must": [
-						{ "term": { "agent": "%s" } },
-						{ "term": { "index": "%s" } }
-					]
-				}
-			}
-		}`, key, ind)
-		mainInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_main"}
-		err = elastic.DeleteByQueryRequest(mainInd, query)
-		if err != nil {
-			logger.Error("Error deleting by query: " + err.Error())
-		}
-	}
+	// for _, ind := range indexes {
+	// 	query := fmt.Sprintf(`{
+	// 		"query": {
+	// 			"bool": {
+	// 				"must": [
+	// 					{ "term": { "agent": "%s" } },
+	// 					{ "term": { "index": "%s" } }
+	// 				]
+	// 			}
+	// 		}
+	// 	}`, key, ind)
+	// 	mainInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_main"}
+	// 	err = elastic.DeleteByQueryRequest(mainInd, query)
+	// 	if err != nil {
+	// 		logger.Error("Error deleting by query: " + err.Error())
+	// 	}
+	// }
 }
