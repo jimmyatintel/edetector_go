@@ -80,7 +80,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				continue
 			}
 		}
-		if key == "unknown" || key == "NoKey" || key == "" || key == "null" || len(key) != 32{
+		if key == "unknown" || key == "NoKey" || key == "" || key == "null" || len(key) != 32 {
+			logger.Debug("Get key: " + NewPacket.GetRkey())
 			key = NewPacket.GetRkey()
 		}
 		if agentTaskType == "unknown" {
