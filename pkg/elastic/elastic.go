@@ -188,7 +188,7 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	req := esapi.SearchRequest{
 		Index:  []string{index},
 		Body:   strings.NewReader(body),
-		Scroll: 60*time.Second,
+		Scroll: 60 * time.Second,
 		Size:   &size,
 		Sort:   []string{sortItem},
 	}
@@ -223,7 +223,7 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	}
 	for {
 		req := esapi.ScrollRequest{
-			Scroll:   60*time.Second,
+			Scroll:   60 * time.Second,
 			ScrollID: scrollID,
 		}
 		res, err := req.Do(context.Background(), es)
