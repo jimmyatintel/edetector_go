@@ -70,6 +70,8 @@ func Update_task_timestamp(clientid string, tasktype string) {
 		col = "file_finish_time"
 	} else if tasktype == "StartGetImage" {
 		col = "image_finish_time"
+	} else if tasktype == "StartYaraRule" {
+		col = "yararule_finish_time"
 	} else {
 		return
 	}
