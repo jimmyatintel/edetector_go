@@ -171,7 +171,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		logger.Error("Scan failed: " + string(key))
 		mq.Update_task_status(key, agentTaskType, 2, 0)
-	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
+	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" || agentTaskType == "StartYaraRule" {
 		if !strings.Contains(lastTask, "End") {
 			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
