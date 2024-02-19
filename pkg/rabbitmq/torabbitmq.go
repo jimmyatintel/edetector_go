@@ -17,44 +17,44 @@ type Message struct {
 }
 
 func ToRabbitMQ_Main(index string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
-	date_int, err := strconv.Atoi(date)
-	if err != nil {
-		logger.Error("Error converting time: " + err.Error())
-		date_int = 0
-	}
-	template := elastic.MainSource{
-		UUID:      uuid,
-		Index:     index,
-		Agent:     agentID,
-		AgentIP:   ip,
-		AgentName: name,
-		ItemMain:  item,
-		DateMain:  date_int,
-		TypeMain:  ttype,
-		EtcMain:   etc,
-	}
-	request, err := template.Elastical()
-	if err != nil {
-		return err
-	}
-	var msg = Message{
-		Index: config.Viper.GetString("ELASTIC_PREFIX") + "_main",
-		Data:  string(request),
-	}
-	msgBytes, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	for {
-		err = Publish(priority, msgBytes)
-		if err != nil {
-			logger.Error("Error sending to rabbitMQ (main), retrying... " + err.Error())
-			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
-			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
-		} else {
-			break
-		}
-	}
+	// date_int, err := strconv.Atoi(date)
+	// if err != nil {
+	// 	logger.Error("Error converting time: " + err.Error())
+	// 	date_int = 0
+	// }
+	// template := elastic.MainSource{
+	// 	UUID:      uuid,
+	// 	Index:     index,
+	// 	Agent:     agentID,
+	// 	AgentIP:   ip,
+	// 	AgentName: name,
+	// 	ItemMain:  item,
+	// 	DateMain:  date_int,
+	// 	TypeMain:  ttype,
+	// 	EtcMain:   etc,
+	// }
+	// request, err := template.Elastical()
+	// if err != nil {
+	// 	return err
+	// }
+	// var msg = Message{
+	// 	Index: config.Viper.GetString("ELASTIC_PREFIX") + "_main",
+	// 	Data:  string(request),
+	// }
+	// msgBytes, err := json.Marshal(msg)
+	// if err != nil {
+	// 	return err
+	// }
+	// for {
+	// 	err = Publish(priority, msgBytes)
+	// 	if err != nil {
+	// 		logger.Error("Error sending to rabbitMQ (main), retrying... " + err.Error())
+	// 		randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
+	// 		time.Sleep(time.Duration(randomSleep) * time.Millisecond)
+	// 	} else {
+	// 		break
+	// 	}
+	// }
 	return nil
 }
 
