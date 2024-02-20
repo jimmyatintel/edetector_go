@@ -158,6 +158,7 @@ func Connection_close(Connection_close_chan chan<- int) {
 }
 
 func offline_all_clients() {
+	logger.Info("Offline all clients")
 	clients := mq.Load_all_client()
 	for _, client := range clients {
 		rq.Offline(client, false)
