@@ -86,24 +86,3 @@ type MemoryNetwork struct {
 func (n MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
-
-// type MemoryNetworkScan struct {
-// 	ProcessId         int    `json:"processId"`
-// 	ProcessCreateTime int    `json:"processCreateTime"`
-// 	SrcAddress        string `json:"srcAddress"`
-// 	DstAddress        string `json:"dstAddress"`
-// 	Action            string `json:"action"`
-// 	Timestamp         int    `json:"timestamp"`
-// 	UUID              string `json:"uuid"`
-// 	Agent             string `json:"agent"`
-// 	AgentIP           string `json:"agentIP"`
-// 	AgentName         string `json:"agentName"`
-// 	ItemMain          string `json:"item_main"`
-// 	DateMain          int    `json:"date_main"`
-// 	TypeMain          string `json:"type_main"`
-// 	EtcMain           string `json:"etc_main"`
-// }
-
-// func (n MemoryNetworkScan) Elastical() ([]byte, error) {
-// 	return json.Marshal(n)
-// }
