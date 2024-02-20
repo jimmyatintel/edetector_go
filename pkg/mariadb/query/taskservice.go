@@ -60,6 +60,36 @@ func Update_task_status(clientid string, tasktype string, old_status int, new_st
 	return int(rowsAffected)
 }
 
+func Update_task_status_by_taskid(taskid string, new_status int) {
+	result, err := mariadb.DB.Exec("update task set status = ? where task_id = ?", new_status, taskid)
+	if err != nil {
+		logger.Error("Error Update_task_status_by_taskid: " + err.Error())
+		return
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		logger.Error("Error getting rowsAffected: " + err.Error())
+		return
+	}
+	if rowsAffected > 0 {
+		res, err := mariadb.DB.Query("select client_id from task where task_id = ?", taskid)
+		if err != nil {
+			logger.Error("Error selecting client_id: " + err.Error())
+			return
+		}
+		defer res.Close()
+		var clientid string
+		for res.Next() {
+			err := res.Scan(&clientid)
+			if err != nil {
+				logger.Error("Error scanning client_id: " + err.Error())
+				return
+			}
+		}
+		request.RequestToUser(clientid)
+	}
+}
+
 func Update_task_timestamp(clientid string, tasktype string) {
 	col := ""
 	if tasktype == "StartScan" {

@@ -9,7 +9,6 @@ import (
 
 	"edetector_go/config"
 	"edetector_go/internal/packet"
-	"edetector_go/internal/task"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
@@ -54,9 +53,14 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Invalid request format: " + err.Error())
+		res := TaskResponse{
+			IsSuccess: false,
+			Message:   "Invalid request format",
+		}
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
-	handleTaskrequest(ctx, req.TaskID)
+	go handleTaskrequest(ctx, req.TaskID)
 	res := TaskResponse{
 		IsSuccess: true,
 		Message:   "Success",
@@ -74,26 +78,26 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	err := NewPacket.NewPacket(content)
 	if err != nil {
 		logger.Error("Error reading task packet: " + err.Error())
+		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
 	if NewPacket.GetUserTaskType() == "Undefine" {
 		nullIndex := bytes.IndexByte(content[76:100], 0)
 		logger.Error("Undefine User Task Type: " + string(content[76:76+nullIndex]))
+		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
 	logger.Info("Task " + taskid + " " + string(NewPacket.GetUserTaskType()) + " is handling...")
 	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
 	if !ok {
 		logger.Error("Function notfound:" + string(NewPacket.GetUserTaskType()))
+		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
 	_, err = taskFunc(NewPacket)
 	if err != nil {
 		logger.Error("Task " + string(NewPacket.GetUserTaskType()) + " failed: " + err.Error())
-		UsertaskType, ok := task.UserTaskTypeMap[NewPacket.GetUserTaskType()]
-		if ok {
-			query.Failed_task(NewPacket.GetRkey(), UsertaskType, 6)
-		}
+		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
 	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
