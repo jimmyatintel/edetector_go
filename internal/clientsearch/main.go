@@ -7,6 +7,8 @@ import (
 	packet "edetector_go/internal/packet"
 	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
+	mq "edetector_go/pkg/mariadb/query"
+	rq "edetector_go/pkg/redis/query"
 
 	// "io/ioutil"
 	"net"
@@ -105,6 +107,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	UDP_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
+	offline_all_clients()
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
@@ -152,6 +155,13 @@ func Connection_close(Connection_close_chan chan<- int) {
 		Client_UDP_Server.Close()
 	}
 	Connection_close_chan <- 1
+}
+
+func offline_all_clients() {
+	clients := mq.Load_all_client()
+	for _, client := range clients {
+		rq.Offline(client, false)
+	}
 }
 
 func Main(ctx context.Context, Connection_close_chan chan<- int) {

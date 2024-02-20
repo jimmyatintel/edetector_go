@@ -3,11 +3,13 @@ package dbparser
 import (
 	"edetector_go/pkg/logger"
 	"fmt"
+	"strings"
 	"time"
 )
 
 func RFCToTimestamp(original string) string {
-	if original == "0" {
+	original = strings.TrimSpace(original)
+	if original == "0" || original == "-1" {
 		return "0"
 	}
 	layout := "Mon, 02 Jan 2006 15:04:05 GMT"
@@ -20,7 +22,8 @@ func RFCToTimestamp(original string) string {
 }
 
 func DigitToTimestamp(original string) string {
-	if original == "0" {
+	original = strings.TrimSpace(original)
+	if original == "0" || original == "-1" {
 		return "0"
 	}
 	original = original + "000000"
