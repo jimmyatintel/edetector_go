@@ -100,11 +100,6 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error getting risk level: " + err.Error())
 			return task.FAIL, err
 		}
-		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
-		if err != nil {
-			logger.Error("Error sending to rabbitMQ (main): " + err.Error())
-			return task.FAIL, err
-		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())

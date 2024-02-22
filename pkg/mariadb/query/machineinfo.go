@@ -9,11 +9,11 @@ import (
 func GetMachineIPandName(KeyNum string) (string, string, error) {
 	agentIP := GetMachineIP(KeyNum)
 	if agentIP == "" {
-		return "", "", errors.New("Error getting machine ip")
+		return "", "", errors.New("error getting machine ip")
 	}
 	agentName := GetMachineName(KeyNum)
 	if agentName == "" {
-		return "", "", errors.New("Error getting machine name")
+		return "", "", errors.New("error getting machine name")
 	}
 	return agentIP, agentName, nil
 }

@@ -215,10 +215,6 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
-		if err != nil {
-			return err
-		}
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan")
 		if err != nil {
 			return err
