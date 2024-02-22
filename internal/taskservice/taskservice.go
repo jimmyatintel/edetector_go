@@ -66,11 +66,13 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 		Message:   "Success",
 	}
 	c.JSON(http.StatusOK, res)
+	logger.Info("Task " + req.TaskID + " received")
 }
 
 // To-Do (TBD)
 func handleTaskrequest(ctx context.Context, taskid string) {
 	logger.Info("Handling task: " + taskid)
+	query.Update_task_status_by_taskid(taskid, 2)
 	// task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
 	message := redis.RedisGetString(taskid)
 	content := []byte(message)
