@@ -167,7 +167,7 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 	if err != nil {
 		return err
 	}
-	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low", "StartCollect")
 	if err != nil {
 		return err
 	}
