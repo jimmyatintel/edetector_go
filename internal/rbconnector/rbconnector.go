@@ -5,6 +5,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
+	elaInsert "edetector_go/pkg/elastic/insert"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
@@ -155,7 +156,7 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 	for {
 		mutex.Lock()
 		if ((time.Since(last_send) > time.Duration(tunnel_time)*time.Second) && len(*bulkaction) > 0) || len(*bulkaction) > size {
-			err := elastic.BulkIndexRequest(*bulkaction, *bulkdata)
+			err := elaInsert.BulkInsert(*bulkaction, *bulkdata)
 			if err != nil {
 				logger.Error("Bulk index request error: " + err.Error())
 				time.Sleep(10 * time.Second)

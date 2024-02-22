@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -102,7 +101,6 @@ func terminateCollect() {
 }
 
 func dbParser(ctx context.Context, dbFile string, agent string) {
-	elasticquery.DeleteRepeat(agent, "StartCollect")
 	time.Sleep(3 * time.Second) // wait for fully copy
 	db, err := sql.Open("sqlite3", dbFile)
 	if err != nil {

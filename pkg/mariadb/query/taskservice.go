@@ -1,6 +1,7 @@
 package query
 
 import (
+	elaDelete "edetector_go/pkg/elastic/delete"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/request"
@@ -140,6 +141,10 @@ func Terminate_handling_task(clientid string, tasktype string) {
 }
 
 func Failed_task(clientid string, tasktype string, status int) {
+	if tasktype == "StartGetDrive" || tasktype == "StartCollect" {
+		taskID := Load_handling_task_id(clientid, tasktype)
+		elaDelete.DeleteFailedData(clientid, tasktype, taskID)
+	}
 	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
 	if tasktype == "ChangeDetectMode" {
 		return
@@ -150,7 +155,7 @@ func Failed_task(clientid string, tasktype string, status int) {
 	}
 }
 
-func Load_handling_task_id(clienid string, tasktype string) string{
+func Load_handling_task_id(clienid string, tasktype string) string {
 	res, err := mariadb.DB.Query("SELECT task_id FROM task WHERE client_id = ? AND type = ? AND status = 2", clienid, tasktype)
 	if err != nil {
 		logger.Error("Error Load_handling_task_id: " + err.Error())

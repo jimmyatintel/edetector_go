@@ -5,7 +5,6 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -121,9 +120,6 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		return
 	}
 	fileSystem := parts[1]
-	if redis.RedisGetString(agent+"-DriveUnfinished") == redis.RedisGetString(agent+"-DriveTotal") {
-		elasticquery.DeleteRepeat(agent, "StartGetDrive")
-	}
 	time.Sleep(3 * time.Second) // wait for fully copy
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
@@ -184,7 +180,8 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
 	// tree traversal & send to elastic(relation)
-	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap)
+	headChan := make(chan ExplorerRelation)
+	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, headChan)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 	// send to elastic (main & details)
 	for _, line := range lines {
@@ -239,6 +236,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		}
 	}
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
+	// send ExplorerTreeHead in the end
+	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", <-headChan, "ed_low")
+	if err != nil {
+		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		clearBuilder(agent, diskInfo, "")
+		return
+	}
 	clearBuilder(agent, diskInfo, explorerFile)
 	redis.RedisSet_AddInteger(agent+"-DriveUnfinished", -1)
 	if redis.RedisGetInt(agent+"-DriveUnfinished") == 0 { // last drive -> send finish signal
@@ -280,7 +285,7 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation)) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headChan chan ExplorerRelation) {
 	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
 	if disk == "Linux" {
@@ -308,15 +313,19 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		Child:   relation.Child,
 		Task_id: task_id,
 	}
-	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
-	if err != nil {
-		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-		clearBuilder(agent, diskInfo, "")
-		return
+	if isRoot { // send later
+		headChan <- data
+	} else {
+		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
+		if err != nil {
+			logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
+			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+			clearBuilder(agent, diskInfo, "")
+			return
+		}
 	}
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap)
+		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, headChan)
 	}
 }
 
