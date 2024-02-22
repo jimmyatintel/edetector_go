@@ -90,7 +90,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		uuid := uuid.NewString()
 		values = append(values, "0", "0")
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc")
+		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc", "nil")
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
 			return task.FAIL, err
@@ -105,7 +105,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error sending to rabbitMQ (main): " + err.Error())
 			return task.FAIL, err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 			return task.FAIL, err

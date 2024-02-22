@@ -313,6 +313,9 @@ func recalculateScore(query string) {
 				}
 			}`, level, score)
 		err = elastic.UpdateByDocIDRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", docID, query)
+		if err != nil {
+			logger.Error("Error updating risk level and score: " + err.Error())
+		}
 	}
 
 }

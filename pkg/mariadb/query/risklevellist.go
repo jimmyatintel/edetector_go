@@ -1,7 +1,6 @@
 package query
 
 import (
-	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 )
 
@@ -22,9 +21,9 @@ func Load_white_list() ([][]string, error) {
 		}
 		result = append(result, tmp)
 	}
-	if len(result) == 0 {
-		logger.Info("White list is empty")
-	}
+	// if len(result) == 0 {
+	// 	logger.Info("White list is empty")
+	// }
 	return result, nil
 }
 
@@ -45,9 +44,9 @@ func Load_black_list() ([][]string, error) {
 		}
 		result = append(result, tmp)
 	}
-	if len(result) == 0 {
-		logger.Info("Black list is empty")
-	}
+	// if len(result) == 0 {
+	// 	logger.Info("Black list is empty")
+	// }
 	return result, nil
 }
 
@@ -68,8 +67,8 @@ func Load_hack_list() ([][]string, error) {
 		}
 		result = append(result, tmp)
 	}
-	if len(result) == 0 {
-		logger.Info("Hack list is empty")
-	}
+	// if len(result) == 0 {
+	// 	logger.Info("Hack list is empty")
+	// }
 	return result, nil
 }

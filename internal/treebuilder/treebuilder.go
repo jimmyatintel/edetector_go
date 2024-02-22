@@ -228,7 +228,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
-			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
+			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low", "StartGetDrive")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				mariadbquery.Failed_task(agent, "StartGetDrive", 6)

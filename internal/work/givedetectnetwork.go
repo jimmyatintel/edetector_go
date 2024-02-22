@@ -46,7 +46,7 @@ func detectNetworkElastic(p packet.Packet) {
 		if values == nil {
 			continue
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &(MemoryNetwork{}), values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid", "nil")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 			continue

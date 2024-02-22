@@ -89,36 +89,6 @@ func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, 
 	return nil
 }
 
-func ToRabbitMQ_Details_test(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, task_id string, priority string) error {
-	template, err := StringToStruct_test(st, values, uuid, agentID, ip, name, item, date, ttype, etc, task_id)
-	if err != nil {
-		return err
-	}
-	request, err := template.Elastical()
-	if err != nil {
-		return err
-	}
-	var msg = Message{
-		Index: index,
-		Data:  string(request),
-	}
-	msgBytes, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	for {
-		err = Publish(priority, msgBytes)
-		if err != nil {
-			logger.Error("Error sending to rabbitMQ (details), retrying... " + err.Error())
-			randomSleep := (rand.Intn(100) + 1) * 100 // 0.1 ~ 10
-			time.Sleep(time.Duration(randomSleep) * time.Millisecond)
-		} else {
-			break
-		}
-	}
-	return nil
-}
-
 func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority string) error {
 	request, err := template.Elastical()
 	if err != nil {
@@ -191,40 +161,6 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 			field.Set(reflect.ValueOf(value))
 		case reflect.Int64:
 			values[i] = strings.TrimSpace(values[i])
-			value, err := strconv.ParseInt(values[i], 10, 64)
-			if err != nil {
-				logger.Error("Error converting to int64: " + err.Error())
-				break
-			}
-			field.Set(reflect.ValueOf(value))
-		case reflect.String:
-			field.Set(reflect.ValueOf(values[i]))
-		case reflect.Bool:
-			value, err := strconv.ParseBool(values[i])
-			if err != nil {
-				logger.Error("Error converting to bool: " + err.Error())
-				break
-			}
-			field.Set(reflect.ValueOf(value))
-		}
-	}
-	return st, nil
-}
-
-func StringToStruct_test(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, task_id string) (elastic.Request_data, error) {
-	v := reflect.Indirect(reflect.ValueOf(st))
-	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, task_id)
-	for i := 0; i < v.NumField(); i++ {
-		field := v.Field(i)
-		switch field.Kind() {
-		case reflect.Int:
-			value, err := strconv.Atoi(values[i])
-			if err != nil {
-				logger.Error("Error converting to int: " + err.Error())
-				break
-			}
-			field.Set(reflect.ValueOf(value))
-		case reflect.Int64:
 			value, err := strconv.ParseInt(values[i], 10, 64)
 			if err != nil {
 				logger.Error("Error converting to int64: " + err.Error())
