@@ -180,8 +180,8 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
 	// tree traversal & send to elastic(relation)
-	headChan := make(chan ExplorerRelation)
-	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, headChan)
+	headData := ExplorerRelation{}
+	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, headData)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 	// send to elastic (main & details)
 	for _, line := range lines {
@@ -237,7 +237,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
-	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", <-headChan, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_low")
 	if err != nil {
 		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -285,7 +285,7 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headChan chan ExplorerRelation) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headData ExplorerRelation) {
 	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
 	if disk == "Linux" {
@@ -314,7 +314,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		Task_id: task_id,
 	}
 	if isRoot { // send later
-		headChan <- data
+		headData = data
 	} else {
 		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 		if err != nil {
@@ -325,7 +325,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		}
 	}
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, headChan)
+		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, headData)
 	}
 }
 
