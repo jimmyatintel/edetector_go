@@ -4,6 +4,7 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"math/rand"
 	"reflect"
@@ -59,8 +60,9 @@ func ToRabbitMQ_Main(index string, uuid string, agentID string, ip string, name 
 	return nil
 }
 
-func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string) error {
-	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc)
+func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string) error {
+	taskID := query.Load_handling_task_id(agentID, taskType)
+	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
 	if err != nil {
 		return err
 	}
@@ -145,9 +147,9 @@ func ToRabbitMQ_FinishSignal(agent string, taskType string, priority string) err
 	return nil
 }
 
-func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string) (elastic.Request_data, error) {
+func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, taskID string) (elastic.Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(st))
-	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc)
+	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {

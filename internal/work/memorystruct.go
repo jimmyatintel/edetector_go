@@ -45,6 +45,7 @@ type Memory struct {
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`
 	EtcMain           string `json:"etc_main"`
+	Task_id           string `json:"task_id"`
 }
 
 func (n Memory) Elastical() ([]byte, error) {
@@ -81,6 +82,7 @@ type MemoryNetwork struct {
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`
 	EtcMain           string `json:"etc_main"`
+	Task_id           string `json:"task_id"`
 }
 
 func (n MemoryNetwork) Elastical() ([]byte, error) {

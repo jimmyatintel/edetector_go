@@ -149,3 +149,21 @@ func Failed_task(clientid string, tasktype string, status int) {
 		request.RequestToUser(clientid)
 	}
 }
+
+func Load_handling_task_id(clienid string, tasktype string) string{
+	res, err := mariadb.DB.Query("SELECT task_id FROM task WHERE client_id = ? AND type = ? AND status = 2", clienid, tasktype)
+	if err != nil {
+		logger.Error("Error Load_handling_task_id: " + err.Error())
+		return ""
+	}
+	defer res.Close()
+	var taskid string
+	for res.Next() {
+		err := res.Scan(&taskid)
+		if err != nil {
+			logger.Error("Error scanning task_id: " + err.Error())
+			return ""
+		}
+	}
+	return taskid
+}

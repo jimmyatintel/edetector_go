@@ -3,10 +3,11 @@ package treebuilder
 import "encoding/json"
 
 type ExplorerRelation struct {
-	Agent  string   `json:"agent"`
-	IsRoot bool     `json:"isRoot"`
-	Parent string   `json:"parent"`
-	Child  []string `json:"child"`
+	Agent   string   `json:"agent"`
+	IsRoot  bool     `json:"isRoot"`
+	Parent  string   `json:"parent"`
+	Child   []string `json:"child"`
+	Task_id string   `json:"task_id"`
 }
 
 func (n ExplorerRelation) Elastical() ([]byte, error) {
@@ -35,6 +36,7 @@ type ExplorerDetails struct {
 	DateMain          int    `json:"date_main"`
 	TypeMain          string `json:"type_main"`
 	EtcMain           string `json:"etc_main"`
+	Task_id           string `json:"task_id"`
 }
 
 func (n ExplorerDetails) Elastical() ([]byte, error) {

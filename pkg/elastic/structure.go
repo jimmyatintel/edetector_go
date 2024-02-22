@@ -18,6 +18,7 @@ type MainSource struct {
 	DateMain  int    `json:"date_main"`
 	TypeMain  string `json:"type_main"`
 	EtcMain   string `json:"etc_main"`
+	Task_id   string `json:"task_id"`
 }
 
 func (s *MainSource) Elastical() ([]byte, error) {

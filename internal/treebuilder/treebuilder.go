@@ -5,11 +5,11 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
+	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	mariadbquery "edetector_go/pkg/mariadb/query"
-	elasticquery "edetector_go/pkg/elastic/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"os"
@@ -300,11 +300,13 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		relation.Path = path
 	}
 	(*RelationMap)[ind] = relation
+	task_id := mariadbquery.Load_handling_task_id(agent, "StartGetDrive")
 	data := ExplorerRelation{
-		Agent:  agent,
-		IsRoot: isRoot,
-		Parent: relation.UUID,
-		Child:  relation.Child,
+		Agent:   agent,
+		IsRoot:  isRoot,
+		Parent:  relation.UUID,
+		Child:   relation.Child,
+		Task_id: task_id,
 	}
 	err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 	if err != nil {
