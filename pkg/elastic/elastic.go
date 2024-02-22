@@ -258,7 +258,7 @@ func DeleteByQueryRequest(indexes []string, query string) error {
 		if err != nil {
 			return err
 		}
-		logger.Info("Deleted repeated data: ", zap.Any("message", responseJSON["deleted"]))
+		logger.Info("Delete By Query: ", zap.Any("message", responseJSON["deleted"]))
 
 		conflictCount := responseJSON["version_conflicts"].(float64)
 		if conflictCount != 0 {

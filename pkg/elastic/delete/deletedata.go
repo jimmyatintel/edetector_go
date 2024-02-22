@@ -21,7 +21,7 @@ func GetIndexes(ttype string) []string {
 	indexes := []string{}
 	switch ttype {
 	case "ExplorerTreeHead":
-		indexes = append(indexes, prefix+"explorer_relation")
+		indexes = append(indexes, prefix+"_explorer_relation")
 	case "StartGetDrive":
 		for _, ind := range diskIndex {
 			indexes = append(indexes, prefix+"_"+ind)
