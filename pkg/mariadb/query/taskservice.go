@@ -125,7 +125,7 @@ func Finish_task(clientid string, tasktype string) {
 }
 
 func Terminated_task(clientid string, tasktype string, status int) {
-	deleteData(clientid, tasktype)
+	deleteData(clientid, tasktype, 5)
 	rowsAffected := Update_task_status(clientid, tasktype, status, 4)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
@@ -142,7 +142,7 @@ func Terminate_handling_task(clientid string, tasktype string) {
 }
 
 func Failed_task(clientid string, tasktype string, status int) {
-	deleteData(clientid, tasktype)
+	deleteData(clientid, tasktype, 2)
 	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
 	if tasktype == "ChangeDetectMode" {
 		return
@@ -153,8 +153,8 @@ func Failed_task(clientid string, tasktype string, status int) {
 	}
 }
 
-func Load_handling_task_id(clienid string, tasktype string) string {
-	res, err := mariadb.DB.Query("SELECT task_id FROM task WHERE client_id = ? AND type = ? AND status = 2", clienid, tasktype)
+func Load_task_id(clienid string, tasktype string, status int) string {
+	res, err := mariadb.DB.Query("SELECT task_id FROM task WHERE client_id = ? AND type = ? AND status = ?", clienid, tasktype, status)
 	if err != nil {
 		logger.Error("Error Load_handling_task_id: " + err.Error())
 		return ""
@@ -171,8 +171,8 @@ func Load_handling_task_id(clienid string, tasktype string) string {
 	return taskid
 }
 
-func deleteData(clientid string, tasktype string) {
-	taskID := Load_handling_task_id(clientid, tasktype)
+func deleteData(clientid string, tasktype string, status int) {
+	taskID := Load_task_id(clientid, tasktype, status)
 	if tasktype == "StartGetDrive" {
 		elaDelete.DeleteUnfinishedData(clientid, "ExplorerTreeHead", taskID)
 	}

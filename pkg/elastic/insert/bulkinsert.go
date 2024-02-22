@@ -34,7 +34,7 @@ func BulkInsert(action []string, work []string) error {
 				continue
 			}
 			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
-			task_id := mariadbquery.Load_handling_task_id(data.Agent, data.TaskType)
+			task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
 			if data.TaskType == "StartGetDrive" { // delete head first
 				logger.Info("Delete old ExplorerTreeHead")
 				err = elaDelete.DeleteOldData(data.Agent, "ExplorerTreeHead", task_id)

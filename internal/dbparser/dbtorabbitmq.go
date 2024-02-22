@@ -163,10 +163,6 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 		return err
 	}
 	uuid := uuid.NewString()
-	err = rabbitmq.ToRabbitMQ_Main(index, uuid, agent, ip, name, item, date, ttype, etc, "ed_low")
-	if err != nil {
-		return err
-	}
 	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low", "StartCollect")
 	if err != nil {
 		return err

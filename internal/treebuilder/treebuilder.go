@@ -218,13 +218,6 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				values[6] = "0"
 			}
 			values = append(values, "0", "") // yara rule hit count & yara rule hit
-			err = rabbitmq.ToRabbitMQ_Main(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low")
-			if err != nil {
-				logger.Error("Error sending to main rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-				clearBuilder(agent, diskInfo, explorerFile)
-				return
-			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low", "StartGetDrive")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
@@ -305,7 +298,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		relation.Path = path
 	}
 	(*RelationMap)[ind] = relation
-	task_id := mariadbquery.Load_handling_task_id(agent, "StartGetDrive")
+	task_id := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
 	data := ExplorerRelation{
 		Agent:   agent,
 		IsRoot:  isRoot,
