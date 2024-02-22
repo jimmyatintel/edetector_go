@@ -4,7 +4,6 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
-	mariadbquery "edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,11 +16,6 @@ import (
 )
 
 var es *elasticsearch.Client
-
-type IndexInfo struct {
-	Index string `json:"_index"`
-	Type  string `json:"_type"`
-}
 
 func flagcheck() bool {
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
@@ -40,6 +34,10 @@ func Elastic_init() {
 		logger.Panic("Error connecting to elastic: " + err.Error())
 		panic(err)
 	}
+}
+
+type Request_data interface {
+	Elastical() ([]byte, error)
 }
 
 func CreateIndex(name string) {
@@ -82,29 +80,8 @@ func IndexRequest(name string, body string) error {
 	return nil
 }
 
-func BulkIndexRequest(action []string, work []string) error {
+func BulkIndexRequest(buf strings.Builder) error {
 	if !flagcheck() {
-		return nil
-	}
-	var buf strings.Builder
-	for i, doc := range action {
-		if IsFinish(doc) {
-			var data FinishSignal
-			err := json.Unmarshal([]byte(work[i]), &data)
-			if err != nil {
-				logger.Error("Error unmarshaling finish signal: " + err.Error())
-				continue
-			}
-			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
-			mariadbquery.Finish_task(data.Agent, data.TaskType)
-			continue
-		}
-		buf.WriteString(doc)
-		buf.WriteByte('\n')
-		buf.WriteString(work[i])
-		buf.WriteByte('\n')
-	}
-	if buf.Len() == 0 {
 		return nil
 	}
 	res, err := es.Bulk(
@@ -258,15 +235,15 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	return hitsArray
 }
 
-func DeleteByQueryRequest(indexes []string, deleteQuery string) error {
+func DeleteByQueryRequest(indexes []string, query string) error {
 	if !flagcheck() {
 		return errors.New("elastic is not enabled")
 	}
 	logger.Debug("Index: " + strings.Join(indexes, ", "))
-	logger.Debug("Delete query:" + deleteQuery)
+	logger.Debug("Delete query:" + query)
 	req := esapi.DeleteByQueryRequest{
 		Index: indexes,
-		Body:  strings.NewReader(deleteQuery),
+		Body:  strings.NewReader(query),
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
@@ -293,19 +270,4 @@ func DeleteByQueryRequest(indexes []string, deleteQuery string) error {
 		}
 	}
 	return nil
-}
-
-func IsFinish(jsonString string) bool {
-	var indexInfo struct {
-		IndexInfo `json:"index"`
-	}
-	err := json.Unmarshal([]byte(jsonString), &indexInfo)
-	if err != nil {
-		logger.Error("Error parsing action: " + err.Error())
-		return false
-	}
-	if indexInfo.Index == "Finish" {
-		return true
-	}
-	return false
 }

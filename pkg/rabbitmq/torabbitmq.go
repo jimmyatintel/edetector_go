@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
+	elaInsert "edetector_go/pkg/elastic/insert"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
@@ -118,7 +119,7 @@ func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority s
 }
 
 func ToRabbitMQ_FinishSignal(agent string, taskType string, priority string) error {
-	template := elastic.FinishSignal{
+	template := elaInsert.FinishSignal{
 		Agent:    agent,
 		TaskType: taskType,
 	}
