@@ -74,18 +74,33 @@ func DeleteOldData(key string, ttype string, taskID string) error {
 	return nil
 }
 
-func DeleteFailedData(key string, ttype string, taskID string) error {
+func DeleteUnfinishedData(key string, ttype string, taskID string) error {
 	indexes := GetIndexes(ttype)
-	query := fmt.Sprintf(`{
-		"query": {
-			"bool": {
-				"must": [
-					{ "term": { "agent": "%s" } },
-					{ "term": { "task_id": "%s" } }
-				]
+	var query string
+	if ttype == "ExplorerTreeHead" {
+		query = fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "task_id": "%s" } },
+						{ "term": { "isRoot": true } }
+					]
+				}
 			}
-		}
-	}`, key, taskID)
+		}`, key, taskID)
+	} else {
+		query = fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "task_id": "%s" } }
+					]
+				}
+			}
+		}`, key, taskID)
+	}
 	err := elastic.DeleteByQueryRequest(indexes, query)
 	if err != nil {
 		return err

@@ -125,6 +125,7 @@ func Finish_task(clientid string, tasktype string) {
 }
 
 func Terminated_task(clientid string, tasktype string, status int) {
+	deleteData(clientid, tasktype)
 	rowsAffected := Update_task_status(clientid, tasktype, status, 4)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
@@ -141,10 +142,7 @@ func Terminate_handling_task(clientid string, tasktype string) {
 }
 
 func Failed_task(clientid string, tasktype string, status int) {
-	if tasktype == "StartGetDrive" || tasktype == "StartCollect" {
-		taskID := Load_handling_task_id(clientid, tasktype)
-		elaDelete.DeleteFailedData(clientid, tasktype, taskID)
-	}
+	deleteData(clientid, tasktype)
 	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
 	if tasktype == "ChangeDetectMode" {
 		return
@@ -171,4 +169,14 @@ func Load_handling_task_id(clienid string, tasktype string) string {
 		}
 	}
 	return taskid
+}
+
+func deleteData(clientid string, tasktype string) {
+	taskID := Load_handling_task_id(clientid, tasktype)
+	if tasktype == "StartGetDrive" {
+		elaDelete.DeleteUnfinishedData(clientid, "ExplorerTreeHead", taskID)
+	}
+	if tasktype == "StartGetDrive" || tasktype == "StartCollect" {
+		elaDelete.DeleteUnfinishedData(clientid, tasktype, taskID)
+	}
 }
