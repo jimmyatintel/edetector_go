@@ -307,10 +307,8 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		Task_id: taskID,
 	}
 	if isRoot { // send later
-		logger.Debug("HeadData: " + data.Agent + " " + data.Parent)
 		headData = data
 	} else {
-		logger.Debug("RelationData: " + data.Agent + " " + data.Parent)
 		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 		if err != nil {
 			logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
