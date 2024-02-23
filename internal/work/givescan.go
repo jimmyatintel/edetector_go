@@ -166,6 +166,7 @@ func updateScanProgress(key string) {
 }
 
 func parseScan(path string, key string) error {
+	taskID := query.Load_task_id(key, "StartScan", 2)
 	ip, name, err := query.GetMachineIPandName(key)
 	if err != nil {
 		return err
@@ -215,7 +216,7 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan", taskID)
 		if err != nil {
 			return err
 		}
@@ -231,6 +232,7 @@ func parseScan(path string, key string) error {
 }
 
 func scanNetworkElastic(pid string, pCreateTime string, key string, data string, ip string, name string) int {
+	taskID := query.Load_task_id(key, "StartScan", 2)
 	totalMalicious := 0
 	lines := strings.Split(data, ";")
 	for _, line := range lines {
@@ -298,7 +300,7 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			otherIP + "|" + otherPort + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
 		values := strings.Split(line, "|")
 		uuid := uuid.NewString()
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
