@@ -182,7 +182,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	// tree traversal & send to elastic(relation)
 	headData := ExplorerRelation{}
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
-	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, headData, taskID)
+	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, &headData, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 	// send to elastic (main & details)
 	for _, line := range lines {
@@ -231,6 +231,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
+	logger.Info("Send ExplorerTreeHead to elastic (" + agent + "-" + diskInfo + "): " + headData.Parent)
 	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_low")
 	if err != nil {
 		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
@@ -279,7 +280,7 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headData ExplorerRelation, taskID string) {
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headData *ExplorerRelation, taskID string) {
 	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
 	if disk == "Linux" {
@@ -307,7 +308,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		Task_id: taskID,
 	}
 	if isRoot { // send later
-		headData = data
+		*headData = data
 	} else {
 		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
 		if err != nil {
