@@ -5,7 +5,6 @@ import (
 	"edetector_go/pkg/elastic"
 	elaInsert "edetector_go/pkg/elastic/insert"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"math/rand"
 	"reflect"
@@ -19,8 +18,7 @@ type Message struct {
 	Data  string `json:"data"`
 }
 
-func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string) error {
-	taskID := query.Load_task_id(agentID, taskType, 2)
+func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string, taskID string) error {
 	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
 	if err != nil {
 		return err
