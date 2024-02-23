@@ -13,9 +13,9 @@ func LoadConfig() (*viper.Viper, error) {
 	vp.SetConfigType("env")
 	vp.AddConfigPath("config")
 	vp.AutomaticEnv()
-	// if err := vp.ReadInConfig(); err != nil {
-	// 	return nil, err
-	// }
+	if err := vp.ReadInConfig(); err != nil {
+		return nil, err
+	}
 	Viper = vp
 	return vp, nil
 }
