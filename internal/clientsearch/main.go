@@ -107,7 +107,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	UDP_CHANNEL := make(chan string)
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
-	offline_all_clients()
+	Offline_all_clients()
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
@@ -157,7 +157,7 @@ func Connection_close(Connection_close_chan chan<- int) {
 	Connection_close_chan <- 1
 }
 
-func offline_all_clients() {
+func Offline_all_clients() {
 	logger.Info("Offline all clients")
 	clients := mq.Load_all_client()
 	for _, client := range clients {
