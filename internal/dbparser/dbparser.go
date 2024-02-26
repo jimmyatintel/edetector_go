@@ -19,6 +19,7 @@ import (
 
 var dbUnstagePath = "dbUnstage"
 var dbStagedPath = "dbStaged"
+var dbRawDataPath = "dbRawData"
 var limit int
 var count int
 var cancelMap = map[string]context.CancelFunc{}
@@ -26,6 +27,7 @@ var cancelMap = map[string]context.CancelFunc{}
 func parser_init() {
 	file.CheckDir(dbUnstagePath)
 	file.CheckDir(dbStagedPath)
+	file.CheckDir(dbRawDataPath)
 	// fflag.Get_fflag()
 	// if fflag.FFLAG == nil {
 	// 	logger.Panic("Error loading feature flag")
@@ -167,10 +169,26 @@ func clearParser(db *sql.DB, dbFile string, agent string) {
 	count--
 	cancelMap[agent] = nil
 	db.Close()
-	err := file.MoveFile(dbFile, filepath.Join(dbStagedPath, agent+".db"))
+	stagedPath := filepath.Join(dbStagedPath, agent+".db")
+	err := file.MoveFile(dbFile, stagedPath)
 	if err != nil {
 		logger.Error("Error moving file (" + agent + "): " + err.Error())
 	} else {
 		logger.Info("Move db file to staged: " + dbFile)
+	}
+	// move file to RawData
+	ip, _, err := mariadbquery.GetMachineIPandName(agent)
+	// other format
+	time := time.Now().Format("2006-01-02_15:04:05")
+	if err != nil {
+		logger.Error("Error getting machine ip and name: " + err.Error())
+		return
+	}
+	rawDataPath := filepath.Join(dbRawDataPath, ip+"_"+time+".db")
+	err = file.CopyFile(stagedPath, rawDataPath)
+	if err != nil {
+		logger.Error("Error copying file to RawData (" + agent + "): " + err.Error())
+	} else {
+		logger.Info("Copy db file to RawData: " + dbFile)
 	}
 }
