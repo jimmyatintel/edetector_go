@@ -18,6 +18,12 @@ yaraWorking
 yaraUnstage
 ruleMatchWorking
 ruleMatchUnstage
+memoryTreeWorking
+memoryTreeUnstage
+dumpDllWorking
+dumpDllUnstage
+dumpProcessWorking
+dumpProcessUnstage
 pathWorking
 agentFile
 heap*

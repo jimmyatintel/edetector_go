@@ -64,6 +64,17 @@ func init() {
 		
 		// terminate
 		task.FINISH_TERMINATE: FinishTerminate,
+
+		// memory tree
+		task.GIVE_MEMORY_TREE_INFO: GiveMemoryTreeInfo,
+		task.GIVE_MEMORY_TREE:      GiveMemoryTree,
+		task.GIVE_MEMORY_TREE_END:  GiveMemoryTreeEnd,
+		// task.GIVE_MEMORY_TREE_PROGRESS: GiveMemoryTreeProgress,
+
+		// dump dll
+		task.GIVE_DUMP_DLL_INFO: GiveDumpDllInfo,
+		task.GIVE_DUMP_DLL_DATA: GiveDumpDllData,
+		task.GIVE_DUMP_DLL_END:  GiveDumpDllEnd,
 	}
 }
 
