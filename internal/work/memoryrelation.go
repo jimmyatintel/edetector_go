@@ -1,7 +1,10 @@
 package work
 
 import (
+	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	mariadbquery "edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/rabbitmq"
 	"strconv"
 	"strings"
 
@@ -15,14 +18,14 @@ type Relation struct {
 }
 
 func handleRelation(data []byte, agent string) error {
-	// ip, name, err := mariadbquery.GetMachineIPandName(agent)
-	// if err != nil {
-	// 	return err
-	// }
-	// taskID := mariadbquery.Load_task_id(agent, "StartMemoryTree", 2)
+	ip, name, err := mariadbquery.GetMachineIPandName(agent)
+	if err != nil {
+		return err
+	}
+	taskID := mariadbquery.Load_task_id(agent, "StartMemoryTree", 2)
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
-	// rootInd := -1
+	rootInd := -1
 	strData := strings.ReplaceAll(string(data), "\r", "")
 	lines := strings.Split(strData, "\n")
 	// record the relation
@@ -46,14 +49,15 @@ func handleRelation(data []byte, agent string) error {
 		RelationMap[child] = tmp
 		// record relation
 		if parent == -1 {
-			// rootInd = child
+			rootInd = child
 		} else {
 			tmp := RelationMap[parent]
 			tmp.Child = append(tmp.Child, RelationMap[child].UUID)
 			RelationMap[parent] = tmp
 		}
 	}
-	logger.Info("Record the relation:" + agent)
+	logger.Info("Record the relation: " + agent)
+	headData := MemoryRelation{}
 	// send to elastic (details & relation)
 	for _, line := range lines {
 		values := strings.Split(line, "|")
@@ -63,15 +67,44 @@ func handleRelation(data []byte, agent string) error {
 			}
 			continue
 		}
-		// child, err := strconv.Atoi(strings.TrimSpace(values[0]))
-		// if err != nil {
-		// 	return err
-		// }
-		// // send to elastic
-		// err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", &MemoryTree{}, values, RelationMap[child].UUID, agent, ip, name, values[2], values[3], "memory", "", "ed_mid", "StartMemoryTree", taskID)
-		// if err != nil {
-		// 	return err
-		// }
+		child, err := strconv.Atoi(strings.TrimSpace(values[0]))
+		if err != nil {
+			return err
+		}
+		// send details
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", &MemoryTree{}, values, RelationMap[child].UUID, agent, ip, name, values[2], values[3], "memory", "", "ed_mid", "StartMemoryTree", taskID)
+		if err != nil {
+			return err
+		}
+		// send relation
+		data := MemoryRelation{
+			Agent:   agent,
+			IsRoot:  false,
+			Parent:  RelationMap[child].UUID,
+			Child:   RelationMap[child].Child,
+			Task_id: taskID,
+		}
+		if child == rootInd {
+			headData = data
+		} else {
+			err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_mid")
+			if err != nil {
+				return err
+			}
+		}
+	}
+	logger.Info("Send to elastic (details & relation): " + agent)
+	// send head relation
+	headData.IsRoot = true
+	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_mid")
+	if err != nil {
+		return err
+	}
+	logger.Info("Send to elastic (head relation): " + agent)
+	// send finish signal
+	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartMemoryTree", "ed_mid")
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -101,101 +134,3 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 		(*UUIDMap)[uuid] = ind
 	}
 }
-
-// func BuildMemoryRelation(agent string, field string, value string, parent string, child string) {
-// 	index := config.Viper.GetString("ELASTIC_PREFIX") + "_memory_relation"
-// 	searchQuery := fmt.Sprintf(`{
-// 			"query": {
-// 				"bool": {
-// 				  "must": [
-// 					{ "term": { "agent": "%s" } },
-// 					{ "term": { "parent": "%s" } }
-// 				  ]
-// 				}
-// 			  }
-// 			}`, agent, value)
-// 	hitsArray := elastic.SearchRequest(index, searchQuery, "uuid")
-// 	if len(hitsArray) == 0 { // not exists
-// 		data := MemoryRelation{}
-// 		if field == "parent" {
-// 			data = MemoryRelation{
-// 				Agent:  agent,
-// 				IsRoot: true,
-// 				Parent: value,
-// 				Child:  []string{child},
-// 			}
-// 		} else if field == "child" {
-// 			data = MemoryRelation{
-// 				Agent:  agent,
-// 				IsRoot: false,
-// 				Parent: value,
-// 				Child:  []string{},
-// 			}
-// 		}
-// 		err := rabbitmq.ToRabbitMQ_Relation("_memory_relation", data, "ed_high")
-// 		if err != nil {
-// 			logger.Error("Error sending to rabbitMQ (relation): " + err.Error())
-// 			return
-// 		}
-// 	} else if len(hitsArray) == 1 { // exists
-// 		hitMap, ok := hitsArray[0].(map[string]interface{})
-// 		if !ok {
-// 			logger.Error("Hit is not a map")
-// 			return
-// 		}
-// 		docID, ok := hitMap["_id"].(string)
-// 		if !ok {
-// 			logger.Error("docID not found")
-// 			return
-// 		}
-// 		if field == "parent" {
-// 			source, ok := hitMap["_source"].(map[string]interface{})
-// 			if !ok {
-// 				logger.Error("source not found")
-// 				return
-// 			}
-// 			oldChild, ok := source["child"].([]interface{})
-// 			if !ok {
-// 				logger.Error("children not found")
-// 			}
-// 			for _, c := range oldChild {
-// 				if c.(string) == child {
-// 					return
-// 				}
-// 			}
-// 			script := fmt.Sprintf(`
-// 			{
-// 				"script": {
-// 					"source": "ctx._source.child.add(params.value)",
-// 					"lang": "painless",
-// 					"params": {
-// 						"value": "%s"
-// 					}
-// 				}
-// 			}`, child)
-// 			err := elastic.UpdateByDocIDRequest(index, docID, script)
-// 			if err != nil {
-// 				logger.Error("Error updating parent: " + err.Error())
-// 				return
-// 			}
-// 		} else if field == "child" {
-// 			script := `
-// 			{
-// 				"script": {
-// 					"source": "ctx._source.isRoot = params.value",
-// 					"lang": "painless",
-// 					"params": {
-// 						"value": "false"
-// 					}
-// 				}
-// 			}`
-// 			err := elastic.UpdateByDocIDRequest(index, docID, script)
-// 			if err != nil {
-// 				logger.Error("Error updating child: " + err.Error())
-// 				return
-// 			}
-// 		}
-// 	} else {
-// 		logger.Error("More than one relation found: " + field + " parent " + parent + " child " + child)
-// 	}
-// }

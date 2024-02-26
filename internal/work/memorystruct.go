@@ -2,17 +2,6 @@ package work
 
 import "encoding/json"
 
-type MemoryRelation struct {
-	Agent  string   `json:"agent"`
-	IsRoot bool     `json:"isRoot"`
-	Parent string   `json:"parent"`
-	Child  []string `json:"child"`
-}
-
-func (n MemoryRelation) Elastical() ([]byte, error) {
-	return json.Marshal(n)
-}
-
 type Memory struct {
 	ProcessName       string `json:"processName"`
 	ProcessCreateTime int    `json:"processCreateTime"`
@@ -104,5 +93,17 @@ type MemoryTree struct {
 }
 
 func (n MemoryTree) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type MemoryRelation struct {
+	Agent   string   `json:"agent"`
+	IsRoot  bool     `json:"isRoot"`
+	Parent  string   `json:"parent"`
+	Child   []string `json:"child"`
+	Task_id string   `json:"task_id"`
+}
+
+func (n MemoryRelation) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

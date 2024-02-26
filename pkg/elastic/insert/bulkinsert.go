@@ -35,11 +35,11 @@ func BulkInsert(action []string, work []string) error {
 			}
 			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
 			task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
-			if data.TaskType == "StartGetDrive" { // delete head first
-				logger.Debug("Delete old ExplorerTreeHead: " + data.Agent)
-				err = elaDelete.DeleteOldData(data.Agent, "ExplorerTreeHead", task_id)
+			if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" { // delete head first
+				logger.Debug("Delete old TreeHead " + data.TaskType + ": " + data.Agent)
+				err = elaDelete.DeleteOldData(data.Agent, (data.TaskType + "Head"), task_id)
 				if err != nil {
-					logger.Error("Error deleting ExplorerTreeHead: " + err.Error())
+					logger.Error("Error deleting TreeHead " + data.TaskType + ": " + err.Error())
 				}
 			}
 			if data.TaskType != "StartScan" {

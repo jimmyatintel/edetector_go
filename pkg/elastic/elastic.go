@@ -152,7 +152,8 @@ func UpdateByDocIDRequest(index string, docID string, script string) error {
 	if updateRes.IsError() {
 		return errors.New("Error UpdateByDocIDRequest:" + updateRes.String())
 	}
-	logger.Debug("Update response" + updateRes.String())
+	logger.Debug("Update query: " + script)
+	logger.Debug("Update response: " + updateRes.String())
 	return nil
 }
 
