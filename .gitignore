@@ -26,6 +26,7 @@ dumpProcessWorking
 dumpProcessUnstage
 pathWorking
 agentFile
+dbRawData
 heap*
 *.png
 *.pdf
