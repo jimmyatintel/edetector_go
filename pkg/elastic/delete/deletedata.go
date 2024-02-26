@@ -20,8 +20,13 @@ func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
 	indexes := []string{}
 	switch ttype {
-	case "ExplorerTreeHead":
+	case "StartGetDriveHead":
 		indexes = append(indexes, prefix+"_explorer_relation")
+	case "StartMemoryTreeHead":
+		indexes = append(indexes, prefix+"_memory_relation")
+	case "StartMemoryTree":
+		indexes = append(indexes, prefix+"_memory_tree")
+		indexes = append(indexes, prefix+"_memory_relation")
 	case "StartGetDrive":
 		for _, ind := range diskIndex {
 			indexes = append(indexes, prefix+"_"+ind)
@@ -39,7 +44,7 @@ func GetIndexes(ttype string) []string {
 func DeleteOldData(key string, ttype string, taskID string) error {
 	indexes := GetIndexes(ttype)
 	var query string
-	if ttype == "ExplorerTreeHead" {
+	if ttype == "StartGetDriveHead" || ttype == "StartMemoryTreeHead" {
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {

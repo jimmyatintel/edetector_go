@@ -269,7 +269,7 @@ func recalculateScore(query string) {
 		var info Memory
 		info.Mode = hitMap["_source"].(map[string]interface{})["mode"].(string)
 		if info.Mode != "scan" && info.Mode != "detect" {
-			return
+			continue
 		}
 		info.ProcessName = hitMap["_source"].(map[string]interface{})["processName"].(string)
 		info.ProcessCreateTime = int(hitMap["_source"].(map[string]interface{})["processCreateTime"].(float64))
@@ -295,12 +295,12 @@ func recalculateScore(query string) {
 		level, score, _, _, err := Getriskscore(info, initScore)
 		if err != nil {
 			logger.Error("Error getting risk score: " + err.Error())
-			return
+			continue
 		}
 		docID := hitMap["_id"].(string)
 		if !ok {
 			logger.Error("docID not found")
-			return
+			continue
 		}
 		query := fmt.Sprintf(`{
 				"script": {

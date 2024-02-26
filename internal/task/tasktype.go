@@ -100,10 +100,15 @@ const (
 	GIVE_DUMP_DLL_END  TaskType = "GiveDumpDllEnd"
 
 	// dump process
-	GET_DUMP_PROCESS TaskType = "GetDumpProcess"
+	GET_DUMP_PROCESS       TaskType = "GetDumpProcess"
+	GIVE_DUMP_PROCESS_INFO TaskType = "GiveDumpProcessInfo"
+	GIVE_DUMP_PROCESS_DATA TaskType = "GiveDumpProcessData"
+	GIVE_DUMP_PROCESS_END  TaskType = "GiveDumpProcessEnd"
 
 	// load dll
-	GET_LOAD_DLL TaskType = "GetLoadDll"
+	GET_LOAD_DLL       TaskType = "GetLoadDll"
+	GIVE_LOAD_DLL_DATA TaskType = "GiveLoadDllData"
+	GIVE_LOAD_DLL_END  TaskType = "GiveLoadDllEnd"
 
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
@@ -118,6 +123,9 @@ const (
 	START_REMOVE            UserTaskType = "StartRemove"
 	START_YARA_RULE         UserTaskType = "StartYaraRule"
 	START_MEMORY_TREE       UserTaskType = "StartMemoryTree"
+	START_LOAD_DLL          UserTaskType = "StartLoadDll"
+	START_DUMP_DLL          UserTaskType = "StartDumpDll"
+	START_DUMP_PROCESS      UserTaskType = "StartDumpProcess"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
@@ -191,7 +199,12 @@ var Worklist = []TaskType{
 	GIVE_DUMP_DLL_DATA,
 	GIVE_DUMP_DLL_END,
 	GET_DUMP_PROCESS,
+	GIVE_DUMP_PROCESS_INFO,
+	GIVE_DUMP_PROCESS_DATA,
+	GIVE_DUMP_PROCESS_END,
 	GET_LOAD_DLL,
+	GIVE_LOAD_DLL_DATA,
+	GIVE_LOAD_DLL_END,
 }
 
 var UserWorklist = []UserTaskType{
@@ -205,6 +218,9 @@ var UserWorklist = []UserTaskType{
 	START_UPDATE,
 	START_REMOVE,
 	START_MEMORY_TREE,
+	START_LOAD_DLL,
+	START_DUMP_DLL,
+	START_DUMP_PROCESS,
 	START_YARA_RULE,
 	TERMINATE,
 	USER_UNDEFINE,

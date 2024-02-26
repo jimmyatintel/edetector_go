@@ -35,6 +35,9 @@ func init() {
 		START_REMOVE:       "StartRemove",
 		START_YARA_RULE:    "StartYaraRule",
 		START_MEMORY_TREE:  "StartMemoryTree",
+		START_LOAD_DLL:     "StartLoadDll",
+		START_DUMP_DLL:     "StartDumpDll",
+		START_DUMP_PROCESS: "StartDumpProcess",
 		TERMINATE:          "Terminate",
 	}
 }
