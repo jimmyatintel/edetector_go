@@ -88,3 +88,21 @@ type MemoryNetwork struct {
 func (n MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
+
+type MemoryTree struct {
+	ProcessId               int    `json:"processId"`
+	ParentProcessId         int    `json:"parentProcessId"`
+	ProcessName             string `json:"processName"`
+	ProcessCreateTime       int    `json:"processCreateTime"`
+	ParentProcessName       string `json:"parentProcessName"`
+	ParentProcessCreateTime int    `json:"parentProcessCreateTime"`
+	ProcessPath             string `json:"processPath"`
+	UserName                string `json:"userName"`
+	IsPacked                bool   `json:"isPacked"`
+	DynamicCommand          string `json:"dynamicCommand"`
+	IsHide                  bool   `json:"isHide"`
+}
+
+func (n MemoryTree) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}

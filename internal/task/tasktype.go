@@ -86,6 +86,25 @@ const (
 	TERMINATE_ALL    TaskType = "TerminateAll"
 	FINISH_TERMINATE TaskType = "FinishTerminate"
 
+	// memory tree
+	GET_MEMORY_TREE           TaskType = "GetMemoryTree"
+	GIVE_MEMORY_TREE_INFO     TaskType = "GiveMemoryTreeInfo"
+	GIVE_MEMORY_TREE          TaskType = "GiveMemoryTree"
+	GIVE_MEMORY_TREE_END      TaskType = "GiveMemoryTreeEnd"
+	GIVE_MEMORY_TREE_PROGRESS TaskType = "GiveMemoryTreeProgress"
+
+	// dump dll
+	GET_DUMP_DLL       TaskType = "GetDumpDll"
+	GIVE_DUMP_DLL_INFO TaskType = "GiveDumpDllInfo"
+	GIVE_DUMP_DLL_DATA TaskType = "GiveDumpDllData"
+	GIVE_DUMP_DLL_END  TaskType = "GiveDumpDllEnd"
+
+	// dump process
+	GET_DUMP_PROCESS TaskType = "GetDumpProcess"
+
+	// load dll
+	GET_LOAD_DLL TaskType = "GetLoadDll"
+
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
 	START_SCAN              UserTaskType = "StartScan"
@@ -162,6 +181,17 @@ var Worklist = []TaskType{
 	GIVE_YARA_PROGRESS,
 	TERMINATE_ALL,
 	FINISH_TERMINATE,
+	GET_MEMORY_TREE,
+	GIVE_MEMORY_TREE_INFO,
+	GIVE_MEMORY_TREE,
+	GIVE_MEMORY_TREE_END,
+	GIVE_MEMORY_TREE_PROGRESS,
+	GET_DUMP_DLL,
+	GIVE_DUMP_DLL_INFO,
+	GIVE_DUMP_DLL_DATA,
+	GIVE_DUMP_DLL_END,
+	GET_DUMP_PROCESS,
+	GET_LOAD_DLL,
 }
 
 var UserWorklist = []UserTaskType{

@@ -178,12 +178,6 @@ func parseScan(path string, key string) error {
 		return err
 	}
 	lines := strings.Split(string(content), "\n")
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// 	HandleRelation(lines, key, 17)
-	// }()
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "\r", "")
 		values := strings.Split(line, "|")
