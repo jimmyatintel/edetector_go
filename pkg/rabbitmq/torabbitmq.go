@@ -116,7 +116,6 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 			value, err := strconv.Atoi(values[i])
 			if err != nil {
 				logger.Error("Error converting to int: " + err.Error())
-				break
 			}
 			field.Set(reflect.ValueOf(value))
 		case reflect.Int64:
@@ -124,7 +123,6 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 			value, err := strconv.ParseInt(values[i], 10, 64)
 			if err != nil {
 				logger.Error("Error converting to int64: " + err.Error())
-				break
 			}
 			field.Set(reflect.ValueOf(value))
 		case reflect.String:
@@ -133,7 +131,6 @@ func StringToStruct(st elastic.Request_data, values []string, uuid string, agent
 			value, err := strconv.ParseBool(values[i])
 			if err != nil {
 				logger.Error("Error converting to bool: " + err.Error())
-				break
 			}
 			field.Set(reflect.ValueOf(value))
 		}
