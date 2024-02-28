@@ -88,7 +88,7 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 					logger.Error("Error converting adding_point to integer" + err.Error())
 					continue
 				}
-				logger.Debug("Hit hack list")
+				logger.Debug("Hit hack list: " + strconv.Itoa(score) + "+" + strconv.Itoa(point) + "=" + strconv.Itoa(score+point))
 				score += point
 			}
 		}
