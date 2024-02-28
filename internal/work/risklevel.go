@@ -46,10 +46,6 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 	maliciluos, total, err := virustotal.ScanFile(info.ProcessMD5)
 	if err != nil {
 		logger.Warn("Error getting virustotal: " + err.Error())
-	} else {
-		if maliciluos > 0 {
-			score += maliciluos * 20
-		}
 	}
 	realPath := strings.Replace(info.ProcessPath, "\\\\", "\\", -1)
 	// white list
@@ -73,23 +69,6 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 			if (black[0] == "" || info.ProcessName == black[0]) && (black[1] == "" || info.ProcessMD5 == black[1]) && strings.Contains(info.DigitalSign, black[2]) && strings.Contains(realPath, black[3]) {
 				logger.Debug("Hit black list")
 				return "3", "300", strconv.Itoa(maliciluos), strconv.Itoa(total), nil
-			}
-		}
-	}
-	// hack list
-	hackList, err := query.Load_hack_list()
-	if err != nil {
-		logger.Error("Error loading hack list" + err.Error())
-	} else {
-		for _, hack := range hackList {
-			if (hack[0] == "" || info.ProcessName == hack[0]) && strings.Contains(info.DynamicCommand, hack[1]) && strings.Contains(realPath, hack[2]) {
-				point, err := strconv.Atoi(hack[3])
-				if err != nil {
-					logger.Error("Error converting adding_point to integer" + err.Error())
-					continue
-				}
-				logger.Debug("Hit hack list: " + strconv.Itoa(score) + "+" + strconv.Itoa(point) + "=" + strconv.Itoa(score+point))
-				score += point
 			}
 		}
 	}
@@ -135,11 +114,32 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 		if score > 60 {
 			score -= 60
 		} else {
-			score = 0
+			score = initScore
 		}
 	}
 	if info.DigitalSign == "null" && info.ProcessBeInjected == 0 && info.Hook == "null" {
-		score = 0
+		score = initScore
+	}
+	// add virus total score
+	if maliciluos > 0 {
+		score += maliciluos * 20
+	}
+	// check hack list in the end
+	hackList, err := query.Load_hack_list()
+	if err != nil {
+		logger.Error("Error loading hack list" + err.Error())
+	} else {
+		for _, hack := range hackList {
+			if (hack[0] == "" || info.ProcessName == hack[0]) && strings.Contains(info.DynamicCommand, hack[1]) && strings.Contains(realPath, hack[2]) {
+				point, err := strconv.Atoi(hack[3])
+				if err != nil {
+					logger.Error("Error converting adding_point to integer" + err.Error())
+					continue
+				}
+				logger.Debug("Hit hack list: " + strconv.Itoa(score) + "+" + strconv.Itoa(point) + "=" + strconv.Itoa(score+point))
+				score += point
+			}
+		}
 	}
 	level := scoretoLevel(score)
 	return strconv.Itoa(level), strconv.Itoa(score), strconv.Itoa(maliciluos), strconv.Itoa(total), nil
