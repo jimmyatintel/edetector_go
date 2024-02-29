@@ -29,6 +29,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	lastTask := "unknown"
 	var updateDataRightChan chan net.Conn
 	var yaraDataRightChan chan net.Conn
+	var imageDataRightChan chan net.Conn
 	closeConn := make(chan bool)
 	for {
 		var NewPacket packet.Packet
@@ -55,7 +56,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		t := NewPacket.GetTaskType()
-		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "DataRight" && t != "GiveDriveInfo" {
+		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "ReadyImage" && t != "DataRight" && t != "GiveDriveInfo" {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
@@ -138,12 +139,22 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 			}
+		} else if NewPacket.GetTaskType() == task.READY_IMAGE {
+			imageDataRightChan = make(chan net.Conn)
+			_, err = work.ReadyImage(NewPacket, conn, imageDataRightChan)
+			if err != nil {
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
+				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
+			}
 		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("UpdateDataRight: " + NewPacket.GetRkey())
 			updateDataRightChan <- conn
 		} else if agentTaskType == "StartYaraRule" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("YaraDataRight: " + NewPacket.GetRkey())
 			yaraDataRightChan <- conn
+		} else if agentTaskType == "StartGetImage" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+			logger.Info("ImageDataRight: " + NewPacket.GetRkey())
+			imageDataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {
