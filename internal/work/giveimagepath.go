@@ -12,8 +12,12 @@ import (
 )
 
 func ReadyImage(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
-	logger.Info("ReadyImage: " + p.GetRkey() + "::" + p.GetMessage())
-	imageList, err := query.Load_key_image(p.GetMessage())
+	imageType := p.GetMessage()
+	logger.Info("ReadyImage: " + p.GetRkey() + "::" + imageType)
+	if imageType != "default" && imageType != "advanced" && imageType != "customized" {
+		imageType = "default"
+	}
+	imageList, err := query.Load_key_image(imageType)
 	if err != nil {
 		return task.FAIL, err
 	}
