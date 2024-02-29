@@ -7,7 +7,6 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
-	rq "edetector_go/pkg/redis/query"
 	"net"
 	"strings"
 
@@ -24,7 +23,6 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	}
 	mq.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	mq.Addmachine(ClientInfo)
-	rq.Offline(ClientInfo.KeyNum, true)
 	err := clientsearchsend.SendTCPtoClient(p, task.OPEN_CHECK_THREAD, ClientInfo.KeyNum, conn) // send ack(OPEN_CHECK_THREAD) to client
 	if err != nil {
 		return task.FAIL, err

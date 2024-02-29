@@ -35,7 +35,11 @@ func Online(KeyNum string) {
 	}
 }
 
-func Offline(KeyNum string, GiveInfo bool) {
+func Offline(KeyNum string, ClientCount *int) {
+	if GetStatus(KeyNum) == 0 { // already offline
+		return
+	}
+	*ClientCount -= 1
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
@@ -46,28 +50,27 @@ func Offline(KeyNum string, GiveInfo bool) {
 		logger.Error("Update offline failed:" + err.Error())
 		return
 	}
-	if !GiveInfo {
-		handlingTasks1, err := query.Load_stored_task("nil", KeyNum, 1, "nil")
-		if err != nil {
-			logger.Error("Get handling tasks1 failed: " + err.Error())
-			return
-		}
-		handlingTasks2, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
-		if err != nil {
-			logger.Error("Get handling tasks2 failed: " + err.Error())
-			return
-		}
-		for _, t := range handlingTasks1 {
-			query.Failed_task(KeyNum, t[3], 7)
-		}
-		for _, t := range handlingTasks2 {
-			query.Failed_task(KeyNum, t[3], 7)
-		}
+	handlingTasks1, err := query.Load_stored_task("nil", KeyNum, 1, "nil")
+	if err != nil {
+		logger.Error("Get handling tasks1 failed: " + err.Error())
+		return
+	}
+	handlingTasks2, err := query.Load_stored_task("nil", KeyNum, 2, "nil")
+	if err != nil {
+		logger.Error("Get handling tasks2 failed: " + err.Error())
+		return
+	}
+	for _, t := range handlingTasks1 {
+		query.Failed_task(KeyNum, t[3], 7)
+	}
+	for _, t := range handlingTasks2 {
+		query.Failed_task(KeyNum, t[3], 7)
 	}
 	request.RequestToUser(KeyNum)
 }
 
-func GetStatus(content string) int {
+func GetStatus(KeyNum string) int {
+	content := redis.RedisGetString(KeyNum)
 	var clientStatus ClientOnlineStatus
 	err := json.Unmarshal([]byte(content), &clientStatus)
 	if err != nil {
@@ -75,4 +78,15 @@ func GetStatus(content string) int {
 		return -1
 	}
 	return clientStatus.Status
+}
+
+func GetTime(KeyNum string) string {
+	content := redis.RedisGetString(KeyNum)
+	var clientStatus ClientOnlineStatus
+	err := json.Unmarshal([]byte(content), &clientStatus)
+	if err != nil {
+		logger.Error("Get online time failed: " + err.Error())
+		return "1970-01-01T00:00:00Z"
+	}
+	return clientStatus.Time
 }
