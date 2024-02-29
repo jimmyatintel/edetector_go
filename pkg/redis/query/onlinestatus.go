@@ -35,11 +35,12 @@ func Online(KeyNum string) {
 	}
 }
 
-func Offline(KeyNum string, ClientCount *int) {
+func Offline(KeyNum string, ClientCount *int, ClientList *map[string]bool) {
 	if GetStatus(KeyNum) == 0 { // already offline
 		return
 	}
 	*ClientCount -= 1
+	delete(*ClientList, KeyNum)
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
