@@ -163,14 +163,13 @@ func Offline_all_clients() {
 	logger.Info("Offline all clients")
 	clients := mq.Load_all_client()
 	for _, client := range clients {
-		rq.Offline(client, &ClientCount)
+		rq.Offline(client, &ClientCount, &ClientList)
 	}
 }
 
 func checkOnline() {
 	for {
-		clients := mq.Load_all_client()
-		for _, client := range clients {
+		for client, _ := range ClientList {
 			if rq.GetStatus(client) == 1 {
 				redisTime, err := time.Parse(time.RFC3339, rq.GetTime(client))
 				if err != nil {
@@ -180,7 +179,8 @@ func checkOnline() {
 				currentTime := time.Now()
 				difference := currentTime.Sub(redisTime)
 				if difference > 120*time.Second {
-					rq.Offline(client, &ClientCount)
+					logger.Info("Offline: " + client + "- more than 120 seconds without CheckConnect")
+					rq.Offline(client, &ClientCount, &ClientList)
 				}
 			}
 		}
