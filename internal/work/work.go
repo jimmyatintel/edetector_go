@@ -74,6 +74,15 @@ func init() {
 		task.GIVE_DUMP_DLL_INFO: GiveDumpDllInfo,
 		task.GIVE_DUMP_DLL_DATA: GiveDumpDllData,
 		task.GIVE_DUMP_DLL_END:  GiveDumpDllEnd,
+
+		// dump process
+		task.GIVE_DUMP_PROCESS_INFO: GiveDumpProcessInfo,
+		task.GIVE_DUMP_PROCESS_DATA: GiveDumpProcessData,
+		task.GIVE_DUMP_PROCESS_END:  GiveDumpProcessEnd,
+
+		// load dll
+		task.GIVE_LOAD_DLL_DATA: GiveLoadDllData,
+		task.GIVE_LOAD_DLL_END:  GiveLoadDllEnd,
 	}
 }
 

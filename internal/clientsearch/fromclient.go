@@ -122,7 +122,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				}
 			}()
 		}
-		if NewPacket.GetTaskType() != task.GIVE_INFO {
+		if NewPacket.GetTaskType() != task.CHECK_CONNECT {
 			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
