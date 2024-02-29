@@ -19,11 +19,9 @@ import (
 )
 
 var ClientCount int
-var ClientList map[string]bool
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	ClientCount = 0
-	ClientList = make(map[string]bool)
 	logger.Info("Worker port accepted, IP: " + conn.RemoteAddr().String())
 	defer conn.Close()
 	buf := make([]byte, 1024)
@@ -107,7 +105,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
 			rq.Online(key)
 			ClientCount += 1
-			ClientList[key] = true
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
 			go func() {
@@ -197,7 +194,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
-		rq.Offline(key, &ClientCount, &ClientList)
+		rq.Offline(key, &ClientCount)
 		if len(removeTasks) != 0 {
 			mq.DeleteAgent(key)
 			err = redis.RedisDelete(key)
