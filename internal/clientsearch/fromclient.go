@@ -105,7 +105,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			close(closeConn)
 			return
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
-			// wait for key to join the packet
+			rq.Online(key)
 			ClientCount += 1
 			ClientList[key] = true
 			channelmap.AssignTaskChannel(key, &task_chan)
