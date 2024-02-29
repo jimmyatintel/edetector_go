@@ -52,11 +52,14 @@ const (
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
 
 	// image
-	GET_IMAGE       TaskType = "GetImage"
-	READY_IMAGE     TaskType = "ReadyImage"
-	GIVE_IMAGE_INFO TaskType = "GiveImageInfo"
-	GIVE_IMAGE      TaskType = "GiveImage"
-	GIVE_IMAGE_END  TaskType = "GiveImageEnd"
+	GET_IMAGE            TaskType = "GetImage"
+	READY_IMAGE          TaskType = "ReadyImage"
+	GIVE_IMAGE_PATH_INFO TaskType = "GiveImagePathInfo"
+	GIVE_IMAGE_PATH      TaskType = "GiveImagePath"
+	GIVE_IMAGE_PATH_END  TaskType = "GiveImagePathEnd"
+	GIVE_IMAGE_INFO      TaskType = "GiveImageInfo"
+	GIVE_IMAGE           TaskType = "GiveImage"
+	GIVE_IMAGE_END       TaskType = "GiveImageEnd"
 
 	// update
 	UPDATE_AGENT       TaskType = "UpdateAgent"
@@ -169,6 +172,9 @@ var Worklist = []TaskType{
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,
+	GIVE_IMAGE_PATH_INFO,
+	GIVE_IMAGE_PATH,
+	GIVE_IMAGE_PATH_END,
 	UPDATE_AGENT,
 	READY_UPDATE_AGENT,
 	GIVE_UPDATE_INFO,

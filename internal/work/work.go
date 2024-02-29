@@ -51,7 +51,6 @@ func init() {
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
 
 		// image
-		task.READY_IMAGE:     ReadyImage,
 		task.GIVE_IMAGE_INFO: GiveImageInfo,
 		task.GIVE_IMAGE:      GiveImage,
 		task.GIVE_IMAGE_END:  GiveImageEnd,
@@ -61,7 +60,7 @@ func init() {
 		task.GIVE_RULE_MATCH:      GiveRuleMatch,
 		task.GIVE_RULE_MATCH_END:  GiveRuleMatchEnd,
 		task.GIVE_YARA_PROGRESS:   GiveYaraProgress,
-		
+
 		// terminate
 		task.FINISH_TERMINATE: FinishTerminate,
 

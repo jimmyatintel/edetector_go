@@ -9,16 +9,8 @@ import (
 
 func StartGetImage(p packet.UserPacket) (task.TaskResult, error) {
 	logger.Info("StartGetImage: " + p.GetRkey() + "::" + p.GetMessage())
-	imageStr := "root:\\windows\\system32\\sru\\||srudb.dat,\\ConnectedDevicesPlatform\\*\\|LOCALAPPDATA|ActivitiesCache.db,root:\\Users\\*\\||NTUSER.DAT"
-	// imageList, err := query.Load_key_image("default")
-	// if err != nil {
-	// 	return task.FAIL, err
-	// }
-	// imageStr := ""
-	// for _, image := range imageList {
-	// 	imageStr = imageStr + image[1] + "|" + image[0] + "|" + image[2] + ","
-	// }
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_IMAGE, imageStr)
+	// imageStr := "root:\\windows\\system32\\sru\\||srudb.dat,\\ConnectedDevicesPlatform\\*\\|LOCALAPPDATA|ActivitiesCache.db,root:\\Users\\*\\||NTUSER.DAT"
+	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_IMAGE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
