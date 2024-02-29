@@ -181,13 +181,12 @@ func checkOnline() {
 			}
 			currentTime := time.Now()
 			difference := currentTime.Sub(redisTime)
-			logger.Debug("Difference: " + difference.String() + " for " + client)
-			if difference > 80*time.Second {
-				logger.Info("Offline: " + client + "- more than 120 seconds without CheckConnect")
+			if difference > 75*time.Second {
+				logger.Info("Offline: " + client + "- more than 75 seconds without CheckConnect")
 				rq.Offline(client, &ClientCount)
 			}
 		}
-		time.Sleep(80 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 
 }
