@@ -9,6 +9,7 @@ import (
 	logger "edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
 	rq "edetector_go/pkg/redis/query"
+	"time"
 
 	// "io/ioutil"
 	"net"
@@ -108,6 +109,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	Offline_all_clients()
+	go checkOnline()
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
 	go Conn_TCP_detect_start(TCP_DETECT_CHANNEL, ctx)
@@ -161,8 +163,30 @@ func Offline_all_clients() {
 	logger.Info("Offline all clients")
 	clients := mq.Load_all_client()
 	for _, client := range clients {
-		rq.Offline(client, false)
+		rq.Offline(client, &ClientCount)
 	}
+}
+
+func checkOnline() {
+	for {
+		clients := mq.Load_all_client()
+		for _, client := range clients {
+			if rq.GetStatus(client) == 1 {
+				redisTime, err := time.Parse(time.RFC3339, rq.GetTime(client))
+				if err != nil {
+					logger.Error("Error parsing time: " + err.Error())
+					continue
+				}
+				currentTime := time.Now()
+				difference := currentTime.Sub(redisTime)
+				if difference > 120*time.Second {
+					rq.Offline(client, &ClientCount)
+				}
+			}
+		}
+		time.Sleep(120 * time.Second)
+	}
+
 }
 
 func Main(ctx context.Context, Connection_close_chan chan<- int) {

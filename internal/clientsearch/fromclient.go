@@ -18,9 +18,10 @@ import (
 	"net"
 )
 
-var Clientlist []string
+var ClientCount int
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
+	ClientCount = 0
 	logger.Info("Worker port accepted, IP: " + conn.RemoteAddr().String())
 	defer conn.Close()
 	buf := make([]byte, 1024)
@@ -96,14 +97,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.GIVE_INFO && len(Clientlist) > 1000 {
+		if NewPacket.GetTaskType() == task.GIVE_INFO && ClientCount > 1000 {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
 			close(closeConn)
 			return
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
 			// wait for key to join the packet
-			Clientlist = append(Clientlist, key)
+			ClientCount += 1
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
 			go func() {
@@ -122,7 +123,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				}
 			}()
 		}
-		if NewPacket.GetTaskType() != task.CHECK_CONNECT {
+		if NewPacket.GetTaskType() == task.CHECK_CONNECT { // update online status only when CHECK_CONNECT
 			rq.Online(key)
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
@@ -188,21 +189,13 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "Main" {
-		// remove key from Clientlist
-		for i, v := range Clientlist {
-			if v == key {
-				Clientlist = append(Clientlist[:i], Clientlist[i+1:]...)
-				break
-			}
-		}
 		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
-		if len(removeTasks) == 0 {
-			rq.Offline(key, false)
-		} else {
+		rq.Offline(key, &ClientCount)
+		if len(removeTasks) != 0 {
 			mq.DeleteAgent(key)
 			err = redis.RedisDelete(key)
 			if err != nil {
@@ -210,5 +203,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			}
 			logger.Info("Finish remove agent: " + key)
 		}
+	} else {
+		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 	}
 }
