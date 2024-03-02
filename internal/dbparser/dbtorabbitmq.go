@@ -147,6 +147,24 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &WindowsActivity{}, taskID)
 		case "Wireless":
 			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Wireless{}, taskID)
+		case "Email":
+			err = toRabbitMQ(index, agent, values, values[9], values[5], "emails", values[3], &Email{}, taskID)
+		case "EmailPath":
+			err = toRabbitMQ(index, agent, values, values[1], "0", "emails", "0", &EmailPath{}, taskID)
+		case "FirefoxLogin":
+			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &FirefoxLogin{}, taskID)
+		case "IECache":
+			err = toRabbitMQ(index, agent, values, values[0], values[3], "cookie_cache", values[1], &IECache{}, taskID)
+		case "IELogin":
+			err = toRabbitMQ(index, agent, values, values[1], values[4], "website_bookmark", values[2], &IELogin{}, taskID)
+		case "NetAdapters":
+			err = toRabbitMQ(index, agent, values, values[0], values[11], "software", values[3], &Netadapters{}, taskID)
+		case "RecentFile":
+			err = toRabbitMQ(index, agent, values, values[2], "0", "document", values[0], &RecentFile{}, taskID)
+		case "Shellbags":
+			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[1], &Shellbags{}, taskID)
+		case "SystemInfo":
+			err = toRabbitMQ(index, agent, values, values[13], "0", "network_record", values[1], &SystemInfo{}, taskID)
 		default:
 			logger.Error("Unknown table name (" + agent + "): " + tableName)
 			return nil
