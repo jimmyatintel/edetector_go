@@ -14,7 +14,8 @@ var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "Ch
 	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
 	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
 	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
-	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless"}
+	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless", "Email", "EmailPath", "FirefoxLogin",
+	"IECache", "IELogin", "Netadapters", "RecentFile", "Shellbags", "SystemInfo"}
 
 func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
