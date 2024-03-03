@@ -23,7 +23,7 @@ func Checkindex(KeyNum string, ip string, mac string) {
 	// }
 	// if check == 0 {
 	_, err := method.Exec(
-		"INSERT INTO client (client_id, ip, mac) VALUE (?,?,?) ON DUPLICATE KEY UPDATE client_id = ?",
+		"INSERT INTO client (client_id, ip, mac) VALUE (?,?,?) ON DUPLICATE KEY UPDATE ip = VALUES(ip), mac = VALUES(mac);",
 		KeyNum, ip, mac, KeyNum,
 	)
 	if err != nil {
@@ -35,7 +35,7 @@ func Checkindex(KeyNum string, ip string, mac string) {
 func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	// client_info table
 	_, err := method.Exec(
-		"INSERT INTO client_info (client_id, sysinfo, osinfo, computername, username, fileversion, boottime) VALUE (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE client_id = ?",
+		"INSERT INTO client_info (client_id, sysinfo, osinfo, computername, username, fileversion, boottime) VALUE (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE sysinfo = VALUES(sysinfo), osinfo = VALUES(osinfo), computername = VALUES(computername), username = VALUES(username), fileversion = VALUES(fileversion), boottime = VALUES(boottime);",
 		ClientInfo.KeyNum, ClientInfo.SysInfo, ClientInfo.OsInfo, ClientInfo.ComputerName, ClientInfo.UserName, ClientInfo.FileVersion, ClientInfo.BootTime, ClientInfo.KeyNum,
 	)
 	if err != nil {
