@@ -165,6 +165,8 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[1], &Shellbags{}, taskID)
 		case "SystemInfo":
 			err = toRabbitMQ(index, agent, values, values[13], "0", "network_record", values[1], &SystemInfo{}, taskID)
+		case "ChromeCookies":
+			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &ChromeCookies{}, taskID)
 		default:
 			logger.Error("Unknown table name (" + agent + "): " + tableName)
 			return nil

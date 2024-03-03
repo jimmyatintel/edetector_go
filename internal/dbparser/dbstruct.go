@@ -1326,3 +1326,28 @@ type SystemInfo struct {
 func (n SystemInfo) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
+
+type ChromeCookies struct {
+	Id             int    `json:"id"`
+	CreationUTC    int    `json:"creation_utc"`
+	HostKey        string `json:"host_key"`
+	Name           string `json:"name"`
+	Value          string `json:"value"`
+	EncryptedValue string `json:"encrypted_value"`
+	ExpiresUTC     int    `json:"expires_utc"`
+	LastAccessUTC  int    `json:"last_access_utc"`
+	SourcePort     int    `json:"source_port"`
+	UUID           string `json:"uuid"`
+	Agent          string `json:"agent"`
+	AgentIP        string `json:"agentIP"`
+	AgentName      string `json:"agentName"`
+	ItemMain       string `json:"item_main"`
+	DateMain       int    `json:"date_main"`
+	TypeMain       string `json:"type_main"`
+	EtcMain        string `json:"etc_main"`
+	Task_id        string `json:"task_id"`
+}
+
+func (n ChromeCookies) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
