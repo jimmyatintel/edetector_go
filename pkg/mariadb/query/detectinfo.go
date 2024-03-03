@@ -29,7 +29,7 @@ func First_detect_info(KeyNum string, message string) string {
 			logger.Error("Invalid GiveDetectInfoFirst format")
 		}
 		_, err = method.Exec(
-			"INSERT INTO client_setting (client_id, networkreport, processreport) VALUE (?,?,?) ON DUPLICATE KEY UPDATE networkreport = VALUES(networkreport), processreport = VALUES(processreport);",
+			"INSERT INTO client_setting (client_id, networkreport, processreport) VALUE (?,?,?) ON DUPLICATE KEY UPDATE client_id = ?",
 			KeyNum, data_splited[1], data_splited[0], KeyNum,
 		)
 		if err != nil {
