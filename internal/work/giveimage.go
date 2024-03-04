@@ -8,6 +8,7 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	mariadbquery "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"net"
 	"os"
@@ -17,11 +18,11 @@ import (
 )
 
 var imageWorkingPath = "imageWorking"
-var imageUstagePath = "imageUnstage"
+var imageFilePath = "ImageFile"
 
 func init() {
 	file.CheckDir(imageWorkingPath)
-	file.CheckDir(imageUstagePath)
+	file.CheckDir(imageFilePath)
 }
 
 func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
@@ -73,29 +74,14 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageEnd: " + key + "::" + p.GetMessage())
-	workPath := filepath.Join(imageWorkingPath, key)
-	extension := ".tar.gz"
-	f, err := os.Open(workPath)
-	if err != nil {
-		return task.FAIL, err
-	}
-	defer f.Close()
-	var firstByte [1]byte
-	_, err = f.Read(firstByte[:])
-	if err != nil {
-		return task.FAIL, err
-	}
-	if firstByte[0] == 'P' {
-		extension = ".zip"
-	}
-	unstagePath := filepath.Join(imageUstagePath, (key + extension))
+	srcPath := filepath.Join(imageWorkingPath, key)
 	// truncate data
-	err = file.TruncateFile(workPath, redis.RedisGetInt(key+"-ImageTotal"))
+	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ImageTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
-	// move to Unstage
-	err = file.MoveFile(workPath, unstagePath)
+	// store the ImageFile
+	err = storeImageFile(key, srcPath)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -120,4 +106,64 @@ func updateImageProgress(key string) {
 		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
+}
+
+func storeImageFile(key string, srcPath string) error {
+	extension, err := getExtension(srcPath)
+	if err != nil {
+		return err
+	}
+	ip, _, err := mariadbquery.GetMachineIPandName(key)
+	if err != nil {
+		return err
+	}
+	time := time.Now().Format("2006_0102_150405")
+	imageType, err := getImageType(key)
+	if err != nil {
+		return err
+	}
+
+	// clear all the content of the directory
+	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
+	if err != nil {
+		return err
+	}
+	// move to ImagePath
+	dstPath := filepath.Join(imageFilePath, ip, (("Obtained_" + time + "_" + imageType) + extension))
+	err = file.MoveFile(srcPath, dstPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getExtension(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	// check the extension type
+	var firstByte [1]byte
+	_, err = f.Read(firstByte[:])
+	if err != nil {
+		return "", err
+	}
+	extension := ".tar.gz"
+	if firstByte[0] == 'P' {
+		extension = ".zip"
+	}
+	return extension, nil
+}
+
+func getImageType(key string) (string, error) {
+	taskID := mariadbquery.Load_task_id(key, "StartGetImage", 2)
+	content := []byte(redis.RedisGetString(taskID))
+	NewPacket := new(packet.TaskPacket)
+	err := NewPacket.NewPacket(content)
+	if err != nil {
+		return "", err
+	}
+	imageType := NewPacket.GetMessage()
+	return imageType, nil
 }

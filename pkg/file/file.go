@@ -25,6 +25,15 @@ func CheckDir(path string) {
 	}
 }
 
+func ClearDirContent(path string) error {
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+	CheckDir(path)
+	return nil
+}
+
 func MoveToParentDir() {
 	currentDir, err := os.Getwd()
 	if err != nil {
