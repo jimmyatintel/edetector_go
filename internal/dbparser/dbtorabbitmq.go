@@ -70,6 +70,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &ChromeCache{}, taskID)
 		case "ChromeDownload":
 			values[11] = toBoolean(values[11])
+			values[17] = RFCToTimestamp(values[17])
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &ChromeDownload{}, taskID)
 		case "ChromeHistory":
 			err = toRabbitMQ(index, agent, values, values[0], values[2], "website_bookmark", values[1], &ChromeHistory{}, taskID)
@@ -184,6 +185,11 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 		return err
 	}
 	uuid := uuid.NewString()
+	if item == "-1" {
+		item = "Empty table"
+	} else if item == "-2" {
+		item = "Collecting Table Failed"
+	}
 	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low", "StartCollect", taskID)
 	if err != nil {
 		return err
