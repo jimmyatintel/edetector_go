@@ -2,6 +2,7 @@ package clientsearch
 
 import (
 	"bytes"
+	config "edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
 	"fmt"
@@ -97,7 +98,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.GIVE_INFO && ClientCount > 1000 {
+		if NewPacket.GetTaskType() == task.GIVE_INFO && ClientCount >= config.Viper.GetInt("AGENT_LIMIT") {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
 			close(closeConn)
