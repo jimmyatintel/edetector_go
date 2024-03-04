@@ -175,7 +175,7 @@ func clearParser(db *sql.DB, dbFile string, agent string) {
 		return
 	}
 	rawDataPath := filepath.Join(dbRawDataPath, ip+"_"+time+".db")
-	err = file.CopyFile(dbFile, rawDataPath)
+	err = file.MoveFile(dbFile, rawDataPath)
 	if err != nil {
 		logger.Error("Error copying file to RawData (" + agent + "): " + err.Error())
 	} else {

@@ -9,6 +9,7 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -162,7 +163,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 			err = toRabbitMQ(index, agent, values, values[0], values[11], "software", values[3], &Netadapters{}, taskID)
 		case "RecentFile":
 			err = toRabbitMQ(index, agent, values, values[2], "0", "document", values[0], &RecentFile{}, taskID)
-		case "Shellbags":
+		case "ShellBags":
 			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[1], &Shellbags{}, taskID)
 		case "SystemInfo":
 			err = toRabbitMQ(index, agent, values, values[13], "0", "network_record", values[1], &SystemInfo{}, taskID)
@@ -187,8 +188,10 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 	uuid := uuid.NewString()
 	if item == "-1" {
 		item = "Empty table"
+		date = fmt.Sprint(time.Now().Unix())
 	} else if item == "-2" {
 		item = "Collecting Table Failed"
+		date = fmt.Sprint(time.Now().Unix())
 	}
 	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low", "StartCollect", taskID)
 	if err != nil {
