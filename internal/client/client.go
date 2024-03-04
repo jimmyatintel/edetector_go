@@ -5,8 +5,8 @@ import (
 	"edetector_go/internal/packet"
 )
 
-func PacketClientInfo(p packet.WorkPacket) clientinfo.ClientInfo {
+func PacketClientInfo(p packet.WorkPacket) (clientinfo.ClientInfo, error) {
 	clientinfo := clientinfo.ClientInfo{}
-	clientinfo.Load_data(p.GetMessage())
-	return clientinfo
+	err := clientinfo.Load_data(p.GetMessage())
+	return clientinfo, err
 }

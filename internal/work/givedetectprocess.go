@@ -39,7 +39,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
 	for _, line := range lines {
-		values := strings.Split(line, "|")
+		values := strings.Split(line, "|@|")
 		if len(values) != 16 {
 			if len(values) != 1 {
 				logger.Error("Invalid line: " + line)

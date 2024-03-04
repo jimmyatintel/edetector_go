@@ -3,6 +3,7 @@ package clientinfo
 import (
 	logger "edetector_go/pkg/logger"
 	"encoding/json"
+	"errors"
 	"strings"
 )
 
@@ -16,12 +17,10 @@ type ClientInfo struct {
 	KeyNum       string
 }
 
-func (c *ClientInfo) Load_data(data string) {
-	data_splited := strings.Split(data, "|")
+func (c *ClientInfo) Load_data(data string) error {
+	data_splited := strings.Split(data, "|@|")
 	if len(data_splited) < 7 {
-		for i := len(data_splited); i < 7; i++ {
-			data_splited = append(data_splited, "")
-		}
+		return errors.New("error in GiveInfo format, version conflicted")
 	}
 	c.SysInfo = data_splited[0]
 	c.OsInfo = data_splited[1]
@@ -30,6 +29,7 @@ func (c *ClientInfo) Load_data(data string) {
 	c.FileVersion = data_splited[4]
 	c.BootTime = data_splited[5]
 	c.KeyNum = data_splited[6]
+	return nil
 }
 
 func (c *ClientInfo) Marshal() string {

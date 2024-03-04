@@ -180,7 +180,7 @@ func parseScan(path string, key string) error {
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "\r", "")
-		values := strings.Split(line, "|")
+		values := strings.Split(line, "|@|")
 		if len(values) != 17 {
 			if len(values) != 1 {
 				logger.Error("Invalid line: " + line)
@@ -288,11 +288,15 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 		if err != nil {
 			logger.Warn("Error getting virustotal: " + err.Error())
 		}
-		line = pid + "|" + pCreateTime + "|" + actionAndTime[1] + "|" + conns[0] + "|" + conns[1] + "|" + conns[2] + "|" + conns[3] + "|" +
-			actionAndTime[0] + "|" + direction + "|scan|" +
-			agentPort + "|" + agentCountry + "|" + strconv.Itoa(agentLo) + "|" + strconv.Itoa(agentLa) + "|" +
-			otherIP + "|" + otherPort + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
-		values := strings.Split(line, "|")
+		line = pid + "|@|" + pCreateTime + "|@|" + actionAndTime[1] + "|@|" + 
+			conns[0] + "|@|" + conns[1] + "|@|" + conns[2] + "|@|" + conns[3] + "|@|" +
+			actionAndTime[0] + "|@|" + direction + "|@|scan|@|" +
+			agentPort + "|@|" + agentCountry + "|@|" + 
+			strconv.Itoa(agentLo) + "|@|" + strconv.Itoa(agentLa) + "|@|" +
+			otherIP + "|@|" + otherPort + "|@|" + otherCountry + "|@|" + 
+			strconv.Itoa(otherLo) + "|@|" + strconv.Itoa(otherLa) + "|@|" + 
+			strconv.Itoa(malicious) + "|@|" + strconv.Itoa(total)
+		values := strings.Split(line, "|@|")
 		uuid := uuid.NewString()
 		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID)
 		if err != nil {

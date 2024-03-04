@@ -41,7 +41,7 @@ func TestPacketClientInfo(t *testing.T) {
 		},
 	}
 	for _, tt := range test {
-		if got := PacketClientInfo(tt.p); got != tt.want {
+		if got, _ := PacketClientInfo(tt.p); got != tt.want {
 			t.Errorf("PacketClientInfo() = %v, want %v", got, tt.want)
 		}
 	}
