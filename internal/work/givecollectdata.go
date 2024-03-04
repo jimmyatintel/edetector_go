@@ -24,8 +24,8 @@ var collectFirstPart float64
 var collectSecondPart float64
 
 func init() {
-	file.CheckDir(dbWorkingPath)
-	file.CheckDir(dbUstagePath)
+	file.ClearDirContent(dbWorkingPath)
+	file.ClearDirContent(dbUstagePath)
 }
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {

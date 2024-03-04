@@ -21,7 +21,7 @@ var imageWorkingPath = "imageWorking"
 var imageFilePath = "ImageFile"
 
 func init() {
-	file.CheckDir(imageWorkingPath)
+	file.ClearDirContent(imageWorkingPath)
 	file.CheckDir(imageFilePath)
 }
 

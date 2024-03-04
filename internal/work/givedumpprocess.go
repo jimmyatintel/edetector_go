@@ -17,7 +17,7 @@ var dumpProcessWorkingPath = "dumpProcessWorking"
 var dumpProcessUstagePath = "dumpProcessUnstage"
 
 func init() {
-	file.CheckDir(dumpProcessWorkingPath)
+	file.ClearDirContent(dumpProcessWorkingPath)
 	file.CheckDir(dumpProcessUstagePath)
 }
 

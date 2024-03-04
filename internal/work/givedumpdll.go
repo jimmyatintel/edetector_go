@@ -17,7 +17,7 @@ var dumpDllWorkingPath = "dumpDllWorking"
 var dumpDllUstagePath = "dumpDllUnstage"
 
 func init() {
-	file.CheckDir(dumpDllWorkingPath)
+	file.ClearDirContent(dumpDllWorkingPath)
 	file.CheckDir(dumpDllUstagePath)
 }
 

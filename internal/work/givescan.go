@@ -28,7 +28,7 @@ var scanFirstPart float64
 var scanSecondPart float64
 
 func init() {
-	file.CheckDir(scanWorkingPath)
+	file.ClearDirContent(scanWorkingPath)
 	file.CheckDir(scanUstagePath)
 }
 
