@@ -18,9 +18,16 @@ func TestRFCToTimestamp(t *testing.T) {
 		want  string
 	}{
 		{"Sat, 25 Nov 2023 06:30:03 GMT", "1700893803"},
-		{"Wed, 28 Nov 2023 23:32:04 MST", "0"},
+		{"Wed, 4 Jun 2008 06:06:06 GMT", "1212559566"},
+		{"Wed, 28 Nov 2023 23:32:04 MST", "1701214324"},
+		{"Wed, 8 Nov 2023 23:32:04 MST", "1699486324"},
+		{"Fri, 23 Feb 2024 07:17:19 UTC", "1708672639"},
+		{"Fri, 3 Feb 2024 07:17:19 UTC", "1706944639"},
+		{"Thu Feb 22 14:19:27 2024", "0"},
 		{"Wed, 28 2023 23:32:04", "0"},
 		{"abc", "0"},
+		{"0", "0"},
+		{"-1", "0"},
 	}
 	for _, tt := range tests {
 		data := RFCToTimestamp(tt.value)
