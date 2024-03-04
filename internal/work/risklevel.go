@@ -147,13 +147,13 @@ func Getriskscore(info Memory, initScore int) (string, string, string, string, e
 
 func scoretoLevel(score int) int {
 	if score >= 150 {
-		return 3
+		return 4
 	} else if score > 90 {
-		return 2
+		return 3
 	} else if score > 30 {
-		return 1
+		return 2
 	} else {
-		return 0
+		return 1
 	}
 }
 
