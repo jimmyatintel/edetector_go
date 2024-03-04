@@ -24,9 +24,9 @@ var ruleMatchUnstage = "ruleMatchUnstage"
 var pathWorkingPath = "pathWorking"
 
 func init() {
-	file.CheckDir(ruleMatchWorkingPath)
+	file.ClearDirContent(ruleMatchWorkingPath)
 	file.CheckDir(ruleMatchUnstage)
-	file.CheckDir(pathWorkingPath)
+	file.ClearDirContent(pathWorkingPath)
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {

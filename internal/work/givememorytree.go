@@ -17,7 +17,7 @@ var memoryTreeWorkingPath = "memoryTreeWorking"
 var memoryTreeUstagePath = "memoryTreeUnstage"
 
 func init() {
-	file.CheckDir(memoryTreeWorkingPath)
+	file.ClearDirContent(memoryTreeWorkingPath)
 	file.CheckDir(memoryTreeUstagePath)
 }
 

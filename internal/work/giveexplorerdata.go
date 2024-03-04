@@ -25,8 +25,8 @@ var explorerFirstPart float64
 var explorerSecondPart float64
 
 func init() {
-	file.CheckDir(fileWorkingPath)
-	file.CheckDir(fileUnstagePath)
+	file.ClearDirContent(fileWorkingPath)
+	file.ClearDirContent(fileUnstagePath)
 }
 
 func Explorer(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
