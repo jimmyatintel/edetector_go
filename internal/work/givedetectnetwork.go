@@ -98,6 +98,9 @@ func parseNetowrk(line string, networkSet *map[string]struct{}, ip string) ([]st
 			addr + "|" + port + "|" + otherCountry + "|" + strconv.Itoa(otherLo) + "|" + strconv.Itoa(otherLa) + "|" + strconv.Itoa(malicious) + "|" + strconv.Itoa(total)
 	}
 	values = strings.Split(modifiedStr, "|")
+	if len(values) != 21 {
+		return nil, errors.New("invalid line" + line)
+	}
 	if malicious < 0 {
 		malicious = 0
 	}
