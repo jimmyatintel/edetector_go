@@ -14,7 +14,6 @@ import (
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
-	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 	"net"
 )
@@ -23,6 +22,7 @@ var ClientCount int
 
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
 	ClientCount = 0
+	firstCheckConnect := true
 	logger.Info("Worker port accepted, IP: " + conn.RemoteAddr().String())
 	defer conn.Close()
 	buf := make([]byte, 1024)
@@ -101,6 +101,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		if NewPacket.GetTaskType() == task.GIVE_INFO && ClientCount >= config.Viper.GetInt("AGENT_LIMIT") {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
+			work.DeleteAgentData(key)
 			close(closeConn)
 			return
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
@@ -125,7 +126,16 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			}()
 		}
 		if NewPacket.GetTaskType() == task.CHECK_CONNECT { // update online status only when CHECK_CONNECT
-			rq.Online(key)
+			if rq.GetStatus(key) == 0 { // offline
+				if !firstCheckConnect {
+					logger.Error("Agent already offline: " + string(key))
+					close(closeConn)
+					return
+				}
+				firstCheckConnect = false
+			} else {
+				rq.Online(key)
+			}
 		}
 		if NewPacket.GetTaskType() == task.READY_UPDATE_AGENT {
 			updateDataRightChan = make(chan net.Conn)
@@ -197,11 +207,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		}
 		rq.Offline(key, &ClientCount)
 		if len(removeTasks) != 0 {
-			mq.DeleteAgent(key)
-			err = redis.RedisDelete(key)
-			if err != nil {
-				logger.Error("Error deleting key from redis: " + err.Error())
-			}
+			work.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)
 		}
 	} else {
