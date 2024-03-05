@@ -118,11 +118,7 @@ func storeImageFile(key string, srcPath string) error {
 		return err
 	}
 	time := time.Now().Format("2006_0102_150405")
-	imageType, err := getImageType(key)
-	if err != nil {
-		return err
-	}
-
+	imageType := getImageType(key)
 	// clear all the content of the directory
 	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
 	if err != nil {
@@ -156,14 +152,15 @@ func getExtension(path string) (string, error) {
 	return extension, nil
 }
 
-func getImageType(key string) (string, error) {
+func getImageType(key string) string {
 	taskID := mariadbquery.Load_task_id(key, "StartGetImage", 2)
 	content := []byte(redis.RedisGetString(taskID))
 	NewPacket := new(packet.TaskPacket)
 	err := NewPacket.NewPacket(content)
 	if err != nil {
-		return "", err
+		logger.Error("Error getting ImageType: " + err.Error())
+		return "UnknownType"
 	}
 	imageType := NewPacket.GetMessage()
-	return imageType, nil
+	return imageType
 }

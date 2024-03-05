@@ -21,6 +21,7 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	if err != nil {
 		logger.Error("GiveInfo error: " + err.Error())
 		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
+		DeleteAgentData(p.GetRkey())
 		return task.FAIL, err
 	}
 	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") { // assign a new key(uuid)
