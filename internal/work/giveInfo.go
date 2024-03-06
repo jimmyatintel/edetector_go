@@ -19,7 +19,11 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	np := packet.CheckIsWork(p)
 	ClientInfo, err := client.PacketClientInfo(np)
 	if err != nil {
-		logger.Error("GiveInfo error: " + err.Error())
+		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
+		return task.FAIL, err
+	}
+	if ClientInfo.FileVersion != "1.0.7,1988,1989" { // TODO: get version using dependency
+		logger.Error("Version Conflict: " + ClientInfo.FileVersion)
 		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
 		return task.FAIL, err
 	}

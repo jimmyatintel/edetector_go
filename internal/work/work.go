@@ -5,6 +5,9 @@ import (
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/logger"
+	mq "edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 
 	"net"
 )
@@ -84,6 +87,18 @@ func init() {
 		task.GIVE_LOAD_DLL_DATA: GiveLoadDllData,
 		task.GIVE_LOAD_DLL_END:  GiveLoadDllEnd,
 	}
+}
+
+func getTaskMsg(key string, ttype string) string {
+	taskID := mq.Load_task_id(key, ttype, 2)
+	content := []byte(redis.RedisGetString(taskID))
+	NewPacket := new(packet.TaskPacket)
+	err := NewPacket.NewPacket(content)
+	if err != nil {
+		logger.Error("Error getting task msg: " + err.Error())
+		return "Unknown"
+	}
+	return NewPacket.GetMessage()
 }
 
 func getDataPacketContent(p packet.Packet) []byte {

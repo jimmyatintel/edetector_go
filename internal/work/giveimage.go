@@ -8,7 +8,6 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	mariadbquery "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"net"
 	"os"
@@ -113,12 +112,12 @@ func storeImageFile(key string, srcPath string) error {
 	if err != nil {
 		return err
 	}
-	ip, _, err := mariadbquery.GetMachineIPandName(key)
+	ip, _, err := query.GetMachineIPandName(key)
 	if err != nil {
 		return err
 	}
 	time := time.Now().Format("2006_0102_150405")
-	imageType := getImageType(key)
+	imageType := getTaskMsg(key, "StartGetImage")
 	// clear all the content of the directory
 	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
 	if err != nil {
@@ -150,17 +149,4 @@ func getExtension(path string) (string, error) {
 		extension = ".zip"
 	}
 	return extension, nil
-}
-
-func getImageType(key string) string {
-	taskID := mariadbquery.Load_task_id(key, "StartGetImage", 2)
-	content := []byte(redis.RedisGetString(taskID))
-	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
-	if err != nil {
-		logger.Error("Error getting ImageType: " + err.Error())
-		return "UnknownType"
-	}
-	imageType := NewPacket.GetMessage()
-	return imageType
 }
