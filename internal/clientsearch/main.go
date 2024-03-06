@@ -8,6 +8,7 @@ import (
 	"edetector_go/internal/taskservice"
 	logger "edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 	"time"
 
@@ -109,6 +110,7 @@ func Connect_start(ctx context.Context, Connection_close_chan chan<- int) int {
 	defer close(TCP_CHANNEL)
 	defer close(UDP_CHANNEL)
 	Offline_all_clients()
+	redis.RedisSet("OnlineClientCount", 0)
 	go checkOnline()
 	go Conn_TCP_start(TCP_CHANNEL, wg)
 	go Conn_UDP_start(UDP_CHANNEL, wg)
@@ -163,7 +165,7 @@ func Offline_all_clients() {
 	logger.Info("Offline all clients")
 	clients := mq.Load_all_client()
 	for _, client := range clients {
-		rq.Offline(client, &ClientCount)
+		rq.Offline(client)
 	}
 }
 
@@ -183,7 +185,7 @@ func checkOnline() {
 			difference := currentTime.Sub(redisTime)
 			if difference > 65*time.Second {
 				logger.Info("Offline: " + client + "- more than 65 seconds without CheckConnect")
-				rq.Offline(client, &ClientCount)
+				rq.Offline(client)
 			}
 		}
 		time.Sleep(60 * time.Second)

@@ -35,11 +35,11 @@ func Online(KeyNum string) {
 	}
 }
 
-func Offline(KeyNum string, ClientCount *int) {
+func Offline(KeyNum string) {
 	if GetStatus(KeyNum) == 0 { // already offline
 		return
 	}
-	*ClientCount -= 1
+	redis.RedisSet_AddInteger("OnlineClientCount", -1)
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
