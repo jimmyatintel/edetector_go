@@ -147,8 +147,8 @@ func GinLog() gin.HandlerFunc {
 }
 
 func StoreLogToDB(level string, message string) {
-	if len(message) > 100 {
-		message = message[:100]
+	if len(message) > 250 {
+		message = message[:250]
 	}
 	query := "INSERT INTO log (level, service, content, timestamp) VALUES (?, ?, ?, CURRENT_TIMESTAMP)"
 	_, err := mariadb.DB.Exec(query, level, Service, message)
