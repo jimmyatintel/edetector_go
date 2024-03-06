@@ -9,6 +9,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/rabbitmq"
+	"edetector_go/pkg/redis"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -50,6 +51,12 @@ func connector_init() {
 		panic(err)
 	} else {
 		logger.Info("Mariadb connectionString: " + connString)
+	}
+	if true {
+		if db := redis.Redis_init(); db == nil {
+			logger.Panic("Error connecting to redis")
+			panic(err)
+		}
 	}
 	if true {
 		elastic.Elastic_init()
