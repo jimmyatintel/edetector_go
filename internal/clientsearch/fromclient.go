@@ -5,6 +5,7 @@ import (
 	config "edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
 	"edetector_go/internal/task"
+	"edetector_go/internal/taskservice"
 	"fmt"
 	"strings"
 
@@ -98,13 +99,12 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}
-		if NewPacket.GetTaskType() == task.GIVE_INFO && 
-		   (ClientCount >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
-				logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
-				clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
-				work.DeleteAgentData(key)
-				close(closeConn)
-				return
+		if NewPacket.GetTaskType() == task.GIVE_INFO &&
+			(ClientCount >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
+			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
+			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
+			close(closeConn)
+			return
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
 			rq.Online(key)
 			ClientCount += 1
@@ -208,7 +208,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		}
 		rq.Offline(key, &ClientCount)
 		if len(removeTasks) != 0 {
-			work.DeleteAgentData(key)
+			taskservice.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)
 		}
 	} else {

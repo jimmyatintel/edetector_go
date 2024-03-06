@@ -4,6 +4,7 @@ import (
 	elaDelete "edetector_go/pkg/elastic/delete"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
+	"edetector_go/pkg/redis"
 	"edetector_go/pkg/request"
 	"strconv"
 )
@@ -114,6 +115,8 @@ func Update_task_timestamp(clientid string, tasktype string) {
 }
 
 func Finish_task(clientid string, tasktype string) {
+	taskID := Load_task_id(clientid, tasktype, 2)
+	redis.RedisDelete(taskID)
 	rowsAffected := Update_task_status(clientid, tasktype, 2, 3)
 	if tasktype == "ChangeDetectMode" {
 		return
@@ -122,9 +125,12 @@ func Finish_task(clientid string, tasktype string) {
 		Update_task_timestamp(clientid, tasktype)
 		request.RequestToUser(clientid)
 	}
+
 }
 
 func Terminated_task(clientid string, tasktype string, status int) {
+	taskID := Load_task_id(clientid, tasktype, status)
+	redis.RedisDelete(taskID)
 	deleteData(clientid, tasktype, 5)
 	rowsAffected := Update_task_status(clientid, tasktype, status, 4)
 	if rowsAffected > 0 {
@@ -142,6 +148,8 @@ func Terminate_handling_task(clientid string, tasktype string) {
 }
 
 func Failed_task(clientid string, tasktype string, status int) {
+	taskID := Load_task_id(clientid, tasktype, 2)
+	redis.RedisDelete(taskID)
 	deleteData(clientid, tasktype, 2)
 	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
 	if tasktype == "ChangeDetectMode" {

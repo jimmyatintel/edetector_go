@@ -120,6 +120,18 @@ func RedisDelete(key string) error {
 	return RedisClient.Del(context.Background(), key).Err()
 }
 
+func GetKeysMatchingPattern(pattern string) []string {
+	if !checkflag() {
+		return nil
+	}
+	keys, err := RedisClient.Keys(context.Background(), pattern).Result()
+	if err != nil {
+		logger.Error("Error getting keys from redis: " + err.Error())
+		return []string{}
+	}
+	return keys
+}
+
 func GetKeysByLength(length int) []string {
 	keys, err := RedisClient.Keys(context.Background(), "*").Result()
 	if err != nil {
