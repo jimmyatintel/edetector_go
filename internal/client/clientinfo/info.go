@@ -14,7 +14,6 @@ type ClientInfo struct {
 	UserName     string
 	FileVersion  string
 	BootTime     string
-	
 	KeyNum       string
 }
 
