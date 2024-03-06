@@ -15,14 +15,12 @@ import (
 	work "edetector_go/internal/work"
 	logger "edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 	"net"
 )
 
-var ClientCount int
-
 func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) {
-	ClientCount = 0
 	firstCheckConnect := true
 	logger.Info("Worker port accepted, IP: " + conn.RemoteAddr().String())
 	defer conn.Close()
@@ -100,14 +98,14 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO &&
-			(ClientCount >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
+			(redis.RedisGetInt("OnlineClientCount") >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
 			close(closeConn)
 			return
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
 			rq.Online(key)
-			ClientCount += 1
+			redis.RedisSet_AddInteger("OnlineClientCount", 1)
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
 			go func() {
@@ -206,7 +204,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
-		rq.Offline(key, &ClientCount)
+		rq.Offline(key)
 		if len(removeTasks) != 0 {
 			taskservice.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)
