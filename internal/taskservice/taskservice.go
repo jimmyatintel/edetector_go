@@ -13,7 +13,9 @@ import (
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	rq "edetector_go/pkg/redis/query"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -83,27 +85,33 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
-	if NewPacket.GetUserTaskType() == "Undefine" {
+	ttype := NewPacket.GetUserTaskType()
+	key := NewPacket.GetRkey()
+	if ttype == "Undefine" {
 		nullIndex := bytes.IndexByte(content[76:100], 0)
 		logger.Error("Undefine User Task Type: " + string(content[76:76+nullIndex]))
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
-	logger.Info("Task " + taskid + " " + string(NewPacket.GetUserTaskType()) + " is handling...")
-	taskFunc, ok := work_from_api.WorkapiMap[NewPacket.GetUserTaskType()]
+	logger.Info("Task " + taskid + " " + string(ttype) + " is handling...")
+	if ttype == "StartRemove" && rq.GetStatus(key) == 0 {
+		DeleteAgentData(key)
+		return
+	}
+	taskFunc, ok := work_from_api.WorkapiMap[ttype]
 	if !ok {
-		logger.Error("Function notfound:" + string(NewPacket.GetUserTaskType()))
+		logger.Error("Function notfound:" + string(ttype))
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
 	_, err = taskFunc(NewPacket)
 	if err != nil {
-		logger.Error("Task " + string(NewPacket.GetUserTaskType()) + " failed: " + err.Error())
+		logger.Error("Task " + string(ttype) + " failed: " + err.Error())
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
-	if NewPacket.GetUserTaskType() == "ChangeDetectMode" {
-		query.Finish_task(NewPacket.GetRkey(), "ChangeDetectMode")
+	if ttype == "ChangeDetectMode" {
+		query.Finish_task(key, "ChangeDetectMode")
 	}
 }
 
@@ -144,4 +152,15 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 		"message":   msg + ": " + err.Error(),
 	})
 	logger.Error(msg + ": " + err.Error())
+}
+
+func DeleteAgentData(key string) {
+	mq.DeleteAgent(key)
+	redisData := redis.GetKeysMatchingPattern(key + "*")
+	for _, r := range redisData {
+		err := redis.RedisDelete(r)
+		if err != nil {
+			logger.Error("Error deleting data from redis: " + err.Error())
+		}
+	}
 }

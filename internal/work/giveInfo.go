@@ -21,12 +21,11 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 	if err != nil {
 		logger.Error("GiveInfo error: " + err.Error())
 		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
-		DeleteAgentData(p.GetRkey())
 		return task.FAIL, err
 	}
 	if (ClientInfo.KeyNum == "") || (ClientInfo.KeyNum == "null") || (ClientInfo.KeyNum == "NoKey") { // assign a new key(uuid)
 		ClientInfo.KeyNum = strings.Replace(uuid.New().String(), "-", "", -1)
-		logger.Debug("new key: " + ClientInfo.KeyNum)
+		logger.Info("New key: " + ClientInfo.KeyNum)
 	}
 	mq.Checkindex(ClientInfo.KeyNum, p.GetipAddress(), p.GetMacAddress())
 	mq.Addmachine(ClientInfo)
