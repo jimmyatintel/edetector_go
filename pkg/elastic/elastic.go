@@ -40,6 +40,29 @@ type Request_data interface {
 	Elastical() ([]byte, error)
 }
 
+type BulkResponse struct {
+	Took   int         `json:"took"`
+	Errors bool        `json:"errors"`
+	Items  []ItemIndex `json:"items"`
+}
+
+type ItemIndex struct {
+	Index IndexDetails `json:"index"`
+}
+
+type IndexDetails struct {
+	Index  string `json:"_index"`
+	Type   string `json:"_type"`
+	ID     string `json:"_id"`
+	Status int    `json:"status"`
+	Error  Error  `json:"error,omitempty"`
+}
+
+type Error struct {
+	Type   string `json:"type"`
+	Reason string `json:"reason"`
+}
+
 func CreateIndex(name string) {
 	if !flagcheck() {
 		return
@@ -98,6 +121,17 @@ func BulkIndexRequest(buf strings.Builder) error {
 	output := res.String()
 	if output[:8] == "[200 OK]" {
 		logger.Info("BulkIndexRequest Res: " + output[:100])
+		var bulkResp BulkResponse
+		err := json.NewDecoder(res.Body).Decode(&bulkResp)
+		if err != nil {
+			logger.Error("Error unmarshalling BulkResponse: " + err.Error())
+		} else if bulkResp.Errors {
+			for _, item := range bulkResp.Items {
+				if item.Index.Status != 201 {
+					logger.Error("Error indexing: " + item.Index.Error.Reason)
+				}
+			}
+		}
 	} else {
 		return errors.New("Error BulkIndexRequest Res: " + output[:500])
 	}
