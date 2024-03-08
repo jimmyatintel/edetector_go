@@ -93,7 +93,7 @@ func (n BaseService) Elastical() ([]byte, error) {
 type ChromeBookmarks struct {
 	Id            int    `json:"id"`
 	Parent        int    `json:"parent"`
-	Type          string `json:"ttype"`
+	Type          string `json:"type"`
 	Name          string `json:"name"`
 	Url           string `json:"url"`
 	Guid          string `json:"guid"`
@@ -1119,7 +1119,7 @@ type Email struct {
 	Importance           string `json:"importance"`
 	Received             string `json:"received"`
 	Subject              string `json:"subject"`
-	MessageID            string `json:"message_id"`
+	MessageID            string `json:"message_ID"`
 	Message              string `json:"message"`
 	UUID                 string `json:"uuid"`
 	Agent                string `json:"agent"`
