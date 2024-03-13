@@ -27,7 +27,11 @@ func flagcheck() bool {
 func Elastic_init() {
 	var err error
 	cfg := elasticsearch.Config{
-		Addresses: []string{"http://" + config.Viper.GetString("ELASTIC_HOST") + ":" + config.Viper.GetString("ELASTIC_PORT")},
+		Addresses: []string{
+			config.Viper.GetString("ELASTIC_URL_1"),
+			config.Viper.GetString("ELASTIC_URL_2"),
+			config.Viper.GetString("ELASTIC_URL_3"),
+		},
 	}
 	es, err = elasticsearch.NewClient(cfg)
 	if err != nil {
