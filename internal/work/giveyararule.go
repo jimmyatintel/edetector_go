@@ -30,15 +30,9 @@ func init() {
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
-	srcPath := filepath.Join("static", "yaraRule")
-	dstPath := filepath.Join("static", "yaraRule.zip")
+	path := filepath.Join("static", "yaraRule.zip")
 	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
-	// zip the file
-	err := file.ZipDirectory(srcPath, dstPath)
-	if err != nil {
-		return task.FAIL, err
-	}
-	fileInfo, err := os.Stat(dstPath)
+	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -50,7 +44,7 @@ func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (tas
 	}
 	redis.RedisSet(p.GetRkey()+"-YaraProgress", 0)
 	go updateYaraRuleProgress(p.GetRkey())
-	go GiveYaraRule(p, fileLen, dstPath, dataRight)
+	go GiveYaraRule(p, fileLen, path, dataRight)
 	return task.SUCCESS, nil
 }
 

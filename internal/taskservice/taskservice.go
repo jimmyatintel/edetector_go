@@ -3,6 +3,7 @@ package taskservice
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -25,9 +26,14 @@ type TaskRequest struct {
 	TaskID string `json:"taskID"`
 }
 
-type TaskResponse struct {
+type Response struct {
 	IsSuccess bool   `json:"isSuccess"`
 	Message   string `json:"message"`
+}
+
+type YaraRequest struct {
+	FileType string `json:"fileType"`
+	File     []byte `json:"file"`
 }
 
 func Start(ctx context.Context) {
@@ -48,6 +54,9 @@ func Start(ctx context.Context) {
 	router.POST("/listscore/:type", func(c *gin.Context) {
 		ReceiveUpdateLists(c, ctx)
 	})
+	router.POST("/yara", func(c *gin.Context) {
+		// ReceiveYara(c, ctx)
+	})
 	router.Run(":5055")
 }
 
@@ -55,7 +64,7 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Invalid request format: " + err.Error())
-		res := TaskResponse{
+		res := Response{
 			IsSuccess: false,
 			Message:   "Invalid request format",
 		}
@@ -63,7 +72,7 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 	go handleTaskrequest(ctx, req.TaskID)
-	res := TaskResponse{
+	res := Response{
 		IsSuccess: true,
 		Message:   "Success",
 	}
@@ -138,7 +147,7 @@ func ReceiveUpdateLists(c *gin.Context, ctx context.Context) {
 		ErrorResponse(c, nil, "Invalid list type")
 		return
 	}
-	res := TaskResponse{
+	res := Response{
 		IsSuccess: true,
 		Message:   "Success",
 	}
@@ -163,4 +172,22 @@ func DeleteAgentData(key string) {
 			logger.Error("Error deleting data from redis: " + err.Error())
 		}
 	}
+}
+
+func ReceiveYara(c *gin.Context, err error, msg string) {
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		return
+	}
+	defer file.Close()
+
+	// Get other form values
+	fileType := c.PostForm("fileType")
+
+	// Do something with the file and fileType
+	fmt.Printf("Received file: %s, type: %s\n", header.Filename, fileType)
+
+	// Respond to the client
+	c.JSON(http.StatusOK, gin.H{"message": "File received successfully"})
 }
