@@ -3,18 +3,18 @@ package taskservice
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"edetector_go/config"
 	"edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
+	filePkg "edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 
@@ -55,7 +55,7 @@ func Start(ctx context.Context) {
 		ReceiveUpdateLists(c, ctx)
 	})
 	router.POST("/yara", func(c *gin.Context) {
-		// ReceiveYara(c, ctx)
+		ReceiveYara(c, ctx)
 	})
 	router.Run(":5055")
 }
@@ -164,7 +164,7 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 }
 
 func DeleteAgentData(key string) {
-	mq.DeleteAgent(key)
+	query.DeleteAgent(key)
 	redisData := redis.GetKeysMatchingPattern(key + "*")
 	for _, r := range redisData {
 		err := redis.RedisDelete(r)
@@ -174,20 +174,38 @@ func DeleteAgentData(key string) {
 	}
 }
 
-func ReceiveYara(c *gin.Context, err error, msg string) {
-	file, header, err := c.Request.FormFile("file")
+func ReceiveYara(c *gin.Context, ctx context.Context) {
+	logger.Info("Receiving yara rule file")
+	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		logger.Error("Error getting file: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
 		return
 	}
 	defer file.Close()
-
-	// Get other form values
+	// get file info
+	fileSize := handler.Size
 	fileType := c.PostForm("fileType")
-
-	// Do something with the file and fileType
-	fmt.Printf("Received file: %s, type: %s\n", header.Filename, fileType)
-
-	// Respond to the client
-	c.JSON(http.StatusOK, gin.H{"message": "File received successfully"})
+	dstPath := filepath.Join("static", "yaraRule")
+	logger.Info("Received file: " + handler.Filename + " (" + fileType + ")")
+	// save file to static/yaraRule
+	switch fileType {
+	case "zip":
+		err = filePkg.UnzipFile(handler.Filename, dstPath, int(fileSize))
+	case "tar":
+		err = filePkg.UnzipTarFile(handler.Filename, dstPath, int(fileSize))
+	case "yara":
+		err = filePkg.MoveFile(handler.Filename, filepath.Join(dstPath, handler.Filename))
+	}
+	if err != nil {
+		logger.Error("Error extracting file: " + err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to extract file"})
+		return
+	}
+	res := Response{
+		IsSuccess: true,
+		Message:   "Success",
+	}
+	c.JSON(http.StatusOK, res)
+	logger.Info("Updated yara rule file")
 }
