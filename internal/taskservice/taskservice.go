@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,7 +13,6 @@ import (
 	"edetector_go/internal/packet"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
-	filePkg "edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
@@ -29,11 +29,6 @@ type TaskRequest struct {
 type Response struct {
 	IsSuccess bool   `json:"isSuccess"`
 	Message   string `json:"message"`
-}
-
-type YaraRequest struct {
-	FileType string `json:"fileType"`
-	File     []byte `json:"file"`
 }
 
 func Start(ctx context.Context) {
@@ -175,7 +170,6 @@ func DeleteAgentData(key string) {
 }
 
 func ReceiveYara(c *gin.Context, ctx context.Context) {
-	logger.Info("Receiving yara rule file")
 	file, handler, err := c.Request.FormFile("file")
 	if err != nil {
 		logger.Error("Error getting file: " + err.Error())
@@ -183,23 +177,11 @@ func ReceiveYara(c *gin.Context, ctx context.Context) {
 		return
 	}
 	defer file.Close()
-	// get file info
-	fileSize := handler.Size
-	fileType := c.PostForm("fileType")
-	dstPath := filepath.Join("static", "yaraRule")
-	logger.Info("Received file: " + handler.Filename + " (" + fileType + ")")
-	// save file to static/yaraRule
-	switch fileType {
-	case "zip":
-		err = filePkg.UnzipFile(handler.Filename, dstPath, int(fileSize))
-	case "tar":
-		err = filePkg.UnzipTarFile(handler.Filename, dstPath, int(fileSize))
-	case "yara":
-		err = filePkg.MoveFile(handler.Filename, filepath.Join(dstPath, handler.Filename))
-	}
+	// save the file
+	err = saveFile(file, handler)
 	if err != nil {
-		logger.Error("Error extracting file: " + err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to extract file"})
+		logger.Error("Error saving file: " + err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	res := Response{
@@ -208,4 +190,21 @@ func ReceiveYara(c *gin.Context, ctx context.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 	logger.Info("Updated yara rule file")
+}
+
+func saveFile(file multipart.File, handler *multipart.FileHeader) error {
+	// save file to the yaraRule folder
+	path := filepath.Join("static", "yaraRule.zip")
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, file); err != nil {
+		return err
+	}
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

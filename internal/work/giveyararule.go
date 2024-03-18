@@ -30,13 +30,13 @@ func init() {
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
-	path := filepath.Join("static", "yaraRule.zip")
 	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
-	fileInfo, err := os.Stat(path)
+	path := filepath.Join("static", "yaraRule.zip")
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
 	}
-	fileLen := int(fileInfo.Size())
+	fileLen := len(content)
 	logger.Info("ServerSend GiveYaraRuleInfo: " + p.GetRkey() + "::" + strconv.Itoa(fileLen))
 	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_YARA_RULE_INFO, strconv.Itoa(fileLen), conn)
 	if err != nil {
@@ -44,23 +44,17 @@ func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (tas
 	}
 	redis.RedisSet(p.GetRkey()+"-YaraProgress", 0)
 	go updateYaraRuleProgress(p.GetRkey())
-	go GiveYaraRule(p, fileLen, path, dataRight)
+	go GiveYaraRule(p, fileLen, content, dataRight)
 	return task.SUCCESS, nil
 }
 
-func GiveYaraRule(p packet.Packet, fileLen int, path string, dataRight chan net.Conn) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		logger.Error("Read file error: " + err.Error())
-		query.Failed_task(p.GetRkey(), "StartYaraRule", 6)
-		return
-	}
+func GiveYaraRule(p packet.Packet, fileLen int, content []byte, dataRight chan net.Conn) {
 	start := 0
 	for {
 		conn := <-dataRight
 		if start >= fileLen {
 			logger.Info("ServerSend GiveYaraRuleEnd: " + p.GetRkey())
-			err = clientsearchsend.SendDataTCPtoClient(p, task.GIVE_YARA_RULE_END, []byte{}, conn)
+			err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_YARA_RULE_END, []byte{}, conn)
 			if err != nil {
 				logger.Error("Send GiveYaraRuleEnd error: " + err.Error())
 				query.Failed_task(p.GetRkey(), "StartYaraRule", 6)

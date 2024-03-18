@@ -199,13 +199,17 @@ func DecompressionFile(srcPath string, dstPath string, size int) error {
 	if err != nil {
 		return err
 	}
+	err = TruncateFile(srcPath, size)
+	if err != nil {
+		return err
+	}
 	if firstByte[0] == 'P' {
-		err = UnzipFile(srcPath, dstPath, size)
+		err = UnzipFile(srcPath, dstPath, false)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = UnzipTarFile(srcPath, dstPath, size)
+		err = UnzipTarFile(srcPath, dstPath, false)
 		if err != nil {
 			return err
 		}
@@ -213,12 +217,7 @@ func DecompressionFile(srcPath string, dstPath string, size int) error {
 	return nil
 }
 
-func UnzipFile(zipPath string, dstPath string, size int) error {
-	// truncate data
-	err := TruncateFile(zipPath, size)
-	if err != nil {
-		return err
-	}
+func UnzipFile(zipPath string, dstPath string, useOriginalName bool) error {
 	// open the zip file for reading
 	reader, err := zip.OpenReader(zipPath)
 	if err != nil {
@@ -227,7 +226,12 @@ func UnzipFile(zipPath string, dstPath string, size int) error {
 	// extract the files from the zip archive
 	for _, file := range reader.File {
 		if !file.FileInfo().IsDir() {
-			destFile, err := os.Create(dstPath)
+			var destFile *os.File
+			if useOriginalName {
+				destFile, err = os.Create(filepath.Join(dstPath, filepath.Base(file.Name)))
+			} else {
+				destFile, err = os.Create(dstPath)
+			}
 			if err != nil {
 				return err
 			}
@@ -254,12 +258,7 @@ func UnzipFile(zipPath string, dstPath string, size int) error {
 	return nil
 }
 
-func UnzipTarFile(tarPath string, dstPath string, size int) error {
-	// truncate data
-	err := TruncateFile(tarPath, size)
-	if err != nil {
-		return err
-	}
+func UnzipTarFile(tarPath string, dstPath string, useOriginalName bool) error {
 	// open the tar.gz file for reading
 	file, err := os.Open(tarPath)
 	if err != nil {
@@ -287,7 +286,12 @@ outerloop:
 			continue // Skip if the header is nil
 		}
 		// Extract the file
-		destFile, err := os.Create(dstPath)
+		var destFile *os.File
+		if useOriginalName {
+			destFile, err = os.Create(filepath.Join(dstPath, filepath.Base(file.Name())))
+		} else {
+			destFile, err = os.Create(dstPath)
+		}
 		if err != nil {
 			return err
 		}
