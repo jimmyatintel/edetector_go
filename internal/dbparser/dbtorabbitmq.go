@@ -193,7 +193,7 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 		item = "Collecting Table Failed"
 		date = fmt.Sprint(time.Now().Unix())
 	}
-	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low", "StartCollect", taskID)
+	err = rabbitmq.ToRabbitMQ_Details(index, st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low_db", "StartCollect", taskID)
 	if err != nil {
 		return err
 	}

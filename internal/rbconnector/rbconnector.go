@@ -70,10 +70,12 @@ func Start(version string) {
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
 	rabbitmq.Rabbit_init()
-	rabbitmq.Declare("ed_low")
+	rabbitmq.Declare("ed_low_db")
+	rabbitmq.Declare("ed_low_file")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
-	go low_speed()
+	go low_speed("ed_low_db")
+	go low_speed("ed_low_file")
 	go mid_speed()
 	go high_speed()
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
@@ -131,8 +133,8 @@ func mid_speed() {
 	}
 }
 
-func low_speed() {
-	msgs, err := rabbitmq.Consume("ed_low", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
+func low_speed(name string) {
+	msgs, err := rabbitmq.Consume(name, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
 		logger.Error("Low speed consumer error: " + err.Error())
 		return

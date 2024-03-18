@@ -221,7 +221,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				values[6] = "0"
 			}
 			values = append(values, "0", "")
-			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low", "StartGetDrive", taskID)
+			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low_file", "StartGetDrive", taskID)
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -234,7 +234,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
 	logger.Info("Send ExplorerTreeHead to elastic (" + agent + "-" + diskInfo + "): " + headData.Parent)
-	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_low_file")
 	if err != nil {
 		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -244,7 +244,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	clearBuilder(agent, diskInfo, explorerFile)
 	redis.RedisSet_AddInteger(agent+"-DriveUnfinished", -1)
 	if redis.RedisGetInt(agent+"-DriveUnfinished") == 0 { // last drive -> send finish signal
-		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low")
+		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low_file")
 		if err != nil {
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
 			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -312,7 +312,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 	if isRoot { // send later
 		*headData = data
 	} else {
-		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
+		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low_file")
 		if err != nil {
 			logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 			mariadbquery.Failed_task(agent, "StartGetDrive", 6)

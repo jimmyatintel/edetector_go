@@ -134,7 +134,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		}
 	}
 	clearParser(db, dbFile, agent)
-	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low")
+	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low_db")
 	if err != nil {
 		logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartCollect", 6)
