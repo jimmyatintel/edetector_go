@@ -15,7 +15,6 @@ import (
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 
@@ -161,7 +160,6 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 
 func DeleteAgentData(key string) {
 	query.DeleteAgent(key)
-	mq.DeleteAgent(key)
 	redisData := redis.GetKeysMatchingPattern(key + "*")
 	for _, r := range redisData {
 		err := redis.RedisDelete(r)
