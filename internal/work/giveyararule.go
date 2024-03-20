@@ -22,16 +22,18 @@ import (
 var ruleMatchWorkingPath = "ruleMatchWorking"
 var ruleMatchUnstage = "ruleMatchUnstage"
 var pathWorkingPath = "pathWorking"
+var yaraRulePath = filepath.Join("static", "yaraRule")
 
 func init() {
 	file.ClearDirContent(ruleMatchWorkingPath)
 	file.CheckDir(ruleMatchUnstage)
+	file.CheckDir(yaraRulePath)
 	file.ClearDirContent(pathWorkingPath)
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
-	path := filepath.Join("static", "yaraRule.zip")
+	path := filepath.Join(yaraRulePath, "yara.zip")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
