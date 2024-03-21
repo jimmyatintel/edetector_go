@@ -31,3 +31,4 @@ heap*
 *.pdf
 oldfile
 cmd/test.go
+static/yaraRule
