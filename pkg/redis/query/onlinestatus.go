@@ -4,7 +4,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
-	"edetector_go/pkg/request"
 	"encoding/json"
 	"time"
 )
@@ -66,7 +65,7 @@ func Offline(KeyNum string) {
 	for _, t := range handlingTasks2 {
 		query.Failed_task(KeyNum, t[3], 7)
 	}
-	request.RequestToUser(KeyNum)
+	// request.RequestToUser(KeyNum)
 }
 
 func GetStatus(KeyNum string) int {
