@@ -25,6 +25,28 @@ func init() {
 	}
 }
 
+func TestCheckVersion(t *testing.T) {
+	test := []struct {
+		version    string
+		minVersion string
+		want       bool
+	}{
+		{"1.0.3", "1.0.7", true},
+		{"1.0", "1.0.7", true},
+		{"1.0.7", "1.0.7", false},
+		{"1.2.3", "1.0.7", false},
+		{"1.0.12", "1.0.7", false},
+	}
+	
+	for _, tt := range test {
+		data := checkInvalidVersion(tt.version, tt.minVersion)
+		if data != tt.want {
+			t.Errorf("Failed: checkVersion(%v, %v) = %v want %v", tt.version, tt.minVersion, data, tt.want)
+		}
+	}
+
+}
+
 func TestParseNetowrk(t *testing.T) {
 	// networkSet := make(map[string]struct{})
 	// ip := "0.0.0.0"
