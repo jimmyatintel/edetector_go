@@ -23,6 +23,7 @@ dumpDllWorking
 dumpDllUnstage
 dumpProcessWorking
 dumpProcessUnstage
+pathStaged
 pathWorking
 agentFile
 dbRawData

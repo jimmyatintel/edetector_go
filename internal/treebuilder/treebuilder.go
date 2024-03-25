@@ -22,6 +22,8 @@ import (
 
 var fileUnstagePath = "fileUnstage"
 var fileStagedPath = "fileStaged"
+var pathStagedPath = "pathStaged"
+var pathWorkingPath = "pathWorking"
 var limit int
 var count int
 var cancelMap = map[string][]context.CancelFunc{}
@@ -36,6 +38,8 @@ type Relation struct {
 func builder_init() {
 	file.CheckDir(fileUnstagePath)
 	file.CheckDir(fileStagedPath)
+	file.CheckDir(pathStagedPath)
+	file.ClearDirContent(pathWorkingPath)
 	// fflag.Get_fflag()
 	// if fflag.FFLAG == nil {
 	// 	logger.Panic("Error loading feature flag")
@@ -184,6 +188,15 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
 	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, &headData, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
+	// record paths
+	agentPathWorking := filepath.Join(pathWorkingPath, agent)
+	err = file.CreateFile(agentPathWorking)
+	if err != nil {
+		logger.Error("Error creating path file (" + agent + "-" + diskInfo + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		clearBuilder(agent, diskInfo, explorerFile)
+		return
+	}
 	// send to elastic (main & details)
 	for _, line := range lines {
 		select {
@@ -221,6 +234,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				values[6] = "0"
 			}
 			values = append(values, "0", "")
+			// record paths
+			err = file.WriteFile(agentPathWorking, []byte(RelationMap[child].Path+"\n"))
+			if err != nil {
+				logger.Error("Error writing path file (" + agent + "-" + diskInfo + "): " + err.Error())
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+				clearBuilder(agent, diskInfo, explorerFile)
+				return
+			}
 			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low", "StartGetDrive", taskID)
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
@@ -231,6 +252,8 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			time.Sleep(1 * time.Microsecond)
 		}
 	}
+	// record paths
+	err = file.ZipFile(agentPathWorking, filepath.Join(pathStagedPath, agent+".zip"))
 	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
 	logger.Info("Send ExplorerTreeHead to elastic (" + agent + "-" + diskInfo + "): " + headData.Parent)
