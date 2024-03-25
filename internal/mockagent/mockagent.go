@@ -87,7 +87,7 @@ func createAgent() {
 		logger.Info(key + ":: Connected to the server at " + serverAddr)
 		// handshake
 		timestamp := time.Now().Format("20060102150405")
-		agentInfo := "x64|Windows 10 (VM)|DESKTOP|SYSTEM|1.0.0|" + timestamp + "|" + key
+		agentInfo := "x64|@|Windows 10 (VM)|@|DESKTOP|@|SYSTEM|@|1.0.6,1988,1989|@|" + timestamp + "|@|" + key
 		SendTCPtoServer(task.GIVE_INFO, agentInfo, conn, info)
 		err = handleMainConn(conn, &detectStatus, info)
 		if err != nil {
