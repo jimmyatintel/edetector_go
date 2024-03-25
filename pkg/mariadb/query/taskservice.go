@@ -5,7 +5,6 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/redis"
-	"edetector_go/pkg/request"
 	"strconv"
 )
 
@@ -88,7 +87,7 @@ func Update_task_status_by_taskid(taskid string, new_status int) {
 				return
 			}
 		}
-		request.RequestToUser(clientid)
+		// request.RequestToUser(clientid)
 	}
 }
 
@@ -123,7 +122,7 @@ func Finish_task(clientid string, tasktype string) {
 	}
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
-		request.RequestToUser(clientid)
+		// request.RequestToUser(clientid)
 	}
 
 }
@@ -135,7 +134,7 @@ func Terminated_task(clientid string, tasktype string, status int) {
 	rowsAffected := Update_task_status(clientid, tasktype, status, 4)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
-		request.RequestToUser(clientid)
+		// request.RequestToUser(clientid)
 	}
 }
 
@@ -143,7 +142,7 @@ func Terminate_handling_task(clientid string, tasktype string) {
 	rowsAffected := Update_task_status(clientid, tasktype, 2, 5)
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
-		request.RequestToUser(clientid)
+		// request.RequestToUser(clientid)
 	}
 }
 
@@ -157,7 +156,7 @@ func Failed_task(clientid string, tasktype string, status int) {
 	}
 	if rowsAffected > 0 {
 		Update_task_timestamp(clientid, tasktype)
-		request.RequestToUser(clientid)
+		// request.RequestToUser(clientid)
 	}
 }
 
