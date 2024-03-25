@@ -18,7 +18,7 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 	key := p.GetRkey()
 	logger.Info("ReadyUpdateAgent: " + key)
 	version := getTaskMsg(key, "StartUpdate")
-	path := filepath.Join("agentFile", "Agent_"+version+".exe")
+	path := filepath.Join("static", "agent", "Agent_"+version+".exe")
 	logger.Info("Update agent using: " + path)
 	fileInfo, err := os.Stat(path)
 	if err != nil {
