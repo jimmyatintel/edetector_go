@@ -13,22 +13,43 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
 var imageWorkingPath = "imageWorking"
 var imageFilePath = "ImageFile"
+var imageFirstPart float64
 
 func init() {
 	file.ClearDirContent(imageWorkingPath)
 	file.CheckDir(imageFilePath)
 }
 
+func GiveImageProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("GiveImageProgress: " + key + "::" + p.GetMessage())
+	// update progress
+	if strings.Split(p.GetMessage(), "/")[0] == "1" {
+		imageFirstPart = float64(config.Viper.GetInt("IMAGE_FIRST_PART"))
+		redis.RedisSet(key+"-ImageProgress", 0)
+		go updateImageProgress(key)
+	}
+	progress, err := getProgressByMsg(p.GetMessage(), imageFirstPart)
+	if err != nil {
+		return task.FAIL, err
+	}
+	redis.RedisSet(key+"-ImageProgress", progress)
+	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}
+
 func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageInfo: " + key + "::" + p.GetMessage())
-	redis.RedisSet(key+"-ImageProgress", 0)
-	go updateImageProgress(key)
 	// init image info
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -61,7 +82,7 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
-	progress := getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, 100)
+	progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, 100)
 	redis.RedisSet(key+"-ImageProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {

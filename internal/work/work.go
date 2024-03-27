@@ -54,9 +54,10 @@ func init() {
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
 
 		// image
-		task.GIVE_IMAGE_INFO: GiveImageInfo,
-		task.GIVE_IMAGE:      GiveImage,
-		task.GIVE_IMAGE_END:  GiveImageEnd,
+		task.GIVE_IMAGE_PROGRESS: GiveImageProgress,
+		task.GIVE_IMAGE_INFO:     GiveImageInfo,
+		task.GIVE_IMAGE:          GiveImage,
+		task.GIVE_IMAGE_END:      GiveImageEnd,
 
 		// rule match
 		task.GIVE_RULE_MATCH_INFO: GiveRuleMatchInfo,

@@ -57,6 +57,7 @@ const (
 	GIVE_IMAGE_PATH_INFO TaskType = "GiveImagePathInfo"
 	GIVE_IMAGE_PATH      TaskType = "GiveImagePath"
 	GIVE_IMAGE_PATH_END  TaskType = "GiveImagePathEnd"
+	GIVE_IMAGE_PROGRESS  TaskType = "GiveImageProgress"
 	GIVE_IMAGE_INFO      TaskType = "GiveImageInfo"
 	GIVE_IMAGE           TaskType = "GiveImage"
 	GIVE_IMAGE_END       TaskType = "GiveImageEnd"
@@ -169,6 +170,7 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA_ERROR,
 	GET_IMAGE,
 	READY_IMAGE,
+	GIVE_IMAGE_PROGRESS,
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,

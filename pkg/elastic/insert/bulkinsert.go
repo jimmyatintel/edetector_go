@@ -25,31 +25,10 @@ func (s *FinishSignal) Elastical() ([]byte, error) {
 
 func BulkInsert(action []string, work []string) error {
 	var buf strings.Builder
+	var finishSignals []string
 	for i, doc := range action {
 		if IsFinish(doc) {
-			var data FinishSignal
-			err := json.Unmarshal([]byte(work[i]), &data)
-			if err != nil {
-				logger.Error("Error unmarshaling finish signal: " + err.Error())
-				continue
-			}
-			logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
-			task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
-			if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" { // delete head first
-				logger.Debug("Delete old TreeHead " + data.TaskType + ": " + data.Agent)
-				err = elaDelete.DeleteOldData(data.Agent, (data.TaskType + "Head"), task_id)
-				if err != nil {
-					logger.Error("Error deleting TreeHead " + data.TaskType + ": " + err.Error())
-				}
-			}
-			if data.TaskType != "StartScan" {
-				logger.Debug("Delete old repeated data: " + data.Agent + " " + data.TaskType)
-				err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id)
-				if err != nil {
-					logger.Error("Error deleting old repeated data: " + err.Error())
-				}
-			}
-			mariadbquery.Finish_task(data.Agent, data.TaskType)
+			finishSignals = append(finishSignals, work[i])
 			continue
 		}
 		buf.WriteString(doc)
@@ -63,6 +42,31 @@ func BulkInsert(action []string, work []string) error {
 	err := elastic.BulkIndexRequest(buf)
 	if err != nil {
 		return err
+	}
+	for _, signal := range finishSignals {
+		var data FinishSignal
+		err := json.Unmarshal([]byte(signal), &data)
+		if err != nil {
+			logger.Error("Error unmarshaling finish signal: " + err.Error())
+			continue
+		}
+		logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
+		task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
+		if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" { // delete head first
+			logger.Debug("Delete old TreeHead " + data.TaskType + ": " + data.Agent)
+			err = elaDelete.DeleteOldData(data.Agent, (data.TaskType + "Head"), task_id)
+			if err != nil {
+				logger.Error("Error deleting TreeHead " + data.TaskType + ": " + err.Error())
+			}
+		}
+		if data.TaskType != "StartScan" {
+			logger.Debug("Delete old repeated data: " + data.Agent + " " + data.TaskType)
+			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id)
+			if err != nil {
+				logger.Error("Error deleting old repeated data: " + err.Error())
+			}
+		}
+		mariadbquery.Finish_task(data.Agent, data.TaskType)
 	}
 	return nil
 }
