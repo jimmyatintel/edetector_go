@@ -20,6 +20,7 @@ import (
 var imageWorkingPath = "imageWorking"
 var imageFilePath = "ImageFile"
 var imageFirstPart float64
+var imageSecondPart float64
 
 func init() {
 	file.ClearDirContent(imageWorkingPath)
@@ -32,6 +33,7 @@ func GiveImageProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		imageFirstPart = float64(config.Viper.GetInt("IMAGE_FIRST_PART"))
+		imageSecondPart = 100 - imageFirstPart
 		redis.RedisSet(key+"-ImageProgress", 0)
 		go updateImageProgress(key)
 	}
@@ -82,7 +84,7 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
-	progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, 100)
+	progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, imageSecondPart)
 	redis.RedisSet(key+"-ImageProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
