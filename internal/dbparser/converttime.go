@@ -17,6 +17,7 @@ func RFCToTimestamp(original string) string {
 		"Mon, _2 Jan 2006 15:04:05 MST",
 		"Mon, _2 Jan 2006 15:04:05 UTC",
 		"Mon Jan _2 15:04:05 2006",
+		"Jan _2, 2006 15:04:05.000000000 UTC",
 		}
 	for _, layout := range layouts {
 		t, err = time.Parse(layout, original)

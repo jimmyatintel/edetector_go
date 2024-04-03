@@ -150,6 +150,8 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "Wireless":
 			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Wireless{}, taskID)
 		case "Email":
+			values[5] = RFCToTimestamp(values[5])
+			values[6] = RFCToTimestamp(values[6])
 			err = toRabbitMQ(index, agent, values, values[9], values[5], "emails", values[3], &Email{}, taskID)
 		case "EmailPath":
 			err = toRabbitMQ(index, agent, values, values[1], "0", "emails", "0", &EmailPath{}, taskID)
