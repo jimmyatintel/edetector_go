@@ -72,7 +72,7 @@ func handleRelation(data []byte, agent string) error {
 			return err
 		}
 		// send details
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", &MemoryTree{}, values, RelationMap[child].UUID, agent, ip, name, values[2], values[3], "memory", "", "ed_mid", "StartMemoryTree", taskID)
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", &MemoryTree{}, nil, values, RelationMap[child].UUID, agent, ip, name, values[2], values[3], "memory", "", "ed_mid", "StartMemoryTree", taskID)
 		if err != nil {
 			return err
 		}

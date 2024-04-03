@@ -18,8 +18,9 @@ type Message struct {
 	Data  string `json:"data"`
 }
 
-func ToRabbitMQ_Details(index string, st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string, taskID string) error {
-	template, err := StringToStruct(st, values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
+func ToRabbitMQ_Details(index string, st elastic.Request_data, sub_st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string, taskID string) error {
+	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
+	template, err := StringToStruct(st, sub_st, values)
 	if err != nil {
 		return err
 	}
@@ -105,35 +106,49 @@ func ToRabbitMQ_FinishSignal(agent string, taskType string, priority string) err
 	return nil
 }
 
-func StringToStruct(st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, taskID string) (elastic.Request_data, error) {
+func StringToStruct(st elastic.Request_data, sub_st elastic.Request_data, values []string) (elastic.Request_data, error) {
 	v := reflect.Indirect(reflect.ValueOf(st))
-	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
+	j := 0
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		switch field.Kind() {
-		case reflect.Int:
-			values[i] = strings.TrimSpace(values[i])
-			value, err := strconv.Atoi(values[i])
+		case reflect.Struct:
+			nestedValues := make([]string, 0)
+			nestedV := reflect.Indirect(reflect.ValueOf(sub_st))
+			for j = i; j < nestedV.NumField()+i; j++ {
+				nestedValues = append(nestedValues, values[j])
+			}
+			j--
+			// Create new instance of nested struct
+			nestedSt, err := StringToStruct(sub_st, nil, nestedValues)
 			if err != nil {
-				logger.Error("Error converting to int: " + err.Error())
+				return nil, err
+			}
+			field.Set(reflect.ValueOf(nestedSt).Elem())
+		case reflect.Int:
+			values[j] = strings.TrimSpace(values[j])
+			value, err := strconv.Atoi(values[j])
+			if err != nil {
+				logger.Error("Error converting to int [" + strconv.Itoa(j) + "]: " + err.Error())
 			}
 			field.Set(reflect.ValueOf(value))
 		case reflect.Int64:
-			values[i] = strings.TrimSpace(values[i])
-			value, err := strconv.ParseInt(values[i], 10, 64)
+			values[j] = strings.TrimSpace(values[j])
+			value, err := strconv.ParseInt(values[j], 10, 64)
 			if err != nil {
-				logger.Error("Error converting to int64: " + err.Error())
+				logger.Error("Error converting to int64 [" + strconv.Itoa(j) + "]: " + err.Error())
 			}
 			field.Set(reflect.ValueOf(value))
 		case reflect.String:
-			field.Set(reflect.ValueOf(values[i]))
+			field.Set(reflect.ValueOf(values[j]))
 		case reflect.Bool:
-			value, err := strconv.ParseBool(values[i])
+			value, err := strconv.ParseBool(values[j])
 			if err != nil {
-				logger.Error("Error converting to bool: " + err.Error())
+				logger.Error("Error converting to bool [" + strconv.Itoa(j) + "]: " + err.Error())
 			}
 			field.Set(reflect.ValueOf(value))
 		}
+		j++
 	}
 	return st, nil
 }

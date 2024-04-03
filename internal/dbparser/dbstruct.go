@@ -13,28 +13,36 @@ type AppResourceUsageMonitor struct {
 	Facetime                     int64  `json:"facetime"`
 	Foregroundbytesread          int64  `json:"foregroundbytesread"`
 	Foregroundbyteswritten       int64  `json:"foregroundbyteswritten"`
-	Foregroundnumreadoperations  int    `json:"foregroundnumreadoperations"`
-	Foregroundnumwriteoperations int    `json:"foregroundnumwriteoperations"`
-	Foregroundnumberofflushes    int    `json:"foregroundnumberofflushes"`
-	Backgroundbytesread          int    `json:"backgroundbytesread"`
-	Backgroundbyteswritten       int    `json:"backgroundbyteswritten"`
-	Backgroundnumreadoperations  int    `json:"backgroundnumreadoperations"`
-	Backgroundnumwriteoperations int    `json:"backgroundnumwriteoperations"`
-	Backgroundnumberofflushes    int    `json:"backgroundnumberofflushes"`
+	Foregroundnumreadoperations  int64  `json:"foregroundnumreadoperations"`
+	Foregroundnumwriteoperations int64  `json:"foregroundnumwriteoperations"`
+	Foregroundnumberofflushes    int64  `json:"foregroundnumberofflushes"`
+	Backgroundbytesread          int64  `json:"backgroundbytesread"`
+	Backgroundbyteswritten       int64  `json:"backgroundbyteswritten"`
+	Backgroundnumreadoperations  int64  `json:"backgroundnumreadoperations"`
+	Backgroundnumwriteoperations int64  `json:"backgroundnumwriteoperations"`
+	Backgroundnumberofflushes    int64  `json:"backgroundnumberofflushes"`
 	Interfaceluid                string `json:"interfaceluid"`
 	Timestamp                    int    `json:"timestamp"`
-	UUID                         string `json:"uuid"`
-	Agent                        string `json:"agent"`
-	AgentIP                      string `json:"agentIP"`
-	AgentName                    string `json:"agentName"`
-	ItemMain                     string `json:"item_main"`
-	DateMain                     int    `json:"date_main"`
-	TypeMain                     string `json:"type_main"`
-	EtcMain                      string `json:"etc_main"`
-	Task_id                      string `json:"task_id"`
+}
+
+type Collect_AppResourceUsageMonitor struct {
+	AppResourceUsageMonitor AppResourceUsageMonitor `json:"appresourceusagemonitor"`
+	UUID                    string                  `json:"uuid"`
+	Agent                   string                  `json:"agent"`
+	AgentIP                 string                  `json:"agentIP"`
+	AgentName               string                  `json:"agentName"`
+	ItemMain                string                  `json:"item_main"`
+	DateMain                int                     `json:"date_main"`
+	TypeMain                string                  `json:"type_main"`
+	EtcMain                 string                  `json:"etc_main"`
+	Task_id                 string                  `json:"task_id"`
 }
 
 func (n AppResourceUsageMonitor) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_AppResourceUsageMonitor) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -43,18 +51,26 @@ type ARPCache struct {
 	Internetaddress string `json:"internetaddress"`
 	Physicaladdress string `json:"physicaladdress"`
 	Type            string `json:"type"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_ARPCache struct {
+	ARPCache  ARPCache `json:"arp_cache"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n ARPCache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ARPCache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -75,18 +91,26 @@ type BaseService struct {
 	Systemname        string `json:"systemname"`
 	Acceptpause       bool   `json:"acceptpause"`
 	Acceptstop        bool   `json:"acceptstop"`
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
-	ItemMain          string `json:"item_main"`
-	DateMain          int    `json:"date_main"`
-	TypeMain          string `json:"type_main"`
-	EtcMain           string `json:"etc_main"`
-	Task_id           string `json:"task_id"`
+}
+
+type Collect_BaseService struct {
+	BaseService BaseService `json:"base_service"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n BaseService) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_BaseService) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -121,14 +145,14 @@ type ChromeCache struct {
 	Frame            string `json:"frame"`
 	Cache_control    string `json:"cache_control"`
 	Content_encoding string `json:"content_encoding"`
-	Content_length   int    `json:"content_length"`
+	Content_length   int64  `json:"content_length"`
 	Conent_type      string `json:"content_type"`
 	Date             int    `json:"date"`
 	Expires          int    `json:"expires"`
 	Last_modified    int    `json:"last_modified"`
 	Server           string `json:"server"`
-	Usage_counter    int    `json:"usage_counter"`
-	Reuse_counter    int    `json:"reuse_counter"`
+	Usage_counter    int64  `json:"usage_counter"`
+	Reuse_counter    int64  `json:"reuse_counter"`
 	UUID             string `json:"uuid"`
 	Agent            string `json:"agent"`
 	AgentIP          string `json:"agentIP"`
@@ -184,7 +208,7 @@ type ChromeHistory struct {
 	URL           string `json:"url"`
 	Title         string `json:"title"`
 	VisitTime     int    `json:"visit_time"`
-	VisitCount    int    `json:"visit_count"`
+	VisitCount    int64  `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
 	UUID          string `json:"uuid"`
 	Agent         string `json:"agent"`
@@ -225,8 +249,6 @@ type ChromeLogin struct {
 	ActionURL       string `json:"action_url"`
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
-	PasswordElement string `json:"password_element"`
-	PasswordValue   string `json:"password_value"`
 	DateCreated     string `json:"date_created"`
 	UUID            string `json:"uuid"`
 	Agent           string `json:"agent"`
@@ -244,14 +266,14 @@ func (n ChromeLogin) Elastical() ([]byte, error) {
 }
 
 type DNSInfo struct {
-	TimeToLive     int    `json:"timetolive"`
+	TimeToLive     int64  `json:"timetolive"`
 	PsComputerName string `json:"pscomputername"`
 	Caption        string `json:"caption"`
 	Description    string `json:"description"`
 	ElementName    string `json:"elementname"`
 	InstanceID     int    `json:"instanceid"`
 	Data           string `json:"data"`
-	DataLength     int    `json:"datalength"`
+	DataLength     int64  `json:"datalength"`
 	Entry          string `json:"entry"`
 	Name           string `json:"name"`
 	Section        int    `json:"section"`
@@ -304,14 +326,14 @@ type EdgeCache struct {
 	Frame           string `json:"frame"`
 	CacheControl    string `json:"cache_control"`
 	ContentEncoding string `json:"content_encoding"`
-	ContentLength   int    `json:"content_length"`
+	ContentLength   int64  `json:"content_length"`
 	ContentType     string `json:"content_type"`
 	Date            int    `json:"date"`
 	Expires         int    `json:"expires"`
 	LastModified    int    `json:"last_modified"`
 	Server          string `json:"server"`
-	UsageCounter    int    `json:"usage_counter"`
-	ReuseCounter    int    `json:"reuse_counter"`
+	UsageCounter    int64  `json:"usage_counter"`
+	ReuseCounter    int64  `json:"reuse_counter"`
 	UUID            string `json:"uuid"`
 	Agent           string `json:"agent"`
 	AgentIP         string `json:"agentIP"`
@@ -357,7 +379,7 @@ type EdgeHistory struct {
 	URL           string `json:"url"`
 	Title         string `json:"title"`
 	VisitTime     int    `json:"visit_time"`
-	VisitCount    int    `json:"visit_count"`
+	VisitCount    int64  `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
 	UUID          string `json:"uuid"`
 	Agent         string `json:"agent"`
@@ -380,8 +402,6 @@ type EdgeLogin struct {
 	ActionURL       string `json:"action_url"`
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
-	PasswordElement string `json:"password_element"`
-	PasswordValue   string `json:"password_value"`
 	DateCreated     int    `json:"date_created"`
 	UUID            string `json:"uuid"`
 	Agent           string `json:"agent"`
@@ -512,7 +532,7 @@ type FirefoxBookmarks struct {
 	URL              string `json:"url"`
 	URLTitle         string `json:"url_title"`
 	RevHost          string `json:"rev_host"`
-	URLVisitCount    int    `json:"url_visit_count"`
+	URLVisitCount    int64  `json:"url_visit_count"`
 	URLLastVisitDate int    `json:"url_last_visit_date"`
 	URLGUID          string `json:"url_guid"`
 	URLDescription   string `json:"url_description"`
@@ -539,9 +559,9 @@ type FirefoxCache struct {
 	ServerName      string `json:"server_name"`
 	CacheControl    string `json:"cache_control"`
 	ContentEncoding string `json:"content_encoding"`
-	ContentLength   int    `json:"content_length"`
+	ContentLength   int64  `json:"content_length"`
 	ContentType     string `json:"content_type"`
-	FetchCount      int    `json:"fetch_count"`
+	FetchCount      int64  `json:"fetch_count"`
 	LastFetched     int    `json:"last_fetched"`
 	LastModified    int    `json:"last_modified"`
 	Frequency       int    `json:"frequency"`
@@ -592,7 +612,7 @@ type FirefoxHistory struct {
 	GUID          string `json:"guid"`
 	Description   string `json:"description"`
 	PreviewImgURL string `json:"preview_image_url"`
-	VisitCount    int    `json:"visit_count"`
+	VisitCount    int64  `json:"visit_count"`
 	VisitDate     int    `json:"visit_date"`
 	LastVisitDate int    `json:"last_visit_date"`
 	UUID          string `json:"uuid"`
@@ -616,18 +636,26 @@ type IEHistory struct {
 	ExpiresTime     int    `json:"expirestime"`
 	LastUpdatedTime int    `json:"lastupdatedtime"`
 	VisitedTime     int    `json:"visitedtime"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_IEHistory struct {
+	IEHistory IEHistory `json:"iehistory"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	TaskID    string    `json:"task_id"`
 }
 
 func (n IEHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_IEHistory) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -648,7 +676,7 @@ type InstalledSoftware struct {
 	InstallSource             string `json:"installsource"`
 	ReleaseType               string `json:"releasetype"`
 	DisplayIcon               string `json:"displayicon"`
-	EstimatedSize             int    `json:"estimatedsize"`
+	EstimatedSize             int64  `json:"estimatedsize"`
 	RegistryTime              int    `json:"registrytime"`
 	InstallFolderCreatedTime  int    `json:"installfoldercreatedtime"`
 	InstallFolderModifiedTime int    `json:"installfoldermodifiedtime"`
@@ -741,7 +769,7 @@ type NetworkDataUsageMonitor struct {
 	AppID              int    `json:"app_id"`
 	UserName           string `json:"user_name"`
 	UserSID            string `json:"user_sid"`
-	BytesSent          int    `json:"bytes_sent"`
+	BytesSent          int64  `json:"bytes_sent"`
 	BytesReceived      int64  `json:"bytes_recvd"`
 	NetworkAdapter     string `json:"network_adapter"`
 	NetworkAdapterGUID string `json:"network_adapter_guid"`
@@ -812,7 +840,7 @@ type Prefetch struct {
 	ProcessName        string `json:"processname"`
 	LastRunTime        int    `json:"lastruntime"`
 	ProcessPath        string `json:"processpath"`
-	RunCount           int    `json:"runcount"`
+	RunCount           int64  `json:"runcount"`
 	FileSize           int64  `json:"filesize"`
 	FolderCreatedTime  int    `json:"foldercreatedtime"`
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
@@ -957,7 +985,7 @@ type TaskSchedule struct {
 	LastRunTime   int    `json:"lastruntime"`
 	NextRunTime   int    `json:"nextruntime"`
 	StartBoundary int64  `json:"startboundary"`
-	EndBoundary   int    `json:"endboundary"`
+	EndBoundary   int64  `json:"endboundary"`
 	UUID          string `json:"uuid"`
 	Agent         string `json:"agent"`
 	AgentIP       string `json:"agentIP"`
@@ -1008,9 +1036,9 @@ func (n USBdevices) Elastical() ([]byte, error) {
 type UserAssist struct {
 	Name             string `json:"name"`
 	ClassID          string `json:"classid"`
-	OfTimesExecuted  int    `json:"of_times_executed"`
-	FocusCount       int    `json:"focus_count"`
-	FocusTimeSeconds int    `json:"focus_time(s)"`
+	OfTimesExecuted  int64  `json:"of_times_executed"`
+	FocusCount       int64  `json:"focus_count"`
+	FocusTimeSeconds int64  `json:"focus_time(s)"`
 	ModifiedTime     int    `json:"modifiedtime"`
 	UUID             string `json:"uuid"`
 	Agent            string `json:"agent"`
@@ -1275,7 +1303,7 @@ func (n RecentFile) Elastical() ([]byte, error) {
 type Shellbags struct {
 	Path             string `json:"path"`
 	Slotpath         string `json:"slotpath"`
-	Slotnum          int    `json:"slotnum"`
+	Slotnum          int64  `json:"slotnum"`
 	Lastmodifiedtime int    `json:"lastmodifiedtime"`
 	Slotmodifiedtime int    `json:"slotmodifiedtime"`
 	Createtime       int    `json:"createtime"`

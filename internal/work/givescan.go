@@ -202,7 +202,8 @@ func parseScan(path string, key string) error {
 		values = append(values, "0", "0", "scan", processKey, "0", "0")
 		uuid := uuid.NewString()
 		m_tmp := Memory{}
-		_, err := rabbitmq.StringToStruct(&m_tmp, values, uuid, key, "ip", "name", "item", "0", "ttype", "etc", "nil")
+		tmpValues := append(values, uuid, key, "ip", "name", "item", "0", "ttype", "etc", "nil")
+		_, err := rabbitmq.StringToStruct(&m_tmp, nil, tmpValues)
 		if err != nil {
 			return err
 		}
@@ -210,7 +211,7 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan", taskID)
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, nil, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan", taskID)
 		if err != nil {
 			return err
 		}
@@ -302,7 +303,7 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			continue
 		}
 		uuid := uuid.NewString()
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID)
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", &MemoryNetwork{}, nil, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}
