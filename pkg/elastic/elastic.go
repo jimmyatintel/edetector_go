@@ -302,10 +302,16 @@ func DeleteByQueryRequest(indexes []string, query string) error {
 		conflictCount := responseJSON["version_conflicts"].(float64)
 		if conflictCount != 0 {
 			logger.Error("Version conflict: ", zap.Any("message", conflictCount))
+			// // retry
+			// time.Sleep(1 * time.Second)
+			// DeleteByQueryRequest(indexes, query)
 		}
 		failures := responseJSON["failures"].([]interface{})
 		if len(failures) != 0 {
 			logger.Error("Failures: ", zap.Any("message", failures))
+			// // retry
+			// time.Sleep(1 * time.Second)
+			// DeleteByQueryRequest(indexes, query)
 		}
 	}
 	return nil

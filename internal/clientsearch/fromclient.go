@@ -175,7 +175,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = taskFunc(NewPacket, conn)
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
-				if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" {
+				if agentTaskType != "unknown" {
 					mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 				}
 			}
@@ -190,16 +190,11 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 
 // To-Do (TBD)
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
+	logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		logger.Error("Scan failed: " + string(key))
 		mq.Update_task_status(key, agentTaskType, 2, 0)
-	} else if agentTaskType == "StartScan" || agentTaskType == "StartGetDrive" || agentTaskType == "StartCollect" || agentTaskType == "StartGetImage" || agentTaskType == "StartYaraRule" {
-		if !strings.Contains(lastTask, "End") {
-			logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
-			mq.Failed_task(key, agentTaskType, 7)
-		}
 	} else if agentTaskType == "Main" {
-		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
 		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
@@ -209,7 +204,10 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			taskservice.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)
 		}
-	} else {
-		logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
+	} else if agentTaskType != "unknown" {
+		if !strings.Contains(lastTask, "End") {
+			mq.Failed_task(key, agentTaskType, 7)
+		}
+
 	}
 }

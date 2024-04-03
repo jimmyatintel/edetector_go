@@ -148,6 +148,9 @@ func Terminate_handling_task(clientid string, tasktype string) {
 
 func Failed_task(clientid string, tasktype string, status int) {
 	taskID := Load_task_id(clientid, tasktype, 2)
+	if taskID == "" {
+		return
+	}
 	redis.RedisDelete(taskID)
 	deleteData(clientid, tasktype, 2)
 	rowsAffected := Update_task_status(clientid, tasktype, 2, status)
