@@ -70,7 +70,7 @@ func GiveMemoryTreeEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	if err != nil {
 		return task.FAIL, err
 	}
-	// parse memory tree - todo
+	// parse memory tree
 	content, err := os.ReadFile(unstagePath)
 	if err != nil {
 		return task.FAIL, err

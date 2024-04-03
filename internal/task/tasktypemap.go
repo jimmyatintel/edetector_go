@@ -23,6 +23,12 @@ func init() {
 		READY_UPDATE_AGENT: "StartUpdate",
 
 		READY_YARA_RULE: "StartYaraRule",
+
+		GIVE_MEMORY_TREE_INFO: "StartMemoryTree",
+
+		GIVE_DUMP_DLL_INFO:     "StartDumpDll",
+		GIVE_DUMP_PROCESS_INFO: "StartDumpProcess",
+		GIVE_LOAD_DLL_DATA:     "StartLoadDll",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{

@@ -87,7 +87,7 @@ func handleRelation(data []byte, agent string) error {
 		if child == rootInd {
 			headData = data
 		} else {
-			err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_mid")
+			err := rabbitmq.ToRabbitMQ_Relation("_memory_relation", data, "ed_mid")
 			if err != nil {
 				return err
 			}
@@ -96,7 +96,7 @@ func handleRelation(data []byte, agent string) error {
 	logger.Info("Send to elastic (details & relation): " + agent)
 	// send head relation
 	headData.IsRoot = true
-	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_mid")
+	err = rabbitmq.ToRabbitMQ_Relation("_memory_relation", headData, "ed_mid")
 	if err != nil {
 		return err
 	}
