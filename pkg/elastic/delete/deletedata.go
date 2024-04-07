@@ -6,23 +6,14 @@ import (
 	"fmt"
 )
 
-var diskIndex = []string{"explorer", "explorer_relation"}
-
 func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
 	indexes := []string{}
 	switch ttype {
-	case "StartGetDriveHead":
-		indexes = append(indexes, prefix+"_explorer_relation")
-	case "StartMemoryTreeHead":
-		indexes = append(indexes, prefix+"_memory_relation")
 	case "StartMemoryTree":
 		indexes = append(indexes, prefix+"_memory_tree")
-		indexes = append(indexes, prefix+"_memory_relation")
 	case "StartGetDrive":
-		for _, ind := range diskIndex {
-			indexes = append(indexes, prefix+"_"+ind)
-		}
+		indexes = append(indexes, prefix+"_explorer")
 	case "StartCollect":
 		indexes = append(indexes, prefix+"_collection")
 	case "Memory":
@@ -31,10 +22,10 @@ func GetIndexes(ttype string) []string {
 	return indexes
 }
 
-func DeleteOldData(key string, ttype string, taskID string) error {
+func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 	indexes := GetIndexes(ttype)
 	var query string
-	if ttype == "StartGetDriveHead" || ttype == "StartMemoryTreeHead" {
+	if head  {
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {

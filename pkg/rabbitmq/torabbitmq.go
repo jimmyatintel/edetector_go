@@ -1,7 +1,6 @@
 package rabbitmq
 
 import (
-	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	elaInsert "edetector_go/pkg/elastic/insert"
 	"edetector_go/pkg/logger"
@@ -49,13 +48,13 @@ func ToRabbitMQ_Details(index string, st elastic.Request_data, sub_st elastic.Re
 	return nil
 }
 
-func ToRabbitMQ_Relation(index string, template elastic.Request_data, priority string) error {
+func ToRabbitMQ_Tree(index string, template elastic.Request_data, priority string) error {
 	request, err := template.Elastical()
 	if err != nil {
 		return err
 	}
 	var msg = Message{
-		Index: config.Viper.GetString("ELASTIC_PREFIX") + index,
+		Index: index,
 		Data:  string(request),
 	}
 	msgBytes, err := json.Marshal(msg)
