@@ -54,7 +54,7 @@ type ARPCache struct {
 }
 
 type Collect_ARPCache struct {
-	ARPCache  ARPCache `json:"arp_cache"`
+	ARPCache  ARPCache `json:"arpcache"`
 	UUID      string   `json:"uuid"`
 	Agent     string   `json:"agent"`
 	AgentIP   string   `json:"agentIP"`
@@ -94,7 +94,7 @@ type BaseService struct {
 }
 
 type Collect_BaseService struct {
-	BaseService BaseService `json:"base_service"`
+	BaseService BaseService `json:"baseservice"`
 	UUID        string      `json:"uuid"`
 	Agent       string      `json:"agent"`
 	AgentIP     string      `json:"agentIP"`
@@ -123,18 +123,26 @@ type ChromeBookmarks struct {
 	Guid          string `json:"guid"`
 	Date_added    int    `json:"date_added"`
 	Date_modified int    `json:"date_modified"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_ChromeBookmarks struct {
+	ChromeBookmarks ChromeBookmarks `json:"chromebookmarks"`
+	UUID            string          `json:"uuid"`
+	Agent           string          `json:"agent"`
+	AgentIP         string          `json:"agentIP"`
+	AgentName       string          `json:"agentName"`
+	ItemMain        string          `json:"item_main"`
+	DateMain        int             `json:"date_main"`
+	TypeMain        string          `json:"type_main"`
+	EtcMain         string          `json:"etc_main"`
+	Task_id         string          `json:"task_id"`
 }
 
 func (n ChromeBookmarks) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeBookmarks) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -153,18 +161,26 @@ type ChromeCache struct {
 	Server           string `json:"server"`
 	Usage_counter    int64  `json:"usage_counter"`
 	Reuse_counter    int64  `json:"reuse_counter"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_ChromeCache struct {
+	ChromeCache ChromeCache `json:"chromecache"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n ChromeCache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeCache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -189,18 +205,26 @@ type ChromeDownload struct {
 	LastModified     int    `json:"last_modified"`
 	MimeType         string `json:"mime_type"`
 	OriginalMimeType string `json:"original_mime_type"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_ChromeDownload struct {
+	ChromeDownload ChromeDownload `json:"chromedownload"`
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
 }
 
 func (n ChromeDownload) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeDownload) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -210,37 +234,53 @@ type ChromeHistory struct {
 	VisitTime     int    `json:"visit_time"`
 	VisitCount    int64  `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_ChromeHistory struct {
+	ChromeHistory ChromeHistory `json:"chromehistory"`
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
 }
 
 func (n ChromeHistory) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
+func (n Collect_ChromeHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
 type ChromeKeywordSearch struct {
-	Term      string `json:"term"`
-	Title     string `json:"title"`
-	URL       string `json:"url"`
-	UUID      string `json:"uuid"`
-	Agent     string `json:"agent"`
-	AgentIP   string `json:"agentIP"`
-	AgentName string `json:"agentName"`
-	ItemMain  string `json:"item_main"`
-	DateMain  int    `json:"date_main"`
-	TypeMain  string `json:"type_main"`
-	EtcMain   string `json:"etc_main"`
-	Task_id   string `json:"task_id"`
+	Term  string `json:"term"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
+type Collect_ChromeKeywordSearch struct {
+	ChromeKeywordSearch ChromeKeywordSearch `json:"chromekeywordsearch"`
+	UUID                string              `json:"uuid"`
+	Agent               string              `json:"agent"`
+	AgentIP             string              `json:"agentIP"`
+	AgentName           string              `json:"agentName"`
+	ItemMain            string              `json:"item_main"`
+	DateMain            int                 `json:"date_main"`
+	TypeMain            string              `json:"type_main"`
+	EtcMain             string              `json:"etc_main"`
+	Task_id             string              `json:"task_id"`
 }
 
 func (n ChromeKeywordSearch) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeKeywordSearch) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -250,18 +290,26 @@ type ChromeLogin struct {
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
 	DateCreated     string `json:"date_created"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_ChromeLogin struct {
+	ChromeLogin ChromeLogin `json:"chromelogin"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n ChromeLogin) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeLogin) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -279,18 +327,26 @@ type DNSInfo struct {
 	Section        int    `json:"section"`
 	Status         int    `json:"status"`
 	Type           int    `json:"type"`
-	UUID           string `json:"uuid"`
-	Agent          string `json:"agent"`
-	AgentIP        string `json:"agentIP"`
-	AgentName      string `json:"agentName"`
-	ItemMain       string `json:"item_main"`
-	DateMain       int    `json:"date_main"`
-	TypeMain       string `json:"type_main"`
-	EtcMain        string `json:"etc_main"`
-	Task_id        string `json:"task_id"`
+}
+
+type Collect_DNSInfo struct {
+	DNSInfo   DNSInfo `json:"dnsinfo"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n DNSInfo) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_DNSInfo) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -304,18 +360,26 @@ type EdgeBookmarks struct {
 	GUID         string `json:"guid"`
 	DateAdded    int    `json:"date_added"`
 	DateModified int    `json:"date_modified"`
-	UUID         string `json:"uuid"`
-	Agent        string `json:"agent"`
-	AgentIP      string `json:"agentIP"`
-	AgentName    string `json:"agentName"`
-	ItemMain     string `json:"item_main"`
-	DateMain     int    `json:"date_main"`
-	TypeMain     string `json:"type_main"`
-	EtcMain      string `json:"etc_main"`
-	Task_id      string `json:"task_id"`
+}
+
+type Collect_EdgeBookmarks struct {
+	EdgeBookmarks EdgeBookmarks `json:"edgebookmarks"`
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
 }
 
 func (n EdgeBookmarks) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EdgeBookmarks) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -334,18 +398,26 @@ type EdgeCache struct {
 	Server          string `json:"server"`
 	UsageCounter    int64  `json:"usage_counter"`
 	ReuseCounter    int64  `json:"reuse_counter"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_EdgeCache struct {
+	EdgeCache EdgeCache `json:"edgecache"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	Task_id   string    `json:"task_id"`
 }
 
 func (n EdgeCache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EdgeCache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -359,18 +431,26 @@ type EdgeCookies struct {
 	ExpiresUTC     int    `json:"expires_utc"`
 	LastAccessUTC  int    `json:"last_access_utc"`
 	SourcePort     int    `json:"source_port"`
-	UUID           string `json:"uuid"`
-	Agent          string `json:"agent"`
-	AgentIP        string `json:"agentIP"`
-	AgentName      string `json:"agentName"`
-	ItemMain       string `json:"item_main"`
-	DateMain       int    `json:"date_main"`
-	TypeMain       string `json:"type_main"`
-	EtcMain        string `json:"etc_main"`
-	Task_id        string `json:"task_id"`
+}
+
+type Collect_EdgeCookies struct {
+	EdgeCookies EdgeCookies `json:"edgecookies"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n EdgeCookies) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EdgeCookies) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -381,18 +461,26 @@ type EdgeHistory struct {
 	VisitTime     int    `json:"visit_time"`
 	VisitCount    int64  `json:"visit_count"`
 	LastVisitTime int    `json:"last_visit_time"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_EdgeHistory struct {
+	EdgeHistory EdgeHistory `json:"edgehistory"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n EdgeHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EdgeHistory) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -403,18 +491,26 @@ type EdgeLogin struct {
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
 	DateCreated     int    `json:"date_created"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_EdgeLogin struct {
+	EdgeLogin EdgeLogin `json:"edgelogin"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	Task_id   string    `json:"task_id"`
 }
 
 func (n EdgeLogin) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EdgeLogin) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -437,18 +533,26 @@ type EventApplication struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
-	UUID                         string `json:"uuid"`
-	Agent                        string `json:"agent"`
-	AgentIP                      string `json:"agentIP"`
-	AgentName                    string `json:"agentName"`
-	ItemMain                     string `json:"item_main"`
-	DateMain                     int    `json:"date_main"`
-	TypeMain                     string `json:"type_main"`
-	EtcMain                      string `json:"etc_main"`
-	Task_id                      string `json:"task_id"`
+}
+
+type Collect_EventApplication struct {
+	EventApplication EventApplication `json:"eventapplication"`
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
 }
 
 func (n EventApplication) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EventApplication) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -471,18 +575,26 @@ type EventSecurity struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
-	UUID                         string `json:"uuid"`
-	Agent                        string `json:"agent"`
-	AgentIP                      string `json:"agentIP"`
-	AgentName                    string `json:"agentName"`
-	ItemMain                     string `json:"item_main"`
-	DateMain                     int    `json:"date_main"`
-	TypeMain                     string `json:"type_main"`
-	EtcMain                      string `json:"etc_main"`
-	Task_id                      string `json:"task_id"`
+}
+
+type Collect_EventSecurity struct {
+	EventSecurity EventSecurity `json:"eventsecurity"`
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
 }
 
 func (n EventSecurity) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EventSecurity) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -505,18 +617,26 @@ type EventSystem struct {
 	Computer                     string `json:"computer"`
 	SecurityUserID               string `json:"securityuserid"`
 	EvtRenderData                string `json:"evtrenderdata"`
-	UUID                         string `json:"uuid"`
-	Agent                        string `json:"agent"`
-	AgentIP                      string `json:"agentIP"`
-	AgentName                    string `json:"agentName"`
-	ItemMain                     string `json:"item_main"`
-	DateMain                     int    `json:"date_main"`
-	TypeMain                     string `json:"type_main"`
-	EtcMain                      string `json:"etc_main"`
-	Task_id                      string `json:"task_id"`
+}
+
+type Collect_EventSystem struct {
+	EventSystem EventSystem `json:"eventsystem"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n EventSystem) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EventSystem) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -537,18 +657,26 @@ type FirefoxBookmarks struct {
 	URLGUID          string `json:"url_guid"`
 	URLDescription   string `json:"url_description"`
 	PreviewImageURL  string `json:"preview_image_url"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_FirefoxBookmarks struct {
+	FirefoxBookmarks FirefoxBookmarks `json:"firefoxbookmarks"`
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
 }
 
 func (n FirefoxBookmarks) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_FirefoxBookmarks) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -566,18 +694,26 @@ type FirefoxCache struct {
 	LastModified    int    `json:"last_modified"`
 	Frequency       int    `json:"frequency"`
 	Expiration      int    `json:"expiration"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_FirefoxCache struct {
+	FirefoxCache FirefoxCache `json:"firefoxcache"`
+	UUID         string       `json:"uuid"`
+	Agent        string       `json:"agent"`
+	AgentIP      string       `json:"agentIP"`
+	AgentName    string       `json:"agentName"`
+	ItemMain     string       `json:"item_main"`
+	DateMain     int          `json:"date_main"`
+	TypeMain     string       `json:"type_main"`
+	EtcMain      string       `json:"etc_main"`
+	Task_id      string       `json:"task_id"`
 }
 
 func (n FirefoxCache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_FirefoxCache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -589,18 +725,26 @@ type FirefoxCookies struct {
 	Path         string `json:"path"`
 	LastAccessed int    `json:"lastaccessed"`
 	CreationTime int    `json:"creationtime"`
-	UUID         string `json:"uuid"`
-	Agent        string `json:"agent"`
-	AgentIP      string `json:"agentIP"`
-	AgentName    string `json:"agentName"`
-	ItemMain     string `json:"item_main"`
-	DateMain     int    `json:"date_main"`
-	TypeMain     string `json:"type_main"`
-	EtcMain      string `json:"etc_main"`
-	Task_id      string `json:"task_id"`
+}
+
+type Collect_FirefoxCookies struct {
+	FirefoxCookies FirefoxCookies `json:"firefoxcookies"`
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
 }
 
 func (n FirefoxCookies) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_FirefoxCookies) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -615,18 +759,26 @@ type FirefoxHistory struct {
 	VisitCount    int64  `json:"visit_count"`
 	VisitDate     int    `json:"visit_date"`
 	LastVisitDate int    `json:"last_visit_date"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_FirefoxHistory struct {
+	FirefoxHistory FirefoxHistory `json:"firefoxhistory"`
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
 }
 
 func (n FirefoxHistory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_FirefoxHistory) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -680,18 +832,26 @@ type InstalledSoftware struct {
 	RegistryTime              int    `json:"registrytime"`
 	InstallFolderCreatedTime  int    `json:"installfoldercreatedtime"`
 	InstallFolderModifiedTime int    `json:"installfoldermodifiedtime"`
-	UUID                      string `json:"uuid"`
-	Agent                     string `json:"agent"`
-	AgentIP                   string `json:"agentIP"`
-	AgentName                 string `json:"agentName"`
-	ItemMain                  string `json:"item_main"`
-	DateMain                  int    `json:"date_main"`
-	TypeMain                  string `json:"type_main"`
-	EtcMain                   string `json:"etc_main"`
-	Task_id                   string `json:"task_id"`
+}
+
+type Collect_InstalledSoftware struct {
+	InstalledSoftware InstalledSoftware `json:"installedsoftware"`
+	UUID              string            `json:"uuid"`
+	Agent             string            `json:"agent"`
+	AgentIP           string            `json:"agentIP"`
+	AgentName         string            `json:"agentName"`
+	ItemMain          string            `json:"item_main"`
+	DateMain          int               `json:"date_main"`
+	TypeMain          string            `json:"type_main"`
+	EtcMain           string            `json:"etc_main"`
+	Task_id           string            `json:"task_id"`
 }
 
 func (n InstalledSoftware) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_InstalledSoftware) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -705,36 +865,52 @@ type JumpList struct {
 	CreateTime    int    `json:"createtime"`
 	AccessTime    int    `json:"accesstime"`
 	ModifiedTime  int    `json:"modifiedtime"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_JumpList struct {
+	JumpList  JumpList `json:"jumplist"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n JumpList) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
+func (n Collect_JumpList) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
 type MUICache struct {
 	ApplicationPath string `json:"applicationpath"`
 	ApplicationName string `json:"applicationname"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_MUICache struct {
+	MUICache  MUICache `json:"muicache"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n MUICache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_MUICache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -748,18 +924,26 @@ type Network struct {
 	State          string `json:"state"`
 	RemoteHostname string `json:"remotehostname"`
 	Protocol       string `json:"protocol"`
-	UUID           string `json:"uuid"`
-	Agent          string `json:"agent"`
-	AgentIP        string `json:"agentIP"`
-	AgentName      string `json:"agentName"`
-	ItemMain       string `json:"item_main"`
-	DateMain       int    `json:"date_main"`
-	TypeMain       string `json:"type_main"`
-	EtcMain        string `json:"etc_main"`
-	Task_id        string `json:"task_id"`
+}
+
+type Collect_Network struct {
+	Network   Network `json:"network"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n Network) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Network) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -775,18 +959,26 @@ type NetworkDataUsageMonitor struct {
 	NetworkAdapterGUID string `json:"network_adapter_guid"`
 	InterfaceLUID      string `json:"interfaceluid"`
 	Timestamp          int    `json:"timestamp"`
-	UUID               string `json:"uuid"`
-	Agent              string `json:"agent"`
-	AgentIP            string `json:"agentIP"`
-	AgentName          string `json:"agentName"`
-	ItemMain           string `json:"item_main"`
-	DateMain           int    `json:"date_main"`
-	TypeMain           string `json:"type_main"`
-	EtcMain            string `json:"etc_main"`
-	Task_id            string `json:"task_id"`
+}
+
+type Collect_NetworkDataUsageMonitor struct {
+	NetworkDataUsageMonitor NetworkDataUsageMonitor `json:"networkdatausagemonitor"`
+	UUID                    string                  `json:"uuid"`
+	Agent                   string                  `json:"agent"`
+	AgentIP                 string                  `json:"agentIP"`
+	AgentName               string                  `json:"agentName"`
+	ItemMain                string                  `json:"item_main"`
+	DateMain                int                     `json:"date_main"`
+	TypeMain                string                  `json:"type_main"`
+	EtcMain                 string                  `json:"etc_main"`
+	Task_id                 string                  `json:"task_id"`
 }
 
 func (n NetworkDataUsageMonitor) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_NetworkDataUsageMonitor) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -800,18 +992,26 @@ type NetworkResources struct {
 	DisplayType   string `json:"displaytype"`
 	Usage         string `json:"usage"`
 	IPAddress     string `json:"ipaddress"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_NetworkResources struct {
+	NetworkResources NetworkResources `json:"networkresources"`
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
 }
 
 func (n NetworkResources) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_NetworkResources) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -820,18 +1020,26 @@ type OpenedFiles struct {
 	ProcessName string `json:"processname"`
 	Type        string `json:"type"`
 	ObjectName  string `json:"objectname"`
-	UUID        string `json:"uuid"`
-	Agent       string `json:"agent"`
-	AgentIP     string `json:"agentIP"`
-	AgentName   string `json:"agentName"`
-	ItemMain    string `json:"item_main"`
-	DateMain    int    `json:"date_main"`
-	TypeMain    string `json:"type_main"`
-	EtcMain     string `json:"etc_main"`
-	Task_id     string `json:"task_id"`
+}
+
+type Collect_OpenedFiles struct {
+	OpenedFiles OpenedFiles `json:"openedfiles"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n OpenedFiles) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_OpenedFiles) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -844,18 +1052,26 @@ type Prefetch struct {
 	FileSize           int64  `json:"filesize"`
 	FolderCreatedTime  int    `json:"foldercreatedtime"`
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
-	UUID               string `json:"uuid"`
-	Agent              string `json:"agent"`
-	AgentIP            string `json:"agentIP"`
-	AgentName          string `json:"agentName"`
-	ItemMain           string `json:"item_main"`
-	DateMain           int    `json:"date_main"`
-	TypeMain           string `json:"type_main"`
-	EtcMain            string `json:"etc_main"`
-	Task_id            string `json:"task_id"`
+}
+
+type Collect_Prefetch struct {
+	Prefetch  Prefetch `json:"prefetch"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n Prefetch) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Prefetch) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -883,18 +1099,26 @@ type Process struct {
 	ImportOtherDLL    string `json:"importOtherDLL"`
 	Hook              string `json:"hook"`
 	ProcessConnectIP  string `json:"processConnectIP"`
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
-	ItemMain          string `json:"item_main"`
-	DateMain          int    `json:"date_main"`
-	TypeMain          string `json:"type_main"`
-	EtcMain           string `json:"etc_main"`
-	Task_id           string `json:"task_id"`
+}
+
+type Collect_Process struct {
+	Process   Process `json:"process"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n Process) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Process) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -913,18 +1137,26 @@ type Service struct {
 	State        string `json:"state"`
 	Status       string `json:"status"`
 	SystemName   string `json:"systemname"`
-	UUID         string `json:"uuid"`
-	Agent        string `json:"agent"`
-	AgentIP      string `json:"agentIP"`
-	AgentName    string `json:"agentName"`
-	ItemMain     string `json:"item_main"`
-	DateMain     int    `json:"date_main"`
-	TypeMain     string `json:"type_main"`
-	EtcMain      string `json:"etc_main"`
-	Task_id      string `json:"task_id"`
+}
+
+type Collect_Service struct {
+	Service   Service `json:"service"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n Service) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Service) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -940,18 +1172,26 @@ type Shortcuts struct {
 	Hotkey           string `json:"hotkey"`
 	ShowCmd          string `json:"showcmd"`
 	ModifyTime       int    `json:"modifytime"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_Shortcuts struct {
+	Shortcuts Shortcuts `json:"shortcuts"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	Task_id   string    `json:"task_id"`
 }
 
 func (n Shortcuts) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Shortcuts) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -963,18 +1203,26 @@ type StartRun struct {
 	Caption     string `json:"caption"`
 	Description string `json:"description"`
 	UserSID     string `json:"usersid"`
-	UUID        string `json:"uuid"`
-	Agent       string `json:"agent"`
-	AgentIP     string `json:"agentIP"`
-	AgentName   string `json:"agentName"`
-	ItemMain    string `json:"item_main"`
-	DateMain    int    `json:"date_main"`
-	TypeMain    string `json:"type_main"`
-	EtcMain     string `json:"etc_main"`
-	Task_id     string `json:"task_id"`
+}
+
+type Collect_StartRun struct {
+	StartRun  StartRun `json:"startrun"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n StartRun) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_StartRun) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -986,18 +1234,26 @@ type TaskSchedule struct {
 	NextRunTime   int    `json:"nextruntime"`
 	StartBoundary int64  `json:"startboundary"`
 	EndBoundary   int64  `json:"endboundary"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_TaskSchedule struct {
+	TaskSchedule TaskSchedule `json:"taskschedule"`
+	UUID         string       `json:"uuid"`
+	Agent        string       `json:"agent"`
+	AgentIP      string       `json:"agentIP"`
+	AgentName    string       `json:"agentName"`
+	ItemMain     string       `json:"item_main"`
+	DateMain     int          `json:"date_main"`
+	TypeMain     string       `json:"type_main"`
+	EtcMain      string       `json:"etc_main"`
+	Task_id      string       `json:"task_id"`
 }
 
 func (n TaskSchedule) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_TaskSchedule) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1018,18 +1274,26 @@ type USBdevices struct {
 	FirstInstallDate               int    `json:"first_install_date"`
 	LastArrivalDate                int    `json:"last_arrival_date"`
 	LastRemovalDate                int    `json:"last_removal_date"`
-	UUID                           string `json:"uuid"`
-	Agent                          string `json:"agent"`
-	AgentIP                        string `json:"agentIP"`
-	AgentName                      string `json:"agentName"`
-	ItemMain                       string `json:"item_main"`
-	DateMain                       int    `json:"date_main"`
-	TypeMain                       string `json:"type_main"`
-	EtcMain                        string `json:"etc_main"`
-	Task_id                        string `json:"task_id"`
+}
+
+type Collect_USBdevices struct {
+	USBdevices USBdevices `json:"usbdevices"`
+	UUID       string     `json:"uuid"`
+	Agent      string     `json:"agent"`
+	AgentIP    string     `json:"agentIP"`
+	AgentName  string     `json:"agentName"`
+	ItemMain   string     `json:"item_main"`
+	DateMain   int        `json:"date_main"`
+	TypeMain   string     `json:"type_main"`
+	EtcMain    string     `json:"etc_main"`
+	Task_id    string     `json:"task_id"`
 }
 
 func (n USBdevices) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_USBdevices) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1040,18 +1304,26 @@ type UserAssist struct {
 	FocusCount       int64  `json:"focus_count"`
 	FocusTimeSeconds int64  `json:"focus_time(s)"`
 	ModifiedTime     int    `json:"modifiedtime"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_UserAssist struct {
+	UserAssist UserAssist `json:"userassist"`
+	UUID       string     `json:"uuid"`
+	Agent      string     `json:"agent"`
+	AgentIP    string     `json:"agentIP"`
+	AgentName  string     `json:"agentName"`
+	ItemMain   string     `json:"item_main"`
+	DateMain   int        `json:"date_main"`
+	TypeMain   string     `json:"type_main"`
+	EtcMain    string     `json:"etc_main"`
+	Task_id    string     `json:"task_id"`
 }
 
 func (n UserAssist) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_UserAssist) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1064,18 +1336,26 @@ type UserProfiles struct {
 	FolderModifiedTime int    `json:"foldermodifiedtime"`
 	LastLoginTime      int    `json:"lastlogontime"`
 	PrivilegeLevel     string `json:"privileglevel"`
-	UUID               string `json:"uuid"`
-	Agent              string `json:"agent"`
-	AgentIP            string `json:"agentIP"`
-	AgentName          string `json:"agentName"`
-	ItemMain           string `json:"item_main"`
-	DateMain           int    `json:"date_main"`
-	TypeMain           string `json:"type_main"`
-	EtcMain            string `json:"etc_main"`
-	Task_id            string `json:"task_id"`
+}
+
+type Collect_UserProfiles struct {
+	UserProfiles UserProfiles `json:"userprofiles"`
+	UUID         string       `json:"uuid"`
+	Agent        string       `json:"agent"`
+	AgentIP      string       `json:"agentIP"`
+	AgentName    string       `json:"agentName"`
+	ItemMain     string       `json:"item_main"`
+	DateMain     int          `json:"date_main"`
+	TypeMain     string       `json:"type_main"`
+	EtcMain      string       `json:"etc_main"`
+	Task_id      string       `json:"task_id"`
 }
 
 func (n UserProfiles) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_UserProfiles) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1096,18 +1376,26 @@ type WindowsActivity struct {
 	StartTime            int    `json:"start_time"`
 	EndTime              int    `json:"end_time"`
 	LastModifiedOnClient int    `json:"last_modified_on_client"`
-	UUID                 string `json:"uuid"`
-	Agent                string `json:"agent"`
-	AgentIP              string `json:"agentIP"`
-	AgentName            string `json:"agentName"`
-	ItemMain             string `json:"item_main"`
-	DateMain             int    `json:"date_main"`
-	TypeMain             string `json:"type_main"`
-	EtcMain              string `json:"etc_main"`
-	Task_id              string `json:"task_id"`
+}
+
+type Collect_WindowsActivity struct {
+	WindowsActivity WindowsActivity `json:"windowsactivity"`
+	UUID            string          `json:"uuid"`
+	Agent           string          `json:"agent"`
+	AgentIP         string          `json:"agentIP"`
+	AgentName       string          `json:"agentName"`
+	ItemMain        string          `json:"item_main"`
+	DateMain        int             `json:"date_main"`
+	TypeMain        string          `json:"type_main"`
+	EtcMain         string          `json:"etc_main"`
+	Task_id         string          `json:"task_id"`
 }
 
 func (n WindowsActivity) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_WindowsActivity) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1121,18 +1409,26 @@ type Wireless struct {
 	Adapterguid          string `json:"adapterguid"`
 	FileName             string `json:"filename"`
 	LastModifiedTime     int    `json:"lastmodifiedtime"`
-	UUID                 string `json:"uuid"`
-	Agent                string `json:"agent"`
-	AgentIP              string `json:"agentIP"`
-	AgentName            string `json:"agentName"`
-	ItemMain             string `json:"item_main"`
-	DateMain             int    `json:"date_main"`
-	TypeMain             string `json:"type_main"`
-	EtcMain              string `json:"etc_main"`
-	Task_id              string `json:"task_id"`
+}
+
+type Collect_Wireless struct {
+	Wireless  Wireless `json:"wireless"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
 }
 
 func (n Wireless) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Wireless) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1149,24 +1445,10 @@ type Email struct {
 	Subject              string `json:"subject"`
 	MessageID            string `json:"message_ID"`
 	Message              string `json:"message"`
-	UUID                 string `json:"uuid"`
-	Agent                string `json:"agent"`
-	AgentIP              string `json:"agentIP"`
-	AgentName            string `json:"agentName"`
-	ItemMain             string `json:"item_main"`
-	DateMain             int    `json:"date_main"`
-	TypeMain             string `json:"type_main"`
-	EtcMain              string `json:"etc_main"`
-	Task_id              string `json:"task_id"`
 }
 
-func (n Email) Elastical() ([]byte, error) {
-	return json.Marshal(n)
-}
-
-type EmailPath struct {
-	Id        int    `json:"id"`
-	Path      string `json:"path"`
+type Collect_Email struct {
+	Email     Email  `json:"email"`
 	UUID      string `json:"uuid"`
 	Agent     string `json:"agent"`
 	AgentIP   string `json:"agentIP"`
@@ -1178,7 +1460,37 @@ type EmailPath struct {
 	Task_id   string `json:"task_id"`
 }
 
+func (n Email) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Email) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+type EmailPath struct {
+	Id   int    `json:"id"`
+	Path string `json:"path"`
+}
+
+type Collect_EmailPath struct {
+	EmailPath EmailPath `json:"emailpath"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	Task_id   string    `json:"task_id"`
+}
+
 func (n EmailPath) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_EmailPath) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1189,18 +1501,26 @@ type FirefoxLogin struct {
 	TimeCreated         int    `json:"timecreated"`
 	TimeLastUsed        int    `json:"timelastused"`
 	TimePasswordChanged int    `json:"timepasswordchanged"`
-	UUID                string `json:"uuid"`
-	Agent               string `json:"agent"`
-	AgentIP             string `json:"agentIP"`
-	AgentName           string `json:"agentName"`
-	ItemMain            string `json:"item_main"`
-	DateMain            int    `json:"date_main"`
-	TypeMain            string `json:"type_main"`
-	EtcMain             string `json:"etc_main"`
-	Task_id             string `json:"task_id"`
+}
+
+type Collect_FirefoxLogin struct {
+	FirefoxLogin FirefoxLogin `json:"firefoxlogin"`
+	UUID         string       `json:"uuid"`
+	Agent        string       `json:"agent"`
+	AgentIP      string       `json:"agentIP"`
+	AgentName    string       `json:"agentName"`
+	ItemMain     string       `json:"item_main"`
+	DateMain     int          `json:"date_main"`
+	TypeMain     string       `json:"type_main"`
+	EtcMain      string       `json:"etc_main"`
+	Task_id      string       `json:"task_id"`
 }
 
 func (n FirefoxLogin) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_FirefoxLogin) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1211,18 +1531,26 @@ type IECache struct {
 	LastAccessTime   int    `json:"lastaccesstime"`
 	LastModifiedTime int    `json:"lastmodifiedtime"`
 	LastSyncTime     int    `json:"lastsynctime"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_IECache struct {
+	IECache   IECache `json:"iecache"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n IECache) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_IECache) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1232,18 +1560,26 @@ type IELogin struct {
 	Username    string `json:"username"`
 	Password    string `json:"password"`
 	LastWritten int    `json:"last_written"`
-	UUID        string `json:"uuid"`
-	Agent       string `json:"agent"`
-	AgentIP     string `json:"agentIP"`
-	AgentName   string `json:"agentName"`
-	ItemMain    string `json:"item_main"`
-	DateMain    int    `json:"date_main"`
-	TypeMain    string `json:"type_main"`
-	EtcMain     string `json:"etc_main"`
-	Task_id     string `json:"task_id"`
+}
+
+type Collect_IELogin struct {
+	IELogin   IELogin `json:"ielogin"`
+	UUID      string  `json:"uuid"`
+	Agent     string  `json:"agent"`
+	AgentIP   string  `json:"agentIP"`
+	AgentName string  `json:"agentName"`
+	ItemMain  string  `json:"item_main"`
+	DateMain  int     `json:"date_main"`
+	TypeMain  string  `json:"type_main"`
+	EtcMain   string  `json:"etc_main"`
+	Task_id   string  `json:"task_id"`
 }
 
 func (n IELogin) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_IELogin) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1260,18 +1596,26 @@ type Netadapters struct {
 	DNSServer     string `json:"dns_server"`
 	LeaseLifetime int    `json:"lease_lifetime"`
 	ValidLifetime int    `json:"valid_lifetime"`
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
+}
+
+type Collect_Netadapters struct {
+	Netadapters Netadapters `json:"netadapters"`
+	UUID        string      `json:"uuid"`
+	Agent       string      `json:"agent"`
+	AgentIP     string      `json:"agentIP"`
+	AgentName   string      `json:"agentName"`
+	ItemMain    string      `json:"item_main"`
+	DateMain    int         `json:"date_main"`
+	TypeMain    string      `json:"type_main"`
+	EtcMain     string      `json:"etc_main"`
+	Task_id     string      `json:"task_id"`
 }
 
 func (n Netadapters) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Netadapters) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1285,18 +1629,26 @@ type RecentFile struct {
 	Createtime   int    `json:"createtime"`
 	Accesstime   int    `json:"accesstime"`
 	Modifiedtime int    `json:"modifiedtime"`
-	UUID         string `json:"uuid"`
-	Agent        string `json:"agent"`
-	AgentIP      string `json:"agentIP"`
-	AgentName    string `json:"agentName"`
-	ItemMain     string `json:"item_main"`
-	DateMain     int    `json:"date_main"`
-	TypeMain     string `json:"type_main"`
-	EtcMain      string `json:"etc_main"`
-	Task_id      string `json:"task_id"`
+}
+
+type Collect_RecentFile struct {
+	RecentFile RecentFile `json:"recentfile"`
+	UUID       string     `json:"uuid"`
+	Agent      string     `json:"agent"`
+	AgentIP    string     `json:"agentIP"`
+	AgentName  string     `json:"agentName"`
+	ItemMain   string     `json:"item_main"`
+	DateMain   int        `json:"date_main"`
+	TypeMain   string     `json:"type_main"`
+	EtcMain    string     `json:"etc_main"`
+	Task_id    string     `json:"task_id"`
 }
 
 func (n RecentFile) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_RecentFile) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1308,18 +1660,26 @@ type Shellbags struct {
 	Slotmodifiedtime int    `json:"slotmodifiedtime"`
 	Createtime       int    `json:"createtime"`
 	Accesstime       int    `json:"accesstime"`
-	UUID             string `json:"uuid"`
-	Agent            string `json:"agent"`
-	AgentIP          string `json:"agentIP"`
-	AgentName        string `json:"agentName"`
-	ItemMain         string `json:"item_main"`
-	DateMain         int    `json:"date_main"`
-	TypeMain         string `json:"type_main"`
-	EtcMain          string `json:"etc_main"`
-	Task_id          string `json:"task_id"`
+}
+
+type Collect_Shellbags struct {
+	Shellbags Shellbags `json:"shellbags"`
+	UUID      string    `json:"uuid"`
+	Agent     string    `json:"agent"`
+	AgentIP   string    `json:"agentIP"`
+	AgentName string    `json:"agentName"`
+	ItemMain  string    `json:"item_main"`
+	DateMain  int       `json:"date_main"`
+	TypeMain  string    `json:"type_main"`
+	EtcMain   string    `json:"etc_main"`
+	Task_id   string    `json:"task_id"`
 }
 
 func (n Shellbags) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Shellbags) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1340,18 +1700,26 @@ type SystemInfo struct {
 	Hotfix          string `json:"hotfix"`
 	Name            string `json:"name"`
 	Username        string `json:"username"`
-	UUID            string `json:"uuid"`
-	Agent           string `json:"agent"`
-	AgentIP         string `json:"agentIP"`
-	AgentName       string `json:"agentName"`
-	ItemMain        string `json:"item_main"`
-	DateMain        int    `json:"date_main"`
-	TypeMain        string `json:"type_main"`
-	EtcMain         string `json:"etc_main"`
-	Task_id         string `json:"task_id"`
+}
+
+type Collect_SystemInfo struct {
+	SystemInfo SystemInfo `json:"systeminfo"`
+	UUID       string     `json:"uuid"`
+	Agent      string     `json:"agent"`
+	AgentIP    string     `json:"agentIP"`
+	AgentName  string     `json:"agentName"`
+	ItemMain   string     `json:"item_main"`
+	DateMain   int        `json:"date_main"`
+	TypeMain   string     `json:"type_main"`
+	EtcMain    string     `json:"etc_main"`
+	Task_id    string     `json:"task_id"`
 }
 
 func (n SystemInfo) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_SystemInfo) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -1365,17 +1733,25 @@ type ChromeCookies struct {
 	ExpiresUTC     int    `json:"expires_utc"`
 	LastAccessUTC  int    `json:"last_access_utc"`
 	SourcePort     int    `json:"source_port"`
-	UUID           string `json:"uuid"`
-	Agent          string `json:"agent"`
-	AgentIP        string `json:"agentIP"`
-	AgentName      string `json:"agentName"`
-	ItemMain       string `json:"item_main"`
-	DateMain       int    `json:"date_main"`
-	TypeMain       string `json:"type_main"`
-	EtcMain        string `json:"etc_main"`
-	Task_id        string `json:"task_id"`
+}
+
+type Collect_ChromeCookies struct {
+	ChromeCookies ChromeCookies `json:"chromecookies"`
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
 }
 
 func (n ChromeCookies) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_ChromeCookies) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

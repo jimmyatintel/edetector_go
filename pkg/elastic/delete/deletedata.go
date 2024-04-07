@@ -4,18 +4,9 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"fmt"
-	"strings"
 )
 
 var diskIndex = []string{"explorer", "explorer_relation"}
-
-var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
-	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
-	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
-	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
-	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
-	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless", "Email", "EmailPath", "FirefoxLogin",
-	"IECache", "IELogin", "Netadapters", "RecentFile", "Shellbags", "SystemInfo", "ChromeCookies"}
 
 func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
@@ -33,9 +24,7 @@ func GetIndexes(ttype string) []string {
 			indexes = append(indexes, prefix+"_"+ind)
 		}
 	case "StartCollect":
-		for _, ind := range dbIndex {
-			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
-		}
+		indexes = append(indexes, prefix+"_collection")
 	case "Memory":
 		indexes = append(indexes, prefix+"_memory")
 	}
