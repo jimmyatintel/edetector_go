@@ -103,6 +103,8 @@ func Update_task_timestamp(clientid string, tasktype string) {
 		col = "image_finish_time"
 	} else if tasktype == "StartYaraRule" {
 		col = "yararule_finish_time"
+	} else if tasktype == "StartMemoryTree" {
+		col = "memorytree_finish_time"
 	} else {
 		return
 	}
