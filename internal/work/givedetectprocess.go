@@ -47,15 +47,15 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			continue
 		}
 		processKey := key + "##" + values[9] + "##" + values[1]
-		values = append(values, "network", "0", "0", "detect", processKey)
+		values = append(values, "network", "0", "0", "detect", processKey, "0", "0")
 		query := fmt.Sprintf(`{
 			"query": {
 				"bool": {
 					"must": [
 						{ "term": { "agent": "%s" } },
-						{ "term": { "processId": %s } },
-						{ "term": { "processCreateTime": %s } },
-						{ "term": { "mode": "detectNetwork" } }
+						{ "term": { "memory.processId": %s } },
+						{ "term": { "memory.processCreateTime": %s } },
+						{ "term": { "memory.mode": "detectNetwork" } }
 					]
 				}
 			}
@@ -81,10 +81,8 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			}
 		}
 		uuid := uuid.NewString()
-		values = append(values, "0", "0")
 		m_tmp := Memory{}
-		tmpValues := append(values, uuid, key, "ip", "name", "item", "0", "ttype", "etc", "nil")
-		_, err := rabbitmq.StringToStruct(&m_tmp, nil, tmpValues)
+		_, err := rabbitmq.StringToStruct(&m_tmp, nil, values)
 		if err != nil {
 			logger.Error("Error converting to struct: " + err.Error())
 			return task.FAIL, err
@@ -94,7 +92,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error getting risk level: " + err.Error())
 			return task.FAIL, err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &m_tmp, nil, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil", "nil")
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_Memory{}, &Memory{}, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil", "nil", "memory")
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 			return task.FAIL, err

@@ -36,6 +36,7 @@ type Collect_AppResourceUsageMonitor struct {
 	TypeMain                string                  `json:"type_main"`
 	EtcMain                 string                  `json:"etc_main"`
 	Task_id                 string                  `json:"task_id"`
+	Category                string                  `json:"category"`
 }
 
 func (n AppResourceUsageMonitor) Elastical() ([]byte, error) {
@@ -64,6 +65,7 @@ type Collect_ARPCache struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n ARPCache) Elastical() ([]byte, error) {
@@ -104,6 +106,7 @@ type Collect_BaseService struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n BaseService) Elastical() ([]byte, error) {
@@ -136,6 +139,7 @@ type Collect_ChromeBookmarks struct {
 	TypeMain        string          `json:"type_main"`
 	EtcMain         string          `json:"etc_main"`
 	Task_id         string          `json:"task_id"`
+	Category        string          `json:"category"`
 }
 
 func (n ChromeBookmarks) Elastical() ([]byte, error) {
@@ -174,6 +178,7 @@ type Collect_ChromeCache struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n ChromeCache) Elastical() ([]byte, error) {
@@ -218,6 +223,7 @@ type Collect_ChromeDownload struct {
 	TypeMain       string         `json:"type_main"`
 	EtcMain        string         `json:"etc_main"`
 	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
 }
 
 func (n ChromeDownload) Elastical() ([]byte, error) {
@@ -247,6 +253,7 @@ type Collect_ChromeHistory struct {
 	TypeMain      string        `json:"type_main"`
 	EtcMain       string        `json:"etc_main"`
 	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
 }
 
 func (n ChromeHistory) Elastical() ([]byte, error) {
@@ -274,6 +281,7 @@ type Collect_ChromeKeywordSearch struct {
 	TypeMain            string              `json:"type_main"`
 	EtcMain             string              `json:"etc_main"`
 	Task_id             string              `json:"task_id"`
+	Category            string              `json:"category"`
 }
 
 func (n ChromeKeywordSearch) Elastical() ([]byte, error) {
@@ -303,6 +311,7 @@ type Collect_ChromeLogin struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n ChromeLogin) Elastical() ([]byte, error) {
@@ -340,6 +349,7 @@ type Collect_DNSInfo struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n DNSInfo) Elastical() ([]byte, error) {
@@ -373,6 +383,7 @@ type Collect_EdgeBookmarks struct {
 	TypeMain      string        `json:"type_main"`
 	EtcMain       string        `json:"etc_main"`
 	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
 }
 
 func (n EdgeBookmarks) Elastical() ([]byte, error) {
@@ -411,6 +422,7 @@ type Collect_EdgeCache struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	Task_id   string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n EdgeCache) Elastical() ([]byte, error) {
@@ -444,6 +456,7 @@ type Collect_EdgeCookies struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n EdgeCookies) Elastical() ([]byte, error) {
@@ -474,6 +487,7 @@ type Collect_EdgeHistory struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n EdgeHistory) Elastical() ([]byte, error) {
@@ -504,6 +518,7 @@ type Collect_EdgeLogin struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	Task_id   string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n EdgeLogin) Elastical() ([]byte, error) {
@@ -546,6 +561,7 @@ type Collect_EventApplication struct {
 	TypeMain         string           `json:"type_main"`
 	EtcMain          string           `json:"etc_main"`
 	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
 }
 
 func (n EventApplication) Elastical() ([]byte, error) {
@@ -588,6 +604,7 @@ type Collect_EventSecurity struct {
 	TypeMain      string        `json:"type_main"`
 	EtcMain       string        `json:"etc_main"`
 	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
 }
 
 func (n EventSecurity) Elastical() ([]byte, error) {
@@ -630,6 +647,7 @@ type Collect_EventSystem struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n EventSystem) Elastical() ([]byte, error) {
@@ -670,6 +688,7 @@ type Collect_FirefoxBookmarks struct {
 	TypeMain         string           `json:"type_main"`
 	EtcMain          string           `json:"etc_main"`
 	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
 }
 
 func (n FirefoxBookmarks) Elastical() ([]byte, error) {
@@ -707,6 +726,7 @@ type Collect_FirefoxCache struct {
 	TypeMain     string       `json:"type_main"`
 	EtcMain      string       `json:"etc_main"`
 	Task_id      string       `json:"task_id"`
+	Category     string       `json:"category"`
 }
 
 func (n FirefoxCache) Elastical() ([]byte, error) {
@@ -738,6 +758,7 @@ type Collect_FirefoxCookies struct {
 	TypeMain       string         `json:"type_main"`
 	EtcMain        string         `json:"etc_main"`
 	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
 }
 
 func (n FirefoxCookies) Elastical() ([]byte, error) {
@@ -772,6 +793,7 @@ type Collect_FirefoxHistory struct {
 	TypeMain       string         `json:"type_main"`
 	EtcMain        string         `json:"etc_main"`
 	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
 }
 
 func (n FirefoxHistory) Elastical() ([]byte, error) {
@@ -801,6 +823,7 @@ type Collect_IEHistory struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	TaskID    string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n IEHistory) Elastical() ([]byte, error) {
@@ -845,6 +868,7 @@ type Collect_InstalledSoftware struct {
 	TypeMain          string            `json:"type_main"`
 	EtcMain           string            `json:"etc_main"`
 	Task_id           string            `json:"task_id"`
+	Category          string            `json:"category"`
 }
 
 func (n InstalledSoftware) Elastical() ([]byte, error) {
@@ -878,6 +902,7 @@ type Collect_JumpList struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n JumpList) Elastical() ([]byte, error) {
@@ -904,6 +929,7 @@ type Collect_MUICache struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n MUICache) Elastical() ([]byte, error) {
@@ -937,6 +963,7 @@ type Collect_Network struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n Network) Elastical() ([]byte, error) {
@@ -972,6 +999,7 @@ type Collect_NetworkDataUsageMonitor struct {
 	TypeMain                string                  `json:"type_main"`
 	EtcMain                 string                  `json:"etc_main"`
 	Task_id                 string                  `json:"task_id"`
+	Category                string                  `json:"category"`
 }
 
 func (n NetworkDataUsageMonitor) Elastical() ([]byte, error) {
@@ -1005,6 +1033,7 @@ type Collect_NetworkResources struct {
 	TypeMain         string           `json:"type_main"`
 	EtcMain          string           `json:"etc_main"`
 	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
 }
 
 func (n NetworkResources) Elastical() ([]byte, error) {
@@ -1033,6 +1062,7 @@ type Collect_OpenedFiles struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n OpenedFiles) Elastical() ([]byte, error) {
@@ -1065,6 +1095,7 @@ type Collect_Prefetch struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n Prefetch) Elastical() ([]byte, error) {
@@ -1112,6 +1143,7 @@ type Collect_Process struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n Process) Elastical() ([]byte, error) {
@@ -1150,6 +1182,7 @@ type Collect_Service struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n Service) Elastical() ([]byte, error) {
@@ -1185,6 +1218,7 @@ type Collect_Shortcuts struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	Task_id   string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n Shortcuts) Elastical() ([]byte, error) {
@@ -1216,6 +1250,7 @@ type Collect_StartRun struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n StartRun) Elastical() ([]byte, error) {
@@ -1247,6 +1282,7 @@ type Collect_TaskSchedule struct {
 	TypeMain     string       `json:"type_main"`
 	EtcMain      string       `json:"etc_main"`
 	Task_id      string       `json:"task_id"`
+	Category     string       `json:"category"`
 }
 
 func (n TaskSchedule) Elastical() ([]byte, error) {
@@ -1287,6 +1323,7 @@ type Collect_USBdevices struct {
 	TypeMain   string     `json:"type_main"`
 	EtcMain    string     `json:"etc_main"`
 	Task_id    string     `json:"task_id"`
+	Category   string     `json:"category"`
 }
 
 func (n USBdevices) Elastical() ([]byte, error) {
@@ -1317,6 +1354,7 @@ type Collect_UserAssist struct {
 	TypeMain   string     `json:"type_main"`
 	EtcMain    string     `json:"etc_main"`
 	Task_id    string     `json:"task_id"`
+	Category   string     `json:"category"`
 }
 
 func (n UserAssist) Elastical() ([]byte, error) {
@@ -1349,6 +1387,7 @@ type Collect_UserProfiles struct {
 	TypeMain     string       `json:"type_main"`
 	EtcMain      string       `json:"etc_main"`
 	Task_id      string       `json:"task_id"`
+	Category     string       `json:"category"`
 }
 
 func (n UserProfiles) Elastical() ([]byte, error) {
@@ -1389,6 +1428,7 @@ type Collect_WindowsActivity struct {
 	TypeMain        string          `json:"type_main"`
 	EtcMain         string          `json:"etc_main"`
 	Task_id         string          `json:"task_id"`
+	Category        string          `json:"category"`
 }
 
 func (n WindowsActivity) Elastical() ([]byte, error) {
@@ -1422,6 +1462,7 @@ type Collect_Wireless struct {
 	TypeMain  string   `json:"type_main"`
 	EtcMain   string   `json:"etc_main"`
 	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
 }
 
 func (n Wireless) Elastical() ([]byte, error) {
@@ -1458,6 +1499,7 @@ type Collect_Email struct {
 	TypeMain  string `json:"type_main"`
 	EtcMain   string `json:"etc_main"`
 	Task_id   string `json:"task_id"`
+	Category  string `json:"category"`
 }
 
 func (n Email) Elastical() ([]byte, error) {
@@ -1484,6 +1526,7 @@ type Collect_EmailPath struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	Task_id   string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n EmailPath) Elastical() ([]byte, error) {
@@ -1514,6 +1557,7 @@ type Collect_FirefoxLogin struct {
 	TypeMain     string       `json:"type_main"`
 	EtcMain      string       `json:"etc_main"`
 	Task_id      string       `json:"task_id"`
+	Category     string       `json:"category"`
 }
 
 func (n FirefoxLogin) Elastical() ([]byte, error) {
@@ -1544,6 +1588,7 @@ type Collect_IECache struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n IECache) Elastical() ([]byte, error) {
@@ -1573,6 +1618,7 @@ type Collect_IELogin struct {
 	TypeMain  string  `json:"type_main"`
 	EtcMain   string  `json:"etc_main"`
 	Task_id   string  `json:"task_id"`
+	Category  string  `json:"category"`
 }
 
 func (n IELogin) Elastical() ([]byte, error) {
@@ -1609,6 +1655,7 @@ type Collect_Netadapters struct {
 	TypeMain    string      `json:"type_main"`
 	EtcMain     string      `json:"etc_main"`
 	Task_id     string      `json:"task_id"`
+	Category    string      `json:"category"`
 }
 
 func (n Netadapters) Elastical() ([]byte, error) {
@@ -1642,6 +1689,7 @@ type Collect_RecentFile struct {
 	TypeMain   string     `json:"type_main"`
 	EtcMain    string     `json:"etc_main"`
 	Task_id    string     `json:"task_id"`
+	Category   string     `json:"category"`
 }
 
 func (n RecentFile) Elastical() ([]byte, error) {
@@ -1673,6 +1721,7 @@ type Collect_Shellbags struct {
 	TypeMain  string    `json:"type_main"`
 	EtcMain   string    `json:"etc_main"`
 	Task_id   string    `json:"task_id"`
+	Category  string    `json:"category"`
 }
 
 func (n Shellbags) Elastical() ([]byte, error) {
@@ -1713,6 +1762,7 @@ type Collect_SystemInfo struct {
 	TypeMain   string     `json:"type_main"`
 	EtcMain    string     `json:"etc_main"`
 	Task_id    string     `json:"task_id"`
+	Category   string     `json:"category"`
 }
 
 func (n SystemInfo) Elastical() ([]byte, error) {
@@ -1746,6 +1796,7 @@ type Collect_ChromeCookies struct {
 	TypeMain      string        `json:"type_main"`
 	EtcMain       string        `json:"etc_main"`
 	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
 }
 
 func (n ChromeCookies) Elastical() ([]byte, error) {

@@ -201,7 +201,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		return
 	}
 	// send to elastic
-	headData := ExplorerDetails{}
+	headData := Collect_Explorer{}
 	for _, line := range lines {
 		select {
 		case <-ctx.Done():
@@ -237,31 +237,34 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				return
 			}
 
-			data := ExplorerDetails{
-				FileName:          values[0],
-				IsDeleted:         values[1] == "1",
-				IsDirectory:       values[2] == "2",
-				CreateTime:        strToInt(values[3]),
-				WriteTime:         strToInt(values[4]),
-				AccessTime:        strToInt(values[5]),
-				EntryModifiedTime: strToInt(values[6]),
-				Datalen:           int64(strToInt(values[7])),
-				Path:              RelationMap[child].Path,
-				Disk:              diskInfo,
-				MD5_Sig:           md5_sig,
-				YaraRuleHitCount:  0,
-				YaraRuleHit:       "",
-				IsRoot:            RelationMap[child].IsRoot,
-				Child:             RelationMap[child].Child,
-				UUID:              RelationMap[child].UUID,
-				Agent:             agent,
-				AgentIP:           ip,
-				AgentName:         name,
-				ItemMain:          values[0],
-				DateMain:          strToInt(values[3]),
-				TypeMain:          "file_table",
-				EtcMain:           RelationMap[child].Path,
-				Task_id:           taskID,
+			data := Collect_Explorer{
+				Explorer: Explorer{
+					FileName:          values[0],
+					IsDeleted:         values[1] == "1",
+					IsDirectory:       values[2] == "2",
+					CreateTime:        strToInt(values[3]),
+					WriteTime:         strToInt(values[4]),
+					AccessTime:        strToInt(values[5]),
+					EntryModifiedTime: strToInt(values[6]),
+					Datalen:           int64(strToInt(values[7])),
+					Path:              RelationMap[child].Path,
+					Disk:              diskInfo,
+					MD5_Sig:           md5_sig,
+					YaraRuleHitCount:  0,
+					YaraRuleHit:       "",
+					IsRoot:            RelationMap[child].IsRoot,
+					Child:             RelationMap[child].Child,
+				},
+				UUID:      RelationMap[child].UUID,
+				Agent:     agent,
+				AgentIP:   ip,
+				AgentName: name,
+				ItemMain:  values[0],
+				DateMain:  strToInt(values[3]),
+				TypeMain:  "file_table",
+				EtcMain:   RelationMap[child].Path,
+				Task_id:   taskID,
+				Category:  "explorer",
 			}
 			if RelationMap[child].IsRoot {
 				headData = data

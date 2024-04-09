@@ -37,7 +37,7 @@ func TestCheckVersion(t *testing.T) {
 		{"1.2.3", "1.0.7", false},
 		{"1.0.12", "1.0.7", false},
 	}
-	
+
 	for _, tt := range test {
 		data := checkInvalidVersion(tt.version, tt.minVersion)
 		if data != tt.want {
@@ -152,14 +152,6 @@ func TestGetriskscore(t *testing.T) {
 				RiskScore:         0,
 				Mode:              "",
 				ProcessKey:        "",
-				UUID:              "",
-				Agent:             "",
-				AgentIP:           "",
-				AgentName:         "",
-				ItemMain:          "",
-				DateMain:          0,
-				TypeMain:          "",
-				EtcMain:           "",
 			},
 			wantLevel: "0",
 			wantScore: "0",

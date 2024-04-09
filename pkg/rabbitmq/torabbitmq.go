@@ -17,8 +17,8 @@ type Message struct {
 	Data  string `json:"data"`
 }
 
-func ToRabbitMQ_Details(index string, st elastic.Request_data, sub_st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string, taskID string) error {
-	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, taskID)
+func ToRabbitMQ_Details(index string, st elastic.Request_data, sub_st elastic.Request_data, values []string, uuid string, agentID string, ip string, name string, item string, date string, ttype string, etc string, priority string, taskType string, taskID string, category string) error {
+	values = append(values, uuid, agentID, ip, name, item, date, ttype, etc, taskID, category)
 	template, err := StringToStruct(st, sub_st, values)
 	if err != nil {
 		return err

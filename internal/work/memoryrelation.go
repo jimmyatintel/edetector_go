@@ -59,7 +59,7 @@ func handleRelation(data []byte, agent string) error {
 		}
 	}
 	logger.Info("Record the relation: " + agent)
-	headData := MemoryTree{}
+	headData := Collect_MemoryTree{}
 	// send to elastic
 	for _, line := range lines {
 		values := strings.Split(line, "|")
@@ -73,29 +73,32 @@ func handleRelation(data []byte, agent string) error {
 		if err != nil {
 			return err
 		}
-		data := MemoryTree{
-			ProcessId:               strToInt(values[0]),
-			ParentProcessId:         strToInt(values[1]),
-			ProcessName:             values[2],
-			ProcessCreateTime:       strToInt(values[3]),
-			ParentProcessName:       values[4],
-			ParentProcessCreateTime: strToInt(values[5]),
-			ProcessPath:             values[6],
-			UserName:                values[7],
-			IsPacked:                values[8] == "1",
-			DynamicCommand:          values[9],
-			IsHide:                  values[10] == "1",
-			IsRoot:                  RelationMap[child].IsRoot,
-			Child:                   RelationMap[child].Child,
-			UUID:                    RelationMap[child].UUID,
-			Agent:                   agent,
-			AgentIP:                 ip,
-			AgentName:               name,
-			ItemMain:                values[2],
-			DateMain:                strToInt(values[3]),
-			TypeMain:                "memory",
-			EtcMain:                 "",
-			Task_id:                 taskID,
+		data := Collect_MemoryTree{
+			MemoryTree: MemoryTree{
+				ProcessId:               strToInt(values[0]),
+				ParentProcessId:         strToInt(values[1]),
+				ProcessName:             values[2],
+				ProcessCreateTime:       strToInt(values[3]),
+				ParentProcessName:       values[4],
+				ParentProcessCreateTime: strToInt(values[5]),
+				ProcessPath:             values[6],
+				UserName:                values[7],
+				IsPacked:                values[8] == "1",
+				DynamicCommand:          values[9],
+				IsHide:                  values[10] == "1",
+				IsRoot:                  RelationMap[child].IsRoot,
+				Child:                   RelationMap[child].Child,
+			},
+			UUID:      RelationMap[child].UUID,
+			Agent:     agent,
+			AgentIP:   ip,
+			AgentName: name,
+			ItemMain:  values[2],
+			DateMain:  strToInt(values[3]),
+			TypeMain:  "memory",
+			EtcMain:   "",
+			Task_id:   taskID,
+			Category:  "memory_tree",
 		}
 
 		if RelationMap[child].IsRoot {
@@ -103,14 +106,14 @@ func handleRelation(data []byte, agent string) error {
 			continue
 		}
 		// send details
-		err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", data, "ed_mid")
+		err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", data, "ed_mid")
 		if err != nil {
 			return err
 		}
 	}
 	logger.Info("Send to elastic: " + agent)
 	// send head
-	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", headData, "ed_mid")
+	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", headData, "ed_mid")
 	if err != nil {
 		return err
 	}

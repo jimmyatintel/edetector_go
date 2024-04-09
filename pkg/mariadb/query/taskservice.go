@@ -185,10 +185,10 @@ func Load_task_id(clienid string, tasktype string, status int) string {
 
 func deleteData(clientid string, tasktype string, status int) {
 	taskID := Load_task_id(clientid, tasktype, status)
-	if tasktype == "StartGetDrive" {
-		elaDelete.DeleteUnfinishedData(clientid, "ExplorerTreeHead", taskID)
+	if tasktype == "StartGetDrive" || tasktype == "StartMemoryTree" { // delete head first
+		elaDelete.DeleteUnfinishedData(clientid, tasktype, taskID, true)
 	}
-	if tasktype == "StartGetDrive" || tasktype == "StartCollect" {
-		elaDelete.DeleteUnfinishedData(clientid, tasktype, taskID)
+	if tasktype == "StartGetDrive" || tasktype == "StartMemoryTree" || tasktype == "StartCollect" {
+		elaDelete.DeleteUnfinishedData(clientid, tasktype, taskID, false)
 	}
 }

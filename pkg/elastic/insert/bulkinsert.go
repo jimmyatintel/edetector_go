@@ -59,7 +59,7 @@ func BulkInsert(action []string, work []string) error {
 				logger.Error("Error deleting TreeHead " + data.TaskType + ": " + err.Error())
 			}
 		}
-		if data.TaskType != "StartScan" {
+		if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" || data.TaskType == "StartCollect" {
 			logger.Debug("Delete old repeated data: " + data.Agent + " " + data.TaskType)
 			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id, false)
 			if err != nil {

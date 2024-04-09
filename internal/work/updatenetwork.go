@@ -30,9 +30,9 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"bool": {
 				  "must": [
 					{ "term": { "agent": "%s" } },
-					{ "term": { "processId": %s } },
-					{ "term": { "processCreateTime": %s } },
-					{ "term": { "mode": "detect" } }
+					{ "term": { "memory.processId": %s } },
+					{ "term": { "memory.processCreateTime": %s } },
+					{ "term": { "memory.mode": "detect" } }
 				  ]
 				}
 			  }
@@ -43,9 +43,9 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"bool": {
 				  "must": [
 					{ "term": { "agent": "%s" } },
-					{ "term": { "processId": %s } },
-					{ "term": { "processCreateTime": %s } },
-					{ "term": { "mode": "detectNetwork" } }
+					{ "term": { "memory.processId": %s } },
+					{ "term": { "memory.processCreateTime": %s } },
+					{ "term": { "memory.mode": "detectNetwork" } }
 				  ]
 				}
 			  }
@@ -74,15 +74,15 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 			createBody := fmt.Sprintf(`
 			{
 				"agent": "%s",
-				"processId": %s,
-				"processCreateTime": %s,
-				"processConnectIP": "true",
-				"riskLevel": %d,
-				"riskScore": %d,
-				"processName": "Unknown",
+				"memory.processId": %s,
+				"memory.processCreateTime": %s,
+				"memory.processConnectIP": "true",
+				"memory.riskLevel": %d,
+				"memory.riskScore": %d,
+				"memory.processName": "Unknown",
 				"agentIP": "%s",
 				"agentName": "%s",
-				"mode": "detectNetwork"
+				"memory.mode": "detectNetwork"
 			}`, agent, id, time, risklevel, riskscore, ip, name)
 			err = elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
 			if err != nil {
@@ -105,7 +105,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				script := fmt.Sprintf(`
 				{
 					"script": {
-						"source": "ctx._source.riskLevel = params.level; ctx._source.riskScore = params.score",
+						"source": "ctx._source.memory.riskLevel = params.level; ctx._source.memory.riskScore = params.score",
 						"lang": "painless",
 						"params": {
 							"level": %d,
@@ -137,7 +137,11 @@ func getScore(hit interface{}) (float64, string, error) {
 	if !ok {
 		return 0, "", errors.New("source not found")
 	}
-	score, ok := source["riskScore"].(float64)
+	memory, ok := source["memory"].(map[string]interface{})
+	if !ok {
+		return 0, "", errors.New("memory not found")
+	}
+	score, ok := memory["riskScore"].(float64)
 	if !ok {
 		return 0, "", errors.New("riskScore not found")
 	}

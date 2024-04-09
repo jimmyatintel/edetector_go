@@ -110,7 +110,7 @@ func UpdateRuleMatch(key string, rule string, path string, count int) {
 	query := fmt.Sprintf(`
 		{
 		"script": {
-			"source": "ctx._source.yaraRuleHitCount = params.count ; ctx._source.yaraRuleHit = params.hit",
+			"source": "ctx._source.explorer.yaraRuleHitCount = params.count ; ctx._source.explorer.yaraRuleHit = params.hit",
 			"lang": "painless",
 			"params": {
 				"count": %d,
@@ -123,7 +123,7 @@ func UpdateRuleMatch(key string, rule string, path string, count int) {
 					{ "term": { "agent": "%s" } },
 					{
 						"match_phrase": {
-						  "path": "%s"
+						  "explorer.path": "%s"
 						}
 					}
 				]

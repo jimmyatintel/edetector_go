@@ -195,19 +195,19 @@ func buildHackQuery(name, cmd, path string) string {
 				"must": [
 				{
 					"query_string": {
-					"fields": ["processName"],
+					"fields": ["memory.processName"],
 					"query": "%s"
 					}
 				},
 				{
 					"query_string": {
-					"fields": ["dynamicCommand"],
+					"fields": ["memory.dynamicCommand"],
 					"query": "*%s*"
 					}
 				},
 				{
 					"query_string": {
-					"fields": ["processPath"],
+					"fields": ["memory.processPath"],
 					"query": "*%s*"
 					}
 				}
@@ -226,25 +226,25 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 				"must": [
 				  {
 					"query_string": {
-					  "fields": ["processName"],
+					  "fields": ["memory.processName"],
 					  "query": "%s"
 					}
 				  },
 				  {
 					"query_string": {
-					  "fields": ["processMD5"],
+					  "fields": ["memory.processMD5"],
 					  "query": "*%s*"
 					}
 				  },
 				  {
 					"query_string": {
-					  "fields": ["digitalSign"],
+					  "fields": ["memory.digitalSign"],
 					  "query": "*%s*"
 					}
 				  },
 				  {
 					"query_string": {
-						"fields": ["processPath"],
+						"fields": ["memory.processPath"],
 						"query": "*%s*"
 					}
 				  }
@@ -256,7 +256,7 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 }
 
 func recalculateScore(query string) {
-	logger.Debug("query: " + query)
+	logger.Debug("recalculateScore query: " + query)
 	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
 	logger.Debug("Hits len: " + strconv.Itoa(len(hitsArray)))
 	for _, hit := range hitsArray {
@@ -266,33 +266,34 @@ func recalculateScore(query string) {
 			return
 		}
 		// convert hitMap to Memory struct
-		var info Memory
-		info.Mode = hitMap["_source"].(map[string]interface{})["mode"].(string)
-		if info.Mode != "scan" && info.Mode != "detect" {
+		var info Collect_Memory
+		memoryData := hitMap["_source"].(map[string]interface{})["memory"].(map[string]interface{})
+		info.Memory.Mode = memoryData["mode"].(string)
+		if info.Memory.Mode != "scan" && info.Memory.Mode != "detect" {
 			continue
 		}
-		info.ProcessName = hitMap["_source"].(map[string]interface{})["processName"].(string)
-		info.ProcessCreateTime = int(hitMap["_source"].(map[string]interface{})["processCreateTime"].(float64))
-		info.DynamicCommand = hitMap["_source"].(map[string]interface{})["dynamicCommand"].(string)
-		info.ProcessMD5 = hitMap["_source"].(map[string]interface{})["processMD5"].(string)
-		info.ProcessPath = hitMap["_source"].(map[string]interface{})["processPath"].(string)
-		info.ParentProcessId = int(hitMap["_source"].(map[string]interface{})["parentProcessId"].(float64))
-		info.ParentProcessName = hitMap["_source"].(map[string]interface{})["parentProcessName"].(string)
-		info.ParentProcessPath = hitMap["_source"].(map[string]interface{})["parentProcessPath"].(string)
-		info.DigitalSign = hitMap["_source"].(map[string]interface{})["digitalSign"].(string)
-		info.ProcessId = int(hitMap["_source"].(map[string]interface{})["processId"].(float64))
-		info.InjectActive = hitMap["_source"].(map[string]interface{})["injectActive"].(string)
-		info.ProcessBeInjected = int(hitMap["_source"].(map[string]interface{})["processBeInjected"].(float64))
-		info.Boot = hitMap["_source"].(map[string]interface{})["boot"].(string)
-		info.Hide = hitMap["_source"].(map[string]interface{})["hide"].(string)
-		info.ImportOtherDLL = hitMap["_source"].(map[string]interface{})["importOtherDLL"].(string)
-		info.Hook = hitMap["_source"].(map[string]interface{})["hook"].(string)
-		info.ProcessConnectIP = hitMap["_source"].(map[string]interface{})["processConnectIP"].(string)
+		info.Memory.ProcessName = memoryData["processName"].(string)
+		info.Memory.ProcessCreateTime = int(memoryData["processCreateTime"].(float64))
+		info.Memory.DynamicCommand = memoryData["dynamicCommand"].(string)
+		info.Memory.ProcessMD5 = memoryData["processMD5"].(string)
+		info.Memory.ProcessPath = memoryData["processPath"].(string)
+		info.Memory.ParentProcessId = int(memoryData["parentProcessId"].(float64))
+		info.Memory.ParentProcessName = memoryData["parentProcessName"].(string)
+		info.Memory.ParentProcessPath = memoryData["parentProcessPath"].(string)
+		info.Memory.DigitalSign = memoryData["digitalSign"].(string)
+		info.Memory.ProcessId = int(memoryData["processId"].(float64))
+		info.Memory.InjectActive = memoryData["injectActive"].(string)
+		info.Memory.ProcessBeInjected = int(memoryData["processBeInjected"].(float64))
+		info.Memory.Boot = memoryData["boot"].(string)
+		info.Memory.Hide = memoryData["hide"].(string)
+		info.Memory.ImportOtherDLL = memoryData["importOtherDLL"].(string)
+		info.Memory.Hook = memoryData["hook"].(string)
+		info.Memory.ProcessConnectIP = memoryData["processConnectIP"].(string)
 		info.Agent = hitMap["_source"].(map[string]interface{})["agent"].(string)
 
 		// update the score
-		initScore := getNetworkMalicious(info.Agent, info.ProcessId, info.ProcessCreateTime)
-		level, score, _, _, err := Getriskscore(info, initScore)
+		initScore := getNetworkMalicious(info.Agent, info.Memory.ProcessId, info.Memory.ProcessCreateTime)
+		level, score, _, _, err := Getriskscore(info.Memory, initScore)
 		if err != nil {
 			logger.Error("Error getting risk score: " + err.Error())
 			continue
@@ -304,7 +305,7 @@ func recalculateScore(query string) {
 		}
 		query := fmt.Sprintf(`{
 				"script": {
-					"source": "ctx._source.riskLevel = params.level; ctx._source.riskScore = params.score",
+					"source": "ctx._source.memory.riskLevel = params.level; ctx._source.memory.riskScore = params.score",
 					"lang": "painless",
 					"params": {
 						"level": %s,
@@ -327,20 +328,28 @@ func getNetworkMalicious(agent string, pid int, ctime int) int {
 			"bool": {
 				"must": [
 					{ "term": { "agent": "%s" } },
-					{ "term": { "processId": %s } },
-					{ "term": { "processCreateTime": %s } }
+					{ "term": { "memory_network.processId": %s } },
+					{ "term": { "memory_network.processCreateTime": %s } }
 				]
 			}
 		}
 	}`, agent, strconv.Itoa(pid), strconv.Itoa(ctime))
-	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_network", query, "uuid")
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
 		if !ok {
 			logger.Error("Error converting hit to map")
 			return 0
 		}
-		score := int(hitMap["_source"].(map[string]interface{})["malicious"].(float64))
+		source, ok := hitMap["_source"].(map[string]interface{})
+		if !ok {
+			return 0
+		}
+		memoryNetworkData, ok := source["memory_network"].(map[string]interface{})
+		if !ok {
+			return 0
+		}
+		score := int(memoryNetworkData["malicious"].(float64))
 		if score > 0 {
 			total += score * 20
 		}

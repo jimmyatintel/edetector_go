@@ -26,18 +26,27 @@ type Memory struct {
 	ProcessKey        string `json:"processKey"`
 	Malicious         int    `json:"malicious"`
 	VirusTotal        int    `json:"virusTotal"`
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
-	ItemMain          string `json:"item_main"`
-	DateMain          int    `json:"date_main"`
-	TypeMain          string `json:"type_main"`
-	EtcMain           string `json:"etc_main"`
-	Task_id           string `json:"task_id"`
+}
+
+type Collect_Memory struct {
+	Memory    Memory `json:"memory"`
+	UUID      string `json:"uuid"`
+	Agent     string `json:"agent"`
+	AgentIP   string `json:"agentIP"`
+	AgentName string `json:"agentName"`
+	ItemMain  string `json:"item_main"`
+	DateMain  int    `json:"date_main"`
+	TypeMain  string `json:"type_main"`
+	EtcMain   string `json:"etc_main"`
+	Task_id   string `json:"task_id"`
+	Category  string `json:"category"`
 }
 
 func (n Memory) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Memory) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -63,18 +72,27 @@ type MemoryNetwork struct {
 	OtehrLatitude     int    `json:"otherLatitude"`
 	Malicious         int    `json:"malicious"`
 	VirusTotal        int    `json:"virusTotal"`
-	UUID              string `json:"uuid"`
-	Agent             string `json:"agent"`
-	AgentIP           string `json:"agentIP"`
-	AgentName         string `json:"agentName"`
-	ItemMain          string `json:"item_main"`
-	DateMain          int    `json:"date_main"`
-	TypeMain          string `json:"type_main"`
-	EtcMain           string `json:"etc_main"`
-	Task_id           string `json:"task_id"`
+}
+
+type Collect_MemoryNetwork struct {
+	MemoryNetwork MemoryNetwork `json:"memory_network"`
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
 }
 
 func (n MemoryNetwork) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_MemoryNetwork) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }
 
@@ -92,17 +110,26 @@ type MemoryTree struct {
 	IsHide                  bool     `json:"isHide"`
 	IsRoot                  bool     `json:"isRoot"`
 	Child                   []string `json:"child"`
-	UUID                    string   `json:"uuid"`
-	Agent                   string   `json:"agent"`
-	AgentIP                 string   `json:"agentIP"`
-	AgentName               string   `json:"agentName"`
-	ItemMain                string   `json:"item_main"`
-	DateMain                int      `json:"date_main"`
-	TypeMain                string   `json:"type_main"`
-	EtcMain                 string   `json:"etc_main"`
-	Task_id                 string   `json:"task_id"`
+}
+
+type Collect_MemoryTree struct {
+	MemoryTree MemoryTree `json:"memory_tree"`
+	UUID       string     `json:"uuid"`
+	Agent      string     `json:"agent"`
+	AgentIP    string     `json:"agentIP"`
+	AgentName  string     `json:"agentName"`
+	ItemMain   string     `json:"item_main"`
+	DateMain   int        `json:"date_main"`
+	TypeMain   string     `json:"type_main"`
+	EtcMain    string     `json:"etc_main"`
+	Task_id    string     `json:"task_id"`
+	Category   string     `json:"category"`
 }
 
 func (n MemoryTree) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_MemoryTree) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

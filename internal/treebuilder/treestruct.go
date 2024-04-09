@@ -2,7 +2,7 @@ package treebuilder
 
 import "encoding/json"
 
-type ExplorerDetails struct {
+type Explorer struct {
 	FileName          string   `json:"fileName"`
 	IsDeleted         bool     `json:"isDeleted"`
 	IsDirectory       bool     `json:"isDirectory"`
@@ -18,17 +18,26 @@ type ExplorerDetails struct {
 	YaraRuleHit       string   `json:"yaraRuleHit"`
 	IsRoot            bool     `json:"isRoot"`
 	Child             []string `json:"child"`
-	UUID              string   `json:"uuid"`
-	Agent             string   `json:"agent"`
-	AgentIP           string   `json:"agentIP"`
-	AgentName         string   `json:"agentName"`
-	ItemMain          string   `json:"item_main"`
-	DateMain          int      `json:"date_main"`
-	TypeMain          string   `json:"type_main"`
-	EtcMain           string   `json:"etc_main"`
-	Task_id           string   `json:"task_id"`
 }
 
-func (n ExplorerDetails) Elastical() ([]byte, error) {
+type Collect_Explorer struct {
+	Explorer  Explorer `json:"explorer"`
+	UUID      string   `json:"uuid"`
+	Agent     string   `json:"agent"`
+	AgentIP   string   `json:"agentIP"`
+	AgentName string   `json:"agentName"`
+	ItemMain  string   `json:"item_main"`
+	DateMain  int      `json:"date_main"`
+	TypeMain  string   `json:"type_main"`
+	EtcMain   string   `json:"etc_main"`
+	Task_id   string   `json:"task_id"`
+	Category  string   `json:"category"`
+}
+
+func (n Explorer) Elastical() ([]byte, error) {
+	return json.Marshal(n)
+}
+
+func (n Collect_Explorer) Elastical() ([]byte, error) {
 	return json.Marshal(n)
 }

@@ -10,35 +10,44 @@ func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
 	indexes := []string{}
 	switch ttype {
-	case "StartMemoryTree":
-		indexes = append(indexes, prefix+"_memory_tree")
 	case "StartGetDrive":
 		indexes = append(indexes, prefix+"_explorer")
 	case "StartCollect":
 		indexes = append(indexes, prefix+"_collection")
-	case "Memory":
+	case "StartMemoryTree":
 		indexes = append(indexes, prefix+"_memory")
+	default:
+		return nil
 	}
 	return indexes
 }
 
 func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 	indexes := GetIndexes(ttype)
+	if indexes == nil {
+		return fmt.Errorf("invalid task type")
+	}
 	var query string
-	if head  {
+	if head {
+		category := "nil"
+		if ttype == "StartGetDrive" {
+			category = "explorer"
+		} else if ttype == "StartMemoryTree" {
+			category = "memory"
+		}
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {
 					"must": [
 						{ "term": { "agent": "%s" } },
-						{ "term": { "isRoot": true } }
+						{ "term": { "%s.isRoot": true } }
 					],
 					"must_not": [
 						{ "term": { "task_id": "%s" } }
 					]
 				}
 			}
-		}`, key, taskID)
+		}`, key, category, taskID)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {
@@ -60,21 +69,30 @@ func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 	return nil
 }
 
-func DeleteUnfinishedData(key string, ttype string, taskID string) error {
+func DeleteUnfinishedData(key string, ttype string, taskID string, head bool) error {
 	indexes := GetIndexes(ttype)
+	if indexes == nil {
+		return fmt.Errorf("invalid task type")
+	}
 	var query string
-	if ttype == "ExplorerTreeHead" {
+	if head {
+		category := "nil"
+		if ttype == "StartGetDrive" {
+			category = "explorer"
+		} else if ttype == "StartMemoryTree" {
+			category = "memory"
+		}
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {
 					"must": [
 						{ "term": { "agent": "%s" } },
 						{ "term": { "task_id": "%s" } },
-						{ "term": { "isRoot": true } }
+						{ "term": { "%s.isRoot": true } }
 					]
 				}
 			}
-		}`, key, taskID)
+		}`, key, taskID, category)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {
