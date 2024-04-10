@@ -5,6 +5,7 @@ import (
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -39,6 +40,7 @@ func Offline(KeyNum string) {
 		return
 	}
 	redis.RedisSet_AddInteger("OnlineClientCount", -1)
+	logger.Info("reduce online clinet: " + KeyNum + "-" + fmt.Sprint(redis.RedisGetInt("OnlineClientCount")))
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
