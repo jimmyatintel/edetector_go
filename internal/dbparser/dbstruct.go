@@ -225,8 +225,6 @@ type ChromeLogin struct {
 	ActionURL       string `json:"action_url"`
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
-	PasswordElement string `json:"password_element"`
-	PasswordValue   string `json:"password_value"`
 	DateCreated     string `json:"date_created"`
 	UUID            string `json:"uuid"`
 	Agent           string `json:"agent"`
@@ -380,8 +378,6 @@ type EdgeLogin struct {
 	ActionURL       string `json:"action_url"`
 	UsernameElement string `json:"username_element"`
 	UsernameValue   string `json:"username_value"`
-	PasswordElement string `json:"password_element"`
-	PasswordValue   string `json:"password_value"`
 	DateCreated     int    `json:"date_created"`
 	UUID            string `json:"uuid"`
 	Agent           string `json:"agent"`

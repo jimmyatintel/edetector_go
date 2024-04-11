@@ -78,7 +78,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "ChromeKeywordSearch":
 			err = toRabbitMQ(index, agent, values, values[0], "0", "website_bookmark", "", &ChromeKeywordSearch{}, taskID)
 		case "ChromeLogin":
-			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &ChromeLogin{}, taskID)
+			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[3], &ChromeLogin{}, taskID)
 		case "DNSInfo":
 			err = toRabbitMQ(index, agent, values, values[9], "0", "software", values[6], &DNSInfo{}, taskID)
 		case "EdgeBookmarks":
@@ -93,7 +93,7 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "EdgeHistory":
 			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[2], &EdgeHistory{}, taskID)
 		case "EdgeLogin":
-			err = toRabbitMQ(index, agent, values, values[1], values[7], "website_bookmark", values[4], &EdgeLogin{}, taskID)
+			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[4], &EdgeLogin{}, taskID)
 		case "EventApplication":
 			err = toRabbitMQ(index, agent, values, values[3], values[9], "software", values[17], &EventApplication{}, taskID)
 		case "EventSecurity":
@@ -150,8 +150,6 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 		case "Wireless":
 			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Wireless{}, taskID)
 		case "Email":
-			values[5] = RFCToTimestamp(values[5])
-			values[6] = RFCToTimestamp(values[6])
 			err = toRabbitMQ(index, agent, values, values[9], values[5], "emails", values[3], &Email{}, taskID)
 		case "EmailPath":
 			err = toRabbitMQ(index, agent, values, values[1], "0", "emails", "0", &EmailPath{}, taskID)
