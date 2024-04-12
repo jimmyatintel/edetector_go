@@ -270,7 +270,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				headData = data
 				continue
 			}
-			err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", data, "ed_low")
+			err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", data, "ed_low_explorer")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -290,7 +290,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	logger.Info("Send details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
-	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", headData, "ed_low")
+	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", headData, "ed_low_explorer")
 	if err != nil {
 		logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -300,7 +300,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	clearBuilder(agent, diskInfo, explorerFile)
 	redis.RedisSet_AddInteger(agent+"-DriveUnfinished", -1)
 	if redis.RedisGetInt(agent+"-DriveUnfinished") == 0 { // last drive -> send finish signal
-		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low")
+		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low_explorer")
 		if err != nil {
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
 			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
