@@ -4,61 +4,50 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
 	"fmt"
-	"strings"
 )
-
-var diskIndex = []string{"explorer", "explorer_relation"}
-
-var dbIndex = []string{"AppResourceUsageMonitor", "ARPCache", "BaseService", "ChromeBookmarks", "ChromeCache", "ChromeDownload",
-	"ChromeHistory", "ChromeKeywordSearch", "ChromeLogin", "DNSInfo", "EdgeBookmarks", "EdgeCache", "EdgeCookies", "EdgeHistory",
-	"EdgeLogin", "EventApplication", "EventSecurity", "EventSystem", "FirefoxBookmarks", "FirefoxCache", "FirefoxCookies",
-	"FirefoxHistory", "IEHistory", "InstalledSoftware", "JumpList", "MUICache", "Network", "NetworkDataUsageMonitor",
-	"NetworkResources", "OpenedFiles", "Prefetch", "Process", "Service", "Shortcuts", "StartRun", "TaskSchedule",
-	"USBdevices", "UserAssist", "UserProfiles", "WindowsActivity", "Wireless", "Email", "EmailPath", "FirefoxLogin",
-	"IECache", "IELogin", "Netadapters", "RecentFile", "Shellbags", "SystemInfo", "ChromeCookies"}
 
 func GetIndexes(ttype string) []string {
 	prefix := config.Viper.GetString("ELASTIC_PREFIX")
 	indexes := []string{}
 	switch ttype {
-	case "StartGetDriveHead":
-		indexes = append(indexes, prefix+"_explorer_relation")
-	case "StartMemoryTreeHead":
-		indexes = append(indexes, prefix+"_memory_relation")
-	case "StartMemoryTree":
-		indexes = append(indexes, prefix+"_memory_tree")
-		indexes = append(indexes, prefix+"_memory_relation")
 	case "StartGetDrive":
-		for _, ind := range diskIndex {
-			indexes = append(indexes, prefix+"_"+ind)
-		}
+		indexes = append(indexes, prefix+"_explorer")
 	case "StartCollect":
-		for _, ind := range dbIndex {
-			indexes = append(indexes, prefix+"_"+strings.ToLower(ind))
-		}
-	case "Memory":
+		indexes = append(indexes, prefix+"_collection")
+	case "StartMemoryTree":
 		indexes = append(indexes, prefix+"_memory")
+	default:
+		return nil
 	}
 	return indexes
 }
 
-func DeleteOldData(key string, ttype string, taskID string) error {
+func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 	indexes := GetIndexes(ttype)
+	if indexes == nil {
+		return fmt.Errorf("invalid task type")
+	}
 	var query string
-	if ttype == "StartGetDriveHead" || ttype == "StartMemoryTreeHead" {
+	if head {
+		category := "nil"
+		if ttype == "StartGetDrive" {
+			category = "explorer"
+		} else if ttype == "StartMemoryTree" {
+			category = "memory"
+		}
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {
 					"must": [
 						{ "term": { "agent": "%s" } },
-						{ "term": { "isRoot": true } }
+						{ "term": { "%s.isRoot": true } }
 					],
 					"must_not": [
 						{ "term": { "task_id": "%s" } }
 					]
 				}
 			}
-		}`, key, taskID)
+		}`, key, category, taskID)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {
@@ -80,21 +69,30 @@ func DeleteOldData(key string, ttype string, taskID string) error {
 	return nil
 }
 
-func DeleteUnfinishedData(key string, ttype string, taskID string) error {
+func DeleteUnfinishedData(key string, ttype string, taskID string, head bool) error {
 	indexes := GetIndexes(ttype)
+	if indexes == nil {
+		return fmt.Errorf("invalid task type")
+	}
 	var query string
-	if ttype == "ExplorerTreeHead" {
+	if head {
+		category := "nil"
+		if ttype == "StartGetDrive" {
+			category = "explorer"
+		} else if ttype == "StartMemoryTree" {
+			category = "memory"
+		}
 		query = fmt.Sprintf(`{
 			"query": {
 				"bool": {
 					"must": [
 						{ "term": { "agent": "%s" } },
 						{ "term": { "task_id": "%s" } },
-						{ "term": { "isRoot": true } }
+						{ "term": { "%s.isRoot": true } }
 					]
 				}
 			}
-		}`, key, taskID)
+		}`, key, taskID, category)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {

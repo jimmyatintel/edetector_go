@@ -54,14 +54,14 @@ func BulkInsert(action []string, work []string) error {
 		task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
 		if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" { // delete head first
 			logger.Debug("Delete old TreeHead " + data.TaskType + ": " + data.Agent)
-			err = elaDelete.DeleteOldData(data.Agent, (data.TaskType + "Head"), task_id)
+			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id, true)
 			if err != nil {
 				logger.Error("Error deleting TreeHead " + data.TaskType + ": " + err.Error())
 			}
 		}
-		if data.TaskType != "StartScan" {
+		if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" || data.TaskType == "StartCollect" {
 			logger.Debug("Delete old repeated data: " + data.Agent + " " + data.TaskType)
-			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id)
+			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id, false)
 			if err != nil {
 				logger.Error("Error deleting old repeated data: " + err.Error())
 			}

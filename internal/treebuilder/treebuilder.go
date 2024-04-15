@@ -29,10 +29,11 @@ var count int
 var cancelMap = map[string][]context.CancelFunc{}
 
 type Relation struct {
-	UUID  string
-	Name  string
-	Path  string
-	Child []string
+	UUID   string
+	Name   string
+	Path   string
+	IsRoot bool
+	Child  []string
 }
 
 func builder_init() {
@@ -174,6 +175,9 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			RelationMap[child] = tmp
 			// record relation
 			if parent == child {
+				tmp := RelationMap[parent]
+				tmp.IsRoot = true
+				RelationMap[parent] = tmp
 				rootInd = parent
 			} else {
 				tmp := RelationMap[parent]
@@ -183,10 +187,9 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		}
 	}
 	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
-	// tree traversal & send to elastic(relation)
-	headData := ExplorerRelation{}
+	// tree traversal
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
-	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, &headData, taskID)
+	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 	// record paths
 	agentPathWorking := filepath.Join(pathWorkingPath, agent)
@@ -197,7 +200,8 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
-	// send to elastic (main & details)
+	// send to elastic
+	headData := Collect_Explorer{}
 	for _, line := range lines {
 		select {
 		case <-ctx.Done():
@@ -219,21 +223,11 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
-			// remove parent & child index
-			values = values[:len(values)-2]
-			if values[2] == "2" {
-				values[2] = "1"
-			}
-			// append path & diskInfo & yara rule hit count & yara rule hit
-			values = append(values, RelationMap[child].Path)
-			values = append(values, diskInfo)
-			if fileSystem == "NTFS" {
-				values = append(values, "")
-			} else {
-				values = append(values, values[6])
+			md5_sig := ""
+			if fileSystem != "NTFS" {
+				md5_sig = values[6]
 				values[6] = "0"
 			}
-			values = append(values, "0", "")
 			// record paths
 			err = file.WriteFile(agentPathWorking, []byte(RelationMap[child].Path+"\n"))
 			if err != nil {
@@ -242,7 +236,41 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
-			err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", &ExplorerDetails{}, values, RelationMap[child].UUID, agent, ip, name, values[0], values[3], "file_table", RelationMap[child].Path, "ed_low", "StartGetDrive", taskID)
+
+			data := Collect_Explorer{
+				Explorer: Explorer{
+					FileName:          values[0],
+					IsDeleted:         values[1] == "1",
+					IsDirectory:       values[2] == "2",
+					CreateTime:        strToInt(values[3]),
+					WriteTime:         strToInt(values[4]),
+					AccessTime:        strToInt(values[5]),
+					EntryModifiedTime: strToInt(values[6]),
+					Datalen:           int64(strToInt(values[7])),
+					Path:              RelationMap[child].Path,
+					Disk:              diskInfo,
+					MD5_Sig:           md5_sig,
+					YaraRuleHitCount:  0,
+					YaraRuleHit:       "",
+					IsRoot:            RelationMap[child].IsRoot,
+					Child:             RelationMap[child].Child,
+				},
+				UUID:      RelationMap[child].UUID,
+				Agent:     agent,
+				AgentIP:   ip,
+				AgentName: name,
+				ItemMain:  values[0],
+				DateMain:  strToInt(values[3]),
+				TypeMain:  "file_table",
+				EtcMain:   RelationMap[child].Path,
+				Task_id:   taskID,
+				Category:  "explorer",
+			}
+			if RelationMap[child].IsRoot {
+				headData = data
+				continue
+			}
+			err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", data, "ed_low_explorer")
 			if err != nil {
 				logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
 				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -254,20 +282,25 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	// record paths
 	err = file.ZipFile(agentPathWorking, filepath.Join(pathStagedPath, agent+".zip"))
-	logger.Info("Send main & details to elastic (" + agent + "-" + diskInfo + ")")
-	// send ExplorerTreeHead in the end
-	logger.Info("Send ExplorerTreeHead to elastic (" + agent + "-" + diskInfo + "): " + headData.Parent)
-	err = rabbitmq.ToRabbitMQ_Relation("_explorer_relation", headData, "ed_low")
 	if err != nil {
-		logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
+		logger.Error("Error zipping path file (" + agent + "-" + diskInfo + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-		clearBuilder(agent, diskInfo, "")
+		clearBuilder(agent, diskInfo, explorerFile)
+		return
+	}
+	logger.Info("Send details to elastic (" + agent + "-" + diskInfo + ")")
+	// send ExplorerTreeHead in the end
+	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", headData, "ed_low_explorer")
+	if err != nil {
+		logger.Error("Error sending to details rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
 	clearBuilder(agent, diskInfo, explorerFile)
 	redis.RedisSet_AddInteger(agent+"-DriveUnfinished", -1)
 	if redis.RedisGetInt(agent+"-DriveUnfinished") == 0 { // last drive -> send finish signal
-		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low")
+		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low_explorer")
 		if err != nil {
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
 			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
@@ -295,17 +328,26 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	if !exists {
 		uuid := uuid.NewString()
 		relation := Relation{
-			UUID:  uuid,
-			Name:  "",
-			Path:  "",
-			Child: []string{},
+			UUID:   uuid,
+			Name:   "",
+			Path:   "",
+			IsRoot: false,
+			Child:  []string{},
 		}
 		(*RelationMap)[ind] = relation
 		(*UUIDMap)[uuid] = ind
 	}
 }
 
-func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), headData *ExplorerRelation, taskID string) {
+func strToInt(str string) int {
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), taskID string) {
 	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
 	if disk == "Linux" {
@@ -325,26 +367,8 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 		relation.Path = path
 	}
 	(*RelationMap)[ind] = relation
-	data := ExplorerRelation{
-		Agent:   agent,
-		IsRoot:  isRoot,
-		Parent:  relation.UUID,
-		Child:   relation.Child,
-		Task_id: taskID,
-	}
-	if isRoot { // send later
-		*headData = data
-	} else {
-		err := rabbitmq.ToRabbitMQ_Relation("_explorer_relation", data, "ed_low")
-		if err != nil {
-			logger.Error("Error sending to relation rabbitMQ (" + agent + "-" + diskInfo + "): " + err.Error())
-			mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-			clearBuilder(agent, diskInfo, "")
-			return
-		}
-	}
 	for _, uuid := range relation.Child {
-		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, headData, taskID)
+		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, taskID)
 	}
 }
 

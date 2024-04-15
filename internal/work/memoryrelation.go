@@ -12,9 +12,10 @@ import (
 )
 
 type Relation struct {
-	UUID  string
-	Name  string
-	Child []string
+	UUID   string
+	Name   string
+	IsRoot bool
+	Child  []string
 }
 
 func handleRelation(data []byte, agent string) error {
@@ -25,7 +26,6 @@ func handleRelation(data []byte, agent string) error {
 	taskID := mariadbquery.Load_task_id(agent, "StartMemoryTree", 2)
 	UUIDMap := make(map[string]int)
 	RelationMap := make(map[int](Relation))
-	rootInd := -1
 	strData := strings.ReplaceAll(string(data), "\r", "")
 	lines := strings.Split(strData, "\n")
 	// record the relation
@@ -49,7 +49,9 @@ func handleRelation(data []byte, agent string) error {
 		RelationMap[child] = tmp
 		// record relation
 		if parent == -1 {
-			rootInd = child
+			tmp := RelationMap[child]
+			tmp.IsRoot = true
+			RelationMap[child] = tmp
 		} else {
 			tmp := RelationMap[parent]
 			tmp.Child = append(tmp.Child, RelationMap[child].UUID)
@@ -57,8 +59,8 @@ func handleRelation(data []byte, agent string) error {
 		}
 	}
 	logger.Info("Record the relation: " + agent)
-	headData := MemoryRelation{}
-	// send to elastic (details & relation)
+	headData := Collect_MemoryTree{}
+	// send to elastic
 	for _, line := range lines {
 		values := strings.Split(line, "|")
 		if len(values) != 11 {
@@ -71,36 +73,51 @@ func handleRelation(data []byte, agent string) error {
 		if err != nil {
 			return err
 		}
+		data := Collect_MemoryTree{
+			MemoryTree: MemoryTree{
+				ProcessId:               strToInt(values[0]),
+				ParentProcessId:         strToInt(values[1]),
+				ProcessName:             values[2],
+				ProcessCreateTime:       strToInt(values[3]),
+				ParentProcessName:       values[4],
+				ParentProcessCreateTime: strToInt(values[5]),
+				ProcessPath:             values[6],
+				UserName:                values[7],
+				IsPacked:                values[8] == "1",
+				DynamicCommand:          values[9],
+				IsHide:                  values[10] == "1",
+				IsRoot:                  RelationMap[child].IsRoot,
+				Child:                   RelationMap[child].Child,
+			},
+			UUID:      RelationMap[child].UUID,
+			Agent:     agent,
+			AgentIP:   ip,
+			AgentName: name,
+			ItemMain:  values[2],
+			DateMain:  strToInt(values[3]),
+			TypeMain:  "memory",
+			EtcMain:   "",
+			Task_id:   taskID,
+			Category:  "memory_tree",
+		}
+
+		if RelationMap[child].IsRoot {
+			headData = data
+			continue
+		}
 		// send details
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory_tree", &MemoryTree{}, values, RelationMap[child].UUID, agent, ip, name, values[2], values[3], "memory", "", "ed_mid", "StartMemoryTree", taskID)
+		err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", data, "ed_mid")
 		if err != nil {
 			return err
 		}
-		// send relation
-		data := MemoryRelation{
-			Agent:   agent,
-			IsRoot:  false,
-			Parent:  RelationMap[child].UUID,
-			Child:   RelationMap[child].Child,
-			Task_id: taskID,
-		}
-		if child == rootInd {
-			headData = data
-		} else {
-			err := rabbitmq.ToRabbitMQ_Relation("_memory_relation", data, "ed_mid")
-			if err != nil {
-				return err
-			}
-		}
 	}
-	logger.Info("Send to elastic (details & relation): " + agent)
-	// send head relation
-	headData.IsRoot = true
-	err = rabbitmq.ToRabbitMQ_Relation("_memory_relation", headData, "ed_mid")
+	logger.Info("Send to elastic: " + agent)
+	// send head
+	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", headData, "ed_mid")
 	if err != nil {
 		return err
 	}
-	logger.Info("Send to elastic (head relation): " + agent)
+	logger.Info("Send to elastic (head): " + agent)
 	// send finish signal
 	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartMemoryTree", "ed_mid")
 	if err != nil {
@@ -126,11 +143,20 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	if !exists {
 		uuid := uuid.NewString()
 		relation := Relation{
-			UUID:  uuid,
-			Name:  "",
-			Child: []string{},
+			UUID:   uuid,
+			Name:   "",
+			IsRoot: false,
+			Child:  []string{},
 		}
 		(*RelationMap)[ind] = relation
 		(*UUIDMap)[uuid] = ind
 	}
+}
+
+func strToInt(str string) int {
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return num
 }
