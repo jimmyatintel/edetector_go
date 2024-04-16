@@ -2,6 +2,7 @@ package treebuilder
 
 //TBD
 import (
+	"bufio"
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/elastic"
@@ -135,18 +136,20 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
-	explorerContent, err := os.ReadFile(explorerFile)
+	file1, err := os.Open(explorerFile)
 	if err != nil {
 		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
 		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 		clearBuilder(agent, diskInfo, explorerFile)
 		return
 	}
+	defer file1.Close()
 	logger.Info("Open txt file: " + explorerFile)
 	// record the relation
 	rootInd := 0
-	lines := strings.Split(string(explorerContent), "\n")
-	for _, line := range lines {
+	scanner1 := bufio.NewScanner(file1)
+	for scanner1.Scan() {
+		line := scanner1.Text()
 		select {
 		case <-ctx.Done():
 			logger.Info("Terminate drive (" + diskInfo + "): " + agent)
@@ -186,6 +189,13 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			}
 		}
 	}
+	if err := scanner1.Err(); err != nil {
+		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		clearBuilder(agent, diskInfo, explorerFile)
+		return
+	}
+	file1.Close()
 	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
 	// tree traversal
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
@@ -202,7 +212,17 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	// send to elastic
 	headData := Collect_Explorer{}
-	for _, line := range lines {
+	file2, err := os.Open(explorerFile)
+	if err != nil {
+		logger.Error("Read file error (" + agent + "-" + diskInfo + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		clearBuilder(agent, diskInfo, explorerFile)
+		return
+	}
+	defer file2.Close()
+	scanner2 := bufio.NewScanner(file2)
+	for scanner2.Scan() {
+		line := scanner2.Text()
 		select {
 		case <-ctx.Done():
 			logger.Info("Terminate drive (" + diskInfo + "): " + agent)
@@ -277,9 +297,9 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
-			time.Sleep(1 * time.Microsecond)
 		}
 	}
+	file2.Close()
 	// record paths
 	err = file.ZipFile(agentPathWorking, filepath.Join(pathStagedPath, agent+".zip"))
 	if err != nil {
