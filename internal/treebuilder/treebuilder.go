@@ -298,6 +298,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				return
 			}
 		}
+		time.Sleep(1 * time.Microsecond)
 	}
 	file2.Close()
 	// record paths
