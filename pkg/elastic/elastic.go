@@ -41,9 +41,9 @@ func Elastic_init() {
 	var err error
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			config.Viper.GetString("ELASTIC_IP_1") + ":" + config.Viper.GetString("ELASTIC_PORT"),
-			config.Viper.GetString("ELASTIC_IP_2") + ":" + config.Viper.GetString("ELASTIC_PORT"),
-			config.Viper.GetString("ELASTIC_IP_3") + ":" + config.Viper.GetString("ELASTIC_PORT"),
+			config.Viper.GetString("ELASTIC_URL_1"),
+			config.Viper.GetString("ELASTIC_URL_2"),
+			config.Viper.GetString("ELASTIC_URL_3"),
 		},
 	}
 	es, err = elasticsearch.NewClient(cfg)
