@@ -37,7 +37,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		hitsDetectArray := elastic.SearchRequest(index, searchDetectQuery, "uuid")
+		hitsDetectArray := elastic.SearchRequest(index, searchDetectQuery, "uuid", 0)
 		searchNetworkQuery := fmt.Sprintf(`{
 			"query": {
 				"bool": {
@@ -50,7 +50,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				}
 			  }
 			}`, agent, id, time)
-		hitsNetworktArray := elastic.SearchRequest(index, searchNetworkQuery, "uuid")
+		hitsNetworktArray := elastic.SearchRequest(index, searchNetworkQuery, "uuid", 0)
 		previousScore := 0.0
 		if len(hitsNetworktArray) > 0 {
 			previousScore, _, err = getScore(hitsNetworktArray[0])
@@ -58,7 +58,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				logger.Error("Error getting score: " + err.Error())
 			}
 			memoryInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_memory"}
-			err = elastic.DeleteByQueryRequest(memoryInd, searchNetworkQuery)
+			err = elastic.DeleteByQueryRequest(memoryInd, searchNetworkQuery, 0)
 			if err != nil {
 				logger.Error("Error deleting by query: " + err.Error())
 			}
@@ -84,7 +84,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 				"agentName": "%s",
 				"memory.mode": "detectNetwork"
 			}`, agent, id, time, risklevel, riskscore, ip, name)
-			err = elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody)
+			err = elastic.IndexRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", createBody, 0)
 			if err != nil {
 				logger.Error("Error creating detect process: " + err.Error())
 				continue
@@ -113,7 +113,7 @@ func UpdateNetworkInfo(agent string, networkSet map[string]struct{}) {
 						}
 					}
 				}`, risklevel, riskscore)
-				err := elastic.UpdateByDocIDRequest(index, docID, script)
+				err := elastic.UpdateByDocIDRequest(index, docID, script, 0)
 				if err != nil {
 					logger.Error("Error updating detect process: " + err.Error())
 					continue

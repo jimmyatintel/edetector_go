@@ -130,7 +130,7 @@ func UpdateRuleMatch(key string, rule string, path string, count int) {
 			}
 		}
 	}`, count, rule, key, path)
-	updateCount, err := elastic.UpdateByQueryRequest(query, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer")
+	updateCount, err := elastic.UpdateByQueryRequest(query, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", 0)
 	if err != nil {
 		logger.Error("UpdateRuleMatch error: " + err.Error())
 		return

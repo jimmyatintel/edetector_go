@@ -62,7 +62,7 @@ func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 			}
 		}`, key, taskID)
 	}
-	err := elastic.DeleteByQueryRequest(indexes, query)
+	err := elastic.DeleteByQueryRequest(indexes, query, 0)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func DeleteUnfinishedData(key string, ttype string, taskID string, head bool) er
 			}
 		}`, key, taskID)
 	}
-	err := elastic.DeleteByQueryRequest(indexes, query)
+	err := elastic.DeleteByQueryRequest(indexes, query, 0)
 	if err != nil {
 		return err
 	}

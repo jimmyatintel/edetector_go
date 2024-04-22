@@ -98,7 +98,7 @@ func high_speed() {
 			logger.Error("Error unmarshaling: " + err.Error())
 			continue
 		}
-		err = elastic.IndexRequest(m.Index, m.Data)
+		err = elastic.IndexRequest(m.Index, m.Data, 0)
 		if err != nil {
 			logger.Error("Index request error: " + err.Error())
 			continue

@@ -257,7 +257,7 @@ func buildWhiteBlackQuery(name, md5, sign, path string) string {
 
 func recalculateScore(query string) {
 	logger.Debug("recalculateScore query: " + query)
-	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid", 0)
 	logger.Debug("Hits len: " + strconv.Itoa(len(hitsArray)))
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
@@ -313,7 +313,7 @@ func recalculateScore(query string) {
 					}
 				}
 			}`, level, score)
-		err = elastic.UpdateByDocIDRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", docID, query)
+		err = elastic.UpdateByDocIDRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", docID, query, 0)
 		if err != nil {
 			logger.Error("Error updating risk level and score: " + err.Error())
 		}
@@ -334,7 +334,7 @@ func getNetworkMalicious(agent string, pid int, ctime int) int {
 			}
 		}
 	}`, agent, strconv.Itoa(pid), strconv.Itoa(ctime))
-	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
+	hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid", 0)
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
 		if !ok {

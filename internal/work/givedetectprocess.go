@@ -60,7 +60,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 				}
 			}
 		}`, p.GetRkey(), values[9], values[1])
-		hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid")
+		hitsArray := elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", query, "uuid", 0)
 		score := 0.0
 		if len(hitsArray) == 0 {
 			values[16] = "detecting"
@@ -72,7 +72,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 				continue
 			}
 			memoryInd := []string{config.Viper.GetString("ELASTIC_PREFIX") + "_memory"}
-			err = elastic.DeleteByQueryRequest(memoryInd, query)
+			err = elastic.DeleteByQueryRequest(memoryInd, query, 0)
 			if err != nil {
 				logger.Error("Error deleting by query: " + err.Error())
 			} else {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/redis"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,9 +18,21 @@ import (
 
 var es *elasticsearch.Client
 
-func flagcheck() bool {
+func elasticCheck(retry int) bool {
+	if retry > 2 {
+		logger.Error("Retry count exceeded")
+		return false
+	}
+	for {
+		if redis.RedisGetInt("elastic_restart") == 1 {
+			logger.Warn("Elastic is restarting, waiting for 60 seconds")
+			time.Sleep(60 * time.Second)
+		} else {
+			return true
+		}
+	}
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
-	return true
+	// return true
 	// }
 	// return false
 }
@@ -28,9 +41,9 @@ func Elastic_init() {
 	var err error
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			config.Viper.GetString("ELASTIC_URL_1"),
-			config.Viper.GetString("ELASTIC_URL_2"),
-			config.Viper.GetString("ELASTIC_URL_3"),
+			config.Viper.GetString("ELASTIC_IP_1") + ":" + config.Viper.GetString("ELASTIC_PORT"),
+			config.Viper.GetString("ELASTIC_IP_2") + ":" + config.Viper.GetString("ELASTIC_PORT"),
+			config.Viper.GetString("ELASTIC_IP_3") + ":" + config.Viper.GetString("ELASTIC_PORT"),
 		},
 	}
 	es, err = elasticsearch.NewClient(cfg)
@@ -67,8 +80,9 @@ type Error struct {
 	Reason string `json:"reason"`
 }
 
-func CreateIndex(name string) {
-	if !flagcheck() {
+func CreateIndex(name string, retry int) {
+	if !elasticCheck(retry) {
+		logger.Error("elastic is not enabled or exceed retry count")
 		return
 	}
 	req := esapi.IndicesCreateRequest{
@@ -77,6 +91,8 @@ func CreateIndex(name string) {
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
 		logger.Error("Error creating index: " + err.Error())
+		time.Sleep(60 * time.Second)
+		CreateIndex(name, retry+1)
 		return
 	}
 	defer res.Body.Close()
@@ -87,9 +103,9 @@ func CreateIndex(name string) {
 	logger.Info("Created index: " + res.String())
 }
 
-func IndexRequest(name string, body string) error {
-	if !flagcheck() {
-		return nil
+func IndexRequest(name string, body string, retry int) error {
+	if !elasticCheck(retry) {
+		return errors.New("elastic is not enabled or exceed retry count")
 	}
 	req := esapi.IndexRequest{
 		Index: name,
@@ -97,7 +113,9 @@ func IndexRequest(name string, body string) error {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		return err
+		logger.Error("Error indexing: " + err.Error())
+		time.Sleep(60 * time.Second)
+		return IndexRequest(name, body, retry+1)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
@@ -107,16 +125,18 @@ func IndexRequest(name string, body string) error {
 	return nil
 }
 
-func BulkIndexRequest(buf strings.Builder) error {
-	if !flagcheck() {
-		return nil
+func BulkIndexRequest(buf strings.Builder, retry int) error {
+	if !elasticCheck(retry) {
+		return errors.New("elastic is not enabled or exceed retry count")
 	}
 	res, err := es.Bulk(
 		strings.NewReader(buf.String()),
 		es.Bulk.WithContext(context.Background()),
 	)
 	if err != nil {
-		return err
+		logger.Error("Error BulkIndexRequest: " + err.Error())
+		time.Sleep(60 * time.Second)
+		return BulkIndexRequest(buf, retry+1)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
@@ -142,9 +162,9 @@ func BulkIndexRequest(buf strings.Builder) error {
 	return nil
 }
 
-func UpdateByQueryRequest(query string, index string) (int, error) {
-	if !flagcheck() {
-		return 0, nil
+func UpdateByQueryRequest(query string, index string, retry int) (int, error) {
+	if !elasticCheck(retry) {
+		return 0, errors.New("elastic is not enabled or exceed retry count")
 	}
 	updateReq := esapi.UpdateByQueryRequest{
 		Index: []string{index},
@@ -152,7 +172,9 @@ func UpdateByQueryRequest(query string, index string) (int, error) {
 	}
 	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
-		return 0, err
+		logger.Error("Error UpdateByQueryRequest: " + err.Error())
+		time.Sleep(60 * time.Second)
+		return UpdateByQueryRequest(query, index, retry+1)
 	}
 	defer updateRes.Body.Close()
 	if updateRes.IsError() {
@@ -173,9 +195,9 @@ func UpdateByQueryRequest(query string, index string) (int, error) {
 	return int(updatedFloat), nil
 }
 
-func UpdateByDocIDRequest(index string, docID string, script string) error {
-	if !flagcheck() {
-		return nil
+func UpdateByDocIDRequest(index string, docID string, script string, retry int) error {
+	if !elasticCheck(retry) {
+		return errors.New("elastic is not enabled or exceed retry count")
 	}
 	updateReq := esapi.UpdateRequest{
 		Index:      index,
@@ -184,7 +206,9 @@ func UpdateByDocIDRequest(index string, docID string, script string) error {
 	}
 	updateRes, err := updateReq.Do(context.Background(), es)
 	if err != nil {
-		return err
+		logger.Error("Error UpdateByDocIDRequest: " + err.Error())
+		time.Sleep(60 * time.Second)
+		return UpdateByDocIDRequest(index, docID, script, retry+1)
 	}
 	defer updateRes.Body.Close()
 	if updateRes.IsError() {
@@ -195,8 +219,8 @@ func UpdateByDocIDRequest(index string, docID string, script string) error {
 	return nil
 }
 
-func SearchRequest(index string, body string, sortItem string) []interface{} {
-	if !flagcheck() {
+func SearchRequest(index string, body string, sortItem string, retry int) []interface{} {
+	if !elasticCheck(retry) {
 		return nil
 	}
 	var result map[string]interface{}
@@ -211,7 +235,8 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
 		logger.Error("Error getting response: " + err.Error())
-		return nil
+		time.Sleep(60 * time.Second)
+		return SearchRequest(index, body, sortItem, retry+1)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
@@ -274,8 +299,8 @@ func SearchRequest(index string, body string, sortItem string) []interface{} {
 	return hitsArray
 }
 
-func DeleteByQueryRequest(indexes []string, query string) error {
-	if !flagcheck() {
+func DeleteByQueryRequest(indexes []string, query string, retry int) error {
+	if !elasticCheck(retry) {
 		return errors.New("elastic is not enabled")
 	}
 	logger.Debug("Index: " + strings.Join(indexes, ", "))
@@ -286,7 +311,9 @@ func DeleteByQueryRequest(indexes []string, query string) error {
 	}
 	res, err := req.Do(context.Background(), es)
 	if err != nil {
-		return err
+		logger.Error("Error DeleteByQueryRequest: " + err.Error())
+		time.Sleep(60 * time.Second)
+		return DeleteByQueryRequest(indexes, query, retry+1)
 	}
 	defer res.Body.Close()
 	if res.IsError() {
@@ -302,16 +329,10 @@ func DeleteByQueryRequest(indexes []string, query string) error {
 		conflictCount := responseJSON["version_conflicts"].(float64)
 		if conflictCount != 0 {
 			logger.Error("Version conflict: ", zap.Any("message", conflictCount))
-			// // retry
-			// time.Sleep(1 * time.Second)
-			// DeleteByQueryRequest(indexes, query)
 		}
 		failures := responseJSON["failures"].([]interface{})
 		if len(failures) != 0 {
 			logger.Error("Failures: ", zap.Any("message", failures))
-			// // retry
-			// time.Sleep(1 * time.Second)
-			// DeleteByQueryRequest(indexes, query)
 		}
 	}
 	return nil

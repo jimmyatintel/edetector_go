@@ -39,7 +39,7 @@ func BulkInsert(action []string, work []string) error {
 	if buf.Len() == 0 {
 		return nil
 	}
-	err := elastic.BulkIndexRequest(buf)
+	err := elastic.BulkIndexRequest(buf, 0)
 	if err != nil {
 		return err
 	}
