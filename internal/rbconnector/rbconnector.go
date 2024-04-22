@@ -86,7 +86,7 @@ func Start(version string) {
 func high_speed() {
 	msgs, err := rabbitmq.Consume("ed_high", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
-		logger.Error("High speed consumer error: " + err.Error())
+		logger.Panic("High speed consumer error: " + err.Error())
 		return
 	}
 	logger.Info("Connected to high speed queue")
@@ -110,7 +110,7 @@ func high_speed() {
 func mid_speed() {
 	msgs, err := rabbitmq.Consume("ed_mid", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
-		logger.Error("Mid speed consumer error: " + err.Error())
+		logger.Panic("Mid speed consumer error: " + err.Error())
 		return
 	}
 	logger.Info("Connected to mid speed queue")
@@ -136,7 +136,7 @@ func mid_speed() {
 func low_speed(queue string) {
 	msgs, err := rabbitmq.Consume(queue, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
 	if err != nil {
-		logger.Error("Low speed consumer error: " + err.Error())
+		logger.Panic("Low speed consumer error: " + err.Error())
 		return
 	}
 	logger.Info("Connected to low speed queue")
