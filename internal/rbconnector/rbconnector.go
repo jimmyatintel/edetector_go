@@ -124,7 +124,7 @@ func mid_speed() {
 		}
 		mid_mutex.Lock()
 		mid_bulkdata = append(mid_bulkdata, m.Data)
-		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
+		mid_bulkaction = append(mid_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s" } }`, m.Index))
 		mid_mutex.Unlock()
 		msg.Ack(false)
 		for len(mid_bulkaction) > (config.Viper.GetInt("MID_TUNNEL_SIZE") * 2) {
@@ -150,7 +150,7 @@ func low_speed(queue string) {
 		}
 		low_mutex.Lock()
 		low_bulkdata = append(low_bulkdata, m.Data)
-		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s", "_type" : "_doc" } }`, m.Index))
+		low_bulkaction = append(low_bulkaction, fmt.Sprintf(`{ "index" : { "_index" : "%s" } }`, m.Index))
 		low_mutex.Unlock()
 		msg.Ack(false)
 		for len(low_bulkaction) > (config.Viper.GetInt("LOW_TUNNEL_SIZE") * 2) {
