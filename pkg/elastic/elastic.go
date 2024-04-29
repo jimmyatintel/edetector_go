@@ -4,7 +4,6 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/redis"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,14 +22,7 @@ func elasticCheck(retry int) bool {
 		logger.Error("Retry count exceeded")
 		return false
 	}
-	for {
-		if redis.RedisGetInt("elastic_restart") == 1 {
-			logger.Warn("Elastic is restarting, waiting for 60 seconds")
-			time.Sleep(60 * time.Second)
-		} else {
-			return true
-		}
-	}
+	return true
 	// if enable, err := fflag.FFLAG.FeatureEnabled("elastic_enable"); enable && err == nil {
 	// return true
 	// }
