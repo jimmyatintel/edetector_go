@@ -29,20 +29,37 @@ func init() {
 }
 
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
-	logger.Info("ReadyYaraRule: " + p.GetRkey() + "::" + p.GetMessage())
+	key := p.GetRkey()
+	logger.Info("ReadyYaraRule: " + key + "::" + p.GetMessage())
 	path := filepath.Join(yaraRulePath, "yara.zip")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return task.FAIL, err
 	}
+	if query.Get_client_os(key) == "ubuntu" {
+		tmpPath := filepath.Join(yaraRulePath, "yaraRaw")
+		err := file.UnZipDir(path, tmpPath)
+		if err != nil {
+			return task.FAIL, err
+		}
+		path = filepath.Join(yaraRulePath, "yara.tar.gz")
+		err = file.TarDir(tmpPath, path)
+		if err != nil {
+			return task.FAIL, err
+		}
+		content, err = os.ReadFile(path)
+		if err != nil {
+			return task.FAIL, err
+		}
+	}
 	fileLen := len(content)
-	logger.Info("ServerSend GiveYaraRuleInfo: " + p.GetRkey() + "::" + strconv.Itoa(fileLen))
+	logger.Info("ServerSend GiveYaraRuleInfo: " + key + "::" + strconv.Itoa(fileLen))
 	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_YARA_RULE_INFO, strconv.Itoa(fileLen), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
-	redis.RedisSet(p.GetRkey()+"-YaraProgress", 0)
-	go updateYaraRuleProgress(p.GetRkey())
+	redis.RedisSet(key+"-YaraProgress", 0)
+	go updateYaraRuleProgress(key)
 	go GiveYaraRule(p, fileLen, content, dataRight)
 	return task.SUCCESS, nil
 }
