@@ -92,6 +92,19 @@ You can view service logs from the console, `./cmd/<service>/*.log`, and `/var/l
 Enhancements:
 - Introduce the new elasticsearch version: 7.17
   - Remove "_type" : "_doc" when inserting data
+- Store WARN level log to mariaDB
+- Introduce the new version of yara rule task
+  - Remove the part of GivePath in yara rule task
+  - Use New format for matched rules
+- Check the OS of agents
+- Introduce the Linux(Ubuntu) agent
+  - Load different key image lists based on the OS
+  - Use .tar.gz for compressing and decompressing file
+  - Use "Ubuntu" as file system type instead of "Linux"
+
+Fixed Bugs:
+- Check TaskID when receiving finish signals to avoid inconsistent finish signals
+- Show multiple sub roots in memory tree
 
 ### 1.1.0 (2024/04/29)
 *Compatible Agent Version: Agent_1.0.9*

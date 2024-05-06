@@ -58,13 +58,7 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
-	// workPath := filepath.Join(ruleMatchWorkingPath, key+".txt")
 	dstPath := filepath.Join(ruleMatchUnstage, key+".txt")
-	// err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
-	// if err != nil {
-	// 	return task.FAIL, err
-	// }
-	// err = file.MoveFile(workPath, dstPath)
 	err = file.MoveFile(srcPath, dstPath)
 	if err != nil {
 		return task.FAIL, err
@@ -88,20 +82,31 @@ func parseRuleMatch(path string, key string) error {
 	if err != nil {
 		return err
 	}
+	matches := make(map[string]string)
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		values := strings.Split(line, "|")
 		if len(values) == 2 {
-			allRule := values[0][1 : len(values[0])-1]
-			allRule = strings.TrimRight(allRule, "\r")
-			rules := strings.Split(allRule, ", ")
-			path := strings.TrimRight(values[1], "\r")
-			path = strings.ReplaceAll(path, "\\", "_backslash_")
-			path = strings.ReplaceAll(path, ":", "_colon_")
-			count := len(rules)
-			UpdateRuleMatch(key, allRule, path, count)
+			rule := values[0]
+			hitPath := strings.TrimRight(values[1], "\r")
+			hitPath = strings.ReplaceAll(hitPath, "\\\\", "_backslash_")
+			hitPath = strings.ReplaceAll(hitPath, "\\", "_backslash_")
+			hitPath = strings.ReplaceAll(hitPath, "//", "_slash_")
+			hitPath = strings.ReplaceAll(hitPath, "/", "_slash_")
+			hitPath = strings.ReplaceAll(hitPath, ":", "_colon_")
+			// check if matches exist
+			if _, ok := matches[hitPath]; !ok {
+				matches[hitPath] = rule
+			} else {
+				matches[hitPath] += ("," + rule)
+			}
 		}
 	}
+	for p, rule := range matches {
+		count := len(strings.Split(rule, ","))
+		UpdateRuleMatch(key, rule, p, count)
+	}
+
 	return nil
 }
 

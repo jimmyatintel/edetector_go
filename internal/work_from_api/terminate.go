@@ -17,7 +17,7 @@ func init() {
 	for i := 'A'; i <= 'Z'; i++ {
 		disks = append(disks, string(i))
 	}
-	disks = append(disks, "Linux")
+	disks = append(disks, "Ubuntu")
 }
 
 func Terminate(p packet.UserPacket) (task.TaskResult, error) {

@@ -97,6 +97,7 @@ func Warn(message string, fields ...zap.Field) {
 	callerFields := getCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Warn(message, fields...)
+	StoreLogToDB("WARN", message)
 }
 
 func Error(message string, fields ...zap.Field) {
