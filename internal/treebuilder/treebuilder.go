@@ -23,8 +23,6 @@ import (
 
 var fileUnstagePath = "fileUnstage"
 var fileStagedPath = "fileStaged"
-var pathStagedPath = "pathStaged"
-var pathWorkingPath = "pathWorking"
 var limit int
 var count int
 var cancelMap = map[string][]context.CancelFunc{}
@@ -40,8 +38,6 @@ type Relation struct {
 func builder_init() {
 	file.CheckDir(fileUnstagePath)
 	file.CheckDir(fileStagedPath)
-	file.CheckDir(pathStagedPath)
-	file.ClearDirContent(pathWorkingPath)
 	// fflag.Get_fflag()
 	// if fflag.FFLAG == nil {
 	// 	logger.Panic("Error loading feature flag")
@@ -201,15 +197,6 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
 	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
-	// record paths
-	agentPathWorking := filepath.Join(pathWorkingPath, agent)
-	err = file.CreateFile(agentPathWorking)
-	if err != nil {
-		logger.Error("Error creating path file (" + agent + "-" + diskInfo + "): " + err.Error())
-		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-		clearBuilder(agent, diskInfo, explorerFile)
-		return
-	}
 	// send to elastic
 	headData := Collect_Explorer{}
 	file2, err := os.Open(explorerFile)
@@ -248,15 +235,6 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				md5_sig = values[6]
 				values[6] = "0"
 			}
-			// record paths
-			err = file.WriteFile(agentPathWorking, []byte(RelationMap[child].Path+"\n"))
-			if err != nil {
-				logger.Error("Error writing path file (" + agent + "-" + diskInfo + "): " + err.Error())
-				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-				clearBuilder(agent, diskInfo, explorerFile)
-				return
-			}
-
 			data := Collect_Explorer{
 				Explorer: Explorer{
 					FileName:          values[0],
@@ -301,14 +279,6 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		time.Sleep(1 * time.Microsecond)
 	}
 	file2.Close()
-	// record paths
-	err = file.ZipFile(agentPathWorking, filepath.Join(pathStagedPath, agent+".zip"))
-	if err != nil {
-		logger.Error("Error zipping path file (" + agent + "-" + diskInfo + "): " + err.Error())
-		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
-		clearBuilder(agent, diskInfo, explorerFile)
-		return
-	}
 	logger.Info("Send details to elastic (" + agent + "-" + diskInfo + ")")
 	// send ExplorerTreeHead in the end
 	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", headData, "ed_low_explorer")

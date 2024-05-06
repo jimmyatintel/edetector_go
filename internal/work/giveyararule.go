@@ -19,7 +19,6 @@ import (
 
 var ruleMatchWorkingPath = "ruleMatchWorking"
 var ruleMatchUnstage = "ruleMatchUnstage"
-var pathStaged = "pathStaged"
 var yaraRulePath = filepath.Join("static", "yaraRule")
 
 func init() {
@@ -60,11 +59,6 @@ func GiveYaraRule(p packet.Packet, fileLen int, content []byte, dataRight chan n
 				return
 			}
 			<-dataRight
-			err = GivePathInfo(p, p.GetRkey(), dataRight, conn)
-			if err != nil {
-				query.Failed_task(p.GetRkey(), "StartYaraRule", 6)
-				return
-			}
 			break
 		}
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
@@ -78,54 +72,6 @@ func GiveYaraRule(p packet.Packet, fileLen int, content []byte, dataRight chan n
 		}
 		start += 65436
 	}
-}
-
-func GivePathInfo(p packet.Packet, key string, dataRight chan net.Conn, conn net.Conn) error {
-	path := filepath.Join(pathStaged, key+".zip")
-	content, err := os.ReadFile(path)
-	if err != nil {
-		logger.Error("Read file error: " + err.Error())
-		return err
-	}
-	fileLen := len(content)
-	logger.Info("ServerSend GivePathInfo: " + key + "::" + strconv.Itoa(fileLen))
-	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_PATH_INFO, strconv.Itoa(fileLen), conn)
-	if err != nil {
-		logger.Error("Send GivePathInfo error: " + err.Error())
-		return err
-	}
-	err = GivePath(p, fileLen, content, dataRight)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GivePath(p packet.Packet, fileLen int, content []byte, dataRight chan net.Conn) error {
-	start := 0
-	for {
-		conn := <-dataRight
-		if start >= fileLen {
-			logger.Info("ServerSend GivePathEnd: " + p.GetRkey())
-			err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_PATH_END, []byte{}, conn)
-			if err != nil {
-				logger.Error("Send GivePathEnd error: " + err.Error())
-				return err
-			}
-			<-dataRight
-			break
-		}
-		end := int(math.Min(float64(fileLen), float64(start+65436)))
-		data := content[start:end]
-		logger.Info("ServerSend GivePath: " + p.GetRkey())
-		err := clientsearchsend.SendDataTCPtoClient(p, task.GIVE_PATH, data, conn)
-		if err != nil {
-			logger.Error("Send GivePath error: " + err.Error())
-			return err
-		}
-		start += 65436
-	}
-	return nil
 }
 
 func GiveYaraProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
