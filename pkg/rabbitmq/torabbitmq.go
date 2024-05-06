@@ -4,6 +4,7 @@ import (
 	"edetector_go/pkg/elastic"
 	elaInsert "edetector_go/pkg/elastic/insert"
 	"edetector_go/pkg/logger"
+	mariadbquery "edetector_go/pkg/mariadb/query"
 	"encoding/json"
 	"math/rand"
 	"reflect"
@@ -76,9 +77,11 @@ func ToRabbitMQ_Tree(index string, template elastic.Request_data, priority strin
 
 func ToRabbitMQ_FinishSignal(agent string, taskType string, priority string) error {
 	logger.Info("Finish signal sent to rabbitMQ")
+	taskID := mariadbquery.Load_task_id(agent, taskType, 2)
 	template := elaInsert.FinishSignal{
 		Agent:    agent,
 		TaskType: taskType,
+		TaskID:   taskID,
 	}
 	request, err := template.Elastical()
 	if err != nil {

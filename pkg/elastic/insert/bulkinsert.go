@@ -17,6 +17,7 @@ type IndexInfo struct {
 type FinishSignal struct {
 	Agent    string `json:"agent"`
 	TaskType string `json:"taskType"`
+	TaskID   string `json:"taskID"`
 }
 
 func (s *FinishSignal) Elastical() ([]byte, error) {
@@ -52,6 +53,10 @@ func BulkInsert(action []string, work []string) error {
 		}
 		logger.Info("Finish signal received: " + data.Agent + " " + data.TaskType)
 		task_id := mariadbquery.Load_task_id(data.Agent, data.TaskType, 2)
+		if task_id != data.TaskID {
+			logger.Warn("Task ID mismatch: " + task_id + " " + data.TaskID)
+			continue
+		}
 		if data.TaskType == "StartGetDrive" || data.TaskType == "StartMemoryTree" { // delete head first
 			logger.Debug("Delete old TreeHead " + data.TaskType + ": " + data.Agent)
 			err = elaDelete.DeleteOldData(data.Agent, data.TaskType, task_id, true)
