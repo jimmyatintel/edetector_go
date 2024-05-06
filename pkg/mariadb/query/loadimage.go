@@ -5,8 +5,8 @@ import (
 	"edetector_go/pkg/mariadb"
 )
 
-func Load_key_image(ttype string) ([][]string, error) {
-	qu := "SELECT apptype, path, keyword FROM key_image WHERE type = \"" + ttype + "\""
+func Load_key_image(ttype string, os string) ([][]string, error) {
+	qu := "SELECT apptype, path, keyword FROM key_image WHERE type = \"" + ttype + "\"" + "AND os = \"" + os + "\""
 	var result [][]string
 	res, err := mariadb.DB.Query(qu)
 	if err != nil {

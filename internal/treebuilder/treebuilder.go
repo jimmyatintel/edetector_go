@@ -261,7 +261,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				Explorer: Explorer{
 					FileName:          values[0],
 					IsDeleted:         values[1] == "1",
-					IsDirectory:       values[2] == "2",
+					IsDirectory:       values[2] != "0",
 					CreateTime:        strToInt(values[3]),
 					WriteTime:         strToInt(values[4]),
 					AccessTime:        strToInt(values[5]),
@@ -371,7 +371,7 @@ func strToInt(str string) int {
 func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), taskID string) {
 	disk := strings.Split(diskInfo, "|")[0]
 	relation := (*RelationMap)[ind]
-	if disk == "Linux" {
+	if disk == "Ubuntu" {
 		if !isRoot {
 			path = path + "/" + relation.Name
 		}
@@ -382,7 +382,7 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 			path = path + "\\" + relation.Name
 		}
 	}
-	if disk == "Linux" && isRoot {
+	if disk == "Ubuntu" && isRoot {
 		relation.Path = "/"
 	} else {
 		relation.Path = path

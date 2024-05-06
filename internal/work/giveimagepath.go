@@ -6,6 +6,7 @@ import (
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
+	"errors"
 	"math"
 	"net"
 	"strconv"
@@ -17,7 +18,11 @@ func ReadyImage(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.T
 	if imageType != "default" && imageType != "advanced" && imageType != "customized" {
 		imageType = "default"
 	}
-	imageList, err := query.Load_key_image(imageType)
+	os := query.Get_client_os(p.GetRkey())
+	if os != "windows" && os != "ubuntu" {
+		return task.FAIL, errors.New("OS not supported")
+	}
+	imageList, err := query.Load_key_image(imageType, os)
 	if err != nil {
 		return task.FAIL, err
 	}

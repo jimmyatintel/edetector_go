@@ -200,12 +200,12 @@ func DecompressionFile(srcPath string, dstPath string, size int) error {
 		return err
 	}
 	if firstByte[0] == 'P' {
-		err = UnzipFile(srcPath, dstPath, size)
+		err = UnZipFile(srcPath, dstPath, size)
 		if err != nil {
 			return err
 		}
 	} else {
-		err = UnzipTarFile(srcPath, dstPath, size)
+		err = UnTarFile(srcPath, dstPath, size)
 		if err != nil {
 			return err
 		}
@@ -213,7 +213,7 @@ func DecompressionFile(srcPath string, dstPath string, size int) error {
 	return nil
 }
 
-func UnzipFile(zipPath string, dstPath string, size int) error {
+func UnZipFile(zipPath string, dstPath string, size int) error {
 	// truncate data
 	err := TruncateFile(zipPath, size)
 	if err != nil {
@@ -254,7 +254,7 @@ func UnzipFile(zipPath string, dstPath string, size int) error {
 	return nil
 }
 
-func UnzipTarFile(tarPath string, dstPath string, size int) error {
+func UnTarFile(tarPath string, dstPath string, size int) error {
 	// truncate data
 	err := TruncateFile(tarPath, size)
 	if err != nil {
@@ -351,43 +351,95 @@ func ZipFile(srcPath string, dstPath string) error {
 	return nil
 }
 
-func ZipDirectory(sourceDir string, zipFilePath string) error {
-	zipFile, err := os.Create(zipFilePath)
+func UnZipDir(zipPath string, dstPath string) error {
+	// open the zip file for reading
+	reader, err := zip.OpenReader(zipPath)
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
-
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-
-	baseDir := filepath.Base(sourceDir)
-	return filepath.Walk(sourceDir, func(filePath string, info os.FileInfo, err error) error {
-		if err != nil {
+	// extract the files from the zip archive
+	for _, file := range reader.File {
+		if !file.FileInfo().IsDir() {
+			srcFile, err := file.Open()
+			if err != nil {
+				return err
+			}
+			// create the directory for the file
+			err = os.MkdirAll(filepath.Dir(filepath.Join(dstPath, file.Name)), 0755)
+			if err != nil {
+				return err
+			}
+			dstFile, err := os.Create(filepath.Join(dstPath, file.Name))
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(dstFile, srcFile)
+			if err != nil {
+				return err
+			}
+			dstFile.Close()
+			srcFile.Close()
+		} else {
+			err = errors.New("the zip file contains a directory")
 			return err
 		}
-		// Skip directories
-		if info.IsDir() {
+	}
+	reader.Close()
+	return nil
+}
+
+func TarDir(srcPath string, dstPath string) error {
+	// Create the destination tar file
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	// Create a tar.Writer
+	tw := tar.NewWriter(dstFile)
+	defer tw.Close()
+	// Walk through all files and subdirectories in the source directory
+	err = filepath.Walk(srcPath, func(filePath string, info os.FileInfo, err error) error {
+		// Ignore the source directory itself
+		if filePath == srcPath {
 			return nil
 		}
-		// Open the file
-		srcFile, err := os.Open(filePath)
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
-		// Determine the relative path for the zip entry
-		relativePath, err := filepath.Rel(sourceDir, filePath)
+		// Create tar file header information
+		header, err := tar.FileInfoHeader(info, info.Name())
 		if err != nil {
 			return err
 		}
-		// Create a new entry for the file in the zip archive
-		zipEntry, err := zipWriter.Create(filepath.Join(baseDir, relativePath))
+		// Modify the file name in the tar header to be a relative path
+		relPath, err := filepath.Rel(srcPath, filePath)
 		if err != nil {
 			return err
 		}
-		// Copy the file data to the zip entry
-		_, err = io.Copy(zipEntry, srcFile)
-		return err
+		header.Name = relPath
+		// Write the tar file header information
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+		// If it's a file, write the file content to the tar file
+		if !info.IsDir() {
+			file, err := os.Open(filePath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			if _, err := io.Copy(tw, file); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
+	if err != nil {
+		return err
+	}
+	// remove the source directory
+	err = os.RemoveAll(srcPath)
+	return nil
 }
