@@ -14,7 +14,7 @@ import (
 type Relation struct {
 	UUID   string
 	Name   string
-	IsRoot bool
+	IsRoot int // 0: unknown root(already died), 1: sub root(real root), 2: not root
 	Child  []string
 }
 
@@ -43,23 +43,28 @@ func handleRelation(data []byte, agent string) error {
 		}
 		generateUUID(agent, parent, &UUIDMap, &RelationMap)
 		generateUUID(agent, child, &UUIDMap, &RelationMap)
-		// record name
+		// record name & exclude root
 		tmp := RelationMap[child]
 		tmp.Name = values[2]
+		tmp.IsRoot = 2 // set as not root temporarily
 		RelationMap[child] = tmp
 		// record relation
-		if parent == -1 {
-			tmp := RelationMap[child]
-			tmp.IsRoot = true
-			RelationMap[child] = tmp
-		} else {
-			tmp := RelationMap[parent]
-			tmp.Child = append(tmp.Child, RelationMap[child].UUID)
-			RelationMap[parent] = tmp
-		}
+		tmp = RelationMap[parent]
+		tmp.Child = append(tmp.Child, RelationMap[child].UUID)
+		RelationMap[parent] = tmp
 	}
 	logger.Info("Record the relation: " + agent)
-	headData := Collect_MemoryTree{}
+	// find all sub roots which is the children of the unknown roots 
+	for _, relation := range RelationMap {
+		if relation.IsRoot == 0 {
+			for _, child := range relation.Child {
+				tmp := RelationMap[UUIDMap[child]]
+				tmp.IsRoot = 1 // set as sub root
+				RelationMap[UUIDMap[child]] = tmp
+			}
+		}
+	}
+	headDataList := []Collect_MemoryTree{}
 	// send to elastic
 	for _, line := range lines {
 		values := strings.Split(line, "|")
@@ -86,7 +91,7 @@ func handleRelation(data []byte, agent string) error {
 				IsPacked:                values[8] == "1",
 				DynamicCommand:          values[9],
 				IsHide:                  values[10] == "1",
-				IsRoot:                  RelationMap[child].IsRoot,
+				IsRoot:                  RelationMap[child].IsRoot != 2,
 				Child:                   RelationMap[child].Child,
 			},
 			UUID:      RelationMap[child].UUID,
@@ -100,9 +105,8 @@ func handleRelation(data []byte, agent string) error {
 			Task_id:   taskID,
 			Category:  "memory_tree",
 		}
-
-		if RelationMap[child].IsRoot {
-			headData = data
+		if RelationMap[child].IsRoot != 2 {
+			headDataList = append(headDataList, data)
 			continue
 		}
 		// send details
@@ -113,9 +117,11 @@ func handleRelation(data []byte, agent string) error {
 	}
 	logger.Info("Send to elastic: " + agent)
 	// send head
-	err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", headData, "ed_mid")
-	if err != nil {
-		return err
+	for _, headData := range headDataList {
+		err = rabbitmq.ToRabbitMQ_Tree(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", headData, "ed_mid")
+		if err != nil {
+			return err
+		}
 	}
 	logger.Info("Send to elastic (head): " + agent)
 	// send finish signal
@@ -145,7 +151,7 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 		relation := Relation{
 			UUID:   uuid,
 			Name:   "",
-			IsRoot: false,
+			IsRoot: 0, // set as unknown root initially
 			Child:  []string{},
 		}
 		(*RelationMap)[ind] = relation
