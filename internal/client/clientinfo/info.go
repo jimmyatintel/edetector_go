@@ -29,6 +29,9 @@ func (c *ClientInfo) Load_data(data string) error {
 	c.FileVersion = data_splited[4]
 	c.BootTime = data_splited[5]
 	c.KeyNum = data_splited[6]
+	if !strings.Contains(c.OsInfo, "Windows") && !strings.Contains(c.OsInfo, "Ubuntu") {
+		return errors.New("incompatible OS:" + c.OsInfo)
+	}
 	return nil
 }
 
