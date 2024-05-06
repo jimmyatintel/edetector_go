@@ -37,7 +37,7 @@ func parser_init() {
 		panic(err)
 	}
 	if true {
-		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"), "dbparser", "DBPARSR")
+		logger.InitLogger(config.Viper.GetString("PARSER_LOG_FILE"), "dbparser", "DBPARSER")
 		logger.Info("logger is enabled please check all out info in log file: " + config.Viper.GetString("PARSER_LOG_FILE"))
 	}
 	connString, err := mariadb.Connect_init()
