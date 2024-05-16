@@ -1,28 +1,70 @@
 # eDetector Server Documentation
-Integrating with the agent for data reception, processing, and storage
+Integrating with agents for receiving, processing, and storing data.
 
-This repository contains four microservices:
+## Introduction
+
+**Task List**
+
+- 記憶體偵測：Scan
+- 記憶體掃描：DetectProcess & DetectNetwork
+- 記憶體樹：MemoryTree
+- 痕跡取證：Collection
+- 檔案總表：Explorer
+- 關鍵映像檔：KeyImage
+- YaraRule
+- 任務終止：Termination
+- Agent 更新：UpdateAgent
+- Agent 移除：RemoveAgent
+
+**Flow**
+
+1. Establish connections with services (MariaDB, Redis, RabbitMQ, and ElasticSearch), the API server, and agents
+2. Receive tasks from the API server
+3. Trigger agents with the tasks
+4. Process raw data from agents
+5. Make data available to users through the following methods:
+   - Directly insert or update data in ElasticSearch
+   - Send data to RabbitMQ and then to ElasticSearch
+   - Store data for user download (e.g. KeyImage)
+
+**Notion Documents**
+
+- [The flow, formats, and details of all tasks](https://www.notion.so/edetector/Working-Server-Functions-Doc-e4ea043d66b44ad484ee0b172281b7f2?pvs=4)
+- [Meaning of agent task status and progress](https://www.notion.so/edetector/Agent-Task-Status-Progress-Doc-421a1a2501b841ec93402d4d0a52d655?pvs=4)
+
+**Microservices**
+
+Please enable the following four microservices and ensure they run continuously to ensure the execution of tasks.
 
 1. **Working Server**<br />
-- Handle data from agents
-- Send memory data to RabbitMQ
+- Receive all tasks from the API server 
+- Receive and process raw data from agents
+- Send data of Scan, DetectProcess, DetectNetwork, and MemoryTree to RabbitMQ
+  - Calculate Risk score and level
+- Store Collection and Explorer files in "dbUstaged" and "fileUstaged" (They will used by other microservices)
+- Store KeyImage files
+- Update YaraRule information to the Explorer
 
 2. **DB Parser**<br />
-- Parse Collect database
-- Send Collect data to RabbitMQ
+- Parse Collection files in "dbUstaged"
+  - Use sqlite3 analyzer
+  - Transfer all time formats to Unix timestamp
+  - Insert data corresponding to their table names
+- Send Collection data to RabbitMQ
 
 3. **Tree Builder**<br />
-- Analyze relationships between files
+- Build Explorer Tree using files from "fileUnstage"
+  - Record relationships between files and find the root directory
+  - Traverse the tree to generate the full path for each file
 - Send Explorer data to RabbitMQ
 
 4. **Connector**<br />
-- Send data to Elasticsearch
-- 4 queues with different speed and tasks
+- Bulk Insert data to Elasticsearch
+  - Use four queues with different speeds and tasks
 
 ## Getting Started
 ### Requirements
 - Go Version: 1.20.8 linux/amd64
-- 
 
 ### Installation
 ```bash
@@ -98,13 +140,13 @@ Enhancements:
   - Use New format for matched rules
 - Check the OS of agents
 - Introduce the Linux(Ubuntu) agent
-  - Load different key image lists based on the OS
+  - Load different KeyImage lists based on the OS
   - Use .tar.gz for compressing and decompressing file
   - Use "Ubuntu" as file system type instead of "Linux"
 
 Fixed Bugs:
 - Check TaskID when receiving finish signals to avoid inconsistent finish signals
-- Show multiple sub roots in memory tree
+- Show multiple sub roots in MemoryTree
 
 ### 1.1.0 (2024/04/29)
 *Compatible Agent Version: Agent_1.0.9*
@@ -119,17 +161,17 @@ Enhancements:
 *Compatible Agent Version: Agent_1.0.8*
 
 New Tasks:
-- Memory Tree
-- Key Image (New version)
+- MemoryTree
+- KeyImage (New version)
 
 Enhancements:
-- Seamlessly replace data from the old to the new in the Collect and Explorer tasks
+- Seamlessly replace data from the old to the new in the Collection and Explorer tasks
   - Add a finished signal to the RabbitMQ publisher at the end of the task
   - Upon receiving the finished signal, delete all old data by specifying the taskID
 - Update the risk level function
   - Move the Hack List & VirusTotal check to the final stage to prevent its impact from being overwritten by other checks
 - Store raw database data on the server
-- Add new Collect tables
+- Add new Collection tables
   - Handle more various time formats
 - Control the number of agents
   - Add AGENT_LIMIT and TOTAL_AGENT_LIMIT env variables
@@ -150,7 +192,7 @@ Enhancements:
 - New task type (terminating, different error types)
 
 Fixed Bugs:
-- Error creating new detectNetwork process
+- Error creating new DetectNetwork process
 - Catch elastic response error
 - Fix bugs of blacklist
 - Fix online errors due to "NoKey" at the beginning.
@@ -162,8 +204,8 @@ Enhancements:
 - Introduce VirusTotal for network ip & process hash
   - Update riskScoure using VirusTotal
 - Introduce FAT32
-- Log the error when the scan crashes because of the agent
-- Implement better terminate method for builder/parser
+- Log the error when the Scan crashes because of the agent
+- Implement better Termination method for builder/parser
   - add new status "terminating"
 - Implement go unit test
 - Add RejectAgent TaskType
@@ -183,8 +225,8 @@ Working in progress:
 *Compatible Agent Version: Agent_1.0.4*
 
 Enhancements:
-- Add Collect table: wireless
-- Modify Collect table: process (add columns from the scan)
+- Add Collection table: wireless
+- Modify Collection table: process (add columns from Scan)
 - Introduce RemoveAgent
 - Introduce .tar.gz for linux agents
 - Introduce ip2location
@@ -204,25 +246,25 @@ Enhancements:
 
 Fixed Bugs:
 - GiveInfo steps: mySQL -> redis -> request
-- Change the finish timing of Collect
+- Change the finish timing of Collection
 
 ### 1.0.0 (2023/10/05)
 Finished tasks:
 - Handshake
-- Detect (memory & network)
+- DetectProcess & DetectNetwork
 - Scan (using zip files)
-- Collect
+- Collection
 - Explorer
 - Image (temporary version)
-- Agent update
-- Terminate
+- UpdateAgent
+- Termination
 - Graylog
 - Log system
 - White, black, and hack list (temporary version)
 
 Enhancements:
 - Introduce Mock agent
-  - Complete functions: Handshake, Detect, Scan, Collect, and Explorer
+  - Complete functions: Handshake, DetectProcess, DetectNetwork, Scan, Collection, and Explorer
   - Generate mock agents with random IDs, IPs, and MACs using go routine
 
 Fixed Bugs:
