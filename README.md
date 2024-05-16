@@ -3,7 +3,7 @@ Integrating with agents for receiving, processing, and storing data.
 
 ## Introduction
 
-**Task List**
+### Task List
 
 - 記憶體偵測：Scan
 - 記憶體掃描：DetectProcess & DetectNetwork
@@ -16,7 +16,7 @@ Integrating with agents for receiving, processing, and storing data.
 - Agent 更新：UpdateAgent
 - Agent 移除：RemoveAgent
 
-**Flow**
+### Flow
 
 1. Establish connections with services (MariaDB, Redis, RabbitMQ, and ElasticSearch), the API server, and agents
 2. Receive tasks from the API server
@@ -27,12 +27,13 @@ Integrating with agents for receiving, processing, and storing data.
    - Send data to RabbitMQ and then to ElasticSearch
    - Store data for user download (e.g. KeyImage)
 
-**Notion Documents**
+### Notion Documents
 
 - [The flow, formats, and details of all tasks](https://www.notion.so/edetector/Working-Server-Functions-Doc-e4ea043d66b44ad484ee0b172281b7f2?pvs=4)
 - [Meaning of agent task status and progress](https://www.notion.so/edetector/Agent-Task-Status-Progress-Doc-421a1a2501b841ec93402d4d0a52d655?pvs=4)
+- [Version Dependency with other services](https://www.notion.so/edetector/Version-Doc-27b63115e38f44d3afaf5fceb68c2eec?pvs=4)
 
-**Microservices**
+### Microservices
 
 Please enable the following four microservices and ensure they run continuously to ensure the execution of tasks.
 
@@ -62,28 +63,7 @@ Please enable the following four microservices and ensure they run continuously 
     - Bulk Insert data to Elasticsearch
       - Use four queues with different speeds and tasks
 
-## Getting Started
-### Requirements
-- Go Version: 1.20.8 linux/amd64
-
-### Installation
-```bash
-cd edetector_go
-go mod download
-```
-
-### Run the Services
-```bash
-go run cmd/server/working_server.go
-go run cmd/connector/connector.go
-go run cmd/builder/builder.go
-go run cmd/parser/parser.go
-```
-
-### Monitor Logs
-You can view service logs from the console, `./cmd/<service>/*.log`, and `/var/log/syslog`
-
-## Directory Structure
+### Directory Structure
   ```
   .
   ├── cmd                           # Entry point of the services
@@ -126,6 +106,27 @@ You can view service logs from the console, `./cmd/<service>/*.log`, and `/var/l
   │       └── yara.zip
   └── test                          # Files for go test
   ```
+
+## Getting Started
+### Requirements
+- Go Version: 1.20.8 linux/amd64
+
+### Installation
+```bash
+cd edetector_go
+go mod download
+```
+
+### Run the Services
+```bash
+go run cmd/server/working_server.go
+go run cmd/connector/connector.go
+go run cmd/builder/builder.go
+go run cmd/parser/parser.go
+```
+
+### Monitor Logs
+You can view service logs from the console, `./cmd/<service>/*.log`, and `/var/log/syslog`
 
 ## Version Documentation
 ### 1.1.1
