@@ -37,30 +37,30 @@ Integrating with agents for receiving, processing, and storing data.
 Please enable the following four microservices and ensure they run continuously to ensure the execution of tasks.
 
 1. **Working Server**<br />
-- Receive all tasks from the API server 
-- Receive and process raw data from agents
-- Send data of Scan, DetectProcess, DetectNetwork, and MemoryTree to RabbitMQ
-  - Calculate Risk score and level
-- Store Collection and Explorer files in "dbUstaged" and "fileUstaged" (They will used by other microservices)
-- Store KeyImage files
-- Update YaraRule information to the Explorer
+    - Receive all tasks from the API server 
+    - Receive and process raw data from agents
+    - Send data of Scan, DetectProcess, DetectNetwork, and MemoryTree to RabbitMQ
+      - Calculate Risk score and level
+    - Store Collection and Explorer files in "dbUstaged" and "fileUstaged" (They will used by other microservices)
+    - Store KeyImage files
+    - Update YaraRule information to the Explorer
 
 2. **DB Parser**<br />
-- Parse Collection files in "dbUstaged"
-  - Use sqlite3 analyzer
-  - Transfer all time formats to Unix timestamp
-  - Insert data corresponding to their table names
-- Send Collection data to RabbitMQ
+    - Parse Collection files in "dbUstaged"
+      - Use sqlite3 analyzer
+      - Transfer all time formats to Unix timestamp
+      - Insert data corresponding to their table names
+    - Send Collection data to RabbitMQ
 
 3. **Tree Builder**<br />
-- Build Explorer Tree using files from "fileUnstage"
-  - Record relationships between files and find the root directory
-  - Traverse the tree to generate the full path for each file
-- Send Explorer data to RabbitMQ
+    - Build Explorer Tree using files from "fileUnstage"
+      - Record relationships between files and find the root directory
+      - Traverse the tree to generate the full path for each file
+    - Send Explorer data to RabbitMQ
 
 4. **Connector**<br />
-- Bulk Insert data to Elasticsearch
-  - Use four queues with different speeds and tasks
+    - Bulk Insert data to Elasticsearch
+      - Use four queues with different speeds and tasks
 
 ## Getting Started
 ### Requirements
