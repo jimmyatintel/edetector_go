@@ -17,6 +17,7 @@ import (
 	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
+	"edetector_go/pkg/request"
 	"net"
 )
 
@@ -106,6 +107,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else if NewPacket.GetTaskType() == task.GIVE_DETECT_INFO_FIRST {
 			rq.Online(key)
 			redis.RedisSet_AddInteger("OnlineClientCount", 1)
+			request.RequestToUser(key)
 			logger.Info("add online clinet: " + key + "-" + fmt.Sprint(redis.RedisGetInt("OnlineClientCount")))
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
