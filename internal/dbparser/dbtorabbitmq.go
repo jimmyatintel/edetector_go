@@ -189,9 +189,8 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 		return err
 	}
 	uuid := uuid.NewString()
-	if item == "-1" {
-		item = "Empty table"
-		date = fmt.Sprint(time.Now().Unix())
+	if item == "-1" { // empty table -> not insert
+		return nil
 	} else if item == "-2" {
 		item = "Collecting Table Failed"
 		date = fmt.Sprint(time.Now().Unix())
