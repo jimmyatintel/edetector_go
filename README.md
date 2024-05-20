@@ -42,7 +42,7 @@ Please enable the following four microservices and ensure they run continuously 
     - Receive and process raw data from agents
     - Send data of Scan, DetectProcess, DetectNetwork, and MemoryTree to RabbitMQ
       - Calculate Risk score and level
-    - Store Collection and Explorer files in "dbUstaged" and "fileUstaged" (They will used by other microservices)
+    - Store Collection and Explorer files in "dbUstaged" and "fileUstaged" (They will be used by other microservices)
     - Store KeyImage files
     - Update YaraRule information to the Explorer
 
@@ -144,6 +144,7 @@ Enhancements:
   - Load different KeyImage lists based on the OS
   - Use .tar.gz for compressing and decompressing file
   - Use "Ubuntu" as file system type instead of "Linux"
+- Use the WebSocket for updating task status and agent connection status
 
 Fixed Bugs:
 - Check TaskID when receiving finish signals to avoid inconsistent finish signals

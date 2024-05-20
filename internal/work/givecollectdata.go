@@ -18,15 +18,8 @@ import (
 	"net"
 )
 
-var dbWorkingPath = "dbWorking"
-var dbUstagePath = "dbUnstage"
 var collectFirstPart float64
 var collectSecondPart float64
-
-func init() {
-	file.ClearDirContent(dbWorkingPath)
-	file.ClearDirContent(dbUstagePath)
-}
 
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
@@ -34,7 +27,7 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
-		collectSecondPart = 85 - collectFirstPart
+		collectSecondPart = float64(config.Viper.GetInt("COLLECT_SECOND_PART")) - collectFirstPart
 		go updateCollectProgress(key)
 	}
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)

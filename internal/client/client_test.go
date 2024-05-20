@@ -3,6 +3,7 @@ package client
 import (
 	"edetector_go/internal/client/clientinfo"
 	"edetector_go/internal/packet"
+	"errors"
 	"testing"
 )
 
@@ -10,10 +11,11 @@ func TestPacketClientInfo(t *testing.T) {
 	test := []struct {
 		p    packet.WorkPacket
 		want clientinfo.ClientInfo
+		err  error
 	}{
 		{
 			p: packet.WorkPacket{
-				Message: "x64|Windows 10 Home|MSI|SYSTEM|1.0.4,1988,1989|800291|3e716e2d61ba910983cb456817116799|0",
+				Message: "x64|@|Windows 10 Home|@|MSI|@|SYSTEM|@|1.0.4,1988,1989|@|800291|@|3e716e2d61ba910983cb456817116799|@|0",
 			},
 			want: clientinfo.ClientInfo{
 				SysInfo:      "x64",
@@ -24,24 +26,33 @@ func TestPacketClientInfo(t *testing.T) {
 				BootTime:     "800291",
 				KeyNum:       "3e716e2d61ba910983cb456817116799",
 			},
+			err: nil,
 		},
 		{
 			p: packet.WorkPacket{
-				Message: "x64|Windows 10 Home|MSI|SYSTEM|1.0.4,1988,1989",
+				Message: "x64|@|Windows 10 Home|@|MSI|@|SYSTEM|@|1.0.4,1988,1989",
 			},
 			want: clientinfo.ClientInfo{
-				SysInfo:      "x64",
-				OsInfo:       "Windows 10 Home",
-				ComputerName: "MSI",
-				UserName:     "SYSTEM",
-				FileVersion:  "1.0.4,1988,1989",
+				SysInfo:      "",
+				OsInfo:       "",
+				ComputerName: "",
+				UserName:     "",
+				FileVersion:  "",
 				BootTime:     "",
 				KeyNum:       "",
 			},
+			err: errors.New("error in GiveInfo format, version conflicted"),
 		},
 	}
 	for _, tt := range test {
-		if got, _ := PacketClientInfo(tt.p); got != tt.want {
+		got, err := PacketClientInfo(tt.p)
+		if err != nil {
+			if tt.err == nil {
+				t.Errorf("Unexpected error: " + err.Error())
+			} else if err.Error() != tt.err.Error() {
+				t.Errorf("Unexpected error: " + err.Error() + " want: " + tt.err.Error())
+			}
+		} else if got != tt.want {
 			t.Errorf("PacketClientInfo() = %v, want %v", got, tt.want)
 		}
 	}

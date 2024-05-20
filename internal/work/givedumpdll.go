@@ -13,14 +13,6 @@ import (
 	"strconv"
 )
 
-var dumpDllWorkingPath = "dumpDllWorking"
-var dumpDllUstagePath = "dumpDllUnstage"
-
-func init() {
-	file.ClearDirContent(dumpDllWorkingPath)
-	file.CheckDir(dumpDllUstagePath)
-}
-
 func GiveDumpDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveDumpDllInfo: " + key + "::" + p.GetMessage())
@@ -56,10 +48,15 @@ func GiveDumpDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveDumpDllEnd: " + key)
-	// move to unstage
 	workPath := filepath.Join(dumpDllWorkingPath, key)
-	unstagePath := filepath.Join(dumpDllUstagePath, key)
-	err := file.MoveFile(workPath, unstagePath)
+	unstagePath := filepath.Join(dumpDllUstagePath, key+".zip")
+	// truncate data
+	err := file.TruncateFile(workPath, redis.RedisGetInt(key+"-DumpDllTotal"))
+	if err != nil {
+		return task.FAIL, err
+	}
+	// move to unstage
+	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}

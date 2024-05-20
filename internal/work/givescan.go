@@ -22,15 +22,8 @@ import (
 	"github.com/google/uuid"
 )
 
-var scanWorkingPath = "scanWorking"
-var scanUstagePath = "scanUnstage"
 var scanFirstPart float64
 var scanSecondPart float64
-
-func init() {
-	file.ClearDirContent(scanWorkingPath)
-	file.CheckDir(scanUstagePath)
-}
 
 // new scan
 func ReadyScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {

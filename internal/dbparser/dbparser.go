@@ -17,8 +17,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var dbUnstagePath = "dbUnstage"
-var dbRawDataPath = "dbRawData"
+var dbUnstagePath = filepath.Join("static", "dbUnstage")
+var dbRawDataPath = filepath.Join("static", "dbRawData")
 var limit int
 var count int
 var cancelMap = map[string]context.CancelFunc{}

@@ -3,6 +3,7 @@ package dbparser
 import (
 	"database/sql"
 	"edetector_go/pkg/file"
+	"errors"
 	"testing"
 )
 
@@ -50,6 +51,7 @@ func TestDigitToTimestamp(t *testing.T) {
 		{"20230506", "1683331200"},
 		{"2023", "0"},
 		{"abc", "0"},
+		{"0", "0"},
 	}
 	for _, tt := range tests {
 		data := DigitToTimestamp(tt.value)
@@ -66,7 +68,7 @@ func TestGetTableNames(t *testing.T) {
 		err  error
 	}{
 		{"test/test.db", []string{"StartRun"}, nil},
-		{"test/bad.db", nil, sql.ErrNoRows},
+		{"test/bad.db", nil, errors.New("database disk image is malformed")},
 	}
 	for _, tt := range tests {
 		db, err := sql.Open("sqlite3", tt.db)
@@ -74,17 +76,21 @@ func TestGetTableNames(t *testing.T) {
 			t.Errorf("Error opening database file: " + err.Error())
 		}
 		data, err := getTableNames(db)
-		if err != nil && tt.err == nil {
-			t.Errorf("Unexpected error: " + err.Error())
-			continue
-		}
-		if len(data) != len(tt.want) {
-			t.Errorf("Failed: GetTableNames(%v) = %v, want %v", tt.db, data, tt.want)
-			continue
-		}
-		for i := 0; i < len(data); i++ {
-			if data[i] != tt.want[i] {
+		if err != nil {
+			if tt.err == nil {
+				t.Errorf("Unexpected error: " + err.Error())
+			} else if err.Error() != tt.err.Error() {
+				t.Errorf("Unexpected error: " + err.Error() + " want: " + tt.err.Error())
+			}
+		} else {
+			if len(data) != len(tt.want) {
 				t.Errorf("Failed: GetTableNames(%v) = %v, want %v", tt.db, data, tt.want)
+				continue
+			}
+			for i := 0; i < len(data); i++ {
+				if data[i] != tt.want[i] {
+					t.Errorf("Failed: GetTableNames(%v) = %v, want %v", tt.db, data, tt.want)
+				}
 			}
 		}
 	}

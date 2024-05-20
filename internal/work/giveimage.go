@@ -17,15 +17,8 @@ import (
 	"time"
 )
 
-var imageWorkingPath = "imageWorking"
-var imageFilePath = "ImageFile"
 var imageFirstPart float64
 var imageSecondPart float64
-
-func init() {
-	file.ClearDirContent(imageWorkingPath)
-	file.CheckDir(imageFilePath)
-}
 
 func GiveImageProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()

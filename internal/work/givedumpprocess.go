@@ -13,14 +13,6 @@ import (
 	"strconv"
 )
 
-var dumpProcessWorkingPath = "dumpProcessWorking"
-var dumpProcessUstagePath = "dumpProcessUnstage"
-
-func init() {
-	file.ClearDirContent(dumpProcessWorkingPath)
-	file.CheckDir(dumpProcessUstagePath)
-}
-
 func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveDumpProcessInfo: " + key + "::" + p.GetMessage())
@@ -38,7 +30,7 @@ func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 func GiveDumpProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveDumpProcess: " + key)
+	logger.Debug("GiveDumpProcessData: " + key)
 	// write file
 	path := filepath.Join(dumpProcessWorkingPath, key)
 	content := getDataPacketContent(p)
@@ -56,10 +48,15 @@ func GiveDumpProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveDumpProcessEnd: " + key)
-	// move to unstage
 	workPath := filepath.Join(dumpProcessWorkingPath, key)
-	unstagePath := filepath.Join(dumpProcessUstagePath, key)
-	err := file.MoveFile(workPath, unstagePath)
+	unstagePath := filepath.Join(dumpProcessUstagePath, key + ".zip")
+	// truncate data
+	err := file.TruncateFile(workPath, redis.RedisGetInt(key+"-DumpProcessTotal"))
+	if err != nil {
+		return task.FAIL, err
+	}
+	// move to unstage
+	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}

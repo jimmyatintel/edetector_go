@@ -13,14 +13,6 @@ import (
 	"strconv"
 )
 
-var memoryTreeWorkingPath = "memoryTreeWorking"
-var memoryTreeUstagePath = "memoryTreeUnstage"
-
-func init() {
-	file.ClearDirContent(memoryTreeWorkingPath)
-	file.CheckDir(memoryTreeUstagePath)
-}
-
 func GiveMemoryTreeInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveMemoryTreeInfo: " + key + "::" + p.GetMessage())

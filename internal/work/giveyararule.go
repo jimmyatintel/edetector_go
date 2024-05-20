@@ -17,16 +17,6 @@ import (
 	"time"
 )
 
-var ruleMatchWorkingPath = "ruleMatchWorking"
-var ruleMatchUnstage = "ruleMatchUnstage"
-var yaraRulePath = filepath.Join("static", "yaraRule")
-
-func init() {
-	file.ClearDirContent(ruleMatchWorkingPath)
-	file.CheckDir(ruleMatchUnstage)
-	file.CheckDir(yaraRulePath)
-}
-
 func ReadyYaraRule(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("ReadyYaraRule: " + key + "::" + p.GetMessage())

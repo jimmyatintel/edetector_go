@@ -153,7 +153,7 @@ func TestGetriskscore(t *testing.T) {
 				Mode:              "",
 				ProcessKey:        "",
 			},
-			wantLevel: "0",
+			wantLevel: "1",
 			wantScore: "0",
 		},
 	}

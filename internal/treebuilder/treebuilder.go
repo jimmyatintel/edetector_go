@@ -21,8 +21,8 @@ import (
 	"github.com/google/uuid"
 )
 
-var fileUnstagePath = "fileUnstage"
-var fileStagedPath = "fileStaged"
+var fileUnstagePath = filepath.Join("static", "fileUnstage")
+var fileStagedPath = filepath.Join("static", "fileStaged")
 var limit int
 var count int
 var cancelMap = map[string][]context.CancelFunc{}

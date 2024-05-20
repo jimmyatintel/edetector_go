@@ -5,14 +5,33 @@ import (
 	"edetector_go/internal/C_AES"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"path/filepath"
 
 	"net"
 )
 
 var WorkMap map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error)
+var scanWorkingPath = filepath.Join("static", "scanWorking")
+var scanUstagePath = filepath.Join("static", "scanUnstage")
+var memoryTreeWorkingPath = filepath.Join("static", "memoryTreeWorking")
+var memoryTreeUstagePath = filepath.Join("static", "memoryTreeUnstage")
+var dbWorkingPath = filepath.Join("static", "dbWorking")
+var dbUstagePath = filepath.Join("static", "dbUnstage")
+var fileWorkingPath = filepath.Join("static", "fileWorking")
+var fileUnstagePath = filepath.Join("static", "fileUnstage")
+var dumpDllWorkingPath = filepath.Join("static", "dumpDllWorking")
+var dumpDllUstagePath = filepath.Join("static", "dumpDllUnstage")
+var dumpProcessWorkingPath = filepath.Join("static", "dumpProcessWorking")
+var dumpProcessUstagePath = filepath.Join("static", "dumpProcessUnstage")
+var imageWorkingPath = filepath.Join("static", "imageWorking")
+var imageFilePath = filepath.Join("static", "ImageFile")
+var ruleMatchWorkingPath = filepath.Join("static", "ruleMatchWorking")
+var ruleMatchUnstage = filepath.Join("static", "ruleMatchUnstage")
+var yaraRulePath = filepath.Join("static", "yaraRule")
 
 func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
@@ -88,6 +107,23 @@ func init() {
 		task.GIVE_LOAD_DLL_DATA: GiveLoadDllData,
 		task.GIVE_LOAD_DLL_END:  GiveLoadDllEnd,
 	}
+	file.ClearDirContent(scanWorkingPath)
+	file.CheckDir(scanUstagePath)
+	file.ClearDirContent(memoryTreeWorkingPath)
+	file.CheckDir(memoryTreeUstagePath)
+	file.ClearDirContent(dbWorkingPath)
+	file.ClearDirContent(dbUstagePath)
+	file.ClearDirContent(fileWorkingPath)
+	file.ClearDirContent(fileUnstagePath)
+	file.ClearDirContent(dumpDllWorkingPath)
+	file.CheckDir(dumpDllUstagePath)
+	file.ClearDirContent(dumpProcessWorkingPath)
+	file.CheckDir(dumpProcessUstagePath)
+	file.ClearDirContent(imageWorkingPath)
+	file.CheckDir(imageFilePath)
+	file.ClearDirContent(ruleMatchWorkingPath)
+	file.CheckDir(ruleMatchUnstage)
+	file.CheckDir(yaraRulePath)
 }
 
 func getTaskMsg(key string, ttype string) string {
