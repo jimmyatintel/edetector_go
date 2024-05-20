@@ -71,11 +71,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			NewPacket = new(packet.DataPacket)
 			decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
 			C_AES.Decryptbuffer(Data_acache, len(Data_acache), decrypt_buf)
-			// rand := fmt.Sprint(rand.Intn(256))
-			// tmpPath := "test/encrypted_long_" + rand
-			// file.WriteFile(tmpPath, Data_acache)
-			// tmpPath = "test/decrypted_long_" + rand
-			// file.WriteFile(tmpPath, decrypt_buf)
 			err = NewPacket.NewPacket(decrypt_buf, Data_acache)
 			if err != nil {
 				logger.Error("Error reading: " + err.Error())

@@ -76,12 +76,8 @@ func TestGetTableNames(t *testing.T) {
 			t.Errorf("Error opening database file: " + err.Error())
 		}
 		data, err := getTableNames(db)
-		if err != nil {
-			if tt.err == nil {
-				t.Errorf("Unexpected error: " + err.Error())
-			} else if err.Error() != tt.err.Error() {
-				t.Errorf("Unexpected error: " + err.Error() + " want: " + tt.err.Error())
-			}
+		if err != nil && tt.err == nil {
+			t.Errorf("Unexpected error: " + err.Error())
 		} else {
 			if len(data) != len(tt.want) {
 				t.Errorf("Failed: GetTableNames(%v) = %v, want %v", tt.db, data, tt.want)

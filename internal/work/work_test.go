@@ -5,6 +5,7 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/mariadb"
 	"edetector_go/pkg/redis"
+	"errors"
 	"testing"
 )
 
@@ -36,6 +37,8 @@ func TestCheckVersion(t *testing.T) {
 		{"1.0.7", "1.0.7", false},
 		{"1.2.3", "1.0.7", false},
 		{"1.0.12", "1.0.7", false},
+		{"1.0.b", "1.0.0", true},
+		{"1.0.7", "1.0.a", true},
 	}
 
 	for _, tt := range test {
@@ -85,16 +88,20 @@ func TestGetProgressByMsg(t *testing.T) {
 		msg  string
 		max  float64
 		want int
+		err  error
 	}{
-		{"1/2", 50, 25},
-		{"100/1", 50, 50},
-		{"1/0", 50, 0},
-		{"", 0, 0},
-		{"0/b", 0, 0},
+		{"1/2", 50, 25, nil},
+		{"100/1", 50, 50, nil},
+		{"1/0", 50, 0, errors.New("error")},
+		{"", 0, 0, errors.New("error")},
+		{"0/b", 0, 0, errors.New("error")},
+		{"b/1", 0, 0, errors.New("error")},
 	}
 	for _, tt := range test {
-		data, _ := getProgressByMsg(tt.msg, tt.max)
-		if data != tt.want {
+		data, err := getProgressByMsg(tt.msg, tt.max)
+		if err != nil && tt.err == nil {
+			t.Errorf("Unexpected error: " + err.Error())
+		} else if data != tt.want {
 			t.Errorf("Failed: getProgressByMsg(%v, %v) = %v want %v", tt.msg, tt.max, data, tt.want)
 		}
 	}

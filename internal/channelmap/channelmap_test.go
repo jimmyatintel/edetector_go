@@ -25,24 +25,19 @@ func TestAssignDiskChannel(t *testing.T) {
 }
 
 func TestGetDiskChannel(t *testing.T) {
-	channel := make(chan string)
 	tests := []struct {
 		key       string
 		task_chan chan string
 		err       error
 	}{
-		{key: "no", task_chan: channel, err: errors.New("invalid key")},
+		{key: "no", task_chan: nil, err: errors.New("invalid key")},
 	}
 	for ind, tt := range tests {
 		channel, err := GetDiskChannel(tt.key)
-		if err != nil {
-			if tt.err == nil {
-				t.Errorf("Failed TestCase %v: GetDiskChannel", ind)
-			}
-		} else {
-			if channel != tt.task_chan {
-				t.Errorf("Failed TestCase %v: GetDiskChannel", ind)
-			}
+		if err != nil && tt.err == nil {
+			t.Errorf("Unexpected error: " + err.Error())
+		} else if channel != tt.task_chan {
+			t.Errorf("Failed TestCase %v: GetDiskChannel", ind)
 		}
 	}
 }

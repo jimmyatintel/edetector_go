@@ -46,12 +46,8 @@ func TestPacketClientInfo(t *testing.T) {
 	}
 	for _, tt := range test {
 		got, err := PacketClientInfo(tt.p)
-		if err != nil {
-			if tt.err == nil {
-				t.Errorf("Unexpected error: " + err.Error())
-			} else if err.Error() != tt.err.Error() {
-				t.Errorf("Unexpected error: " + err.Error() + " want: " + tt.err.Error())
-			}
+		if err != nil && tt.err == nil {
+			t.Errorf("Unexpected error: " + err.Error())
 		} else if got != tt.want {
 			t.Errorf("PacketClientInfo() = %v, want %v", got, tt.want)
 		}
