@@ -42,6 +42,11 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	return task.SUCCESS, nil
 }
 
+func CollectReady(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	logger.Info("CollectReady: " + p.GetRkey() + "::" + p.GetMessage())
+	return task.SUCCESS, nil
+}
+
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectDataInfo: " + key + "::" + p.GetMessage())

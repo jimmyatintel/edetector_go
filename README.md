@@ -88,19 +88,18 @@ Please enable the following four microservices and ensure they run continuously 
   │   ├── app.env
   │   ├── config.go
   │   └── container.yml
-  ├── dbRawData                     # Storage of finished DB files
-  ├── ImageFile                     # Storage of finished Image files
-  ├── *Staged                       # Files that have finished parsing
-  ├── *Unstage                      # Files that are parsing
-  ├── *Working                      # Files that are receiving data from agents
-  ├── docs                          # Deprecated version documents
   ├── go.mod
   ├── go.sum
   ├── internal                      # Private library code
   ├── pkg                           # Public library code
   ├── README.md
   ├── static
-  │   └── IP2LOCATION-LITE-DB5.BIN  # IP2LOCATION reference
+  |   ├── dbRawData                     # Storage of finished DB files
+  |   ├── ImageFile                     # Storage of finished Image files
+  |   ├── *Staged                       # Files that have finished parsing
+  |   ├── *Unstage                      # Files that are parsing
+  |   ├── *Working                      # Files that are receiving data from agents
+  │   ├── IP2LOCATION-LITE-DB5.BIN  # IP2LOCATION reference
   │   └── yaraRule                  # Files for YaraRule task
   │       ├── yaraNew.zip
   │       └── yara.zip
@@ -145,6 +144,8 @@ Enhancements:
   - Use .tar.gz for compressing and decompressing file
   - Use "Ubuntu" as file system type instead of "Linux"
 - Use the WebSocket for updating task status and agent connection status
+- Move "working", "unstage", and "staged" directories to the static directory
+- Use "COLLECT_READY" and "IMAGE_ERROR" functions to detect crash
 
 Fixed Bugs:
 - Check TaskID when receiving finish signals to avoid inconsistent finish signals

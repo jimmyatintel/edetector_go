@@ -9,6 +9,7 @@ import (
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -106,6 +107,10 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	query.Finish_task(key, "StartGetImage")
 	return task.SUCCESS, nil
+}
+
+func ImageError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	return task.FAIL, errors.New("receive ImageError")
 }
 
 func updateImageProgress(key string) {

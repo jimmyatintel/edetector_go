@@ -67,6 +67,7 @@ func init() {
 
 		// collection
 		task.GIVE_COLLECT_PROGRESS:   GiveCollectProgress,
+		task.COLLECT_READY:           CollectReady,
 		task.GIVE_COLLECT_DATA_INFO:  GiveCollectDataInfo,
 		task.GIVE_COLLECT_DATA:       GiveCollectData,
 		task.GIVE_COLLECT_DATA_END:   GiveCollectDataEnd,
@@ -77,6 +78,7 @@ func init() {
 		task.GIVE_IMAGE_INFO:     GiveImageInfo,
 		task.GIVE_IMAGE:          GiveImage,
 		task.GIVE_IMAGE_END:      GiveImageEnd,
+		task.IMAGE_ERROR:         ImageError,
 
 		// rule match
 		task.GIVE_RULE_MATCH_INFO: GiveRuleMatchInfo,

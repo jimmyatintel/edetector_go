@@ -46,6 +46,7 @@ const (
 	// new collection
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
 	GIVE_COLLECT_PROGRESS   TaskType = "GiveCollectProgress"
+	COLLECT_READY           TaskType = "CollectReady"
 	GIVE_COLLECT_DATA_INFO  TaskType = "GiveCollectDataInfo"
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
@@ -61,6 +62,7 @@ const (
 	GIVE_IMAGE_INFO      TaskType = "GiveImageInfo"
 	GIVE_IMAGE           TaskType = "GiveImage"
 	GIVE_IMAGE_END       TaskType = "GiveImageEnd"
+	IMAGE_ERROR          TaskType = "ImageError"
 
 	// update
 	UPDATE_AGENT       TaskType = "UpdateAgent"
@@ -164,6 +166,7 @@ var Worklist = []TaskType{
 	GIVE_EXPLORER_ERROR,
 	GET_COLLECT_INFO,
 	GIVE_COLLECT_PROGRESS,
+	COLLECT_READY,
 	GIVE_COLLECT_DATA_INFO,
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
@@ -174,6 +177,7 @@ var Worklist = []TaskType{
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,
+	IMAGE_ERROR,
 	GIVE_IMAGE_PATH_INFO,
 	GIVE_IMAGE_PATH,
 	GIVE_IMAGE_PATH_END,
