@@ -546,5 +546,8 @@ func TarDir(srcPath string, dstPath string) error {
 	}
 	// remove the source directory
 	err = os.RemoveAll(srcPath)
+	if err != nil {
+		return err
+	}
 	return nil
 }
