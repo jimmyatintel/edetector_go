@@ -305,46 +305,30 @@ outerloop:
 	return nil
 }
 
-func ZipFile(srcPath string, dstPath string) error {
-	// create a zip file
-	zipFile, err := os.Create(dstPath)
+func DecompressionDir(srcPath string, dstPath string) error {
+	file, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
-	defer zipFile.Close()
-	// create a zip writer
-	zipWriter := zip.NewWriter(zipFile)
-	defer zipWriter.Close()
-	// open the source file for reading
-	srcFile, err := os.Open(srcPath)
+	defer file.Close()
+	var firstByte [1]byte
+	_, err = file.Read(firstByte[:])
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
-	// get the file information
-	info, err := srcFile.Stat()
-	if err != nil {
-		return err
+	if firstByte[0] == 'P' {
+		err = UnZipDir(srcPath, dstPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = UnTarGz(srcPath, dstPath)
+		if err != nil {
+			return err
+		}
 	}
-	// get the file header
-	header, err := zip.FileInfoHeader(info)
-	if err != nil {
-		return err
-	}
-	// change to deflate to gain better compression
-	header.Method = zip.Deflate
-	// create a writer for the file header
-	writer, err := zipWriter.CreateHeader(header)
-	if err != nil {
-		return err
-	}
-	// copy the file data to the zip writer
-	_, err = io.Copy(writer, srcFile)
-	if err != nil {
-		return err
-	}
-	// flush the zip writer
-	err = zipWriter.Flush()
+	// remove the original file
+	err = os.Remove(srcPath)
 	if err != nil {
 		return err
 	}
@@ -357,34 +341,155 @@ func UnZipDir(zipPath string, dstPath string) error {
 	if err != nil {
 		return err
 	}
+	defer reader.Close()
 	// extract the files from the zip archive
 	for _, file := range reader.File {
+		dstFilePath := filepath.Join(dstPath, file.Name)
 		if !file.FileInfo().IsDir() {
+			// open the source file
 			srcFile, err := file.Open()
 			if err != nil {
 				return err
 			}
+			defer srcFile.Close()
 			// create the directory for the file
-			err = os.MkdirAll(filepath.Dir(filepath.Join(dstPath, file.Name)), 0755)
+			err = os.MkdirAll(filepath.Dir(dstFilePath), 0755)
 			if err != nil {
 				return err
 			}
-			dstFile, err := os.Create(filepath.Join(dstPath, file.Name))
+			// create the destination file
+			dstFile, err := os.Create(dstFilePath)
 			if err != nil {
 				return err
 			}
+			defer dstFile.Close()
+
+			// copy the contents of the file
 			_, err = io.Copy(dstFile, srcFile)
 			if err != nil {
 				return err
 			}
-			dstFile.Close()
-			srcFile.Close()
 		} else {
-			err = errors.New("the zip file contains a directory")
-			return err
+			// create directories if it is a directory
+			err = os.MkdirAll(dstFilePath, 0755)
+			if err != nil {
+				return err
+			}
 		}
 	}
-	reader.Close()
+	return nil
+}
+
+func UnTarGz(tarGzPath string, dstPath string) error {
+	// open the tar.gz file for reading
+	file, err := os.Open(tarGzPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	// create a gzip reader
+	gzr, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+	// create a tar reader
+	tr := tar.NewReader(gzr)
+	// extract the files from the tar archive
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break // end of archive
+		}
+		if err != nil {
+			return err
+		}
+		dstFilePath := filepath.Join(dstPath, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			// create directory if it is a directory
+			if err := os.MkdirAll(dstFilePath, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			// create the directory for the file
+			if err := os.MkdirAll(filepath.Dir(dstFilePath), 0755); err != nil {
+				return err
+			}
+			// create the destination file
+			dstFile, err := os.Create(dstFilePath)
+			if err != nil {
+				return err
+			}
+			defer dstFile.Close()
+			// copy the contents of the file
+			if _, err := io.Copy(dstFile, tr); err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("unsupported file type: %v", header.Typeflag)
+		}
+	}
+	return nil
+}
+
+func ZipDir(srcPath string, dstPath string) error {
+	// create the destination zip file
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+	// create a zip.Writer
+	zw := zip.NewWriter(dstFile)
+	defer zw.Close()
+	// walk through all files and subdirectories in the source directory
+	err = filepath.Walk(srcPath, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// create a zip file header information
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		// modify the file name in the zip header to be a relative path
+		relPath, err := filepath.Rel(srcPath, filePath)
+		if err != nil {
+			return err
+		}
+		header.Name = relPath
+		// for directories, add a trailing slash to the name
+		if info.IsDir() {
+			header.Name += "/"
+		}
+		// write the zip file header information
+		writer, err := zw.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		// if it's a file, write the file content to the zip file
+		if !info.IsDir() {
+			file, err := os.Open(filePath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			if _, err := io.Copy(writer, file); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	// remove the source directory
+	err = os.RemoveAll(srcPath)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

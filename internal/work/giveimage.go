@@ -11,7 +11,6 @@ import (
 	"edetector_go/pkg/redis"
 	"errors"
 	"net"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,10 +24,14 @@ func GiveImageProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	key := p.GetRkey()
 	logger.Info("GiveImageProgress: " + key + "::" + p.GetMessage())
 	// update progress
-	if strings.Split(p.GetMessage(), "/")[0] == "1" {
+	if strings.Split(p.GetMessage(), "/")[0] == "1" { // the first
 		imageFirstPart = float64(config.Viper.GetInt("IMAGE_FIRST_PART"))
-		imageSecondPart = 100 - imageFirstPart
+		// imageSecondPart = 100 - imageFirstPart
 		redis.RedisSet(key+"-ImageProgress", 0)
+		err := file.ClearDirContent(filepath.Join(imageWorkingPath, key)) // clear or create imageWorking directory for the agent
+		if err != nil {
+			return task.FAIL, err
+		}
 		go updateImageProgress(key)
 	}
 	progress, err := getProgressByMsg(p.GetMessage(), imageFirstPart)
@@ -52,9 +55,9 @@ func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	redis.RedisSet(key+"-ImageTotal", total)
-	redis.RedisSet(key+"-ImageCount", 0)
+	// redis.RedisSet(key+"-ImageCount", 0)
 	// create or truncate the zip file
-	path := filepath.Join(imageWorkingPath, p.GetRkey())
+	path := filepath.Join(imageWorkingPath, key+".zip")
 	err = file.CreateFile(path)
 	if err != nil {
 		return task.FAIL, err
@@ -70,16 +73,16 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveImage: " + key)
 	// write file
-	path := filepath.Join(imageWorkingPath, key)
+	path := filepath.Join(imageWorkingPath, key+".zip")
 	content := getDataPacketContent(p)
 	err := file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}
 	// update progress
-	redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
-	progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, imageSecondPart)
-	redis.RedisSet(key+"-ImageProgress", progress)
+	// redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
+	// progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, imageSecondPart)
+	// redis.RedisSet(key+"-ImageProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
@@ -90,14 +93,15 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageEnd: " + key + "::" + p.GetMessage())
-	srcPath := filepath.Join(imageWorkingPath, key)
+	srcPath := filepath.Join(imageWorkingPath, key+".zip")
+	dstPath := filepath.Join(imageWorkingPath, key)
 	// truncate data
 	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ImageTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
-	// store the ImageFile
-	err = storeImageFile(key, srcPath)
+	// decompress the file and move to the imageWorkingPath/key
+	err = file.DecompressionDir(srcPath, dstPath)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -106,6 +110,29 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	query.Finish_task(key, "StartGetImage")
+	return task.SUCCESS, nil
+}
+
+func FinishImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("FinishImage: " + key)
+	ip, _, err := query.GetMachineIPandName(key)
+	if err != nil {
+		return task.FAIL, err
+	}
+	time := time.Now().Format("2006_0102_150405")
+	// clear all the content of the directory
+	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
+	if err != nil {
+		return task.FAIL, err
+	}
+	// zip the file and move to ImagePath
+	srcPath := filepath.Join(imageWorkingPath, key)
+	dstPath := filepath.Join(imageFilePath, ip, (("Obtained_" + time + "_" + getTaskMsg(key, "StartGetImage")) + ".zip"))
+	err = file.ZipDir(srcPath, dstPath)
+	if err != nil {
+		return task.FAIL, err
+	}
 	return task.SUCCESS, nil
 }
 
@@ -126,48 +153,4 @@ func updateImageProgress(key string) {
 		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
-}
-
-func storeImageFile(key string, srcPath string) error {
-	extension, err := getExtension(srcPath)
-	if err != nil {
-		return err
-	}
-	ip, _, err := query.GetMachineIPandName(key)
-	if err != nil {
-		return err
-	}
-	time := time.Now().Format("2006_0102_150405")
-	imageType := getTaskMsg(key, "StartGetImage")
-	// clear all the content of the directory
-	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
-	if err != nil {
-		return err
-	}
-	// move to ImagePath
-	dstPath := filepath.Join(imageFilePath, ip, (("Obtained_" + time + "_" + imageType) + extension))
-	err = file.MoveFile(srcPath, dstPath)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func getExtension(path string) (string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	// check the extension type
-	var firstByte [1]byte
-	_, err = f.Read(firstByte[:])
-	if err != nil {
-		return "", err
-	}
-	extension := ".tar.gz"
-	if firstByte[0] == 'P' {
-		extension = ".zip"
-	}
-	return extension, nil
 }

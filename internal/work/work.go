@@ -78,6 +78,7 @@ func init() {
 		task.GIVE_IMAGE_INFO:     GiveImageInfo,
 		task.GIVE_IMAGE:          GiveImage,
 		task.GIVE_IMAGE_END:      GiveImageEnd,
+		task.FINISH_IMAGE:        FinishImage,
 		task.IMAGE_ERROR:         ImageError,
 
 		// rule match

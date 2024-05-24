@@ -62,6 +62,7 @@ const (
 	GIVE_IMAGE_INFO      TaskType = "GiveImageInfo"
 	GIVE_IMAGE           TaskType = "GiveImage"
 	GIVE_IMAGE_END       TaskType = "GiveImageEnd"
+	FINISH_IMAGE         TaskType = "FinishImage"
 	IMAGE_ERROR          TaskType = "ImageError"
 
 	// update
@@ -177,6 +178,7 @@ var Worklist = []TaskType{
 	GIVE_IMAGE_INFO,
 	GIVE_IMAGE,
 	GIVE_IMAGE_END,
+	FINISH_IMAGE,
 	IMAGE_ERROR,
 	GIVE_IMAGE_PATH_INFO,
 	GIVE_IMAGE_PATH,
