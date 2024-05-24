@@ -56,11 +56,4 @@ func Addmachine(ClientInfo clientinfo.ClientInfo) {
 	if err != nil {
 		logger.Error("Error add client_setting: " + err.Error())
 	}
-	_, err = method.Exec(
-		"INSERT INTO client_permission_group (client_id, pgroup_id) VALUE (?,1) ON DUPLICATE KEY UPDATE client_id = ?",
-		ClientInfo.KeyNum, ClientInfo.KeyNum,
-	)
-	if err != nil {
-		logger.Error("Error add client_permission_group: " + err.Error())
-	}
 }

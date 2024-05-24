@@ -146,6 +146,7 @@ Enhancements:
 - Use the WebSocket for updating task status and agent connection status
 - Move "working", "unstage", and "staged" directories to the static directory
 - Use "COLLECT_READY" and "IMAGE_ERROR" functions to detect crash
+- Remove "client_permission_group"
 
 Fixed Bugs:
 - Check TaskID when receiving finish signals to avoid inconsistent finish signals
