@@ -4,7 +4,6 @@ import (
 	"edetector_go/config"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/mariadb"
-	"edetector_go/pkg/redis"
 	"errors"
 	"testing"
 )
@@ -19,9 +18,6 @@ func init() {
 	}
 	_, err = mariadb.Connect_init()
 	if err != nil {
-		panic(err)
-	}
-	if db := redis.Redis_init(); db == nil {
 		panic(err)
 	}
 }

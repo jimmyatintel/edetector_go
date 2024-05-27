@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"edetector_go/config"
 	"edetector_go/internal/packet"
@@ -13,7 +15,6 @@ import (
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 
@@ -25,7 +26,7 @@ type TaskRequest struct {
 	TaskID string `json:"taskID"`
 }
 
-type TaskResponse struct {
+type Response struct {
 	IsSuccess bool   `json:"isSuccess"`
 	Message   string `json:"message"`
 }
@@ -48,6 +49,9 @@ func Start(ctx context.Context) {
 	router.POST("/listscore/:type", func(c *gin.Context) {
 		ReceiveUpdateLists(c, ctx)
 	})
+	router.POST("/yara", func(c *gin.Context) {
+		ReceiveYara(c, ctx)
+	})
 	router.Run(":5055")
 }
 
@@ -55,7 +59,7 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Invalid request format: " + err.Error())
-		res := TaskResponse{
+		res := Response{
 			IsSuccess: false,
 			Message:   "Invalid request format",
 		}
@@ -63,7 +67,7 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 	go handleTaskrequest(ctx, req.TaskID)
-	res := TaskResponse{
+	res := Response{
 		IsSuccess: true,
 		Message:   "Success",
 	}
@@ -138,7 +142,7 @@ func ReceiveUpdateLists(c *gin.Context, ctx context.Context) {
 		ErrorResponse(c, nil, "Invalid list type")
 		return
 	}
-	res := TaskResponse{
+	res := Response{
 		IsSuccess: true,
 		Message:   "Success",
 	}
@@ -155,7 +159,7 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 }
 
 func DeleteAgentData(key string) {
-	mq.DeleteAgent(key)
+	query.DeleteAgent(key)
 	redisData := redis.GetKeysMatchingPattern(key + "*")
 	for _, r := range redisData {
 		err := redis.RedisDelete(r)
@@ -163,4 +167,44 @@ func DeleteAgentData(key string) {
 			logger.Error("Error deleting data from redis: " + err.Error())
 		}
 	}
+}
+
+func ReceiveYara(c *gin.Context, ctx context.Context) {
+	file, handler, err := c.Request.FormFile("file")
+	if err != nil {
+		logger.Error("Error getting file: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No file provided"})
+		return
+	}
+	defer file.Close()
+	// save the file
+	err = saveFile(file, handler)
+	if err != nil {
+		logger.Error("Error saving file: " + err.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	res := Response{
+		IsSuccess: true,
+		Message:   "Success",
+	}
+	c.JSON(http.StatusOK, res)
+	logger.Info("Updated yara rule file")
+}
+
+func saveFile(file multipart.File, handler *multipart.FileHeader) error {
+	// save file to the yaraRule folder
+	path := filepath.Join("static", "yaraRule.zip")
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, file); err != nil {
+		return err
+	}
+	defer f.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }
