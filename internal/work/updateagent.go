@@ -4,12 +4,14 @@ import (
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
 	"math"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"net"
 )
@@ -35,7 +37,19 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 }
 
 func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Conn) {
-	content, err := os.ReadFile(path)
+	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
+
+	// zip the file if the zipped file doesn't exist
+	if !file.FileExists(zippedPath) {
+		err := file.ZipFile(path, zippedPath)
+		if err != nil {
+			logger.Error("Zip file error: " + err.Error())
+			query.Failed_task(p.GetRkey(), "StartUpdate", 6)
+			return
+		}
+	}
+
+	content, err := os.ReadFile(zippedPath)
 	if err != nil {
 		logger.Error("Read file error: " + err.Error())
 		query.Failed_task(p.GetRkey(), "StartUpdate", 6)
