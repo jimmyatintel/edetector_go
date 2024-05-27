@@ -140,12 +140,13 @@ func storeImageFile(key string, srcPath string) error {
 	time := time.Now().Format("2006_0102_150405")
 	imageType := getTaskMsg(key, "StartGetImage")
 	// clear all the content of the directory
-	err = file.ClearDirContent(filepath.Join(imageFilePath, ip))
+	dirPath := filepath.Join(imageFilePath, ip+"_"+key)
+	err = file.ClearDirContent(dirPath)
 	if err != nil {
 		return err
 	}
 	// move to ImagePath
-	dstPath := filepath.Join(imageFilePath, ip, (("Obtained_" + time + "_" + imageType) + extension))
+	dstPath := filepath.Join(dirPath, (("Obtained_" + time + "_" + imageType) + extension))
 	err = file.MoveFile(srcPath, dstPath)
 	if err != nil {
 		return err
