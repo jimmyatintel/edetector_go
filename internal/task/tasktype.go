@@ -51,6 +51,7 @@ const (
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+	FINISH_COLLECT          TaskType = "FinishCollect"
 
 	// image
 	GET_IMAGE            TaskType = "GetImage"
@@ -172,6 +173,7 @@ var Worklist = []TaskType{
 	GIVE_COLLECT_DATA,
 	GIVE_COLLECT_DATA_END,
 	GIVE_COLLECT_DATA_ERROR,
+	FINISH_COLLECT,
 	GET_IMAGE,
 	READY_IMAGE,
 	GIVE_IMAGE_PROGRESS,

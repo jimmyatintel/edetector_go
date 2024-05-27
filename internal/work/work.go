@@ -72,6 +72,7 @@ func init() {
 		task.GIVE_COLLECT_DATA:       GiveCollectData,
 		task.GIVE_COLLECT_DATA_END:   GiveCollectDataEnd,
 		task.GIVE_COLLECT_DATA_ERROR: GiveCollectDataError,
+		task.FINISH_COLLECT:          FinishCollect,
 
 		// image
 		task.GIVE_IMAGE_PROGRESS: GiveImageProgress,

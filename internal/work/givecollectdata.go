@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"net"
+
+	"github.com/google/uuid"
 )
 
 var collectFirstPart float64
@@ -28,6 +30,8 @@ func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
 		collectSecondPart = float64(config.Viper.GetInt("COLLECT_SECOND_PART")) - collectFirstPart
+		redis.RedisSet(p.GetRkey()+"-CollectTransferFinish", 0)
+		redis.RedisSet(p.GetRkey()+"-CollectUnstagedCount", 0)
 		go updateCollectProgress(key)
 	}
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
@@ -81,9 +85,9 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	// update progress
-	redis.RedisSet_AddInteger((key + "-CollectCount"), 1)
-	progress := int(collectFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 65436, collectSecondPart)
-	redis.RedisSet(key+"-CollectProgress", progress)
+	// redis.RedisSet_AddInteger((key + "-CollectCount"), 1)
+	// progress := int(collectFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 65436, collectSecondPart)
+	// redis.RedisSet(key+"-CollectProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
@@ -93,11 +97,12 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
+	taskID := query.Load_task_id(key, "StartCollect", 2)
 	logger.Info("GiveCollectDataEnd: " + key + "::" + p.GetMessage())
 
 	srcPath := filepath.Join(dbWorkingPath, key)
 	workPath := filepath.Join(dbWorkingPath, key+".db")
-	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
+	unstagePath := filepath.Join(dbUstagePath, (key + "." + taskID + "." + uuid.NewString() + ".db"))
 	// unzip data
 	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-CollectTotal"))
 	if err != nil {
@@ -108,6 +113,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	if err != nil {
 		return task.FAIL, err
 	}
+	redis.RedisSet_AddInteger(key+"-CollectUnstagedCount", 1)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
@@ -122,6 +128,20 @@ func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, erro
 		return task.FAIL, err
 	}
 	return task.FAIL, errors.New(p.GetMessage())
+}
+
+func FinishCollect(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	key := p.GetRkey()
+	logger.Info("FinishCollect: " + key)
+	// update progress
+	redis.RedisSet(key+"-CollectProgress", collectSecondPart)
+	// finish data transfer
+	redis.RedisSet(key+"-CollectTransferFinish", 1)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
 }
 
 func updateCollectProgress(key string) {

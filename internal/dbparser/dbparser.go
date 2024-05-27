@@ -11,6 +11,7 @@ import (
 	mariadbquery "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -71,7 +72,20 @@ func Main(version string) {
 	go terminateCollect()
 	for {
 		if count < limit {
-			dbFile, agent, _ := file.GetOldestFile(dbUnstagePath, ".db")
+			dbFile, agent, taskID := file.GetOldestFile(dbUnstagePath, ".db")
+			result, err := mariadbquery.Load_stored_task(taskID, "nil", -1, "nil")
+			if err != nil {
+				logger.Error("Error loading stored task: " + err.Error())
+				continue
+			}
+			if !(len(result) == 1 && result[0][2] == "2") {
+				logger.Warn("Task is not in handling status: " + taskID + ", agent:" + agent)
+				err = os.Remove(dbFile)
+				if err != nil {
+					logger.Error("Error deleting file: " + dbFile + ", " + err.Error())
+				}
+				continue
+			}
 			count++
 			ctx, cancel := context.WithCancel(context.Background())
 			cancelMap[agent] = cancel
@@ -134,11 +148,14 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		}
 	}
 	clearParser(db, dbFile, agent)
-	err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low_collect")
-	if err != nil {
-		logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
-		mariadbquery.Failed_task(agent, "StartCollect", 6)
-		return
+	redis.RedisSet_AddInteger(agent+"-CollectUnstagedCount", -1)
+	if redis.RedisGetInt(agent+"-CollectUnstagedCount") == 0 && redis.RedisGetInt(agent+"-CollectTransferFinish") == 1 {
+		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartCollect", "ed_low_collect")
+		if err != nil {
+			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
+			mariadbquery.Failed_task(agent, "StartCollect", 6)
+			return
+		}
 	}
 	logger.Info("DB parser task finished: " + agent)
 }
