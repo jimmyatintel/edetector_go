@@ -112,6 +112,11 @@ Please enable the following four microservices and ensure they run continuously 
 
 ### Installation
 ```bash
+wget https://go.dev/dl/go1.20.2.linux-amd64.tar.gz
+sudo tar -xvf go1.20.2.linux-amd64.tar.gz
+sudo mv go /usr/local
+sudo rm go1.20.2.linux-amd64.tar.gz
+sudo apt-get install build-essential
 cd edetector_go
 go mod download
 ```

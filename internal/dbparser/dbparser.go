@@ -110,6 +110,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		return
 	}
 	logger.Info("Open db file: " + dbFile)
+	mariadbquery.Clear_fail_table(agent)
 	tableNames, err := getTableNames(db)
 	if err != nil {
 		logger.Error("Error getting table names (" + agent + "): " + err.Error())
