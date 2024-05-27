@@ -1,5 +1,9 @@
 image: golang:1.20
 
+variables:
+  # Define your environment variables here
+  IP2LOCATION_PATH: "static/IP2LOCATION-LITE-DB5.BIN"
+
 before_script:
   - go get -v -d ./...  
 
