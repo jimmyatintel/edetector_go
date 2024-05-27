@@ -111,15 +111,27 @@ Please enable the following four microservices and ensure they run continuously 
 - Go Version: 1.20.8 linux/amd64
 
 ### Installation
-```bash
-wget https://go.dev/dl/go1.20.2.linux-amd64.tar.gz
-sudo tar -xvf go1.20.2.linux-amd64.tar.gz
-sudo mv go /usr/local
-sudo rm go1.20.2.linux-amd64.tar.gz
-sudo apt-get install build-essential
-cd edetector_go
-go mod download
-```
+- Go installed
+  ```bash
+  wget https://go.dev/dl/go1.20.2.linux-amd64.tar.gz
+  sudo tar -xvf go1.20.2.linux-amd64.tar.gz
+  sudo mv go /usr/local
+  sudo rm go1.20.2.linux-amd64.tar.gz
+  sudo apt-get install build-essential
+  cd edetector_go
+  go mod download
+  ```
+
+- rsyslog installed and enabling tcp input
+  ```bash
+  # open config file
+  sudo vim /etc/rsyslog.conf
+  # uncomment the lines below
+  module(load="imtcp")
+  input(type="imtcp" port="514")
+  # restart rsyslog service
+  sudo service rsyslog restart
+  ```
 
 ### Run the Services
 ```bash
