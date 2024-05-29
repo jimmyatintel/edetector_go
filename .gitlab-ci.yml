@@ -15,7 +15,9 @@ stages:
 unit:
   stage: unit_test
   script:
-    - go test -v ./... # -tags=unit
+    - go test -v ./...
+  tags:
+    - unit
 
 # integration:
 #   stage: integration_test
