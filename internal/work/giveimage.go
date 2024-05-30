@@ -110,7 +110,18 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 }
 
 func ImageError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
-	return task.FAIL, errors.New("receive ImageError")
+	logger.Info("ImageError: " + p.GetRkey() + "::" + p.GetMessage())
+
+	// set task status in mariadb to 0
+	rowAffected := query.Update_task_status(p.GetRkey(), "StartGetImage", 2, 0)
+	if rowAffected > 0 {
+		logger.Info("ImageError: " + p.GetRkey() + "::" + "Update task status to 0 to retry")
+	} else {
+		logger.Error("ImageError: " + p.GetRkey() + "::" + "Update task status failed")
+		return task.FAIL, errors.New("update task status failed")
+	}
+
+	return task.SUCCESS, nil
 }
 
 func updateImageProgress(key string) {
