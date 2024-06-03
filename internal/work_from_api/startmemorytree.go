@@ -15,39 +15,3 @@ func StartMemoryTree(p packet.UserPacket) (task.TaskResult, error) {
 	}
 	return task.SUCCESS, nil
 }
-
-func StartLoadDll(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartLoadDll: " + p.GetRkey())
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_LOAD_DLL, p.GetMessage())
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func StartDumpDll(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpDll: " + p.GetRkey())
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_DLL, p.GetMessage())
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func StartDumpProcess(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpProcess: " + p.GetRkey())
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_PROCESS, p.GetMessage())
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}
-
-func StartDumpDrive(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpDrive: " + p.GetRkey())
-	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_DRIVE, p.GetMessage())
-	if err != nil {
-		return task.FAIL, err
-	}
-	return task.SUCCESS, nil
-}

@@ -6,6 +6,7 @@ import (
 	"edetector_go/internal/channelmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
+	"edetector_go/pkg/mariadb/query"
 	"strings"
 
 	"net"
@@ -66,6 +67,23 @@ func SendDataTCPtoClient(p packet.Packet, worktype task.TaskType, msg []byte, co
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func SendUserTCPtoClientUsingKey(key string, workType task.TaskType, msg string) error {
+	ip := query.GetMachineIP(key)
+	mac := query.GetMachineMAC(key)
+	var send_packet = packet.WorkPacket{
+		MacAddress: mac,
+		IpAddress:  ip,
+		Work:       workType,
+		Message:    msg,
+	}
+	task_chan, err := channelmap.GetTaskChannel(key)
+	if err != nil {
+		return err
+	}
+	task_chan <- &send_packet
 	return nil
 }
 

@@ -129,6 +129,9 @@ func GetFileSize(path string) (int, error) {
 }
 
 func TruncateFile(path string, realLen int) error {
+	if realLen < 0 {
+		return nil
+	}
 	fileLen, err := GetFileSize(path)
 	if err != nil {
 		return err

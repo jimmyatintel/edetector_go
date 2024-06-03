@@ -43,9 +43,9 @@ func Start(ctx context.Context) {
 	router.RedirectFixedPath = true
 	router.Use(cors.New(corsConfig))
 	router.Use(logger.GinLog())
-	// router.POST("/sendDumpTask", func(c *gin.Context) {
-	// 	ReceiveDumpTask(c, ctx)
-	// })
+	router.POST("/sendLoadDumpTask", func(c *gin.Context) {
+		ReceiveLoadDumpTask(c, ctx)
+	})
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
@@ -58,8 +58,33 @@ func Start(ctx context.Context) {
 	router.Run(":5055")
 }
 
-// func ReceiveDumpTask(c *gin.Context, ctx context.Context) {
+func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
+	var req packet.TaskPacket
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("Invalid request format: " + err.Error())
+		res := Response{
+			IsSuccess: false,
+			Message:   "Invalid request format",
+		}
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+	// get the []byte from the packet
+	content := req.Fluent()
+	NewPacket := new(packet.TaskPacket)
+	err := NewPacket.NewPacket(content)
+	if err != nil {
+		logger.Error("Error reading task packet: " + err.Error())
+		res := Response{
+			IsSuccess: false,
+			Message:   "Error reading task packet",
+		}
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
 
+	// c.File("static/dump/" + req.TaskID + ".zip")
+}
 
 func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest

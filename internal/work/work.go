@@ -128,6 +128,8 @@ func init() {
 	file.CheckDir(dumpDllUstagePath)
 	file.ClearDirContent(dumpProcessWorkingPath)
 	file.CheckDir(dumpProcessUstagePath)
+	file.ClearDirContent(dumpDriveWorkingPath)
+	file.CheckDir(dumpDriveUstagePath)
 	file.ClearDirContent(imageWorkingPath)
 	file.CheckDir(imageFilePath)
 	file.ClearDirContent(ruleMatchWorkingPath)
