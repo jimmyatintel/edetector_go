@@ -21,8 +21,18 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 	logger.Info("ReadyUpdateAgent: " + key)
 	version := getTaskMsg(key, "StartUpdate")
 	path := filepath.Join("static", "agent", "Agent_"+version+".exe")
-	logger.Info("Update agent using: " + path)
-	fileInfo, err := os.Stat(path)
+	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
+	// zip the file if the zipped file doesn't exist
+	if !file.FileExists(zippedPath) {
+		err := file.ZipFile(path, zippedPath)
+		if err != nil {
+			logger.Error("Zip file error: " + err.Error())
+			query.Failed_task(p.GetRkey(), "StartUpdate", 6)
+			return task.FAIL, err
+		}
+	}
+	logger.Info("Update agent using: " + zippedPath)
+	fileInfo, err := os.Stat(zippedPath)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -32,24 +42,12 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 	if err != nil {
 		return task.FAIL, err
 	}
-	go GiveUpdate(p, fileLen, path, dataRight)
+	go GiveUpdate(p, fileLen, zippedPath, dataRight)
 	return task.SUCCESS, nil
 }
 
 func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Conn) {
-	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
-
-	// zip the file if the zipped file doesn't exist
-	if !file.FileExists(zippedPath) {
-		err := file.ZipFile(path, zippedPath)
-		if err != nil {
-			logger.Error("Zip file error: " + err.Error())
-			query.Failed_task(p.GetRkey(), "StartUpdate", 6)
-			return
-		}
-	}
-
-	content, err := os.ReadFile(zippedPath)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		logger.Error("Read file error: " + err.Error())
 		query.Failed_task(p.GetRkey(), "StartUpdate", 6)
