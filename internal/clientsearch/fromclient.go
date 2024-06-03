@@ -46,6 +46,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Invalid packet (too short): " + string(buf[:reqLen]))
 			continue
 		}
+		agentCount, err := redis.RedisGetInt("OnlineClientCount")
+		if err != nil {
+			logger.Error("Error getting online client count: " + err.Error())
+			continue
+		}
 		Data_acache := make([]byte, 0)
 		Data_acache = append(Data_acache, buf[:reqLen]...)
 		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
@@ -94,7 +99,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO &&
-			(redis.RedisGetInt("OnlineClientCount") >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
+			(agentCount >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
 			close(closeConn)
@@ -103,9 +108,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			rq.Online(key)
 			redis.RedisSet_AddInteger("OnlineClientCount", 1)
 			request.RequestToUser(key)
-			logger.Info("add online clinet: " + key + "-" + fmt.Sprint(redis.RedisGetInt("OnlineClientCount")))
+			logger.Info("add online clinet: " + key + "-" + fmt.Sprint(agentCount))
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
+			redis.RedisSet(key+"-RetryCount", 0)
 			go func() {
 				for {
 					select {
@@ -188,10 +194,28 @@ func handleUDPRequest(addr net.Addr, buf []byte) {
 
 // To-Do (TBD)
 func connectionClosedByAgent(key string, agentTaskType string, lastTask string, err error) {
-	logger.Warn("Connection close: " + string(key) + "|" + agentTaskType + ", Error: " + err.Error())
+	logger.Warn("Connection close: " + key + "|" + agentTaskType + ", Error: " + err.Error())
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
-		logger.Error("Scan failed: " + string(key))
+		logger.Error("Scan failed: " + key)
 		mq.Update_task_status(key, agentTaskType, 2, 0)
+	} else if agentTaskType == "StartCollect" && (lastTask == "GiveCollectDataInfo" || lastTask == "GiveCollectData") {
+		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_COLLECT)
+		if err != nil {
+			logger.Error("ResendCollect failed: " + err.Error())
+			mq.Failed_task(key, agentTaskType, 7)
+		}
+	} else if agentTaskType == "StartGetDrive" && (lastTask == "GiveExplorerInfo" || lastTask == "GiveExplorerData") {
+		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_DRIVE)
+		if err != nil {
+			logger.Error("ResendDrive failed: " + err.Error())
+			mq.Failed_task(key, agentTaskType, 7)
+		}
+	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageInfo" || lastTask == "GiveImageData") {
+		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_IMAGE)
+		if err != nil {
+			logger.Error("ResendImage failed: " + err.Error())
+			mq.Failed_task(key, agentTaskType, 7)
+		}
 	} else if agentTaskType == "Main" {
 		removeTasks, err := mq.Load_stored_task("nil", key, 2, "StartRemove")
 		if err != nil {
@@ -206,6 +230,5 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		if !strings.Contains(lastTask, "End") {
 			mq.Failed_task(key, agentTaskType, 7)
 		}
-
 	}
 }

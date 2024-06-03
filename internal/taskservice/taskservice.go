@@ -3,17 +3,19 @@ package taskservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"os"
 
 	"edetector_go/config"
+	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/packet"
+	"edetector_go/internal/task"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb/query"
-	mq "edetector_go/pkg/mariadb/query"
 	"edetector_go/pkg/redis"
 	rq "edetector_go/pkg/redis/query"
 
@@ -155,7 +157,7 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 }
 
 func DeleteAgentData(key string) {
-	mq.DeleteAgent(key)
+	query.DeleteAgent(key)
 	redisData := redis.GetKeysMatchingPattern(key + "*")
 	for _, r := range redisData {
 		err := redis.RedisDelete(r)
@@ -163,4 +165,50 @@ func DeleteAgentData(key string) {
 			logger.Error("Error deleting data from redis: " + err.Error())
 		}
 	}
+}
+
+func RetryTask(key string, tasktype string, retryTask task.TaskType) error {
+	// get retry count from radis
+	retryCount, err := redis.RedisGetInt(key + "-RetryCount")
+	if err != nil {
+		logger.Error("Get retry count failed: " + err.Error())
+		query.Failed_task(key, tasktype, 7)
+		// reset retry count
+		redisErr := redis.RedisSet(key+"-RetryCount", 0)
+		if redisErr != nil {
+			logger.Error("Reset retry count failed: " + redisErr.Error())
+			return redisErr
+		}
+		return err
+	}
+	if retryCount >= config.Viper.GetInt("RETRY_COUNT") {
+		query.Failed_task(key, tasktype, 7)
+		// reset retry count
+		redisErr := redis.RedisSet(key+"-RetryCount", 0)
+		if redisErr != nil {
+			logger.Error("Reset retry count failed: " + redisErr.Error())
+			return redisErr
+		}
+		return errors.New("retry count is over")
+	}
+
+	// get agent ip and mac from mariaDB
+	ip := query.GetMachineIP(key)
+	mac := query.GetMachineMAC(key)
+
+	// send ResendCollect task to agent
+	err = clientsearchsend.SendUserTCPtoClientWithoutP(ip, mac, retryTask, "")
+	if err != nil {
+		logger.Error("Send ResendCollect task failed: " + err.Error())
+		return err
+	}
+
+	// update retry count
+	err = redis.RedisSet_AddInteger((key + "-RetryCount"), 1)
+	if err != nil {
+		logger.Error("Update retry count failed: " + err.Error())
+		return err
+	}
+
+	return nil
 }
