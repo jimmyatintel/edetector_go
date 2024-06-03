@@ -19,7 +19,7 @@ func init() {
 		COLLECT_READY:         "StartCollect",
 
 		READY_IMAGE: "StartGetImage",
-		IMAGE_ERROR: "StartGetImage",
+		// IMAGE_ERROR: "StartGetImage",
 
 		READY_UPDATE_AGENT: "StartUpdate",
 

@@ -42,6 +42,7 @@ const (
 	GIVE_EXPLORER_DATA     TaskType = "GiveExplorerData"
 	GIVE_EXPLORER_END      TaskType = "GiveExplorerEnd"
 	GIVE_EXPLORER_ERROR    TaskType = "GiveExplorerError"
+	RESEND_DRIVE           TaskType = "ResendDrive"
 
 	// new collection
 	GET_COLLECT_INFO        TaskType = "GetCollectInfo"
@@ -51,6 +52,7 @@ const (
 	GIVE_COLLECT_DATA       TaskType = "GiveCollectData"
 	GIVE_COLLECT_DATA_END   TaskType = "GiveCollectDataEnd"
 	GIVE_COLLECT_DATA_ERROR TaskType = "GiveCollectDataError"
+	RESEND_COLLECT          TaskType = "ResendCollect"
 
 	// image
 	GET_IMAGE            TaskType = "GetImage"
@@ -63,6 +65,7 @@ const (
 	GIVE_IMAGE           TaskType = "GiveImage"
 	GIVE_IMAGE_END       TaskType = "GiveImageEnd"
 	IMAGE_ERROR          TaskType = "ImageError"
+	RESEND_IMAGE         TaskType = "ResendImage"
 
 	// update
 	UPDATE_AGENT       TaskType = "UpdateAgent"
