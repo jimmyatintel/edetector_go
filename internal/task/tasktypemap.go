@@ -31,6 +31,7 @@ func init() {
 		GIVE_DUMP_DLL_INFO:     "StartDumpDll",
 		GIVE_DUMP_PROCESS_INFO: "StartDumpProcess",
 		GIVE_LOAD_DLL_DATA:     "StartLoadDll",
+		GIVE_DUMP_DRIVE_INFO:   "StartDumpDrive",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{
@@ -46,6 +47,7 @@ func init() {
 		START_LOAD_DLL:     "StartLoadDll",
 		START_DUMP_DLL:     "StartDumpDll",
 		START_DUMP_PROCESS: "StartDumpProcess",
+		START_DUMP_DRIVE:   "StartDumpDrive",
 		TERMINATE:          "Terminate",
 	}
 }

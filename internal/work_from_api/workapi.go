@@ -21,6 +21,7 @@ func init() {
 		task.START_LOAD_DLL:     StartLoadDll,
 		task.START_DUMP_DLL:     StartDumpDll,
 		task.START_DUMP_PROCESS: StartDumpProcess,
+		task.START_DUMP_DRIVE:   StartDumpDrive,
 		task.START_YARA_RULE:    StartYaraRule,
 		task.TERMINATE:          Terminate,
 	}

@@ -43,6 +43,9 @@ func Start(ctx context.Context) {
 	router.RedirectFixedPath = true
 	router.Use(cors.New(corsConfig))
 	router.Use(logger.GinLog())
+	// router.POST("/sendDumpTask", func(c *gin.Context) {
+	// 	ReceiveDumpTask(c, ctx)
+	// })
 	router.POST("/sendTask", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
@@ -54,6 +57,9 @@ func Start(ctx context.Context) {
 	})
 	router.Run(":5055")
 }
+
+// func ReceiveDumpTask(c *gin.Context, ctx context.Context) {
+
 
 func ReceiveTask(c *gin.Context, ctx context.Context) {
 	var req TaskRequest

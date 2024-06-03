@@ -42,3 +42,12 @@ func StartDumpProcess(p packet.UserPacket) (task.TaskResult, error) {
 	}
 	return task.SUCCESS, nil
 }
+
+func StartDumpDrive(p packet.UserPacket) (task.TaskResult, error) {
+	logger.Info("StartDumpDrive: " + p.GetRkey())
+	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_DRIVE, p.GetMessage())
+	if err != nil {
+		return task.FAIL, err
+	}
+	return task.SUCCESS, nil
+}

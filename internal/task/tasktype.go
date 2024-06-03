@@ -116,6 +116,12 @@ const (
 	GIVE_LOAD_DLL_DATA TaskType = "GiveLoadDllData"
 	GIVE_LOAD_DLL_END  TaskType = "GiveLoadDllEnd"
 
+	// dump drive
+	GET_DUMP_DRIVE       TaskType = "GetDumpDrive"
+	GIVE_DUMP_DRIVE_INFO TaskType = "GiveDumpDriveInfo"
+	GIVE_DUMP_DRIVE_DATA TaskType = "GiveDumpDriveData"
+	GIVE_DUMP_DRIVE_END  TaskType = "GiveDumpDriveEnd"
+
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
 	START_SCAN              UserTaskType = "StartScan"
@@ -132,6 +138,7 @@ const (
 	START_LOAD_DLL          UserTaskType = "StartLoadDll"
 	START_DUMP_DLL          UserTaskType = "StartDumpDll"
 	START_DUMP_PROCESS      UserTaskType = "StartDumpProcess"
+	START_DUMP_DRIVE        UserTaskType = "StartDumpDrive"
 	USER_UNDEFINE           UserTaskType = "Undefine"
 )
 
@@ -217,6 +224,10 @@ var Worklist = []TaskType{
 	GET_LOAD_DLL,
 	GIVE_LOAD_DLL_DATA,
 	GIVE_LOAD_DLL_END,
+	GET_DUMP_DRIVE,
+	GIVE_DUMP_DRIVE_INFO,
+	GIVE_DUMP_DRIVE_DATA,
+	GIVE_DUMP_DRIVE_END,
 }
 
 var UserWorklist = []UserTaskType{
@@ -233,6 +244,7 @@ var UserWorklist = []UserTaskType{
 	START_LOAD_DLL,
 	START_DUMP_DLL,
 	START_DUMP_PROCESS,
+	START_DUMP_DRIVE,
 	START_YARA_RULE,
 	TERMINATE,
 	USER_UNDEFINE,
