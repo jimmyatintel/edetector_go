@@ -136,6 +136,10 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	err = redis.RedisSet(key+"-RetryCount", 0)
+	if err != nil {
+		return task.FAIL, err
+	}
 	return task.SUCCESS, nil
 }
 

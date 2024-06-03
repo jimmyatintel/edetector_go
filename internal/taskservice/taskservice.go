@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -181,7 +182,7 @@ func RetryTask(key string, tasktype string, retryTask task.TaskType) error {
 		}
 		return err
 	}
-	if retryCount >= config.Viper.GetInt("RETRY_COUNT") {
+	if retryCount >= config.Viper.GetInt("MAX_RETRY_COUNT") {
 		query.Failed_task(key, tasktype, 7)
 		// reset retry count
 		redisErr := redis.RedisSet(key+"-RetryCount", 0)
@@ -189,7 +190,7 @@ func RetryTask(key string, tasktype string, retryTask task.TaskType) error {
 			logger.Error("Reset retry count failed: " + redisErr.Error())
 			return redisErr
 		}
-		return errors.New("retry count is over")
+		return errors.New("retry count is over, max=" + fmt.Sprint(config.Viper.GetInt("RETRY_COUNT")) + ", now=" + fmt.Sprint(retryCount))
 	}
 
 	// get agent ip and mac from mariaDB
@@ -197,7 +198,7 @@ func RetryTask(key string, tasktype string, retryTask task.TaskType) error {
 	mac := query.GetMachineMAC(key)
 
 	// send ResendCollect task to agent
-	err = clientsearchsend.SendUserTCPtoClientWithoutP(ip, mac, retryTask, "")
+	err = clientsearchsend.SendUserTCPtoClientWithoutP(key, ip, mac, retryTask, "")
 	if err != nil {
 		logger.Error("Send ResendCollect task failed: " + err.Error())
 		return err

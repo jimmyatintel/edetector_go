@@ -75,6 +75,10 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+	err = redis.RedisSet(key+"-RetryCount", 0)
+	if err != nil {
+		return task.FAIL, err
+	}
 	query.Finish_task(p.GetRkey(), "StartYaraRule")
 	return task.SUCCESS, nil
 }

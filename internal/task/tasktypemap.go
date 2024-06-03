@@ -15,8 +15,7 @@ func init() {
 
 		EXPLORER: "StartGetDrive",
 
-		GIVE_COLLECT_PROGRESS: "CollectProgress",
-		COLLECT_READY:         "StartCollect",
+		COLLECT_READY: "StartCollect",
 
 		READY_IMAGE: "StartGetImage",
 		// IMAGE_ERROR: "StartGetImage",

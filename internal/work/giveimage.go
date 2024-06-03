@@ -118,6 +118,10 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	query.Finish_task(key, "StartGetImage")
+	err = redis.RedisSet(key+"-RetryCount", 0)
+	if err != nil {
+		return task.FAIL, err
+	}
 	return task.SUCCESS, nil
 }
 

@@ -90,6 +90,7 @@ const (
 	GIVE_RULE_MATCH      TaskType = "GiveRuleMatch"
 	GIVE_RULE_MATCH_END  TaskType = "GiveRuleMatchEnd"
 	GIVE_YARA_PROGRESS   TaskType = "GiveYaraProgress"
+	RESEND_YAYA          TaskType = "ResendYara"
 
 	// terminate
 	TERMINATE_ALL    TaskType = "TerminateAll"

@@ -84,14 +84,14 @@ func SendUserTCPtoClient(p packet.UserPacket, workType task.TaskType, msg string
 	return nil
 }
 
-func SendUserTCPtoClientWithoutP(ip string, mac string, workType task.TaskType, msg string) error {
+func SendUserTCPtoClientWithoutP(key string, ip string, mac string, workType task.TaskType, msg string) error {
 	var send_packet = packet.WorkPacket{
 		MacAddress: mac,
 		IpAddress:  ip,
 		Work:       workType,
 		Message:    msg,
 	}
-	task_chan, err := channelmap.GetTaskChannel(mac)
+	task_chan, err := channelmap.GetTaskChannel(key)
 	if err != nil {
 		return err
 	}

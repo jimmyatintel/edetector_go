@@ -198,22 +198,28 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 	if agentTaskType == "StartScan" && lastTask == "ReadyScan" {
 		logger.Error("Scan failed: " + key)
 		mq.Update_task_status(key, agentTaskType, 2, 0)
-	} else if agentTaskType == "StartCollect" && (lastTask == "GiveCollectDataInfo" || lastTask == "GiveCollectData") {
+	} else if agentTaskType == "StartCollect" && (lastTask == "GiveCollectProgress" || lastTask == "GiveCollectDataInfo" || lastTask == "GiveCollectData") {
 		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_COLLECT)
 		if err != nil {
 			logger.Error("ResendCollect failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
-	} else if agentTaskType == "StartGetDrive" && (lastTask == "GiveExplorerInfo" || lastTask == "GiveExplorerData") {
+	} else if agentTaskType == "StartGetDrive" && (lastTask == "GiveExplorerProgress" || lastTask == "GiveExplorerInfo" || lastTask == "GiveExplorerData") {
 		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_DRIVE)
 		if err != nil {
 			logger.Error("ResendDrive failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
-	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageInfo" || lastTask == "GiveImageData") {
+	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageProgress" || lastTask == "GiveImageInfo" || lastTask == "GiveImageData") {
 		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_IMAGE)
 		if err != nil {
 			logger.Error("ResendImage failed: " + err.Error())
+			mq.Failed_task(key, agentTaskType, 7)
+		}
+	} else if agentTaskType == "StartYaraRule" && (lastTask == "GiveYaraProgress" || lastTask == "GiveRuleMatchInfo" || lastTask == "GiveRuleMatch") {
+		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_YAYA)
+		if err != nil {
+			logger.Error("ResendYara failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "Main" {
