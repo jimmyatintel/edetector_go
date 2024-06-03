@@ -51,7 +51,11 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	workPath := filepath.Join(dumpDllWorkingPath, key)
 	unstagePath := filepath.Join(dumpDllUstagePath, key+".zip")
 	// truncate data
-	err := file.TruncateFile(workPath, redis.RedisGetInt(key+"-DumpDllTotal"))
+	dumpDllTotal, err := redis.RedisGetInt(key + "-DumpDllTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = file.TruncateFile(workPath, dumpDllTotal)
 	if err != nil {
 		return task.FAIL, err
 	}

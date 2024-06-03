@@ -49,9 +49,13 @@ func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	key := p.GetRkey()
 	logger.Info("GiveDumpProcessEnd: " + key)
 	workPath := filepath.Join(dumpProcessWorkingPath, key)
-	unstagePath := filepath.Join(dumpProcessUstagePath, key + ".zip")
+	unstagePath := filepath.Join(dumpProcessUstagePath, key+".zip")
 	// truncate data
-	err := file.TruncateFile(workPath, redis.RedisGetInt(key+"-DumpProcessTotal"))
+	dumpProcessTotal, err := redis.RedisGetInt(key + "-DumpProcessTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = file.TruncateFile(workPath, dumpProcessTotal)
 	if err != nil {
 		return task.FAIL, err
 	}

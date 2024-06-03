@@ -85,7 +85,17 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
-	progress := int(explorerFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 65426, explorerSecondPart)
+
+	explorerCount, err := redis.RedisGetInt(key + "-ExplorerCount")
+	if err != nil {
+		return task.FAIL, err
+	}
+	explorerTotal, err := redis.RedisGetInt(key + "-ExplorerTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+
+	progress := int(explorerFirstPart) + getProgressByCount(explorerCount, explorerTotal, 65426, explorerSecondPart)
 	redis.RedisSet(key+"-ExplorerProgress", progress)
 
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
@@ -103,8 +113,12 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	srcPath := filepath.Join(fileWorkingPath, filename)
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
+	explorerTotal, err := redis.RedisGetInt(key + "-ExplorerTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
 	// unzip data
-	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
+	err = file.DecompressionFile(srcPath, workPath, explorerTotal)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -144,7 +158,23 @@ func updateDriveProgress(key string) {
 		if len(result) == 0 {
 			return
 		}
-		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
+		driveCount, err := redis.RedisGetInt(key + "-DriveCount")
+		if err != nil {
+			logger.Error("Get drive count failed: " + err.Error())
+			return
+		}
+		driveTotal, err := redis.RedisGetInt(key + "-DriveTotal")
+		if err != nil {
+			logger.Error("Get drive total failed: " + err.Error())
+			return
+		}
+		explorerProgress, err := redis.RedisGetInt(key + "-ExplorerProgress")
+		if err != nil {
+			logger.Error("Get explorer progress failed: " + err.Error())
+			return
+		}
+
+		driveProgress := int((float64(driveCount)/float64(driveTotal))*100 + float64(explorerProgress)/float64(driveTotal))
 		query.Update_progress(driveProgress, key, "StartGetDrive")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}

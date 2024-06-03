@@ -106,7 +106,12 @@ func updateYaraRuleProgress(key string) {
 		if len(result) == 0 {
 			return
 		}
-		query.Update_progress(redis.RedisGetInt(key+"-YaraProgress"), key, "StartYaraRule")
+		yaraProgress, err := redis.RedisGetInt(key + "-YaraProgress")
+		if err != nil {
+			logger.Error("Get YaraProgress failed: " + err.Error())
+			return
+		}
+		query.Update_progress(yaraProgress, key, "StartYaraRule")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

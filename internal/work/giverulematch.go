@@ -54,7 +54,11 @@ func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveRuleMatchEnd: " + key)
 	srcPath := filepath.Join(ruleMatchWorkingPath, key)
-	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
+	ruleMatchTotal, err := redis.RedisGetInt(key + "-RuleMatchTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+	err = file.TruncateFile(srcPath, ruleMatchTotal)
 	if err != nil {
 		return task.FAIL, err
 	}

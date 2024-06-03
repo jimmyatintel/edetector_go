@@ -290,7 +290,13 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	clearBuilder(agent, diskInfo, explorerFile)
 	redis.RedisSet_AddInteger(agent+"-DriveUnfinished", -1)
-	if redis.RedisGetInt(agent+"-DriveUnfinished") == 0 { // last drive -> send finish signal
+	driveUnfinished, err := redis.RedisGetInt(agent + "-DriveUnfinished")
+	if err != nil {
+		logger.Error("Error getting drive unfinished (" + agent + "): " + err.Error())
+		mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+		return
+	}
+	if driveUnfinished == 0 { // last drive -> send finish signal
 		err = rabbitmq.ToRabbitMQ_FinishSignal(agent, "StartGetDrive", "ed_low_explorer")
 		if err != nil {
 			logger.Error("Error sending finish signal to rabbitMQ (" + agent + "): " + err.Error())
