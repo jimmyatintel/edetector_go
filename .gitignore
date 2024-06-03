@@ -7,6 +7,6 @@
 heap*
 cmd/test.go
 static
-!static/IP2LOCATION-LITE-DB5.BIN.txt
+!static/IP2LOCATION-LITE-DB5.BIN
 cover.html
 cover.out

@@ -9,7 +9,6 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -191,9 +190,9 @@ func toRabbitMQ(index string, agent string, values []string, item string, date s
 	uuid := uuid.NewString()
 	if item == "-1" { // empty table -> not insert
 		return nil
-	} else if item == "-2" {
-		item = "Collecting Table Failed"
-		date = fmt.Sprint(time.Now().Unix())
+	} else if item == "-2" { // failed table -> update mariadb
+		query.Add_fail_table(agent, category)
+		return nil
 	}
 	err = rabbitmq.ToRabbitMQ_Details(index, st, sub_st, values, uuid, agent, ip, name, item, date, ttype, etc, "ed_low_collect", "StartCollect", taskID, category)
 	if err != nil {

@@ -25,6 +25,8 @@ var fileWorkingPath = filepath.Join("static", "fileWorking")
 var fileUnstagePath = filepath.Join("static", "fileUnstage")
 var dumpDllWorkingPath = filepath.Join("static", "dumpDllWorking")
 var dumpDllUstagePath = filepath.Join("static", "dumpDllUnstage")
+var dumpDriveWorkingPath = filepath.Join("static", "dumpDriveWorking")
+var dumpDriveUstagePath = filepath.Join("static", "dumpDriveUnstage")
 var dumpProcessWorkingPath = filepath.Join("static", "dumpProcessWorking")
 var dumpProcessUstagePath = filepath.Join("static", "dumpProcessUnstage")
 var imageWorkingPath = filepath.Join("static", "imageWorking")
@@ -104,6 +106,11 @@ func init() {
 		task.GIVE_DUMP_PROCESS_INFO: GiveDumpProcessInfo,
 		task.GIVE_DUMP_PROCESS_DATA: GiveDumpProcessData,
 		task.GIVE_DUMP_PROCESS_END:  GiveDumpProcessEnd,
+
+		// dump drive
+		task.GIVE_DUMP_DRIVE_INFO: GiveDumpDriveInfo,
+		task.GIVE_DUMP_DRIVE_DATA: GiveDumpDriveData,
+		task.GIVE_DUMP_DRIVE_END:  GiveDumpDriveEnd,
 
 		// load dll
 		task.GIVE_LOAD_DLL_DATA: GiveLoadDllData,

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"database/sql"
 	elaDelete "edetector_go/pkg/elastic/delete"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/mariadb"
@@ -121,6 +122,35 @@ func Update_task_timestamp(clientid string, tasktype string) {
 	if err != nil {
 		logger.Error("Error Update_task_timestamp: " + err.Error())
 	}
+}
+
+func Clear_fail_table(clientid string) {
+	_, err := mariadb.DB.Exec("UPDATE client_task_status SET collect_fail_table = NULL WHERE client_id = ?", clientid)
+	if err != nil {
+		logger.Error("Error Clear_fail_table: " + err.Error())
+	}
+}
+
+func Add_fail_table(clientid string, tableName string) error {
+	// select current failed tables
+	var currentFailTable sql.NullString
+	res, err := mariadb.DB.Query("SELECT collect_fail_table FROM client_task_status WHERE client_id = ?", clientid)
+	if err != nil {
+		return err
+	}
+	defer res.Close()
+	for res.Next() {
+		err := res.Scan(&currentFailTable)
+		if err != nil {
+			return err
+		}
+	}
+	if currentFailTable.Valid { // not NULL
+		tableName = currentFailTable.String + "|" + tableName
+	}
+	// update failed table
+	_, err = mariadb.DB.Exec("UPDATE client_task_status SET collect_fail_table = ? WHERE client_id = ?", tableName, clientid)
+	return err
 }
 
 func Finish_task(clientid string, tasktype string) {

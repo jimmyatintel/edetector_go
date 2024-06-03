@@ -110,6 +110,7 @@ func dbParser(ctx context.Context, dbFile string, agent string) {
 		return
 	}
 	logger.Info("Open db file: " + dbFile)
+	mariadbquery.Clear_fail_table(agent)
 	tableNames, err := getTableNames(db)
 	if err != nil {
 		logger.Error("Error getting table names (" + agent + "): " + err.Error())
@@ -174,7 +175,7 @@ func clearParser(db *sql.DB, dbFile string, agent string) {
 		logger.Error("Error getting machine ip and name: " + err.Error())
 		return
 	}
-	rawDataPath := filepath.Join(dbRawDataPath, ip+"_"+time+".db")
+	rawDataPath := filepath.Join(dbRawDataPath, ip+"_"+time+"_"+agent+".db")
 	err = file.MoveFile(dbFile, rawDataPath)
 	if err != nil {
 		logger.Error("Error copying file to RawData (" + agent + "): " + err.Error())
