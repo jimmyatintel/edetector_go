@@ -210,7 +210,7 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			logger.Error("ResendDrive failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
-	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageProgress" || lastTask == "GiveImageInfo" || lastTask == "GiveImageData") {
+	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageProgress" || lastTask == "GiveImageInfo" || lastTask == "GiveImage") {
 		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_IMAGE)
 		if err != nil {
 			logger.Error("ResendImage failed: " + err.Error())
