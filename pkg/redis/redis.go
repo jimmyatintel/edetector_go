@@ -66,7 +66,13 @@ func RedisSet_AddString(key string, value string) error {
 	if !checkflag() {
 		return nil
 	}
-	newValue := RedisGetString(key) + value
+
+	originalValue, err := RedisGetString(key)
+	if err != nil {
+		return err
+	}
+
+	newValue := originalValue + value
 	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
 }
 
@@ -89,16 +95,16 @@ func RedisGet(key string) (string, error) {
 	return RedisClient.Get(context.Background(), key).Result()
 }
 
-func RedisGetString(key string) string {
+func RedisGetString(key string) (string, error) {
 	if !checkflag() {
-		return ""
+		return "", errors.New("checkflag is false")
 	}
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
 		logger.Error("Error getting value from redis: " + err.Error())
-		return ""
+		return "", err
 	}
-	return val
+	return val, nil
 }
 
 func RedisGetInt(key string) (int, error) {

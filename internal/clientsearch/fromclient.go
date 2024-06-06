@@ -108,18 +108,42 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			rq.Online(key)
 			redis.RedisSet_AddInteger("OnlineClientCount", 1)
 			request.RequestToUser(key)
-			logger.Info("add online clinet: " + key + "-" + fmt.Sprint(agentCount))
+			logger.Info("add online client: " + key + "-" + fmt.Sprint(agentCount))
 			channelmap.AssignTaskChannel(key, &task_chan)
 			logger.Info("Set key-channel mapping: " + key)
-			redis.RedisSet(key+"-RetryCount", 0)
+
+			// send retry task after agent online (for task status 2, 7)
+			status2TaskLists, err := mq.Load_stored_task("nil", key, 2, "nil")
+			if err != nil {
+				logger.Error("Get stored task failed: " + err.Error())
+			}
+
+			for _, taskInfo := range status2TaskLists {
+				taskResendMap := map[string]task.TaskType{
+					"StartCollect":  task.RESEND_COLLECT,
+					"StartGetDrive": task.RESEND_DRIVE,
+					"StartGetImage": task.RESEND_IMAGE,
+					"StartYaraRule": task.RESEND_YAYA,
+				}
+				resendTaskType, ok := taskResendMap[taskInfo[3]]
+				if !ok {
+					continue
+				}
+				err := clientsearchsend.SendTCPtoClient(NewPacket, resendTaskType, "", conn)
+				if err != nil {
+					logger.Error("Error sending retry task: " + err.Error())
+				} else {
+					logger.Info("Retry task sent: " + string(resendTaskType))
+				}
+			}
+
 			go func() {
 				for {
 					select {
 					case message := <-task_chan:
 						data := message.Fluent()
 						logger.Info("Get task msg: " + string(data))
-						err := clientsearchsend.SendTaskTCPtoClient(data, conn)
-						if err != nil {
+						if err := clientsearchsend.SendTaskTCPtoClient(data, conn); err != nil {
 							logger.Error("Error Sending: " + err.Error())
 						}
 					case <-closeConn:
@@ -199,26 +223,22 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 		logger.Error("Scan failed: " + key)
 		mq.Update_task_status(key, agentTaskType, 2, 0)
 	} else if agentTaskType == "StartCollect" && (lastTask == "GiveCollectProgress" || lastTask == "GiveCollectDataInfo" || lastTask == "GiveCollectData") {
-		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_COLLECT)
-		if err != nil {
+		if err := taskservice.RetryTask(key, agentTaskType, task.RESEND_COLLECT); err != nil {
 			logger.Error("ResendCollect failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "StartGetDrive" && (lastTask == "GiveExplorerProgress" || lastTask == "GiveExplorerInfo" || lastTask == "GiveExplorerData") {
-		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_DRIVE)
-		if err != nil {
+		if err := taskservice.RetryTask(key, agentTaskType, task.RESEND_DRIVE); err != nil {
 			logger.Error("ResendDrive failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "StartGetImage" && (lastTask == "GiveImageProgress" || lastTask == "GiveImageInfo" || lastTask == "GiveImage") {
-		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_IMAGE)
-		if err != nil {
+		if err := taskservice.RetryTask(key, agentTaskType, task.RESEND_IMAGE); err != nil {
 			logger.Error("ResendImage failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
 	} else if agentTaskType == "StartYaraRule" && (lastTask == "GiveYaraProgress" || lastTask == "GiveRuleMatchInfo" || lastTask == "GiveRuleMatch") {
-		err := taskservice.RetryTask(key, agentTaskType, task.RESEND_YAYA)
-		if err != nil {
+		if err := taskservice.RetryTask(key, agentTaskType, task.RESEND_YAYA); err != nil {
 			logger.Error("ResendYara failed: " + err.Error())
 			mq.Failed_task(key, agentTaskType, 7)
 		}
@@ -228,6 +248,9 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			logger.Error("Get StartRemove tasks failed: " + err.Error())
 		}
 		rq.Offline(key)
+		if err := channelmap.RemoveTaskChannel(key); err != nil {
+			logger.Error("Remove key-channel mapping failed: " + err.Error())
+		}
 		if len(removeTasks) != 0 {
 			taskservice.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)

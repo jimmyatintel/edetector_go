@@ -36,6 +36,20 @@ func GetTaskChannel(key string) (chan packet.Packet, error) {
 	return task_chan, nil
 }
 
+func RemoveTaskChannel(key string) error {
+	TaskMu.Lock()
+	if _, exists := TaskWorkerChannel[key]; !exists {
+		return errors.New("invalid key")
+	}
+	TaskMu.Unlock()
+
+	TaskMu.Lock()
+	delete(TaskWorkerChannel, key)
+	TaskMu.Unlock()
+
+	return nil
+}
+
 func AssignDiskChannel(key string, disk_chan *chan string) {
 	DiskMu.Lock()
 	UserDiskChannel[key] = disk_chan

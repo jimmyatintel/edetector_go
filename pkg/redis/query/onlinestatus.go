@@ -72,23 +72,33 @@ func Offline(KeyNum string) {
 }
 
 func GetStatus(KeyNum string) int {
-	content := redis.RedisGetString(KeyNum)
-	var clientStatus ClientOnlineStatus
-	err := json.Unmarshal([]byte(content), &clientStatus)
+	content, err := redis.RedisGetString(KeyNum)
 	if err != nil {
 		logger.Error("Get status failed: " + err.Error())
 		return -1
 	}
+
+	var clientStatus ClientOnlineStatus
+	if err := json.Unmarshal([]byte(content), &clientStatus); err != nil {
+		logger.Error("Get status failed: " + err.Error())
+		return -1
+	}
+
 	return clientStatus.Status
 }
 
 func GetTime(KeyNum string) string {
-	content := redis.RedisGetString(KeyNum)
-	var clientStatus ClientOnlineStatus
-	err := json.Unmarshal([]byte(content), &clientStatus)
+	content, err := redis.RedisGetString(KeyNum)
 	if err != nil {
 		logger.Error("Get online time failed: " + err.Error())
 		return "1970-01-01T00:00:00Z"
 	}
+
+	var clientStatus ClientOnlineStatus
+	if err := json.Unmarshal([]byte(content), &clientStatus); err != nil {
+		logger.Error("Get online time failed: " + err.Error())
+		return "1970-01-01T00:00:00Z"
+	}
+
 	return clientStatus.Time
 }

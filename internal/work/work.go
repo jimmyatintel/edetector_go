@@ -130,9 +130,14 @@ func init() {
 
 func getTaskMsg(key string, ttype string) string {
 	taskID := mq.Load_task_id(key, ttype, 2)
-	content := []byte(redis.RedisGetString(taskID))
+	taskContent, err := redis.RedisGetString(taskID)
+	if err != nil {
+		logger.Error("Error getting task msg: " + err.Error())
+		return "Unknown"
+	}
+	content := []byte(taskContent)
 	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
+	err = NewPacket.NewPacket(content)
 	if err != nil {
 		logger.Error("Error getting task msg: " + err.Error())
 		return "Unknown"

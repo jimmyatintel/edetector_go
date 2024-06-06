@@ -79,10 +79,15 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	logger.Info("Handling task: " + taskid)
 	query.Update_task_status_by_taskid(taskid, 2)
 	// task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
-	message := redis.RedisGetString(taskid)
+	message, err := redis.RedisGetString(taskid)
+	if err != nil {
+		logger.Error("Error reading task from redis: " + err.Error())
+		query.Update_task_status_by_taskid(taskid, 6)
+		return
+	}
 	content := []byte(message)
 	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
+	err = NewPacket.NewPacket(content)
 	if err != nil {
 		logger.Error("Error reading task packet: " + err.Error())
 		query.Update_task_status_by_taskid(taskid, 6)
@@ -193,21 +198,15 @@ func RetryTask(key string, tasktype string, retryTask task.TaskType) error {
 		return errors.New("retry count is over, max=" + fmt.Sprint(config.Viper.GetInt("RETRY_COUNT")) + ", now=" + fmt.Sprint(retryCount))
 	}
 
-	// get agent ip and mac from mariaDB
+	// get machine ip and mac
 	ip := query.GetMachineIP(key)
 	mac := query.GetMachineMAC(key)
 
-	// send ResendCollect task to agent
+	// detect agent connection closed
+	logger.Info("Agent " + key + " connection closed, retry task: " + string(retryTask))
 	err = clientsearchsend.SendUserTCPtoClientWithoutP(key, ip, mac, retryTask, "")
 	if err != nil {
-		logger.Error("Send ResendCollect task failed: " + err.Error())
-		return err
-	}
-
-	// update retry count
-	err = redis.RedisSet_AddInteger((key + "-RetryCount"), 1)
-	if err != nil {
-		logger.Error("Update retry count failed: " + err.Error())
+		logger.Error("SendUserTCPtoClientWithoutP failed: " + err.Error())
 		return err
 	}
 

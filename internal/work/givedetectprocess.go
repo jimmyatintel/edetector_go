@@ -36,7 +36,11 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	}
 	logger.Info("GiveDetectProcess: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
-	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
+	detectMsg, err := redis.RedisGetString(key + "-DetectMsg")
+	if err != nil {
+		return task.FAIL, err
+	}
+	lines := strings.Split(detectMsg, "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
 	for _, line := range lines {
 		values := strings.Split(line, "|@|")
