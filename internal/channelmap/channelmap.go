@@ -12,9 +12,13 @@ var TaskWorkerChannel map[string](*chan packet.Packet)
 var DiskMu *sync.Mutex
 var UserDiskChannel = make(map[string](*chan string))
 
+var LoadDumpMu *sync.Mutex
+var LoadDumpTaskChannel = make(map[string](*chan string))
+
 func init() {
 	TaskMu = &sync.Mutex{}
 	DiskMu = &sync.Mutex{}
+	LoadDumpMu = &sync.Mutex{}
 }
 
 func AssignTaskChannel(key string, task_chan *chan packet.Packet) {
@@ -53,4 +57,40 @@ func GetDiskChannel(key string) (chan string, error) {
 	disk_chan := *UserDiskChannel[key]
 	DiskMu.Unlock()
 	return disk_chan, nil
+}
+
+func AssignLoadDumpChannel(key string, dump_chan *chan string) {
+	LoadDumpMu.Lock()
+	LoadDumpTaskChannel[key] = dump_chan
+	LoadDumpMu.Unlock()
+}
+
+func GetLoadDumpChannel(key string) (chan string, error) {
+	LoadDumpMu.Lock()
+	_, exists := LoadDumpTaskChannel[key]
+	LoadDumpMu.Unlock()
+	if !exists {
+		return nil, errors.New("invalid key")
+	}
+
+	LoadDumpMu.Lock()
+	dump_chan := *LoadDumpTaskChannel[key]
+	LoadDumpMu.Unlock()
+
+	return dump_chan, nil
+}
+
+func RemoveLoadDumpChannel(key string) error {
+	LoadDumpMu.Lock()
+	_, exists := LoadDumpTaskChannel[key]
+	LoadDumpMu.Unlock()
+	if !exists {
+		return errors.New("invalid key")
+	}
+
+	LoadDumpMu.Lock()
+	delete(LoadDumpTaskChannel, key)
+	LoadDumpMu.Unlock()
+
+	return nil
 }

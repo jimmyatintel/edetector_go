@@ -10,7 +10,9 @@ import (
 	"path/filepath"
 
 	"edetector_go/config"
+	"edetector_go/internal/channelmap"
 	"edetector_go/internal/packet"
+	"edetector_go/internal/task"
 	work "edetector_go/internal/work"
 	work_from_api "edetector_go/internal/work_from_api"
 	"edetector_go/pkg/logger"
@@ -29,6 +31,7 @@ type TaskRequest struct {
 type Response struct {
 	IsSuccess bool   `json:"isSuccess"`
 	Message   string `json:"message"`
+	Data      string `json:"data"`
 }
 
 func Start(ctx context.Context) {
@@ -43,10 +46,10 @@ func Start(ctx context.Context) {
 	router.RedirectFixedPath = true
 	router.Use(cors.New(corsConfig))
 	router.Use(logger.GinLog())
-	router.POST("/sendLoadDumpTask", func(c *gin.Context) {
+	router.POST("/task/:action", func(c *gin.Context) {
 		ReceiveLoadDumpTask(c, ctx)
 	})
-	router.POST("/sendTask", func(c *gin.Context) {
+	router.POST("/task", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
 	})
 	router.POST("/listscore/:type", func(c *gin.Context) {
@@ -69,6 +72,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
+
 	// get the []byte from the packet
 	content := req.Fluent()
 	NewPacket := new(packet.TaskPacket)
@@ -83,7 +87,52 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 
-	// c.File("static/dump/" + req.TaskID + ".zip")
+	clientID := NewPacket.GetRkey()
+	taskType := task.UserTaskType(c.Param("action"))
+	logger.Info(clientID + "::" + string(taskType) + " is handling...")
+
+	// find the function to handle the task
+	taskFunc, ok := work_from_api.WorkapiMap[taskType]
+	if !ok {
+		logger.Error("Function notfound:" + string(taskType))
+		query.Update_task_status(clientID, string(taskType), 2, 6)
+		return
+	}
+
+	// Assign the dump task channel
+	load_dump_chan := make(chan string)
+	channelmap.AssignLoadDumpChannel(clientID+string(taskType), &load_dump_chan)
+
+	// handle the task
+	_, err = taskFunc(NewPacket)
+	if err != nil {
+		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
+		query.Update_task_status(clientID, string(taskType), 2, 6)
+		return
+	}
+
+	// handle load & dump differently
+	if taskType == task.START_LOAD_DLL {
+		// wait for the load task to finish & remove the channel
+		pathInfo := <-load_dump_chan
+		res := Response{
+			IsSuccess: true,
+			Message:   "success",
+			Data:      pathInfo,
+		}
+		c.JSON(http.StatusOK, res)
+		logger.Info(clientID + "::" + string(taskType) + " finished: " + pathInfo)
+	} else {
+		// wait for the dump task to finish & remove the channel
+		dumpFileName := <-load_dump_chan
+		c.File(dumpFileName)
+
+		if err := channelmap.RemoveLoadDumpChannel(clientID + string(taskType)); err != nil {
+			logger.Error("Error removing dump channel: " + err.Error())
+		}
+
+		logger.Info(clientID + "::" + string(taskType) + " finished: " + "respond with " + dumpFileName)
+	}
 }
 
 func ReceiveTask(c *gin.Context, ctx context.Context) {
