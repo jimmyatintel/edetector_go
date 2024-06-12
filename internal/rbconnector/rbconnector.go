@@ -140,8 +140,8 @@ func scale() {
 				if err != nil {
 					logger.Error("Failed to cancel consumer" + err.Error())
 				}
-				consumer_count[queue]--
 				logger.Info("Removed a consumer: " + queue + "-" + strconv.Itoa(consumer_count[queue]))
+				consumer_count[queue]--
 			}
 		}
 	}
