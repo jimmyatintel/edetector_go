@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"strconv"
 
 	"errors"
 
@@ -49,6 +50,14 @@ func Rabbit_init() {
 		logger.Panic("Failed to connect to RabbitMQ")
 		panic(err)
 	}
+	go func() {
+		notifyClose := channel.NotifyClose(make(chan *amqp.Error))
+		err := <-notifyClose
+		if err != nil {
+			logger.Error("Connection closed: " + err.Error())
+			Rabbit_init()
+		}
+	}()
 }
 
 func Declare(name string) (amqp.Queue, error) {
@@ -74,7 +83,7 @@ func Publish(queue string, body []byte) error {
 	)
 }
 
-func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
+func Consume(queue string, id int, count int) (<-chan amqp.Delivery, error) {
 	if channel == nil {
 		return nil, errors.New("failed to consume message: channel is nil")
 	}
@@ -82,15 +91,23 @@ func Consume(queue string, count int) (<-chan amqp.Delivery, error) {
 	if err != nil {
 		logger.Error("Error setting consume messages")
 	}
+	name := queue + "-" + strconv.Itoa(id)
 	return channel.Consume(
 		queue,
-		"",
+		name,
 		false,
 		false,
 		false,
 		false,
 		nil,
 	)
+}
+
+func Cancel(consumer string) {
+	if channel == nil {
+		return
+	}
+	channel.Cancel(consumer, false)
 }
 
 func Connection_close() {

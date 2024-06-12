@@ -11,12 +11,18 @@ import (
 	"edetector_go/pkg/rabbitmq"
 	"edetector_go/pkg/redis"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/streadway/amqp"
 )
 
 var mid_mutex *sync.Mutex
@@ -24,10 +30,30 @@ var low_mutex *sync.Mutex
 
 var mid_bulkdata []string
 var mid_bulkaction []string
-var low_bulkdata []string
-var low_bulkaction []string
 
-func connector_init() {
+var consumer_count map[string]int = make(map[string]int)
+var queues = []string{"ed_low_collect", "ed_low_explorer"}
+
+var hostname string
+var port string
+var username string
+var password string
+var vhost string
+
+type RateDetails struct {
+	Rate float64 `json:"rate"`
+}
+
+type MessageStats struct {
+	PublishDetails    RateDetails `json:"publish_details"`
+	DeliverGetDetails RateDetails `json:"deliver_details"`
+}
+
+type QueueInfo struct {
+	MessageStats MessageStats `json:"message_stats"`
+}
+
+func init() {
 	mid_mutex = &sync.Mutex{}
 	low_mutex = &sync.Mutex{}
 
@@ -62,10 +88,16 @@ func connector_init() {
 		elastic.Elastic_init()
 		logger.Info("Elastic is enabled.")
 	}
+	hostname = config.Viper.GetString("RABBITMQ_IP")
+	port = config.Viper.GetString("RABBITMQ_WEB_PORT")
+	username = config.Viper.GetString("RABBITMQ_USERNAME")
+	password = config.Viper.GetString("RABBITMQ_PASSWORD")
+	vhost = url.PathEscape(config.Viper.GetString("RABBITMQ_VHOST"))
+	consumer_count["ed_low_collect"] = 0
+	consumer_count["ed_low_explorer"] = 0
 }
 
 func Start(version string) {
-	connector_init()
 	logger.Info("Welcome to edetector connector: " + version)
 	Quit := make(chan os.Signal, 1)
 	_, cancel := context.WithCancel(context.Background())
@@ -74,22 +106,60 @@ func Start(version string) {
 	rabbitmq.Declare("ed_low_explorer")
 	rabbitmq.Declare("ed_mid")
 	rabbitmq.Declare("ed_high")
-	go low_speed("ed_low_collect")
-	go low_speed("ed_low_explorer")
+	for _, queue := range queues {
+		consumer_count[queue]++
+		time.Sleep(1 * time.Second)
+		go low_speed(queue, consumer_count[queue])
+	}
+	time.Sleep(1 * time.Second)
 	go mid_speed()
+	time.Sleep(1 * time.Second)
 	go high_speed()
+	go scale()
 	signal.Notify(Quit, syscall.SIGINT, syscall.SIGTERM)
 	<-Quit
 	cancel()
 }
 
-func high_speed() {
-	msgs, err := rabbitmq.Consume("ed_high", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
-	if err != nil {
-		logger.Panic("High speed consumer error: " + err.Error())
-		return
+func scale() {
+	logger.Info("Scale check started")
+	for {
+		time.Sleep(time.Duration(config.Viper.GetInt("RABBITMQ_SCALE_SLEEP")) * time.Second)
+		for _, queue := range queues {
+			count, err := GetMessageCount(queue)
+			if err != nil {
+				logger.Error("Error getting rabbit messages: " + err.Error())
+				continue
+			}
+			if (count > config.Viper.GetInt("RABBITMQ_SCALE_THRESHOLD") || PublishFasterThanDeliver(queue)) && consumer_count[queue] < config.Viper.GetInt("RABBITMQ_MAX_CONSUMER") {
+				consumer_count[queue]++
+				time.Sleep(1 * time.Second)
+				go low_speed(queue, consumer_count[queue]) // add a consumer
+			} else if consumer_count[queue] != 1 {
+				rabbitmq.Cancel(queue + "-" + strconv.Itoa(consumer_count[queue])) // cancel the consumer
+				if err != nil {
+					logger.Error("Failed to cancel consumer" + err.Error())
+				}
+				consumer_count[queue]--
+				logger.Info("Removed a consumer: " + queue + "-" + strconv.Itoa(consumer_count[queue]))
+			}
+		}
 	}
-	logger.Info("Connected to high speed queue")
+}
+
+func high_speed() {
+	var msgs <-chan amqp.Delivery
+	var err error
+	for {
+		msgs, err = rabbitmq.Consume("ed_high", 1, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
+		if err != nil {
+			logger.Error("High speed consumer error: " + err.Error())
+			time.Sleep(10 * time.Second)
+		} else {
+			break
+		}
+	}
+	logger.Info("Added a consumer: ed_high")
 	for msg := range msgs {
 		logger.Info("Received a message: " + string(msg.Body))
 		var m rabbitmq.Message
@@ -108,12 +178,18 @@ func high_speed() {
 }
 
 func mid_speed() {
-	msgs, err := rabbitmq.Consume("ed_mid", config.Viper.GetInt("LOW_TUNNEL_SIZE"))
-	if err != nil {
-		logger.Panic("Mid speed consumer error: " + err.Error())
-		return
+	var msgs <-chan amqp.Delivery
+	var err error
+	for {
+		msgs, err = rabbitmq.Consume("ed_mid", 1, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
+		if err != nil {
+			logger.Error("Mid speed consumer error: " + err.Error())
+			time.Sleep(10 * time.Second)
+		} else {
+			break
+		}
 	}
-	logger.Info("Connected to mid speed queue")
+	logger.Info("Added a consumer: ed_mid")
 	go count_timer(config.Viper.GetInt("MID_TUNNEL_TIME"), config.Viper.GetInt("MID_TUNNEL_SIZE"), &mid_bulkaction, &mid_bulkdata, mid_mutex)
 	for msg := range msgs {
 		var m rabbitmq.Message
@@ -133,13 +209,21 @@ func mid_speed() {
 	}
 }
 
-func low_speed(queue string) {
-	msgs, err := rabbitmq.Consume(queue, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
-	if err != nil {
-		logger.Panic("Low speed consumer error: " + err.Error())
-		return
+func low_speed(queue string, count int) {
+	var msgs <-chan amqp.Delivery
+	var err error
+	for {
+		msgs, err = rabbitmq.Consume(queue, count, config.Viper.GetInt("LOW_TUNNEL_SIZE"))
+		if err != nil {
+			logger.Error("Low speed consumer error: " + err.Error())
+			time.Sleep(10 * time.Second)
+		} else {
+			break
+		}
 	}
-	logger.Info("Connected to low speed queue")
+	logger.Info("Added a consumer: " + queue + "-" + strconv.Itoa(count))
+	var low_bulkdata []string
+	var low_bulkaction []string
 	go count_timer(config.Viper.GetInt("LOW_TUNNEL_TIME"), config.Viper.GetInt("LOW_TUNNEL_SIZE"), &low_bulkaction, &low_bulkdata, low_mutex)
 	for msg := range msgs {
 		var m rabbitmq.Message
@@ -178,4 +262,61 @@ func count_timer(tunnel_time int, size int, bulkaction *[]string, bulkdata *[]st
 		mutex.Unlock()
 		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func GetMessageCount(queue string) (int, error) {
+	path := fmt.Sprintf("http://%s:%s/api/queues/%s/%s", hostname, port, vhost, queue)
+	req, err := http.NewRequest("GET", path, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.SetBasicAuth(username, password)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return 0, errors.New("error getting rabbitmq queue info")
+	}
+	var result map[string]interface{}
+	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
+		return 0, err
+	}
+	count, ok := result["messages"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("messages not found in response")
+	}
+	return int(count), nil
+}
+
+func PublishFasterThanDeliver(queue string) bool {
+	path := fmt.Sprintf("http://%s:%s/api/queues/%s/%s", hostname, port, vhost, queue)
+	req, err := http.NewRequest("GET", path, nil)
+	if err != nil {
+		logger.Error("Error creating new request:" + err.Error())
+		return false
+	}
+	req.SetBasicAuth(username, password)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		logger.Error("Error getting rabbitmq queue info:" + err.Error())
+		return false
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		logger.Error("Error getting rabbitmq queue info: " + response.Status)
+		return false
+	}
+	var queueInfo QueueInfo
+	if err := json.NewDecoder(response.Body).Decode(&queueInfo); err != nil {
+		logger.Error("Error decoding rabbitmq queue info:" + err.Error())
+		return false
+	}
+	logger.Debug("Queue: " + queue +
+		" ,PublishRate: " + strconv.FormatFloat(queueInfo.MessageStats.PublishDetails.Rate, 'f', -1, 64) +
+		" ,DeliverGetRate: " + strconv.FormatFloat(queueInfo.MessageStats.DeliverGetDetails.Rate, 'f', -1, 64))
+	return queueInfo.MessageStats.PublishDetails.Rate > queueInfo.MessageStats.DeliverGetDetails.Rate
 }
