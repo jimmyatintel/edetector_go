@@ -33,7 +33,7 @@ func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 		if ttype == "StartGetDrive" {
 			category = "explorer"
 		} else if ttype == "StartMemoryTree" {
-			category = "memory"
+			category = "memory_tree"
 		}
 		query = fmt.Sprintf(`{
 			"query": {
@@ -48,6 +48,20 @@ func DeleteOldData(key string, ttype string, taskID string, head bool) error {
 				}
 			}
 		}`, key, category, taskID)
+	} else if ttype == "StartMemoryTree" {
+		query = fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "category": "memory_tree" } }
+					],
+					"must_not": [
+						{ "term": { "task_id": "%s" } }
+					]
+				}
+			}
+		}`, key, taskID)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {
@@ -80,7 +94,7 @@ func DeleteUnfinishedData(key string, ttype string, taskID string, head bool) er
 		if ttype == "StartGetDrive" {
 			category = "explorer"
 		} else if ttype == "StartMemoryTree" {
-			category = "memory"
+			category = "memory_tree"
 		}
 		query = fmt.Sprintf(`{
 			"query": {
@@ -93,6 +107,18 @@ func DeleteUnfinishedData(key string, ttype string, taskID string, head bool) er
 				}
 			}
 		}`, key, taskID, category)
+	} else if ttype == "StartMemoryTree" {
+		query = fmt.Sprintf(`{
+			"query": {
+				"bool": {
+					"must": [
+						{ "term": { "agent": "%s" } },
+						{ "term": { "task_id": "%s" } },
+						{ "term": { "category": "memory_tree" } }
+					]
+				}
+			}
+		}`, key, taskID)
 	} else {
 		query = fmt.Sprintf(`{
 			"query": {
