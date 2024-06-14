@@ -121,7 +121,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 			Data:      pathInfo,
 		}
 		c.JSON(http.StatusOK, res)
-		logger.Info(clientID + "::" + string(taskType) + " finished: " + pathInfo)
+		logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
 	} else {
 		// wait for the dump task to finish & remove the channel
 		dumpFileName := <-load_dump_chan
@@ -131,7 +131,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 			logger.Error("Error removing dump channel: " + err.Error())
 		}
 
-		logger.Info(clientID + "::" + string(taskType) + " finished: " + "respond with " + dumpFileName)
+		logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
 	}
 }
 
