@@ -81,33 +81,42 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		logger.Error("Error reading task packet: " + err.Error())
 		res := Response{
 			IsSuccess: false,
-			Message:   "Error reading task packet",
+			Message:   "Error reading task packet: " + err.Error(),
 		}
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	clientID := NewPacket.GetRkey()
+	msg := NewPacket.GetMessage()
 	taskType := task.UserTaskType(c.Param("action"))
 	logger.Info(clientID + "::" + string(taskType) + " is handling...")
 
 	// find the function to handle the task
 	taskFunc, ok := work_from_api.WorkapiMap[taskType]
 	if !ok {
-		logger.Error("Function notfound:" + string(taskType))
-		query.Update_task_status(clientID, string(taskType), 2, 6)
+		logger.Error("Function not found:" + string(taskType))
+		res := Response{
+			IsSuccess: false,
+			Message:   "Function not found: " + string(taskType),
+		}
+		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
 	// Assign the dump task channel
 	load_dump_chan := make(chan string)
-	channelmap.AssignLoadDumpChannel(clientID+string(taskType), &load_dump_chan)
+	channelmap.AssignLoadDumpChannel(clientID+string(taskType)+msg, &load_dump_chan)
 
 	// handle the task
 	_, err = taskFunc(NewPacket)
 	if err != nil {
 		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
-		query.Update_task_status(clientID, string(taskType), 2, 6)
+		res := Response{
+			IsSuccess: false,
+			Message:   "Task " + string(taskType) + " failed: " + err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, res)
 		return
 	}
 
@@ -117,7 +126,6 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		pathInfo := <-load_dump_chan
 		res := Response{
 			IsSuccess: true,
-			Message:   "success",
 			Data:      pathInfo,
 		}
 		c.JSON(http.StatusOK, res)
@@ -127,6 +135,10 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		dumpFileName := <-load_dump_chan
 		c.File(dumpFileName)
 
+		// remove the file & channel
+		if err := os.Remove(dumpFileName); err != nil {
+			logger.Error("Error removing dump file: " + err.Error())
+		}
 		if err := channelmap.RemoveLoadDumpChannel(clientID + string(taskType)); err != nil {
 			logger.Error("Error removing dump channel: " + err.Error())
 		}

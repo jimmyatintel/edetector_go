@@ -16,7 +16,7 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Debug(key + "::GiveLoadDllData: " + pathInfo)
 
 	// send path info in load task channel to trigger response
-	load_chan, err := channelmap.GetLoadDumpChannel(key + string(task.START_LOAD_DLL))
+	load_chan, err := channelmap.GetLoadDumpChannel(key + string(task.START_LOAD_DLL) + p.GetMessage())
 	if err != nil {
 		logger.Error("Error getting load channel: " + err.Error())
 		return task.FAIL, err

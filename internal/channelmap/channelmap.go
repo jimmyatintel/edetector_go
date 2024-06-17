@@ -59,6 +59,7 @@ func GetDiskChannel(key string) (chan string, error) {
 	return disk_chan, nil
 }
 
+// key = agent_id + task_type + message
 func AssignLoadDumpChannel(key string, dump_chan *chan string) {
 	LoadDumpMu.Lock()
 	LoadDumpTaskChannel[key] = dump_chan

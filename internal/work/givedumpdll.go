@@ -70,7 +70,7 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 
 	// send dump file name in dump task channel to trigger response
-	dump_chan, err := channelmap.GetLoadDumpChannel(key + string(task.START_DUMP_DLL))
+	dump_chan, err := channelmap.GetLoadDumpChannel(key + string(task.START_DUMP_DLL) + p.GetMessage())
 	if err != nil {
 		logger.Error("Error getting dump channel: " + err.Error())
 		return task.FAIL, err
