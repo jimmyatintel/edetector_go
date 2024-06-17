@@ -19,8 +19,9 @@ import (
 func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("ReadyUpdateAgent: " + key)
-	version := getTaskMsg(key, "StartUpdate")
-	path := filepath.Join("static", "agent", "Agent_"+version+".exe")
+	updateInfo := strings.Split(getTaskMsg(key, "StartUpdate"), "|")
+	osInfo, version := updateInfo[0], updateInfo[1]
+	path := filepath.Join(agentPath, osInfo, "Agent_"+version+".exe")
 	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
 	// zip the file if the zipped file doesn't exist
 	if !file.FileExists(zippedPath) {

@@ -34,6 +34,7 @@ var imageFilePath = filepath.Join("static", "ImageFile")
 var ruleMatchWorkingPath = filepath.Join("static", "ruleMatchWorking")
 var ruleMatchUnstage = filepath.Join("static", "ruleMatchUnstage")
 var yaraRulePath = filepath.Join("static", "yaraRule")
+var agentPath = filepath.Join("static", "agent")
 
 func init() {
 	WorkMap = map[task.TaskType]func(packet.Packet, net.Conn) (task.TaskResult, error){
