@@ -118,7 +118,8 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanEnd: " + key + "::" + p.GetMessage())
-
+	progress := int(scanFirstPart) + int(scanSecondPart)
+	redis.RedisSet(key+"-ScanProgress", progress)
 	srcPath := filepath.Join(scanWorkingPath, key)
 	workPath := filepath.Join(scanWorkingPath, key+".txt")
 	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))

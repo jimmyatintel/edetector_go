@@ -94,7 +94,8 @@ func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectDataEnd: " + key + "::" + p.GetMessage())
-
+	progress := int(collectFirstPart) + int(collectSecondPart)
+	redis.RedisSet(key+"-CollectProgress", progress)
 	srcPath := filepath.Join(dbWorkingPath, key)
 	workPath := filepath.Join(dbWorkingPath, key+".db")
 	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
