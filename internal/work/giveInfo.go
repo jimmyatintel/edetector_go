@@ -30,8 +30,13 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
 		return task.FAIL, err
 	}
-	minVersion := config.Viper.GetString("MIN_AGENT_VERSION")
-	if checkInvalidVersion(info[0], minVersion) {
+	minWindowsVersion := config.Viper.GetString("MIN_AGENT_VERSION_WINDOWS")
+	minLinuxVersion := config.Viper.GetString("MIN_AGENT_VERSION_LINUX")
+	if strings.Contains(ClientInfo.OsInfo, "Ubuntu") && checkInvalidVersion(info[0], minLinuxVersion) {
+		logger.Error("Version Conflict: " + ClientInfo.FileVersion)
+		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
+		return task.FAIL, err
+	} else if strings.Contains(ClientInfo.OsInfo, "Windows") && checkInvalidVersion(info[0], minWindowsVersion) {
 		logger.Error("Version Conflict: " + ClientInfo.FileVersion)
 		clientsearchsend.SendTCPtoClient(p, task.REJECT_AGENT, "", conn)
 		return task.FAIL, err
