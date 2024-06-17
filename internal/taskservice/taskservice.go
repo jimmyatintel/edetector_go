@@ -76,8 +76,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 	// get the []byte from the packet
 	content := req.Fluent()
 	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
-	if err != nil {
+	if err := NewPacket.NewPacket(content); err != nil {
 		logger.Error("Error reading task packet: " + err.Error())
 		res := Response{
 			IsSuccess: false,
@@ -104,13 +103,31 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 
+	// check whether it is a duplicate task
+	if channel, err := channelmap.GetLoadDumpChannel(clientID + string(taskType) + msg); err != nil {
+		logger.Error("Error getting dump channel: " + err.Error())
+		res := Response{
+			IsSuccess: false,
+			Message:   "Error getting dump channel: " + err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, res)
+		return
+	} else if channel != nil {
+		logger.Error("Duplicate task: " + string(taskType))
+		res := Response{
+			IsSuccess: false,
+			Message:   "Duplicate task: " + string(taskType),
+		}
+		c.JSON(http.StatusBadRequest, res)
+		return
+	}
+
 	// Assign the dump task channel
 	load_dump_chan := make(chan string)
 	channelmap.AssignLoadDumpChannel(clientID+string(taskType)+msg, &load_dump_chan)
 
 	// handle the task
-	_, err = taskFunc(NewPacket)
-	if err != nil {
+	if _, err := taskFunc(NewPacket); err != nil {
 		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
 		res := Response{
 			IsSuccess: false,
@@ -120,7 +137,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 
-	// handle load & dump differently
+	// handle load & dump response differently
 	if taskType == task.START_LOAD_DLL {
 		// wait for the load task to finish & remove the channel
 		pathInfo := <-load_dump_chan
