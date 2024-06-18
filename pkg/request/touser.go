@@ -25,11 +25,11 @@ func RequestToUser(id string) {
 		logger.Error("Error marshaling JSON: " + err.Error())
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// Create an HTTP request
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	ip := config.Viper.GetString("WS_HOST")
 	port := config.Viper.GetString("WS_PORT")
