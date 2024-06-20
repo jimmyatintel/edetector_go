@@ -133,24 +133,34 @@ func storeImageFile(key string, srcPath string) error {
 	if err != nil {
 		return err
 	}
+
 	ip, _, err := query.GetMachineIPandName(key)
 	if err != nil {
 		return err
 	}
+
 	time := time.Now().Format("2006_0102_150405")
 	imageType := getTaskMsg(key, "StartGetImage")
+
 	// clear all the content of the directory
 	dirPath := filepath.Join(imageFilePath, ip+"_"+key)
-	err = file.ClearDirContent(dirPath)
-	if err != nil {
+	if err := file.ClearDirContent(dirPath); err != nil {
 		return err
 	}
+
 	// move to ImagePath
-	dstPath := filepath.Join(dirPath, (("Obtained_" + time + "_" + imageType) + extension))
-	err = file.MoveFile(srcPath, dstPath)
-	if err != nil {
+	dstPath := filepath.Join(dirPath, "Obtained_"+time+"_"+imageType+extension)
+	if err := file.MoveFile(srcPath, dstPath); err != nil {
 		return err
 	}
+
+	// if the file is tar.gz -> convert to zip
+	if extension == ".tar.gz" {
+		if err := file.ConvertTarGzToZip(dstPath, "Obtained_"+time+"_"+imageType+".zip"); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -160,15 +170,16 @@ func getExtension(path string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
+
 	// check the extension type
 	var firstByte [1]byte
-	_, err = f.Read(firstByte[:])
-	if err != nil {
+	if _, err = f.Read(firstByte[:]); err != nil {
 		return "", err
 	}
-	extension := ".tar.gz"
+
 	if firstByte[0] == 'P' {
-		extension = ".zip"
+		return ".zip", nil
+	} else {
+		return ".tar.gz", nil
 	}
-	return extension, nil
 }
