@@ -90,6 +90,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		}
 		if NewPacket.GetTaskType() == "Undefine" {
 			nullIndex := bytes.IndexByte(decrypt_buf[76:100], 0)
+			logger.Error(string(decrypt_buf))
 			logger.Error("Undefine TaskType: " + string(decrypt_buf[76:76+nullIndex]))
 			continue
 		}

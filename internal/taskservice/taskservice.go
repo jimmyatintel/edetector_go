@@ -47,7 +47,7 @@ func Start(ctx context.Context) {
 	router.Use(cors.New(corsConfig))
 	router.Use(logger.GinLog())
 	router.POST("/task/:action", func(c *gin.Context) {
-		ReceiveLoadDumpTask(c, ctx)
+		HandleLoadDumpTask(c, ctx)
 	})
 	router.POST("/task", func(c *gin.Context) {
 		ReceiveTask(c, ctx)
@@ -61,7 +61,7 @@ func Start(ctx context.Context) {
 	router.Run(":5055")
 }
 
-func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
+func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	var req packet.TaskPacket
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Invalid request format: " + err.Error())
@@ -89,6 +89,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 	clientID := NewPacket.GetRkey()
 	msg := NewPacket.GetMessage()
 	taskType := task.UserTaskType(c.Param("action"))
+	chanKey := clientID + "-" + string(taskType) + "-" + msg
 	logger.Info(clientID + "::" + string(taskType) + " is handling...")
 
 	// find the function to handle the task
@@ -104,15 +105,7 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 	}
 
 	// check whether it is a duplicate task
-	if channel, err := channelmap.GetLoadDumpChannel(clientID + string(taskType) + msg); err != nil {
-		logger.Error("Error getting dump channel: " + err.Error())
-		res := Response{
-			IsSuccess: false,
-			Message:   "Error getting dump channel: " + err.Error(),
-		}
-		c.JSON(http.StatusInternalServerError, res)
-		return
-	} else if channel != nil {
+	if channelmap.IsDumpChannelExists(chanKey) {
 		logger.Error("Duplicate task: " + string(taskType))
 		res := Response{
 			IsSuccess: false,
@@ -124,7 +117,8 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 
 	// Assign the dump task channel
 	load_dump_chan := make(chan string)
-	channelmap.AssignLoadDumpChannel(clientID+string(taskType)+msg, &load_dump_chan)
+	channelmap.AssignLoadDumpChannel(chanKey, &load_dump_chan)
+	logger.Info("Create load dump channel: " + chanKey)
 
 	// handle the task
 	if _, err := taskFunc(NewPacket); err != nil {
@@ -141,26 +135,49 @@ func ReceiveLoadDumpTask(c *gin.Context, ctx context.Context) {
 	if taskType == task.START_LOAD_DLL {
 		// wait for the load task to finish & remove the channel
 		pathInfo := <-load_dump_chan
-		res := Response{
-			IsSuccess: true,
-			Data:      pathInfo,
+		if pathInfo == "" {
+			res := Response{
+				IsSuccess: false,
+				Message:   "Load failed",
+			}
+			c.JSON(http.StatusInternalServerError, res)
+		} else {
+			res := Response{
+				IsSuccess: true,
+				Data:      pathInfo,
+			}
+			c.JSON(http.StatusOK, res)
+			logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
 		}
-		c.JSON(http.StatusOK, res)
-		logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
+
+		// remove the channel
+		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
+			logger.Error("Error removing dump channel: " + err.Error())
+		}
 	} else {
 		// wait for the dump task to finish & remove the channel
 		dumpFileName := <-load_dump_chan
-		c.File(dumpFileName)
+		if dumpFileName == "" {
+			res := Response{
+				IsSuccess: false,
+				Message:   "Dump failed",
+			}
+			c.JSON(http.StatusInternalServerError, res)
+		} else {
+			c.File(dumpFileName)
 
-		// remove the file & channel
-		if err := os.Remove(dumpFileName); err != nil {
-			logger.Error("Error removing dump file: " + err.Error())
+			// remove the file
+			if err := os.Remove(dumpFileName); err != nil {
+				logger.Error("Error removing dump file: " + err.Error())
+			}
+
+			logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
 		}
-		if err := channelmap.RemoveLoadDumpChannel(clientID + string(taskType)); err != nil {
+
+		// remove the channel
+		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
 			logger.Error("Error removing dump channel: " + err.Error())
 		}
-
-		logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
 	}
 }
 

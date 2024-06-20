@@ -32,7 +32,7 @@ func GetTaskChannel(key string) (chan packet.Packet, error) {
 	_, exists := TaskWorkerChannel[key]
 	TaskMu.Unlock()
 	if !exists {
-		return nil, errors.New("invalid key")
+		return nil, errors.New("invalid key for task channel")
 	}
 	TaskMu.Lock()
 	task_chan := *TaskWorkerChannel[key]
@@ -51,7 +51,7 @@ func GetDiskChannel(key string) (chan string, error) {
 	_, exists := UserDiskChannel[key]
 	DiskMu.Unlock()
 	if !exists {
-		return nil, errors.New("invalid key")
+		return nil, errors.New("invalid key for disk channel")
 	}
 	DiskMu.Lock()
 	disk_chan := *UserDiskChannel[key]
@@ -59,19 +59,23 @@ func GetDiskChannel(key string) (chan string, error) {
 	return disk_chan, nil
 }
 
-// key = agent_id + task_type + message
+// key = agent_id-task_type-message
 func AssignLoadDumpChannel(key string, dump_chan *chan string) {
 	LoadDumpMu.Lock()
 	LoadDumpTaskChannel[key] = dump_chan
 	LoadDumpMu.Unlock()
 }
 
-func GetLoadDumpChannel(key string) (chan string, error) {
+func IsDumpChannelExists(key string) bool {
 	LoadDumpMu.Lock()
 	_, exists := LoadDumpTaskChannel[key]
 	LoadDumpMu.Unlock()
-	if !exists {
-		return nil, errors.New("invalid key")
+	return exists
+}
+
+func GetLoadDumpChannel(key string) (chan string, error) {
+	if !IsDumpChannelExists(key) {
+		return nil, errors.New("invalid key for load dump channel")
 	}
 
 	LoadDumpMu.Lock()
@@ -82,10 +86,7 @@ func GetLoadDumpChannel(key string) (chan string, error) {
 }
 
 func RemoveLoadDumpChannel(key string) error {
-	LoadDumpMu.Lock()
-	_, exists := LoadDumpTaskChannel[key]
-	LoadDumpMu.Unlock()
-	if !exists {
+	if !IsDumpChannelExists(key) {
 		return errors.New("invalid key")
 	}
 
