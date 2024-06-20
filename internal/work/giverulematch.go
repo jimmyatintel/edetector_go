@@ -20,63 +20,70 @@ import (
 
 func GiveRuleMatchInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveRuleMatchInfo: " + p.GetRkey())
+	logger.Info(key + "::GiveRuleMatchInfo")
+
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
 	}
 	redis.RedisSet(key+"-RuleMatchTotal", total)
-	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
-	if err != nil {
+
+	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveRuleMatch(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Debug("GiveRuleMatch: " + key)
+	logger.Debug(key + "::GiveRuleMatch")
+
 	// write file
 	path := filepath.Join(ruleMatchWorkingPath, key)
 	content := getDataPacketContent(p)
-	err := file.WriteFile(path, content)
-	if err != nil {
+	if err := file.WriteFile(path, content); err != nil {
 		return task.FAIL, err
 	}
-	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
-	if err != nil {
+
+	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveRuleMatchEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("GiveRuleMatchEnd: " + key)
+	logger.Info(key + "::GiveRuleMatchEnd")
+
 	srcPath := filepath.Join(ruleMatchWorkingPath, key)
-	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-RuleMatchTotal"))
-	if err != nil {
+	if err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-RuleMatchTotal")); err != nil {
 		return task.FAIL, err
 	}
+
 	dstPath := filepath.Join(ruleMatchUnstage, key+".txt")
-	err = file.MoveFile(srcPath, dstPath)
-	if err != nil {
+	if err := file.MoveFile(srcPath, dstPath); err != nil {
 		return task.FAIL, err
 	}
-	err = parseRuleMatch(dstPath, p.GetRkey())
-	if err != nil {
+
+	// send data right to agent first to avoid it waitign to long
+	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		return task.FAIL, err
 	}
-	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
-	if err != nil {
+
+	if err := parseRuleMatch(dstPath, p.GetRkey()); err != nil {
 		return task.FAIL, err
 	}
+
 	query.Finish_task(p.GetRkey(), "StartYaraRule")
+
 	return task.SUCCESS, nil
 }
 
 func parseRuleMatch(path string, key string) error {
-	logger.Info("ParseRuleMatch: " + key)
+	logger.Info(key + "::ParseRuleMatch")
+
 	// send to elasticsearch
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -102,6 +109,7 @@ func parseRuleMatch(path string, key string) error {
 			}
 		}
 	}
+
 	for p, rule := range matches {
 		count := len(strings.Split(rule, ","))
 		UpdateRuleMatch(key, rule, p, count)
@@ -112,6 +120,7 @@ func parseRuleMatch(path string, key string) error {
 
 func UpdateRuleMatch(key string, rule string, path string, count int) {
 	logger.Info("UpdateRuleMatch: " + key + "|" + rule + "|" + path + "|" + strconv.Itoa(count))
+
 	query := fmt.Sprintf(`
 		{
 		"script": {
@@ -135,10 +144,12 @@ func UpdateRuleMatch(key string, rule string, path string, count int) {
 			}
 		}
 	}`, count, rule, key, path)
+
 	updateCount, err := elastic.UpdateByQueryRequest(query, config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", 0)
 	if err != nil {
 		logger.Error("UpdateRuleMatch error: " + err.Error())
 		return
 	}
+
 	logger.Info("UpdateCount: " + strconv.Itoa(updateCount))
 }
