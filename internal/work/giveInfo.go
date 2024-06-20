@@ -50,6 +50,11 @@ func GiveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) { // the 
 }
 
 func checkInvalidVersion(version string, minVersion string) bool {
+	// always allow version 0.0.0 which is for testing
+	if version == "0.0.0" {
+		return false
+	}
+
 	minVersions := strings.Split(minVersion, ".")
 	versions := strings.Split(version, ".")
 	if len(minVersions) != 3 || len(versions) != 3 {
