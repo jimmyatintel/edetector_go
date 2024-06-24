@@ -446,3 +446,76 @@ func TarDir(srcPath string, dstPath string) error {
 	err = os.RemoveAll(srcPath)
 	return nil
 }
+
+// ConvertTarGzToZip converts a tar.gz file to a zip file.
+func ConvertTarGzToZip(tarGzPath, zipPath string) error {
+	// Open the tar.gz file for reading
+	tarGzFile, err := os.Open(tarGzPath)
+	if err != nil {
+		return fmt.Errorf("failed to open tar.gz file: %v", err)
+	}
+	defer tarGzFile.Close()
+
+	// Create a gzip reader
+	gzipReader, err := gzip.NewReader(tarGzFile)
+	if err != nil {
+		return fmt.Errorf("failed to create gzip reader: %v", err)
+	}
+	defer gzipReader.Close()
+
+	// Create a tar reader
+	tarReader := tar.NewReader(gzipReader)
+
+	// Create the zip file for writing
+	zipFile, err := os.Create(zipPath)
+	if err != nil {
+		return fmt.Errorf("failed to create zip file: %v", err)
+	}
+	defer zipFile.Close()
+
+	// Create a zip writer
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	// Extract and write each file from the tar archive to the zip file
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break // End of tar archive
+		}
+		if err != nil {
+			return fmt.Errorf("error reading tar archive: %v", err)
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			// Create a directory entry in the zip file
+			_, err := zipWriter.CreateHeader(&zip.FileHeader{
+				Name:     header.Name + "/",
+				Method:   zip.Deflate,
+				Modified: header.ModTime,
+			})
+			if err != nil {
+				return fmt.Errorf("error creating directory in zip: %v", err)
+			}
+
+		case tar.TypeReg:
+			// Create a file entry in the zip file
+			writer, err := zipWriter.Create(header.Name)
+			if err != nil {
+				return fmt.Errorf("error creating file in zip: %v", err)
+			}
+
+			// Copy the file content from tar to zip
+			_, err = io.Copy(writer, tarReader)
+			if err != nil {
+				return fmt.Errorf("error copying file to zip: %v", err)
+			}
+
+		default:
+			// Skip other types like symlinks or block devices
+		}
+	}
+
+	return nil
+}
