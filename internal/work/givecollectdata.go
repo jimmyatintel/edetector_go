@@ -100,7 +100,7 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 	workPath := filepath.Join(dbWorkingPath, key+".db")
 	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
 	// unzip data
-	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-CollectTotal"))
+	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-CollectTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

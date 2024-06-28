@@ -104,7 +104,7 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
 	// unzip data
-	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
+	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

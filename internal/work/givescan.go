@@ -124,7 +124,7 @@ func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	workPath := filepath.Join(scanWorkingPath, key+".txt")
 	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))
 	// unzip data
-	err := file.DecompressionFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
+	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}

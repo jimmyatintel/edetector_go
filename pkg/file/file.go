@@ -3,6 +3,7 @@ package file
 import (
 	"archive/tar"
 	"archive/zip"
+	"bufio"
 	"compress/gzip"
 	"edetector_go/pkg/logger"
 	"errors"
@@ -191,7 +192,7 @@ func CopyFile(srcPath string, dstPath string) error {
 	return nil
 }
 
-func DecompressionFile(srcPath string, dstPath string, size int) error {
+func DecompressFile(srcPath string, dstPath string, size int) error {
 	file, err := os.Open(srcPath)
 	if err != nil {
 		return err
@@ -444,6 +445,9 @@ func TarDir(srcPath string, dstPath string) error {
 	}
 	// remove the source directory
 	err = os.RemoveAll(srcPath)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -518,4 +522,28 @@ func ConvertTarGzToZip(tarGzPath, zipPath string) error {
 	}
 
 	return nil
+}
+
+func ReadFileLineByLine(path string) ([]string, error) {
+	// Open the file
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close() // Ensure the file is closed after reading
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+
+	// Read each line
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+
+	// Check for errors encountered during scanning
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return lines, nil
 }

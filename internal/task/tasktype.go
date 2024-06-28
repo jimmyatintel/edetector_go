@@ -113,6 +113,7 @@ const (
 
 	// load dll
 	GET_LOAD_DLL       TaskType = "GetLoadDll"
+	GIVE_LOAD_DLL_INFO TaskType = "GiveLoadDllInfo"
 	GIVE_LOAD_DLL_DATA TaskType = "GiveLoadDllData"
 	GIVE_LOAD_DLL_END  TaskType = "GiveLoadDllEnd"
 
@@ -222,6 +223,7 @@ var Worklist = []TaskType{
 	GIVE_DUMP_PROCESS_DATA,
 	GIVE_DUMP_PROCESS_END,
 	GET_LOAD_DLL,
+	GIVE_LOAD_DLL_INFO,
 	GIVE_LOAD_DLL_DATA,
 	GIVE_LOAD_DLL_END,
 	GET_DUMP_DRIVE,

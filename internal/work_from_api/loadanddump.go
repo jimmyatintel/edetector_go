@@ -8,7 +8,7 @@ import (
 )
 
 func StartLoadDll(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartLoadDll: " + p.GetRkey())
+	logger.Info(p.GetRkey() + "::StartLoadDll: " + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_LOAD_DLL, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
@@ -17,7 +17,7 @@ func StartLoadDll(p packet.UserPacket) (task.TaskResult, error) {
 }
 
 func StartDumpDll(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpDll: " + p.GetRkey())
+	logger.Info(p.GetRkey() + "::StartDumpDll: " + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_DLL, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
@@ -26,7 +26,7 @@ func StartDumpDll(p packet.UserPacket) (task.TaskResult, error) {
 }
 
 func StartDumpProcess(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpProcess: " + p.GetRkey())
+	logger.Info(p.GetRkey() + "::StartDumpProcess: " + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_PROCESS, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err
@@ -35,7 +35,7 @@ func StartDumpProcess(p packet.UserPacket) (task.TaskResult, error) {
 }
 
 func StartDumpDrive(p packet.UserPacket) (task.TaskResult, error) {
-	logger.Info("StartDumpDrive: " + p.GetRkey())
+	logger.Info(p.GetRkey() + "::StartDumpDrive: " + p.GetMessage())
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_DUMP_DRIVE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

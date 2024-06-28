@@ -30,7 +30,7 @@ func init() {
 
 		GIVE_DUMP_DLL_INFO:     "StartDumpDll",
 		GIVE_DUMP_PROCESS_INFO: "StartDumpProcess",
-		GIVE_LOAD_DLL_DATA:     "StartLoadDll",
+		GIVE_LOAD_DLL_INFO:     "StartLoadDll",
 		GIVE_DUMP_DRIVE_INFO:   "StartDumpDrive",
 	}
 
