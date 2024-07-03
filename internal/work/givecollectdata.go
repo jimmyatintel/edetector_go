@@ -24,32 +24,43 @@ var collectSecondPart float64
 func GiveCollectProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectProgress: " + key + "::" + p.GetMessage())
+
 	// update progress
 	if strings.Split(p.GetMessage(), "/")[0] == "1" {
 		collectFirstPart = float64(config.Viper.GetInt("COLLECT_FIRST_PART"))
 		collectSecondPart = float64(config.Viper.GetInt("COLLECT_SECOND_PART")) - collectFirstPart
 		go updateCollectProgress(key)
 	}
+
 	progress, err := getProgressByMsg(p.GetMessage(), collectFirstPart)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	redis.RedisSet(key+"-CollectProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func CollectReady(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("CollectReady: " + p.GetRkey() + "::" + p.GetMessage())
+
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectDataInfo: " + key + "::" + p.GetMessage())
+
 	// init collect info
 	total, err := strconv.Atoi(p.GetMessage())
 	if err != nil {
@@ -57,71 +68,81 @@ func GiveCollectDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	}
 	redis.RedisSet(key+"-CollectTotal", total)
 	redis.RedisSet(key+"-CollectCount", 0)
+
 	// create or truncate the zip file
 	path := filepath.Join(dbWorkingPath, p.GetRkey())
-	err = file.CreateFile(path)
-	if err != nil {
+	if err := file.CreateFile(path); err != nil {
 		return task.FAIL, err
 	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveCollectData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveCollectData: " + key)
+
 	// write file
 	path := filepath.Join(dbWorkingPath, key)
 	content := getDataPacketContent(p)
-	err := file.WriteFile(path, content)
-	if err != nil {
+	if err := file.WriteFile(path, content); err != nil {
 		return task.FAIL, err
 	}
+
 	// update progress
 	redis.RedisSet_AddInteger((key + "-CollectCount"), 1)
 	progress := int(collectFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-CollectCount"), redis.RedisGetInt(key+"-CollectTotal"), 65436, collectSecondPart)
 	redis.RedisSet(key+"-CollectProgress", progress)
-	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
+	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveCollectDataEnd: " + key + "::" + p.GetMessage())
+
 	progress := int(collectFirstPart) + int(collectSecondPart)
 	redis.RedisSet(key+"-CollectProgress", progress)
 	srcPath := filepath.Join(dbWorkingPath, key)
 	workPath := filepath.Join(dbWorkingPath, key+".db")
 	unstagePath := filepath.Join(dbUstagePath, (key + ".db"))
+
 	// unzip data
 	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-CollectTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// move to Unstage
-	err = file.MoveFile(workPath, unstagePath)
-	if err != nil {
+	if err := file.MoveFile(workPath, unstagePath); err != nil {
 		return task.FAIL, err
 	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveCollectDataError(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info("GiveCollectDataError: " + p.GetRkey() + "::" + p.GetMessage())
+
 	err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.FAIL, errors.New(p.GetMessage())
 }
 
@@ -132,9 +153,11 @@ func updateCollectProgress(key string) {
 			logger.Error("Get handling tasks failed: " + err.Error())
 			return
 		}
+
 		if len(result) == 0 {
 			return
 		}
+
 		query.Update_progress(redis.RedisGetInt(key+"-CollectProgress"), key, "StartCollect")
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
