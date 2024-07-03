@@ -20,30 +20,31 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 	key := p.GetRkey()
 	logger.Info("ReadyUpdateAgent: " + key)
 	updateInfo := strings.Split(getTaskMsg(key, "StartUpdate"), "|")
-	osInfo, version := updateInfo[0], updateInfo[1]
+	osInfo, version := strings.ToLower(updateInfo[0]), updateInfo[1]
 	path := filepath.Join(agentPath, osInfo, "Agent_"+version+".exe")
 	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
-	// zip the file if the zipped file doesn't exist
-	if !file.FileExists(zippedPath) {
-		err := file.ZipFile(path, zippedPath)
-		if err != nil {
-			logger.Error("Zip file error: " + err.Error())
-			query.Failed_task(p.GetRkey(), "StartUpdate", 6)
-			return task.FAIL, err
-		}
+
+	if err := file.ZipFile(path, zippedPath); err != nil {
+		logger.Error("Zip file error: " + err.Error())
+		query.Failed_task(p.GetRkey(), "StartUpdate", 6)
+		return task.FAIL, err
 	}
+
 	logger.Info("Update agent using: " + zippedPath)
 	fileInfo, err := os.Stat(zippedPath)
 	if err != nil {
 		return task.FAIL, err
 	}
 	fileLen := int(fileInfo.Size())
+
 	logger.Info("ServerSend GiveUpdateInfo: " + key + "::" + strconv.Itoa(fileLen))
 	err = clientsearchsend.SendTCPtoClient(p, task.GIVE_UPDATE_INFO, strconv.Itoa(fileLen), conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	go GiveUpdate(p, fileLen, zippedPath, dataRight)
+
 	return task.SUCCESS, nil
 }
 
@@ -54,6 +55,7 @@ func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Co
 		query.Failed_task(p.GetRkey(), "StartUpdate", 6)
 		return
 	}
+
 	start := 0
 	for {
 		conn := <-dataRight
@@ -66,9 +68,13 @@ func GiveUpdate(p packet.Packet, fileLen int, path string, dataRight chan net.Co
 				return
 			}
 			<-dataRight
+
+			os.Remove(path)
 			query.Finish_task(p.GetRkey(), "StartUpdate")
+
 			break
 		}
+
 		end := int(math.Min(float64(fileLen), float64(start+65436)))
 		data := content[start:end]
 		logger.Info("ServerSend GiveUpdate: " + p.GetRkey())
