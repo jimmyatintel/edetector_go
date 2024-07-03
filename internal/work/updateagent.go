@@ -20,7 +20,7 @@ func ReadyUpdateAgent(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (
 	key := p.GetRkey()
 	logger.Info("ReadyUpdateAgent: " + key)
 	updateInfo := strings.Split(getTaskMsg(key, "StartUpdate"), "|")
-	osInfo, version := strings.ToLower(updateInfo[0]), updateInfo[1]
+	osInfo, version := updateInfo[0], updateInfo[1]
 	path := filepath.Join(agentPath, osInfo, "Agent_"+version+".exe")
 	zippedPath := strings.Replace(path, ".exe", ".zip", 1)
 
