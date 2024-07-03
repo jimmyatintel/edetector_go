@@ -135,10 +135,10 @@ Please enable the following four microservices and ensure they run continuously 
 
 ### Run the Services
 ```bash
-go run cmd/server/working_server.go
-go run cmd/connector/connector.go
-go run cmd/builder/builder.go
-go run cmd/parser/parser.go
+go run cmd/server/working_server.go --env={dev,prod}
+go run cmd/connector/connector.go --env={dev,prod}
+go run cmd/builder/builder.go --env={dev,prod}
+go run cmd/parser/parser.go --env={dev,prod}
 ```
 
 ### Monitor Logs
