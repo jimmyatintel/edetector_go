@@ -121,6 +121,13 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	channelmap.AssignLoadDumpChannel(chanKey, &load_dump_chan)
 	logger.Info("Create load dump channel: " + chanKey)
 
+	defer func() {
+		// remove the allocate channel map before function return
+		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
+			logger.Error("Error removing dump/load channel: " + err.Error())
+		}
+	}()
+
 	// handle the task
 	if _, err := taskFunc(NewPacket); err != nil {
 		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
@@ -150,11 +157,6 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 			c.JSON(http.StatusOK, res)
 			logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
 		}
-
-		// remove the channel
-		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
-			logger.Error("Error removing dump channel: " + err.Error())
-		}
 	} else {
 		// wait for the dump task to finish & remove the channel
 		dumpFileName := <-load_dump_chan
@@ -173,11 +175,6 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 			}
 
 			logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
-		}
-
-		// remove the channel
-		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
-			logger.Error("Error removing dump channel: " + err.Error())
 		}
 	}
 }
@@ -206,7 +203,17 @@ func ReceiveTask(c *gin.Context, ctx context.Context) {
 func handleTaskrequest(ctx context.Context, taskid string) {
 	logger.Info("Handling task: " + taskid)
 	query.Update_task_status_by_taskid(taskid, 2)
-	// task_ctx := context.WithValue(ctx, TaskIDKey, taskid)
+
+	// remove task info in redis before function return
+	defer func() {
+		if err := redis.RedisDelete(taskid); err != nil {
+			logger.Error("Error deleting task info in redis: " + err.Error())
+		} else {
+			logger.Info("Task info deleted in redis: " + taskid)
+		}
+	}()
+
+	// parse task info which store in redis
 	message := redis.RedisGetString(taskid)
 	content := []byte(message)
 	NewPacket := new(packet.TaskPacket)
@@ -216,6 +223,7 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
+
 	ttype := NewPacket.GetUserTaskType()
 	key := NewPacket.GetRkey()
 	if ttype == "Undefine" {
@@ -224,23 +232,29 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
+
 	logger.Info("Task " + taskid + " " + string(ttype) + " is handling...")
 	if ttype == "StartRemove" && rq.GetStatus(key) == 0 {
 		DeleteAgentData(key)
 		return
 	}
+
+	// find the function to handle the task
 	taskFunc, ok := work_from_api.WorkapiMap[ttype]
 	if !ok {
 		logger.Error("Function notfound:" + string(ttype))
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
+
+	// handle the task
 	_, err = taskFunc(NewPacket)
 	if err != nil {
 		logger.Error("Task " + string(ttype) + " failed: " + err.Error())
 		query.Update_task_status_by_taskid(taskid, 6)
 		return
 	}
+
 	if ttype == "ChangeDetectMode" {
 		query.Finish_task(key, "ChangeDetectMode")
 	}

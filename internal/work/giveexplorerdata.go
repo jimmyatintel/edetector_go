@@ -103,25 +103,36 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	srcPath := filepath.Join(fileWorkingPath, filename)
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
+
 	// unzip data
 	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// move to Unstage
 	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	inject_chan, err := channelmap.GetDiskChannel(key)
 	if err != nil {
 		return task.FAIL, err
 	}
 	<-inject_chan
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// delete redis key: DriveUnfinished, ExplorerProgress, DriveCount, DriveTotal
+	err = redis.RedisDelete(key+"-DriveUnfinished", key+"-ExplorerProgress", key+"-DriveCount", key+"-DriveTotal")
+	if err != nil {
+		logger.Error("Delete redis key failed: " + err.Error())
+	}
+
 	return task.SUCCESS, nil
 }
 
