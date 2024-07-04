@@ -17,8 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 var fileUnstagePath = filepath.Join("static", "fileUnstage")
@@ -193,10 +191,12 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	}
 	file1.Close()
 	logger.Info("Record the relation (" + agent + "-" + diskInfo + ")")
+
 	// tree traversal
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
 	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
+
 	// send to elastic
 	headData := Collect_Explorer{}
 	file2, err := os.Open(explorerFile)
@@ -207,6 +207,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		return
 	}
 	defer file2.Close()
+
 	scanner2 := bufio.NewScanner(file2)
 	for scanner2.Scan() {
 		line := scanner2.Text()
@@ -216,53 +217,53 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			clearBuilder(agent, diskInfo, explorerFile)
 			return
 		default:
-			values := strings.Split(line, "|")
-			if len(values) != 10 {
-				if len(values) != 1 {
+			explorerDataRaw := strings.Split(line, "|")
+			if len(explorerDataRaw) != 10 || len(explorerDataRaw) != 11 {
+				if len(explorerDataRaw) != 1 {
 					logger.Error("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
 				continue
 			}
-			child, err := strconv.Atoi(values[8])
+
+			child, err := strconv.Atoi(explorerDataRaw[8])
 			if err != nil {
 				logger.Error("Error getting child (" + agent + "-" + diskInfo + "): " + err.Error())
 				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
 				clearBuilder(agent, diskInfo, explorerFile)
 				return
 			}
-			md5_sig := ""
-			if fileSystem != "NTFS" {
-				md5_sig = values[6]
-				values[6] = "0"
-			}
+
 			data := Collect_Explorer{
 				Explorer: Explorer{
-					FileName:          values[0],
-					IsDeleted:         values[1] == "1",
-					IsDirectory:       values[2] != "0",
-					CreateTime:        strToInt(values[3]),
-					WriteTime:         strToInt(values[4]),
-					AccessTime:        strToInt(values[5]),
-					EntryModifiedTime: strToInt(values[6]),
-					Datalen:           int64(strToInt(values[7])),
+					FileName:          explorerDataRaw[0],
+					FileId:            strToInt(explorerDataRaw[8]),
+					IsDeleted:         explorerDataRaw[1] == "1",
+					IsDirectory:       explorerDataRaw[2] != "0",
+					CreateTime:        strToInt(explorerDataRaw[3]),
+					WriteTime:         strToInt(explorerDataRaw[4]),
+					AccessTime:        strToInt(explorerDataRaw[5]),
+					EntryModifiedTime: getEntryModifiedTime(fileSystem, explorerDataRaw[6]),
+					Datalen:           int64(strToInt(explorerDataRaw[7])),
 					Path:              RelationMap[child].Path,
 					Disk:              diskInfo,
-					MD5_Sig:           md5_sig,
+					MD5_Sig:           getMD5Sig(fileSystem, explorerDataRaw[6]),
+					StartCluster:      getStartCluster(fileSystem, explorerDataRaw[10]),
 					YaraRuleHitCount:  0,
 					YaraRuleHit:       "",
 					IsRoot:            RelationMap[child].IsRoot,
 					Child:             RelationMap[child].Child,
 				},
-				UUID:      RelationMap[child].UUID,
-				Agent:     agent,
-				AgentIP:   ip,
-				AgentName: name,
-				ItemMain:  values[0],
-				DateMain:  strToInt(values[3]),
-				TypeMain:  "file_table",
-				EtcMain:   RelationMap[child].Path,
-				Task_id:   taskID,
-				Category:  "explorer",
+				UUID:          RelationMap[child].UUID,
+				Agent:         agent,
+				AgentIP:       ip,
+				AgentName:     name,
+				ItemMain:      explorerDataRaw[0],
+				DateMain:      strToInt(explorerDataRaw[3]),
+				TypeMain:      "file_table",
+				EtcMain:       RelationMap[child].Path,
+				Task_id:       taskID,
+				Category:      "explorer",
+				TaskTimestamp: getTaskTimestamp(taskID),
 			}
 			if RelationMap[child].IsRoot {
 				headData = data
@@ -307,75 +308,4 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 		}
 	}
 	logger.Info("Tree builder task finished: " + agent + "-" + diskInfo)
-}
-
-func getRelation(values []string) (int, int, error) {
-	values[9] = strings.TrimSpace(values[9])
-	parent, err := strconv.Atoi(values[9])
-	if err != nil {
-		return -1, -1, err
-	}
-	child, err := strconv.Atoi(values[8])
-	if err != nil {
-		return -1, -1, err
-	}
-	return parent, child, nil
-}
-
-func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *map[int](Relation)) {
-	_, exists := (*RelationMap)[ind]
-	if !exists {
-		uuid := uuid.NewString()
-		relation := Relation{
-			UUID:   uuid,
-			Name:   "",
-			Path:   "",
-			IsRoot: false,
-			Child:  []string{},
-		}
-		(*RelationMap)[ind] = relation
-		(*UUIDMap)[uuid] = ind
-	}
-}
-
-func strToInt(str string) int {
-	num, err := strconv.Atoi(str)
-	if err != nil {
-		return 0
-	}
-	return num
-}
-
-func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), taskID string) {
-	disk := strings.Split(diskInfo, "|")[0]
-	relation := (*RelationMap)[ind]
-	if disk == "Ubuntu" {
-		if !isRoot {
-			path = path + "/" + relation.Name
-		}
-	} else {
-		if path == "" {
-			path = disk + ":"
-		} else {
-			path = path + "\\" + relation.Name
-		}
-	}
-	if disk == "Ubuntu" && isRoot {
-		relation.Path = "/"
-	} else {
-		relation.Path = path
-	}
-	(*RelationMap)[ind] = relation
-	for _, uuid := range relation.Child {
-		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, taskID)
-	}
-}
-
-func clearBuilder(agent string, disk string, explorerFile string) {
-	count--
-	cancelMap[agent] = []context.CancelFunc{}
-	err := file.MoveFile(explorerFile, filepath.Join(fileStagedPath, agent+"."+disk+".txt"))
-	if err != nil {
-		logger.Error("Error moving file (" + agent + "-" + disk + "): " + err.Error())
-	}
 }

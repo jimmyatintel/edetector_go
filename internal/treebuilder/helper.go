@@ -1,0 +1,118 @@
+package treebuilder
+
+import (
+	"context"
+	"edetector_go/pkg/file"
+	"edetector_go/pkg/logger"
+	"edetector_go/pkg/mariadb/query"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/google/uuid"
+)
+
+func getEntryModifiedTime(fileSystem string, entryModifiedTime string) int {
+	if fileSystem == "NTFS" {
+		return strToInt(entryModifiedTime)
+	}
+
+	return 0
+}
+
+func getMD5Sig(fileSystem string, signature string) string {
+	if fileSystem != "NTFS" {
+		return signature
+	}
+
+	return ""
+}
+
+func getStartCluster(fileSystem string, startCluster string) int {
+	if fileSystem == "FAT32" {
+		return strToInt(startCluster)
+	}
+
+	return 0
+}
+
+func getTaskTimestamp(taskID string) int {
+	taskInfo, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+	if err != nil {
+		logger.Error("Error getting task timestamp: " + err.Error())
+		return 0
+	}
+
+	return strToInt(taskInfo[0][6])
+}
+
+func getRelation(values []string) (int, int, error) {
+	values[9] = strings.TrimSpace(values[9])
+	parent, err := strconv.Atoi(values[9])
+	if err != nil {
+		return -1, -1, err
+	}
+	child, err := strconv.Atoi(values[8])
+	if err != nil {
+		return -1, -1, err
+	}
+	return parent, child, nil
+}
+
+func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *map[int](Relation)) {
+	_, exists := (*RelationMap)[ind]
+	if !exists {
+		uuid := uuid.NewString()
+		relation := Relation{
+			UUID:   uuid,
+			Name:   "",
+			Path:   "",
+			IsRoot: false,
+			Child:  []string{},
+		}
+		(*RelationMap)[ind] = relation
+		(*UUIDMap)[uuid] = ind
+	}
+}
+
+func strToInt(str string) int {
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo string, UUIDMap *map[string]int, RelationMap *map[int](Relation), taskID string) {
+	disk := strings.Split(diskInfo, "|")[0]
+	relation := (*RelationMap)[ind]
+	if disk == "Ubuntu" {
+		if !isRoot {
+			path = path + "/" + relation.Name
+		}
+	} else {
+		if path == "" {
+			path = disk + ":"
+		} else {
+			path = path + "\\" + relation.Name
+		}
+	}
+	if disk == "Ubuntu" && isRoot {
+		relation.Path = "/"
+	} else {
+		relation.Path = path
+	}
+	(*RelationMap)[ind] = relation
+	for _, uuid := range relation.Child {
+		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, taskID)
+	}
+}
+
+func clearBuilder(agent string, disk string, explorerFile string) {
+	count--
+	cancelMap[agent] = []context.CancelFunc{}
+	err := file.MoveFile(explorerFile, filepath.Join(fileStagedPath, agent+"."+disk+".txt"))
+	if err != nil {
+		logger.Error("Error moving file (" + agent + "-" + disk + "): " + err.Error())
+	}
+}
