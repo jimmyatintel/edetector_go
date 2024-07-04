@@ -113,11 +113,11 @@ func RedisGetInt(key string) int {
 	return val_int
 }
 
-func RedisDelete(key string) error {
+func RedisDelete(keys ...string) error {
 	if !checkflag() {
 		return nil
 	}
-	return RedisClient.Del(context.Background(), key).Err()
+	return RedisClient.Del(context.Background(), keys...).Err()
 }
 
 func GetKeysMatchingPattern(pattern string) []string {
