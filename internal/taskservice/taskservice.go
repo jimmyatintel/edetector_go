@@ -120,6 +120,13 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	channelmap.AssignLoadDumpChannel(chanKey, &load_dump_chan)
 	logger.Info("Create load dump channel: " + chanKey)
 
+	defer func() {
+		// remove the allocate channel map before function return
+		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
+			logger.Error("Error removing dump/load channel: " + err.Error())
+		}
+	}()
+
 	// handle the task
 	if _, err := taskFunc(NewPacket); err != nil {
 		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
@@ -149,11 +156,6 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 			c.JSON(http.StatusOK, res)
 			logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
 		}
-
-		// remove the channel
-		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
-			logger.Error("Error removing dump channel: " + err.Error())
-		}
 	} else {
 		// wait for the dump task to finish & remove the channel
 		dumpFileName := <-load_dump_chan
@@ -172,11 +174,6 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 			}
 
 			logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
-		}
-
-		// remove the channel
-		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
-			logger.Error("Error removing dump channel: " + err.Error())
 		}
 	}
 }
