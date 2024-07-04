@@ -47,12 +47,6 @@ func HandleExpolorer(p packet.Packet) {
 		}
 	}
 	logger.Info("Finish all drives: " + key)
-
-	// delete redis key: DriveUnfinished, ExplorerProgress, DriveCount, DriveTotal
-	err := redis.RedisDelete(key+"-DriveUnfinished", key+"-ExplorerProgress", key+"-DriveCount", key+"-DriveTotal")
-	if err != nil {
-		logger.Error("Delete redis key failed: " + err.Error())
-	}
 }
 
 func StartGetExplorer(p packet.UserPacket) error {

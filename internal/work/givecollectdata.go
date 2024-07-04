@@ -152,12 +152,6 @@ func GiveCollectDataEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		return task.FAIL, err
 	}
 
-	// delete redis key: CollectTotal, CollectCount, CollectProgress
-	err = redis.RedisDelete(key+"-CollectTotal", key+"-CollectCount", key+"-CollectProgress")
-	if err != nil {
-		logger.Error("Delete redis key failed: " + err.Error())
-	}
-
 	return task.SUCCESS, nil
 }
 

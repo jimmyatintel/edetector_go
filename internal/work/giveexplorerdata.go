@@ -187,7 +187,7 @@ func updateDriveProgress(key string) {
 			return
 		}
 
-		driveProgress := int((float64(driveCount)/float64(driveTotal))*100 + float64(explorerProgress)/float64(explorerProgress))
+		driveProgress := int((float64(driveCount)/float64(driveTotal))*100 + float64(explorerProgress)/float64(driveTotal))
 		err = query.Update_progress(driveProgress, key, "StartGetDrive")
 		if err != nil {
 			logger.Error("Update progress failed: " + err.Error())

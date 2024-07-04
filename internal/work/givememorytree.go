@@ -85,10 +85,5 @@ func GiveMemoryTreeEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		return task.FAIL, err
 	}
 
-	err = redis.RedisDelete(key + "-MemoryTreeTotal")
-	if err != nil {
-		logger.Error("Delete redis key failed: " + err.Error())
-	}
-
 	return task.SUCCESS, nil
 }

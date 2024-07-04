@@ -129,11 +129,6 @@ func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 	query.Finish_task(key, "StartGetImage")
 
-	err = redis.RedisDelete(key+"-ImageTotal", key+"-ImageCount", key+"-ImageProgress")
-	if err != nil {
-		logger.Error("Delete redis key failed: " + err.Error())
-	}
-
 	return task.SUCCESS, nil
 }
 
