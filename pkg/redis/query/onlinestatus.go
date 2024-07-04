@@ -40,14 +40,25 @@ func Offline(KeyNum string) {
 	if GetStatus(KeyNum) == 0 { // already offline
 		return
 	}
-	redis.RedisSet_AddInteger("OnlineClientCount", -1)
-	logger.Info("reduce online clinet: " + KeyNum + "-" + fmt.Sprint(redis.RedisGetInt("OnlineClientCount")))
+
+	err := redis.RedisSet_AddInteger("OnlineClientCount", -1)
+	if err != nil {
+		logger.Error("Update online client count failed:" + err.Error())
+		return
+	}
+	onlineClientCount, err := redis.RedisGetInt("OnlineClientCount")
+	if err != nil {
+		logger.Error("Get online client count failed:" + err.Error())
+		return
+	}
+
+	logger.Info("reduce online clinet: " + KeyNum + "-" + fmt.Sprint(onlineClientCount))
 	currentTime := time.Now().Format(time.RFC3339)
 	onlineStatusInfo := ClientOnlineStatus{
 		Status: 0,
 		Time:   currentTime,
 	}
-	err := redis.RedisSet(KeyNum, onlineStatusInfo.Marshal())
+	err = redis.RedisSet(KeyNum, onlineStatusInfo.Marshal())
 	if err != nil {
 		logger.Error("Update offline failed:" + err.Error())
 		return

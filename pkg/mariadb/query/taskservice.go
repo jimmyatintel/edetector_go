@@ -43,19 +43,21 @@ func Load_stored_task(task_id string, client_id string, status int, tasktype str
 	return result, nil
 }
 
-func Update_progress(progress int, clientid string, tasktype string) {
+func Update_progress(progress int, clientid string, tasktype string) error {
 	qu := "update task set progress = ? where client_id = ? and type = ? and status = 2"
 	result, err := mariadb.DB.Exec(qu, progress, clientid, tasktype)
 	if err != nil {
-		logger.Error("Update failed: " + err.Error())
+		return err
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		logger.Error("Error getting rowsAffected: " + err.Error())
+		return err
 	}
 	if rowsAffected > 0 {
 		request.RequestToUser(clientid)
 	}
+
+	return nil
 }
 
 func Update_task_status(clientid string, tasktype string, old_status int, new_status int) int {

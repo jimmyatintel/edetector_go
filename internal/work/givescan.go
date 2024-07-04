@@ -97,6 +97,7 @@ func GiveScanDataInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveScan: " + key)
+
 	// write file
 	path := filepath.Join(scanWorkingPath, key)
 	content := getDataPacketContent(p)
@@ -104,43 +105,71 @@ func GiveScan(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// update progress
 	redis.RedisSet_AddInteger((key + "-ScanCount"), 1)
-	progress := int(scanFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ScanCount"), redis.RedisGetInt(key+"-ScanTotal"), 65436, scanSecondPart)
-	redis.RedisSet(key+"-ScanProgress", progress)
+	scanCount, err := redis.RedisGetInt(key + "-ScanCount")
+	if err != nil {
+		return task.FAIL, err
+	}
+	scanTotal, err := redis.RedisGetInt(key + "-ScanTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+
+	progress := int(scanFirstPart) + getProgressByCount(scanCount, scanTotal, 65436, scanSecondPart)
+	err = redis.RedisSet(key+"-ScanProgress", progress)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
 func GiveScanEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveScanEnd: " + key + "::" + p.GetMessage())
+
 	progress := int(scanFirstPart) + int(scanSecondPart)
-	redis.RedisSet(key+"-ScanProgress", progress)
 	srcPath := filepath.Join(scanWorkingPath, key)
 	workPath := filepath.Join(scanWorkingPath, key+".txt")
 	unstagePath := filepath.Join(scanUstagePath, (key + ".txt"))
-	// unzip data
-	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-ScanTotal"))
+	err := redis.RedisSet(key+"-ScanProgress", progress)
 	if err != nil {
 		return task.FAIL, err
 	}
+	scanTotal, err := redis.RedisGetInt(key + "-ScanTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+
+	// unzip data
+	err = file.DecompressFile(srcPath, workPath, scanTotal)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	// move to Unstage
 	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	err = parseScan(unstagePath, p.GetRkey())
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
@@ -154,7 +183,19 @@ func updateScanProgress(key string) {
 		if len(result) == 0 {
 			return
 		}
-		query.Update_progress(redis.RedisGetInt(key+"-ScanProgress"), key, "StartScan")
+
+		scanProgress, err := redis.RedisGetInt(key + "-ScanProgress")
+		if err != nil {
+			logger.Error("Get scan progress failed: " + err.Error())
+			return
+		}
+
+		err = query.Update_progress(scanProgress, key, "StartScan")
+		if err != nil {
+			logger.Error("Update progress failed: " + err.Error())
+			return
+		}
+
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

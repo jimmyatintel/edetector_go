@@ -76,6 +76,7 @@ func GiveExplorerInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveExplorerData: " + key)
+
 	// write file
 	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk")))
 	content := getDataPacketContent(p)
@@ -83,15 +84,31 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// update progress
-	redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
-	progress := int(explorerFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ExplorerCount"), redis.RedisGetInt(key+"-ExplorerTotal"), 65426, explorerSecondPart)
-	redis.RedisSet(key+"-ExplorerProgress", progress)
+	err = redis.RedisSet_AddInteger((key + "-ExplorerCount"), 1)
+	if err != nil {
+		return task.FAIL, err
+	}
+	explorerCount, err := redis.RedisGetInt(key + "-ExplorerCount")
+	if err != nil {
+		return task.FAIL, err
+	}
+	explorerTotal, err := redis.RedisGetInt(key + "-ExplorerTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+	progress := int(explorerFirstPart) + getProgressByCount(explorerCount, explorerTotal, 65426, explorerSecondPart)
+	err = redis.RedisSet(key+"-ExplorerProgress", progress)
+	if err != nil {
+		return task.FAIL, err
+	}
 
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	return task.SUCCESS, nil
 }
 
@@ -103,9 +120,13 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	srcPath := filepath.Join(fileWorkingPath, filename)
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))
+	explorerTotal, err := redis.RedisGetInt(key + "-ExplorerTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
 
 	// unzip data
-	err := file.DecompressFile(srcPath, workPath, redis.RedisGetInt(key+"-ExplorerTotal"))
+	err = file.DecompressFile(srcPath, workPath, explorerTotal)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -125,12 +146,6 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
-	}
-
-	// delete redis key: DriveUnfinished, ExplorerProgress, DriveCount, DriveTotal
-	err = redis.RedisDelete(key+"-DriveUnfinished", key+"-ExplorerProgress", key+"-DriveCount", key+"-DriveTotal")
-	if err != nil {
-		logger.Error("Delete redis key failed: " + err.Error())
 	}
 
 	return task.SUCCESS, nil
@@ -155,8 +170,30 @@ func updateDriveProgress(key string) {
 		if len(result) == 0 {
 			return
 		}
-		driveProgress := int((float64(redis.RedisGetInt(key+"-DriveCount"))/float64(redis.RedisGetInt(key+"-DriveTotal")))*100 + float64(redis.RedisGetInt(key+"-ExplorerProgress"))/float64(redis.RedisGetInt(key+"-DriveTotal")))
-		query.Update_progress(driveProgress, key, "StartGetDrive")
+
+		driveCount, err := redis.RedisGetInt(key + "-DriveCount")
+		if err != nil {
+			logger.Error("Get drive count failed: " + err.Error())
+			return
+		}
+		driveTotal, err := redis.RedisGetInt(key + "-DriveTotal")
+		if err != nil {
+			logger.Error("Get drive total failed: " + err.Error())
+			return
+		}
+		explorerProgress, err := redis.RedisGetInt(key + "-ExplorerProgress")
+		if err != nil {
+			logger.Error("Get explorer progress failed: " + err.Error())
+			return
+		}
+
+		driveProgress := int((float64(driveCount)/float64(driveTotal))*100 + float64(explorerProgress)/float64(explorerProgress))
+		err = query.Update_progress(driveProgress, key, "StartGetDrive")
+		if err != nil {
+			logger.Error("Update progress failed: " + err.Error())
+			return
+		}
+
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

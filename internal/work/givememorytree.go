@@ -52,28 +52,43 @@ func GiveMemoryTreeEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	scrPath := filepath.Join(memoryTreeWorkingPath, key)
 	workPath := filepath.Join(memoryTreeWorkingPath, key+".txt")
 	unstagePath := filepath.Join(memoryTreeUstagePath, key+".txt")
-	// unzip data
-	err := file.DecompressFile(scrPath, workPath, redis.RedisGetInt(key+"-MemoryTreeTotal"))
+	memoryTreeTotal, err := redis.RedisGetInt(key + "-MemoryTreeTotal")
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// unzip data
+	err = file.DecompressFile(scrPath, workPath, memoryTreeTotal)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	// move to unstage
 	err = file.MoveFile(workPath, unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// parse memory tree
 	content, err := os.ReadFile(unstagePath)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	err = handleRelation(content, key)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	err = redis.RedisDelete(key + "-MemoryTreeTotal")
+	if err != nil {
+		logger.Error("Delete redis key failed: " + err.Error())
+	}
+
 	return task.SUCCESS, nil
 }

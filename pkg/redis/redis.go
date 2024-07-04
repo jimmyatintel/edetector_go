@@ -4,6 +4,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -73,7 +74,14 @@ func RedisSet_AddInteger(key string, value int) error {
 	if !checkflag() {
 		return nil
 	}
-	newValue := RedisGetInt(key) + value
+
+	oldValue, err := RedisGetInt(key)
+	if err != nil {
+		return err
+	}
+
+	newValue := oldValue + value
+
 	return RedisClient.Set(context.Background(), key, newValue, 0).Err()
 }
 
@@ -96,21 +104,22 @@ func RedisGetString(key string) string {
 	return val
 }
 
-func RedisGetInt(key string) int {
+func RedisGetInt(key string) (int, error) {
 	if !checkflag() {
-		return 0
+		return 0, errors.New("Redis is disabled")
 	}
+
 	val, err := RedisClient.Get(context.Background(), key).Result()
 	if err != nil {
-		logger.Error("Error getting value from redis: " + err.Error())
-		return 0
+		return 0, err
 	}
+
 	val_int, err := strconv.Atoi(val)
 	if err != nil {
-		logger.Error("Error converting to integer: " + err.Error())
-		return 0
+		return 0, err
 	}
-	return val_int
+
+	return val_int, nil
 }
 
 func RedisDelete(keys ...string) error {

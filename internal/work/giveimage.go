@@ -69,6 +69,7 @@ func GiveImageInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveImage: " + key)
+
 	// write file
 	path := filepath.Join(imageWorkingPath, key)
 	content := getDataPacketContent(p)
@@ -76,9 +77,21 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	// update progress
-	redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
-	progress := int(imageFirstPart) + getProgressByCount(redis.RedisGetInt(key+"-ImageCount"), redis.RedisGetInt(key+"-ImageTotal"), 65436, imageSecondPart)
+	err = redis.RedisSet_AddInteger((key + "-ImageCount"), 1)
+	if err != nil {
+		return task.FAIL, err
+	}
+	imageCount, err := redis.RedisGetInt(key + "-ImageCount")
+	if err != nil {
+		return task.FAIL, err
+	}
+	imageTotal, err := redis.RedisGetInt(key + "-ImageTotal")
+	if err != nil {
+		return task.FAIL, err
+	}
+	progress := int(imageFirstPart) + getProgressByCount(imageCount, imageTotal, 65436, imageSecondPart)
 	redis.RedisSet(key+"-ImageProgress", progress)
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
@@ -90,22 +103,37 @@ func GiveImage(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 func GiveImageEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveImageEnd: " + key + "::" + p.GetMessage())
+
 	srcPath := filepath.Join(imageWorkingPath, key)
-	// truncate data
-	err := file.TruncateFile(srcPath, redis.RedisGetInt(key+"-ImageTotal"))
+	imageTotal, err := redis.RedisGetInt(key + "-ImageTotal")
 	if err != nil {
 		return task.FAIL, err
 	}
+
+	// truncate data
+	err = file.TruncateFile(srcPath, imageTotal)
+	if err != nil {
+		return task.FAIL, err
+	}
+
 	// store the ImageFile
 	err = storeImageFile(key, srcPath)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		return task.FAIL, err
 	}
+
 	query.Finish_task(key, "StartGetImage")
+
+	err = redis.RedisDelete(key+"-ImageTotal", key+"-ImageCount", key+"-ImageProgress")
+	if err != nil {
+		logger.Error("Delete redis key failed: " + err.Error())
+	}
+
 	return task.SUCCESS, nil
 }
 
@@ -123,7 +151,19 @@ func updateImageProgress(key string) {
 		if len(result) == 0 {
 			return
 		}
-		query.Update_progress(redis.RedisGetInt(key+"-ImageProgress"), key, "StartGetImage")
+
+		imageProress, err := redis.RedisGetInt(key + "-ImageProgress")
+		if err != nil {
+			logger.Error("Get redis key failed: " + err.Error())
+			return
+		}
+
+		err = query.Update_progress(imageProress, key, "StartGetImage")
+		if err != nil {
+			logger.Error("Update progress failed: " + err.Error())
+			return
+		}
+
 		time.Sleep(time.Duration(config.Viper.GetInt("UPDATE_INTERVAL")) * time.Second)
 	}
 }

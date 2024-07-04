@@ -46,6 +46,11 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			logger.Error("Invalid packet (too short): " + string(buf[:reqLen]))
 			continue
 		}
+		onlineClientCount, err := redis.RedisGetInt("OnlineClientCount")
+		if err != nil {
+			logger.Error("Get OnlineClientCount failed: " + err.Error())
+			continue
+		}
 		Data_acache := make([]byte, 0)
 		Data_acache = append(Data_acache, buf[:reqLen]...)
 		decrypt_buf = bytes.Repeat([]byte{0}, len(Data_acache))
@@ -95,7 +100,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		if NewPacket.GetTaskType() == task.GIVE_INFO &&
-			(redis.RedisGetInt("OnlineClientCount") >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
+			(onlineClientCount >= config.Viper.GetInt("AGENT_LIMIT") || len(mq.Load_all_client()) >= config.Viper.GetInt("TOTAL_AGENT_LIMIT")) {
 			logger.Error("Too many clients, reject: " + string(NewPacket.GetRkey()))
 			clientsearchsend.SendTCPtoClient(NewPacket, task.REJECT_AGENT, "", conn)
 			close(closeConn)
