@@ -78,6 +78,9 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info(key + "::GiveLoadDllEnd")
 
+	// remove the msg from ConnMsgMap before return
+	defer connectionmap.RemoveConnMsg(conn)
+
 	// get the pid and path info from ConnMsgMap
 	workPath, unstagePath, returnData := "", "", ""
 	msg, ok := connectionmap.GetConnMsg(conn)
@@ -116,6 +119,8 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			logger.Error("Error removing file: " + err.Error())
 			return task.FAIL, err
 		}
+	} else {
+		returnData = "Error: " + msg.Info
 	}
 
 	// send data right msg to client
@@ -130,9 +135,6 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	load_chan <- returnData
-
-	// remove the msg from ConnMsgMap
-	connectionmap.RemoveConnMsg(conn)
 
 	return task.SUCCESS, nil
 }

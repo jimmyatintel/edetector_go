@@ -75,6 +75,9 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info(key + "::GiveDumpDllEnd")
 
+	// remove the msg from ConnMsgMap before return
+	defer connectionmap.RemoveConnMsg(conn)
+
 	// get dll path from ConnMsgMap
 	workPath, unstagePath := "", ""
 	msg, ok := connectionmap.GetConnMsg(conn)
@@ -98,6 +101,8 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			logger.Error("Error moving file: " + err.Error())
 			return task.FAIL, err
 		}
+	} else {
+		unstagePath = "Error: " + msg.Info
 	}
 
 	// send data right msg to client
@@ -113,9 +118,6 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 	dump_chan <- unstagePath
-
-	// remove the msg from ConnMsgMap
-	connectionmap.RemoveConnMsg(conn)
 
 	return task.SUCCESS, nil
 }

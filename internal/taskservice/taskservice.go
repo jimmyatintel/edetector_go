@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"edetector_go/config"
 	"edetector_go/internal/channelmap"
@@ -135,10 +136,10 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	if taskType == task.START_LOAD_DLL {
 		// wait for the load task to finish & remove the channel
 		pathInfo := <-load_dump_chan
-		if pathInfo == "" {
+		if strings.HasPrefix(pathInfo, "Error: ") {
 			res := Response{
 				IsSuccess: false,
-				Message:   "Load failed",
+				Message:   pathInfo,
 			}
 			c.JSON(http.StatusInternalServerError, res)
 		} else {
@@ -157,10 +158,10 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	} else {
 		// wait for the dump task to finish & remove the channel
 		dumpFileName := <-load_dump_chan
-		if dumpFileName == "" {
+		if strings.HasPrefix(dumpFileName, "Error: ") {
 			res := Response{
 				IsSuccess: false,
-				Message:   "Dump failed",
+				Message:   dumpFileName,
 			}
 			c.JSON(http.StatusInternalServerError, res)
 		} else {
