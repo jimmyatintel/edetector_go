@@ -47,12 +47,12 @@ func detectNetworkElastic(p packet.Packet) {
 			continue
 		}
 		taskID := query.Load_task_id(p.GetRkey(), "StartScan", 2)
-		taskData, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+		timestamp, err := query.GetTaskTimestamp(taskID)
 		if err != nil {
-			logger.Error("Error getting task data: " + err.Error())
+			logger.Error("Error getting timestamp: " + err.Error())
 			continue
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_MemoryNetwork{}, &MemoryNetwork{}, values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid", "nil", "nil", "memory_network", taskData[0][6])
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_MemoryNetwork{}, &MemoryNetwork{}, values, uuid, p.GetRkey(), ip, name, "0", "0", "0", "0", "ed_mid", "nil", "nil", "memory_network", timestamp)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 			continue

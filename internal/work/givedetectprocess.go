@@ -36,12 +36,17 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	}
 	logger.Info("GiveDetectProcess: " + key + "::" + p.GetMessage())
 	redis.RedisSet_AddString(key+"-DetectMsg", p.GetMessage())
-	lines := strings.Split(redis.RedisGetString(key+"-DetectMsg"), "\n")
+	detectMsg, err := redis.RedisGetString(key + "-DetectMsg")
+	if err != nil {
+		logger.Error("Error getting detect message: " + err.Error())
+		return task.FAIL, err
+	}
+	lines := strings.Split(detectMsg, "\n")
 	redis.RedisSet(key+"-DetectMsg", "")
 	taskID := query.Load_task_id(p.GetRkey(), "StartScan", 2)
-	taskData, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+	timestamp, err := query.GetTaskTimestamp(taskID)
 	if err != nil {
-		logger.Error("Error getting task data: " + err.Error())
+		logger.Error("Error getting timestamp: " + err.Error())
 		return task.FAIL, err
 	}
 
@@ -99,7 +104,7 @@ func GiveDetectProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 			logger.Error("Error getting risk level: " + err.Error())
 			return task.FAIL, err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_Memory{}, &Memory{}, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil", "nil", "memory", taskData[0][6])
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_Memory{}, &Memory{}, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "nil", "nil", "memory", timestamp)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 			return task.FAIL, err

@@ -77,10 +77,15 @@ func GiveExplorerData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Debug("GiveExplorerData: " + key)
 
+	disk, err := redis.RedisGetString(key + "-Disk")
+	if err != nil {
+		return task.FAIL, err
+	}
+	path := filepath.Join(fileWorkingPath, (key + "." + disk))
+
 	// write file
-	path := filepath.Join(fileWorkingPath, (key + "." + redis.RedisGetString(key+"-Disk")))
 	content := getDataPacketContent(p)
-	err := file.WriteFile(path, content)
+	err = file.WriteFile(path, content)
 	if err != nil {
 		return task.FAIL, err
 	}
@@ -116,7 +121,11 @@ func GiveExplorerEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	key := p.GetRkey()
 	logger.Info("GiveExplorerEnd: " + key + "::" + p.GetMessage())
 
-	filename := key + "." + redis.RedisGetString(key+"-Disk")
+	disk, err := redis.RedisGetString(key + "-Disk")
+	if err != nil {
+		return task.FAIL, err
+	}
+	filename := key + "." + disk
 	srcPath := filepath.Join(fileWorkingPath, filename)
 	workPath := filepath.Join(fileWorkingPath, filename+".txt")
 	unstagePath := filepath.Join(fileUnstagePath, (filename + ".txt"))

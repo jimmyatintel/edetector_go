@@ -53,129 +53,129 @@ func sendCollectToRabbitMQ(db *sql.DB, tableName string, agent string) error {
 
 		index := config.Viper.GetString("ELASTIC_PREFIX") + "_" + "collection" //! developing
 		category := strings.ToLower(tableName)
-		taskData, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+		timestamp, err := query.GetTaskTimestamp(taskID)
 		if err != nil {
 			return err
 		}
 
 		switch tableName {
 		case "AppResourceUsageMonitor":
-			err = toRabbitMQ(index, agent, values, values[1], values[19], "software", values[14], &Collect_AppResourceUsageMonitor{}, &AppResourceUsageMonitor{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[19], "software", values[14], &Collect_AppResourceUsageMonitor{}, &AppResourceUsageMonitor{}, taskID, category, timestamp)
 		case "ARPCache":
-			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[2], &Collect_ARPCache{}, &ARPCache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[2], &Collect_ARPCache{}, &ARPCache{}, taskID, category, timestamp)
 		case "BaseService":
 			values[14] = toBoolean(values[14])
 			values[15] = toBoolean(values[15])
-			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &Collect_BaseService{}, &BaseService{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &Collect_BaseService{}, &BaseService{}, taskID, category, timestamp)
 		case "ChromeBookmarks":
-			err = toRabbitMQ(index, agent, values, values[4], values[6], "website_bookmark", values[3], &Collect_ChromeBookmarks{}, &ChromeBookmarks{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[4], values[6], "website_bookmark", values[3], &Collect_ChromeBookmarks{}, &ChromeBookmarks{}, taskID, category, timestamp)
 		case "ChromeCache":
 			values[8] = RFCToTimestamp(values[8])
 			values[9] = RFCToTimestamp(values[9])
 			values[10] = RFCToTimestamp(values[10])
-			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &Collect_ChromeCache{}, &ChromeCache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &Collect_ChromeCache{}, &ChromeCache{}, taskID, category, timestamp)
 		case "ChromeDownload":
 			values[11] = toBoolean(values[11])
 			values[17] = RFCToTimestamp(values[17])
-			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &Collect_ChromeDownload{}, &ChromeDownload{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[6], "website_bookmark", values[3], &Collect_ChromeDownload{}, &ChromeDownload{}, taskID, category, timestamp)
 		case "ChromeHistory":
-			err = toRabbitMQ(index, agent, values, values[0], values[2], "website_bookmark", values[1], &Collect_ChromeHistory{}, &ChromeHistory{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[2], "website_bookmark", values[1], &Collect_ChromeHistory{}, &ChromeHistory{}, taskID, category, timestamp)
 		case "ChromeKeywordSearch":
-			err = toRabbitMQ(index, agent, values, values[0], "0", "website_bookmark", "", &Collect_ChromeKeywordSearch{}, &ChromeKeywordSearch{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "website_bookmark", "", &Collect_ChromeKeywordSearch{}, &ChromeKeywordSearch{}, taskID, category, timestamp)
 		case "ChromeLogin":
-			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[3], &Collect_ChromeLogin{}, &ChromeLogin{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[3], &Collect_ChromeLogin{}, &ChromeLogin{}, taskID, category, timestamp)
 		case "DNSInfo":
-			err = toRabbitMQ(index, agent, values, values[9], "0", "software", values[6], &Collect_DNSInfo{}, &DNSInfo{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[9], "0", "software", values[6], &Collect_DNSInfo{}, &DNSInfo{}, taskID, category, timestamp)
 		case "EdgeBookmarks":
-			err = toRabbitMQ(index, agent, values, values[3], values[7], "website_bookmark", values[4], &Collect_EdgeBookmarks{}, &EdgeBookmarks{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[7], "website_bookmark", values[4], &Collect_EdgeBookmarks{}, &EdgeBookmarks{}, taskID, category, timestamp)
 		case "EdgeCache":
 			values[8] = RFCToTimestamp(values[8])
 			values[9] = RFCToTimestamp(values[9])
 			values[10] = RFCToTimestamp(values[10])
-			err = toRabbitMQ(index, agent, values, values[1], values[10], "cookie_cache", values[2], &Collect_EdgeCache{}, &EdgeCache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[10], "cookie_cache", values[2], &Collect_EdgeCache{}, &EdgeCache{}, taskID, category, timestamp)
 		case "EdgeCookies":
-			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &Collect_EdgeCookies{}, &EdgeCookies{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &Collect_EdgeCookies{}, &EdgeCookies{}, taskID, category, timestamp)
 		case "EdgeHistory":
-			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[2], &Collect_EdgeHistory{}, &EdgeHistory{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[2], &Collect_EdgeHistory{}, &EdgeHistory{}, taskID, category, timestamp)
 		case "EdgeLogin":
-			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[4], &Collect_EdgeLogin{}, &EdgeLogin{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[5], "website_bookmark", values[4], &Collect_EdgeLogin{}, &EdgeLogin{}, taskID, category, timestamp)
 		case "EventApplication":
-			err = toRabbitMQ(index, agent, values, values[3], values[9], "software", values[17], &Collect_EventApplication{}, &EventApplication{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[9], "software", values[17], &Collect_EventApplication{}, &EventApplication{}, taskID, category, timestamp)
 		case "EventSecurity":
-			err = toRabbitMQ(index, agent, values, values[3], values[9], "usb", values[17], &Collect_EventSecurity{}, &EventSecurity{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[9], "usb", values[17], &Collect_EventSecurity{}, &EventSecurity{}, taskID, category, timestamp)
 		case "EventSystem":
-			err = toRabbitMQ(index, agent, values, values[3], values[9], "usb", values[17], &Collect_EventSystem{}, &EventSystem{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[9], "usb", values[17], &Collect_EventSystem{}, &EventSystem{}, taskID, category, timestamp)
 		case "FirefoxBookmarks":
-			err = toRabbitMQ(index, agent, values, values[8], values[5], "website_bookmark", values[3], &Collect_FirefoxBookmarks{}, &FirefoxBookmarks{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[8], values[5], "website_bookmark", values[3], &Collect_FirefoxBookmarks{}, &FirefoxBookmarks{}, taskID, category, timestamp)
 		case "FirefoxCache":
-			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &Collect_FirefoxCache{}, &FirefoxCache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[8], "cookie_cache", values[2], &Collect_FirefoxCache{}, &FirefoxCache{}, taskID, category, timestamp)
 		case "FirefoxCookies":
-			err = toRabbitMQ(index, agent, values, values[1], values[5], "cookie_cache", values[3], &Collect_FirefoxCookies{}, &FirefoxCookies{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[5], "cookie_cache", values[3], &Collect_FirefoxCookies{}, &FirefoxCookies{}, taskID, category, timestamp)
 		case "FirefoxHistory":
-			err = toRabbitMQ(index, agent, values, values[0], values[9], "website_bookmark", values[1], &Collect_FirefoxHistory{}, &FirefoxHistory{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[9], "website_bookmark", values[1], &Collect_FirefoxHistory{}, &FirefoxHistory{}, taskID, category, timestamp)
 		case "IEHistory":
-			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &Collect_IEHistory{}, &IEHistory{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &Collect_IEHistory{}, &IEHistory{}, taskID, category, timestamp)
 		case "InstalledSoftware":
 			values[3] = DigitToTimestamp(values[3])
-			err = toRabbitMQ(index, agent, values, values[0], values[17], "network_record", values[6], &Collect_InstalledSoftware{}, &InstalledSoftware{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[17], "network_record", values[6], &Collect_InstalledSoftware{}, &InstalledSoftware{}, taskID, category, timestamp)
 		case "JumpList":
-			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[1], &Collect_JumpList{}, &JumpList{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[1], &Collect_JumpList{}, &JumpList{}, taskID, category, timestamp)
 		case "MUICache":
-			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[1], &Collect_MUICache{}, &MUICache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[1], &Collect_MUICache{}, &MUICache{}, taskID, category, timestamp)
 		case "Network":
-			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[4], &Collect_Network{}, &Network{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[4], &Collect_Network{}, &Network{}, taskID, category, timestamp)
 		case "NetworkDataUsageMonitor":
-			err = toRabbitMQ(index, agent, values, values[1], values[10], "software", values[5], &Collect_NetworkDataUsageMonitor{}, &NetworkDataUsageMonitor{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[10], "software", values[5], &Collect_NetworkDataUsageMonitor{}, &NetworkDataUsageMonitor{}, taskID, category, timestamp)
 		case "NetworkResources":
-			err = toRabbitMQ(index, agent, values, values[0], "0", "network_record", values[8], &Collect_NetworkResources{}, &NetworkResources{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "network_record", values[8], &Collect_NetworkResources{}, &NetworkResources{}, taskID, category, timestamp)
 		case "OpenedFiles":
-			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[0], &Collect_OpenedFiles{}, &OpenedFiles{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], "0", "volatile", values[0], &Collect_OpenedFiles{}, &OpenedFiles{}, taskID, category, timestamp)
 		case "Prefetch":
-			err = toRabbitMQ(index, agent, values, values[1], values[2], "software", values[3], &Collect_Prefetch{}, &Prefetch{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[2], "software", values[3], &Collect_Prefetch{}, &Prefetch{}, taskID, category, timestamp)
 		case "Process":
-			err = toRabbitMQ(index, agent, values, values[1], values[3], "volatile", values[4], &Collect_Process{}, &Process{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[3], "volatile", values[4], &Collect_Process{}, &Process{}, taskID, category, timestamp)
 		case "Service":
-			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &Collect_Service{}, &Service{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[5], &Collect_Service{}, &Service{}, taskID, category, timestamp)
 		case "Shortcuts":
 			values[7] = toBoolean(values[7])
-			err = toRabbitMQ(index, agent, values, values[0], values[10], "document", values[2], &Collect_Shortcuts{}, &Shortcuts{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[10], "document", values[2], &Collect_Shortcuts{}, &Shortcuts{}, taskID, category, timestamp)
 		case "StartRun":
-			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[1], &Collect_StartRun{}, &StartRun{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], "0", "software", values[1], &Collect_StartRun{}, &StartRun{}, taskID, category, timestamp)
 		case "TaskSchedule":
-			err = toRabbitMQ(index, agent, values, values[0], values[3], "software", values[1], &Collect_TaskSchedule{}, &TaskSchedule{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[3], "software", values[1], &Collect_TaskSchedule{}, &TaskSchedule{}, taskID, category, timestamp)
 		case "USBdevices":
-			err = toRabbitMQ(index, agent, values, values[1], values[14], "usb", values[10], &Collect_USBdevices{}, &USBdevices{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[14], "usb", values[10], &Collect_USBdevices{}, &USBdevices{}, taskID, category, timestamp)
 		case "UserAssist":
-			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[2], &Collect_UserAssist{}, &UserAssist{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[5], "software", values[2], &Collect_UserAssist{}, &UserAssist{}, taskID, category, timestamp)
 		case "UserProfiles":
 			values[3] = toBoolean(values[3])
-			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[2], &Collect_UserProfiles{}, &UserProfiles{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[2], &Collect_UserProfiles{}, &UserProfiles{}, taskID, category, timestamp)
 		case "WindowsActivity":
-			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &Collect_WindowsActivity{}, &WindowsActivity{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[15], "document", values[3], &Collect_WindowsActivity{}, &WindowsActivity{}, taskID, category, timestamp)
 		case "Wireless":
-			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Collect_Wireless{}, &Wireless{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[8], "network_record", values[1], &Collect_Wireless{}, &Wireless{}, taskID, category, timestamp)
 		case "Email":
 			values[5] = RFCToTimestamp(values[5])
 			values[6] = RFCToTimestamp(values[6])
-			err = toRabbitMQ(index, agent, values, values[9], values[5], "emails", values[3], &Collect_Email{}, &Email{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[9], values[5], "emails", values[3], &Collect_Email{}, &Email{}, taskID, category, timestamp)
 		case "EmailPath":
-			err = toRabbitMQ(index, agent, values, values[1], "0", "emails", "0", &Collect_EmailPath{}, &EmailPath{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], "0", "emails", "0", &Collect_EmailPath{}, &EmailPath{}, taskID, category, timestamp)
 		case "FirefoxLogin":
-			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &Collect_FirefoxLogin{}, &FirefoxLogin{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[4], "website_bookmark", values[1], &Collect_FirefoxLogin{}, &FirefoxLogin{}, taskID, category, timestamp)
 		case "IECache":
-			err = toRabbitMQ(index, agent, values, values[0], values[3], "cookie_cache", values[1], &Collect_IECache{}, &IECache{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[3], "cookie_cache", values[1], &Collect_IECache{}, &IECache{}, taskID, category, timestamp)
 		case "IELogin":
-			err = toRabbitMQ(index, agent, values, values[1], values[4], "website_bookmark", values[2], &Collect_IELogin{}, &IELogin{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[1], values[4], "website_bookmark", values[2], &Collect_IELogin{}, &IELogin{}, taskID, category, timestamp)
 		case "NetAdapters":
-			err = toRabbitMQ(index, agent, values, values[0], values[11], "software", values[3], &Collect_Netadapters{}, &Netadapters{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[11], "software", values[3], &Collect_Netadapters{}, &Netadapters{}, taskID, category, timestamp)
 		case "RecentFile":
-			err = toRabbitMQ(index, agent, values, values[2], "0", "document", values[0], &Collect_RecentFile{}, &RecentFile{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[2], "0", "document", values[0], &Collect_RecentFile{}, &RecentFile{}, taskID, category, timestamp)
 		case "ShellBags":
-			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[1], &Collect_Shellbags{}, &Shellbags{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[0], values[6], "document", values[1], &Collect_Shellbags{}, &Shellbags{}, taskID, category, timestamp)
 		case "SystemInfo":
-			err = toRabbitMQ(index, agent, values, values[13], "0", "network_record", values[1], &Collect_SystemInfo{}, &SystemInfo{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[13], "0", "network_record", values[1], &Collect_SystemInfo{}, &SystemInfo{}, taskID, category, timestamp)
 		case "ChromeCookies":
-			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &Collect_ChromeCookies{}, &ChromeCookies{}, taskID, category, taskData[0][6])
+			err = toRabbitMQ(index, agent, values, values[3], values[7], "cookie_cache", values[2], &Collect_ChromeCookies{}, &ChromeCookies{}, taskID, category, timestamp)
 		default:
 			logger.Error("Unknown table name (" + agent + "): " + tableName)
 			return nil

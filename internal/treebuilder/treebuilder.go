@@ -233,6 +233,14 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				return
 			}
 
+			timestamp, err := mariadbquery.GetTaskTimestamp(taskID)
+			if err != nil {
+				logger.Error("Error getting task timestamp (" + agent + "-" + diskInfo + "): " + err.Error())
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+				clearBuilder(agent, diskInfo, explorerFile)
+				return
+			}
+
 			data := Collect_Explorer{
 				Explorer: Explorer{
 					FileName:          explorerDataRaw[0],
@@ -263,7 +271,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 				EtcMain:       RelationMap[child].Path,
 				Task_id:       taskID,
 				Category:      "explorer",
-				TaskTimestamp: getTaskTimestamp(taskID),
+				TaskTimestamp: strToInt(timestamp),
 			}
 			if RelationMap[child].IsRoot {
 				headData = data

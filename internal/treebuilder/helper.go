@@ -4,7 +4,6 @@ import (
 	"context"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/mariadb/query"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -34,16 +33,6 @@ func getStartCluster(fileSystem string, startCluster string) int {
 	}
 
 	return 0
-}
-
-func getTaskTimestamp(taskID string) int {
-	taskInfo, err := query.Load_stored_task(taskID, "nil", -1, "nil")
-	if err != nil {
-		logger.Error("Error getting task timestamp: " + err.Error())
-		return 0
-	}
-
-	return strToInt(taskInfo[0][6])
 }
 
 func getRelation(values []string) (int, int, error) {

@@ -5,6 +5,7 @@ import (
 	elaDelete "edetector_go/pkg/elastic/delete"
 	"edetector_go/pkg/logger"
 	mariadbquery "edetector_go/pkg/mariadb/query"
+	"edetector_go/pkg/redis"
 	"encoding/json"
 	"strings"
 )
@@ -71,6 +72,13 @@ func BulkInsert(action []string, work []string) error {
 			}
 		}
 		mariadbquery.Finish_task(data.Agent, data.TaskType)
+
+		// delete task info in redis after finish
+		if err := redis.RedisDelete(data.TaskID); err != nil {
+			logger.Error("Error deleting task info in redis: " + err.Error())
+		} else {
+			logger.Info("Task info deleted in redis: " + data.TaskID)
+		}
 	}
 	return nil
 }

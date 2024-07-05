@@ -245,11 +245,12 @@ func parseScan(path string, key string) error {
 		if err != nil {
 			return err
 		}
-		taskData, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+		timestamp, err := query.GetTaskTimestamp(taskID)
 		if err != nil {
+			logger.Error("Error getting timestamp: " + err.Error())
 			return err
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_Memory{}, &Memory{}, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan", taskID, "memory", taskData[0][6])
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_Memory{}, &Memory{}, values, uuid, key, ip, name, values[0], values[1], "memory", values[17], "ed_mid", "StartScan", taskID, "memory", timestamp)
 		if err != nil {
 			return err
 		}
@@ -341,12 +342,12 @@ func scanNetworkElastic(pid string, pCreateTime string, key string, data string,
 			continue
 		}
 		uuid := uuid.NewString()
-		taskData, err := query.Load_stored_task(taskID, "nil", -1, "nil")
+		timestamp, err := query.GetTaskTimestamp(taskID)
 		if err != nil {
-			logger.Error("Error getting task data: " + err.Error())
+			logger.Error("Error getting timestamp: " + err.Error())
 			continue
 		}
-		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_MemoryNetwork{}, &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID, "memory_network", taskData[0][6])
+		err = rabbitmq.ToRabbitMQ_Details(config.Viper.GetString("ELASTIC_PREFIX")+"_memory", &Collect_MemoryNetwork{}, &MemoryNetwork{}, values, uuid, key, ip, name, "0", "0", "0", "0", "ed_mid", "StartScan", taskID, "memory_network", timestamp)
 		if err != nil {
 			logger.Error("Error sending to rabbitMQ (details): " + err.Error())
 		}

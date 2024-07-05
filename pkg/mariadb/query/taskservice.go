@@ -10,6 +10,25 @@ import (
 	"strconv"
 )
 
+func GetTaskTimestamp(task_id string) (string, error) {
+	qu := "SELECT UNIX_TIMESTAMP(timestamp) FROM task WHERE task_id = ? LIMIT 1"
+	res, err := mariadb.DB.Query(qu, task_id)
+	if err != nil {
+		return "", err
+	}
+	defer res.Close()
+
+	var unixTimestamp int
+	for res.Next() {
+		err := res.Scan(&unixTimestamp)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return strconv.Itoa(unixTimestamp), nil
+}
+
 func Load_stored_task(task_id string, client_id string, status int, tasktype string) ([][]string, error) {
 	qu := "SELECT task_id, client_id, status, type FROM task where "
 	var result [][]string

@@ -2,20 +2,6 @@ package dbparser
 
 import "encoding/json"
 
-type collectBase struct {
-	UUID          string `json:"uuid"`
-	Agent         string `json:"agent"`
-	AgentIP       string `json:"agentIP"`
-	AgentName     string `json:"agentName"`
-	ItemMain      string `json:"item_main"`
-	DateMain      int    `json:"date_main"`
-	TypeMain      string `json:"type_main"`
-	EtcMain       string `json:"etc_main"`
-	Task_id       string `json:"task_id"`
-	Category      string `json:"category"`
-	TaskTimestamp int    `json:"task_timestamp"`
-}
-
 type AppResourceUsageMonitor struct {
 	RecordId                     int    `json:"record_id"`
 	App_name                     string `json:"app_name"`
@@ -41,7 +27,17 @@ type AppResourceUsageMonitor struct {
 
 type Collect_AppResourceUsageMonitor struct {
 	AppResourceUsageMonitor AppResourceUsageMonitor `json:"appresourceusagemonitor"`
-	collectBase
+	UUID                    string                  `json:"uuid"`
+	Agent                   string                  `json:"agent"`
+	AgentIP                 string                  `json:"agentIP"`
+	AgentName               string                  `json:"agentName"`
+	ItemMain                string                  `json:"item_main"`
+	DateMain                int                     `json:"date_main"`
+	TypeMain                string                  `json:"type_main"`
+	EtcMain                 string                  `json:"etc_main"`
+	Task_id                 string                  `json:"task_id"`
+	Category                string                  `json:"category"`
+	TaskTimestamp           int                     `json:"task_timestamp"`
 }
 
 func (n AppResourceUsageMonitor) Elastical() ([]byte, error) {
@@ -60,8 +56,18 @@ type ARPCache struct {
 }
 
 type Collect_ARPCache struct {
-	ARPCache ARPCache `json:"arpcache"`
-	collectBase
+	ARPCache      ARPCache `json:"arpcache"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n ARPCache) Elastical() ([]byte, error) {
@@ -92,8 +98,18 @@ type BaseService struct {
 }
 
 type Collect_BaseService struct {
-	BaseService BaseService `json:"baseservice"`
-	collectBase
+	BaseService   BaseService `json:"baseservice"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n BaseService) Elastical() ([]byte, error) {
@@ -117,7 +133,17 @@ type ChromeBookmarks struct {
 
 type Collect_ChromeBookmarks struct {
 	ChromeBookmarks ChromeBookmarks `json:"chromebookmarks"`
-	collectBase
+	UUID            string          `json:"uuid"`
+	Agent           string          `json:"agent"`
+	AgentIP         string          `json:"agentIP"`
+	AgentName       string          `json:"agentName"`
+	ItemMain        string          `json:"item_main"`
+	DateMain        int             `json:"date_main"`
+	TypeMain        string          `json:"type_main"`
+	EtcMain         string          `json:"etc_main"`
+	Task_id         string          `json:"task_id"`
+	Category        string          `json:"category"`
+	TaskTimestamp   int             `json:"task_timestamp"`
 }
 
 func (n ChromeBookmarks) Elastical() ([]byte, error) {
@@ -146,8 +172,18 @@ type ChromeCache struct {
 }
 
 type Collect_ChromeCache struct {
-	ChromeCache ChromeCache `json:"chromecache"`
-	collectBase
+	ChromeCache   ChromeCache `json:"chromecache"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n ChromeCache) Elastical() ([]byte, error) {
@@ -183,7 +219,17 @@ type ChromeDownload struct {
 
 type Collect_ChromeDownload struct {
 	ChromeDownload ChromeDownload `json:"chromedownload"`
-	collectBase
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
+	TaskTimestamp  int            `json:"task_timestamp"`
 }
 
 func (n ChromeDownload) Elastical() ([]byte, error) {
@@ -204,7 +250,17 @@ type ChromeHistory struct {
 
 type Collect_ChromeHistory struct {
 	ChromeHistory ChromeHistory `json:"chromehistory"`
-	collectBase
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
+	TaskTimestamp int           `json:"task_timestamp"`
 }
 
 func (n ChromeHistory) Elastical() ([]byte, error) {
@@ -223,7 +279,17 @@ type ChromeKeywordSearch struct {
 
 type Collect_ChromeKeywordSearch struct {
 	ChromeKeywordSearch ChromeKeywordSearch `json:"chromekeywordsearch"`
-	collectBase
+	UUID                string              `json:"uuid"`
+	Agent               string              `json:"agent"`
+	AgentIP             string              `json:"agentIP"`
+	AgentName           string              `json:"agentName"`
+	ItemMain            string              `json:"item_main"`
+	DateMain            int                 `json:"date_main"`
+	TypeMain            string              `json:"type_main"`
+	EtcMain             string              `json:"etc_main"`
+	Task_id             string              `json:"task_id"`
+	Category            string              `json:"category"`
+	TaskTimestamp       int                 `json:"task_timestamp"`
 }
 
 func (n ChromeKeywordSearch) Elastical() ([]byte, error) {
@@ -243,8 +309,18 @@ type ChromeLogin struct {
 }
 
 type Collect_ChromeLogin struct {
-	ChromeLogin ChromeLogin `json:"chromelogin"`
-	collectBase
+	ChromeLogin   ChromeLogin `json:"chromelogin"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n ChromeLogin) Elastical() ([]byte, error) {
@@ -272,8 +348,18 @@ type DNSInfo struct {
 }
 
 type Collect_DNSInfo struct {
-	DNSInfo DNSInfo `json:"dnsinfo"`
-	collectBase
+	DNSInfo       DNSInfo `json:"dnsinfo"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n DNSInfo) Elastical() ([]byte, error) {
@@ -298,7 +384,17 @@ type EdgeBookmarks struct {
 
 type Collect_EdgeBookmarks struct {
 	EdgeBookmarks EdgeBookmarks `json:"edgebookmarks"`
-	collectBase
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
+	TaskTimestamp int           `json:"task_timestamp"`
 }
 
 func (n EdgeBookmarks) Elastical() ([]byte, error) {
@@ -327,8 +423,18 @@ type EdgeCache struct {
 }
 
 type Collect_EdgeCache struct {
-	EdgeCache EdgeCache `json:"edgecache"`
-	collectBase
+	EdgeCache     EdgeCache `json:"edgecache"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n EdgeCache) Elastical() ([]byte, error) {
@@ -352,8 +458,18 @@ type EdgeCookies struct {
 }
 
 type Collect_EdgeCookies struct {
-	EdgeCookies EdgeCookies `json:"edgecookies"`
-	collectBase
+	EdgeCookies   EdgeCookies `json:"edgecookies"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n EdgeCookies) Elastical() ([]byte, error) {
@@ -374,8 +490,18 @@ type EdgeHistory struct {
 }
 
 type Collect_EdgeHistory struct {
-	EdgeHistory EdgeHistory `json:"edgehistory"`
-	collectBase
+	EdgeHistory   EdgeHistory `json:"edgehistory"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n EdgeHistory) Elastical() ([]byte, error) {
@@ -396,8 +522,18 @@ type EdgeLogin struct {
 }
 
 type Collect_EdgeLogin struct {
-	EdgeLogin EdgeLogin `json:"edgelogin"`
-	collectBase
+	EdgeLogin     EdgeLogin `json:"edgelogin"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n EdgeLogin) Elastical() ([]byte, error) {
@@ -431,7 +567,17 @@ type EventApplication struct {
 
 type Collect_EventApplication struct {
 	EventApplication EventApplication `json:"eventapplication"`
-	collectBase
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
+	TaskTimestamp    int              `json:"task_timestamp"`
 }
 
 func (n EventApplication) Elastical() ([]byte, error) {
@@ -465,7 +611,17 @@ type EventSecurity struct {
 
 type Collect_EventSecurity struct {
 	EventSecurity EventSecurity `json:"eventsecurity"`
-	collectBase
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
+	TaskTimestamp int           `json:"task_timestamp"`
 }
 
 func (n EventSecurity) Elastical() ([]byte, error) {
@@ -498,8 +654,18 @@ type EventSystem struct {
 }
 
 type Collect_EventSystem struct {
-	EventSystem EventSystem `json:"eventsystem"`
-	collectBase
+	EventSystem   EventSystem `json:"eventsystem"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n EventSystem) Elastical() ([]byte, error) {
@@ -531,7 +697,17 @@ type FirefoxBookmarks struct {
 
 type Collect_FirefoxBookmarks struct {
 	FirefoxBookmarks FirefoxBookmarks `json:"firefoxbookmarks"`
-	collectBase
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
+	TaskTimestamp    int              `json:"task_timestamp"`
 }
 
 func (n FirefoxBookmarks) Elastical() ([]byte, error) {
@@ -559,8 +735,18 @@ type FirefoxCache struct {
 }
 
 type Collect_FirefoxCache struct {
-	FirefoxCache FirefoxCache `json:"firefoxcache"`
-	collectBase
+	FirefoxCache  FirefoxCache `json:"firefoxcache"`
+	UUID          string       `json:"uuid"`
+	Agent         string       `json:"agent"`
+	AgentIP       string       `json:"agentIP"`
+	AgentName     string       `json:"agentName"`
+	ItemMain      string       `json:"item_main"`
+	DateMain      int          `json:"date_main"`
+	TypeMain      string       `json:"type_main"`
+	EtcMain       string       `json:"etc_main"`
+	Task_id       string       `json:"task_id"`
+	Category      string       `json:"category"`
+	TaskTimestamp int          `json:"task_timestamp"`
 }
 
 func (n FirefoxCache) Elastical() ([]byte, error) {
@@ -583,7 +769,17 @@ type FirefoxCookies struct {
 
 type Collect_FirefoxCookies struct {
 	FirefoxCookies FirefoxCookies `json:"firefoxcookies"`
-	collectBase
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
+	TaskTimestamp  int            `json:"task_timestamp"`
 }
 
 func (n FirefoxCookies) Elastical() ([]byte, error) {
@@ -609,7 +805,17 @@ type FirefoxHistory struct {
 
 type Collect_FirefoxHistory struct {
 	FirefoxHistory FirefoxHistory `json:"firefoxhistory"`
-	collectBase
+	UUID           string         `json:"uuid"`
+	Agent          string         `json:"agent"`
+	AgentIP        string         `json:"agentIP"`
+	AgentName      string         `json:"agentName"`
+	ItemMain       string         `json:"item_main"`
+	DateMain       int            `json:"date_main"`
+	TypeMain       string         `json:"type_main"`
+	EtcMain        string         `json:"etc_main"`
+	Task_id        string         `json:"task_id"`
+	Category       string         `json:"category"`
+	TaskTimestamp  int            `json:"task_timestamp"`
 }
 
 func (n FirefoxHistory) Elastical() ([]byte, error) {
@@ -629,8 +835,18 @@ type IEHistory struct {
 }
 
 type Collect_IEHistory struct {
-	IEHistory IEHistory `json:"iehistory"`
-	collectBase
+	IEHistory     IEHistory `json:"iehistory"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n IEHistory) Elastical() ([]byte, error) {
@@ -666,7 +882,17 @@ type InstalledSoftware struct {
 
 type Collect_InstalledSoftware struct {
 	InstalledSoftware InstalledSoftware `json:"installedsoftware"`
-	collectBase
+	UUID              string            `json:"uuid"`
+	Agent             string            `json:"agent"`
+	AgentIP           string            `json:"agentIP"`
+	AgentName         string            `json:"agentName"`
+	ItemMain          string            `json:"item_main"`
+	DateMain          int               `json:"date_main"`
+	TypeMain          string            `json:"type_main"`
+	EtcMain           string            `json:"etc_main"`
+	Task_id           string            `json:"task_id"`
+	Category          string            `json:"category"`
+	TaskTimestamp     int               `json:"task_timestamp"`
 }
 
 func (n InstalledSoftware) Elastical() ([]byte, error) {
@@ -690,8 +916,18 @@ type JumpList struct {
 }
 
 type Collect_JumpList struct {
-	JumpList JumpList `json:"jumplist"`
-	collectBase
+	JumpList      JumpList `json:"jumplist"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n JumpList) Elastical() ([]byte, error) {
@@ -708,8 +944,18 @@ type MUICache struct {
 }
 
 type Collect_MUICache struct {
-	MUICache MUICache `json:"muicache"`
-	collectBase
+	MUICache      MUICache `json:"muicache"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n MUICache) Elastical() ([]byte, error) {
@@ -733,8 +979,18 @@ type Network struct {
 }
 
 type Collect_Network struct {
-	Network Network `json:"network"`
-	collectBase
+	Network       Network `json:"network"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n Network) Elastical() ([]byte, error) {
@@ -761,7 +1017,17 @@ type NetworkDataUsageMonitor struct {
 
 type Collect_NetworkDataUsageMonitor struct {
 	NetworkDataUsageMonitor NetworkDataUsageMonitor `json:"networkdatausagemonitor"`
-	collectBase
+	UUID                    string                  `json:"uuid"`
+	Agent                   string                  `json:"agent"`
+	AgentIP                 string                  `json:"agentIP"`
+	AgentName               string                  `json:"agentName"`
+	ItemMain                string                  `json:"item_main"`
+	DateMain                int                     `json:"date_main"`
+	TypeMain                string                  `json:"type_main"`
+	EtcMain                 string                  `json:"etc_main"`
+	Task_id                 string                  `json:"task_id"`
+	Category                string                  `json:"category"`
+	TaskTimestamp           int                     `json:"task_timestamp"`
 }
 
 func (n NetworkDataUsageMonitor) Elastical() ([]byte, error) {
@@ -786,7 +1052,17 @@ type NetworkResources struct {
 
 type Collect_NetworkResources struct {
 	NetworkResources NetworkResources `json:"networkresources"`
-	collectBase
+	UUID             string           `json:"uuid"`
+	Agent            string           `json:"agent"`
+	AgentIP          string           `json:"agentIP"`
+	AgentName        string           `json:"agentName"`
+	ItemMain         string           `json:"item_main"`
+	DateMain         int              `json:"date_main"`
+	TypeMain         string           `json:"type_main"`
+	EtcMain          string           `json:"etc_main"`
+	Task_id          string           `json:"task_id"`
+	Category         string           `json:"category"`
+	TaskTimestamp    int              `json:"task_timestamp"`
 }
 
 func (n NetworkResources) Elastical() ([]byte, error) {
@@ -805,8 +1081,18 @@ type OpenedFiles struct {
 }
 
 type Collect_OpenedFiles struct {
-	OpenedFiles OpenedFiles `json:"openedfiles"`
-	collectBase
+	OpenedFiles   OpenedFiles `json:"openedfiles"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n OpenedFiles) Elastical() ([]byte, error) {
@@ -829,8 +1115,18 @@ type Prefetch struct {
 }
 
 type Collect_Prefetch struct {
-	Prefetch Prefetch `json:"prefetch"`
-	collectBase
+	Prefetch      Prefetch `json:"prefetch"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n Prefetch) Elastical() ([]byte, error) {
@@ -868,8 +1164,18 @@ type Process struct {
 }
 
 type Collect_Process struct {
-	Process Process `json:"process"`
-	collectBase
+	Process       Process `json:"process"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n Process) Elastical() ([]byte, error) {
@@ -898,8 +1204,18 @@ type Service struct {
 }
 
 type Collect_Service struct {
-	Service Service `json:"service"`
-	collectBase
+	Service       Service `json:"service"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n Service) Elastical() ([]byte, error) {
@@ -925,8 +1241,18 @@ type Shortcuts struct {
 }
 
 type Collect_Shortcuts struct {
-	Shortcuts Shortcuts `json:"shortcuts"`
-	collectBase
+	Shortcuts     Shortcuts `json:"shortcuts"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n Shortcuts) Elastical() ([]byte, error) {
@@ -948,8 +1274,18 @@ type StartRun struct {
 }
 
 type Collect_StartRun struct {
-	StartRun StartRun `json:"startrun"`
-	collectBase
+	StartRun      StartRun `json:"startrun"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n StartRun) Elastical() ([]byte, error) {
@@ -971,8 +1307,18 @@ type TaskSchedule struct {
 }
 
 type Collect_TaskSchedule struct {
-	TaskSchedule TaskSchedule `json:"taskschedule"`
-	collectBase
+	TaskSchedule  TaskSchedule `json:"taskschedule"`
+	UUID          string       `json:"uuid"`
+	Agent         string       `json:"agent"`
+	AgentIP       string       `json:"agentIP"`
+	AgentName     string       `json:"agentName"`
+	ItemMain      string       `json:"item_main"`
+	DateMain      int          `json:"date_main"`
+	TypeMain      string       `json:"type_main"`
+	EtcMain       string       `json:"etc_main"`
+	Task_id       string       `json:"task_id"`
+	Category      string       `json:"category"`
+	TaskTimestamp int          `json:"task_timestamp"`
 }
 
 func (n TaskSchedule) Elastical() ([]byte, error) {
@@ -1003,8 +1349,18 @@ type USBdevices struct {
 }
 
 type Collect_USBdevices struct {
-	USBdevices USBdevices `json:"usbdevices"`
-	collectBase
+	USBdevices    USBdevices `json:"usbdevices"`
+	UUID          string     `json:"uuid"`
+	Agent         string     `json:"agent"`
+	AgentIP       string     `json:"agentIP"`
+	AgentName     string     `json:"agentName"`
+	ItemMain      string     `json:"item_main"`
+	DateMain      int        `json:"date_main"`
+	TypeMain      string     `json:"type_main"`
+	EtcMain       string     `json:"etc_main"`
+	Task_id       string     `json:"task_id"`
+	Category      string     `json:"category"`
+	TaskTimestamp int        `json:"task_timestamp"`
 }
 
 func (n USBdevices) Elastical() ([]byte, error) {
@@ -1025,8 +1381,18 @@ type UserAssist struct {
 }
 
 type Collect_UserAssist struct {
-	UserAssist UserAssist `json:"userassist"`
-	collectBase
+	UserAssist    UserAssist `json:"userassist"`
+	UUID          string     `json:"uuid"`
+	Agent         string     `json:"agent"`
+	AgentIP       string     `json:"agentIP"`
+	AgentName     string     `json:"agentName"`
+	ItemMain      string     `json:"item_main"`
+	DateMain      int        `json:"date_main"`
+	TypeMain      string     `json:"type_main"`
+	EtcMain       string     `json:"etc_main"`
+	Task_id       string     `json:"task_id"`
+	Category      string     `json:"category"`
+	TaskTimestamp int        `json:"task_timestamp"`
 }
 
 func (n UserAssist) Elastical() ([]byte, error) {
@@ -1049,8 +1415,18 @@ type UserProfiles struct {
 }
 
 type Collect_UserProfiles struct {
-	UserProfiles UserProfiles `json:"userprofiles"`
-	collectBase
+	UserProfiles  UserProfiles `json:"userprofiles"`
+	UUID          string       `json:"uuid"`
+	Agent         string       `json:"agent"`
+	AgentIP       string       `json:"agentIP"`
+	AgentName     string       `json:"agentName"`
+	ItemMain      string       `json:"item_main"`
+	DateMain      int          `json:"date_main"`
+	TypeMain      string       `json:"type_main"`
+	EtcMain       string       `json:"etc_main"`
+	Task_id       string       `json:"task_id"`
+	Category      string       `json:"category"`
+	TaskTimestamp int          `json:"task_timestamp"`
 }
 
 func (n UserProfiles) Elastical() ([]byte, error) {
@@ -1082,7 +1458,17 @@ type WindowsActivity struct {
 
 type Collect_WindowsActivity struct {
 	WindowsActivity WindowsActivity `json:"windowsactivity"`
-	collectBase
+	UUID            string          `json:"uuid"`
+	Agent           string          `json:"agent"`
+	AgentIP         string          `json:"agentIP"`
+	AgentName       string          `json:"agentName"`
+	ItemMain        string          `json:"item_main"`
+	DateMain        int             `json:"date_main"`
+	TypeMain        string          `json:"type_main"`
+	EtcMain         string          `json:"etc_main"`
+	Task_id         string          `json:"task_id"`
+	Category        string          `json:"category"`
+	TaskTimestamp   int             `json:"task_timestamp"`
 }
 
 func (n WindowsActivity) Elastical() ([]byte, error) {
@@ -1106,8 +1492,18 @@ type Wireless struct {
 }
 
 type Collect_Wireless struct {
-	Wireless Wireless `json:"wireless"`
-	collectBase
+	Wireless      Wireless `json:"wireless"`
+	UUID          string   `json:"uuid"`
+	Agent         string   `json:"agent"`
+	AgentIP       string   `json:"agentIP"`
+	AgentName     string   `json:"agentName"`
+	ItemMain      string   `json:"item_main"`
+	DateMain      int      `json:"date_main"`
+	TypeMain      string   `json:"type_main"`
+	EtcMain       string   `json:"etc_main"`
+	Task_id       string   `json:"task_id"`
+	Category      string   `json:"category"`
+	TaskTimestamp int      `json:"task_timestamp"`
 }
 
 func (n Wireless) Elastical() ([]byte, error) {
@@ -1134,8 +1530,18 @@ type Email struct {
 }
 
 type Collect_Email struct {
-	Email Email `json:"email"`
-	collectBase
+	Email         Email  `json:"email"`
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	AgentIP       string `json:"agentIP"`
+	AgentName     string `json:"agentName"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
+	Task_id       string `json:"task_id"`
+	Category      string `json:"category"`
+	TaskTimestamp int    `json:"task_timestamp"`
 }
 
 func (n Email) Elastical() ([]byte, error) {
@@ -1152,8 +1558,18 @@ type EmailPath struct {
 }
 
 type Collect_EmailPath struct {
-	EmailPath EmailPath `json:"emailpath"`
-	collectBase
+	EmailPath     EmailPath `json:"emailpath"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n EmailPath) Elastical() ([]byte, error) {
@@ -1174,8 +1590,18 @@ type FirefoxLogin struct {
 }
 
 type Collect_FirefoxLogin struct {
-	FirefoxLogin FirefoxLogin `json:"firefoxlogin"`
-	collectBase
+	FirefoxLogin  FirefoxLogin `json:"firefoxlogin"`
+	UUID          string       `json:"uuid"`
+	Agent         string       `json:"agent"`
+	AgentIP       string       `json:"agentIP"`
+	AgentName     string       `json:"agentName"`
+	ItemMain      string       `json:"item_main"`
+	DateMain      int          `json:"date_main"`
+	TypeMain      string       `json:"type_main"`
+	EtcMain       string       `json:"etc_main"`
+	Task_id       string       `json:"task_id"`
+	Category      string       `json:"category"`
+	TaskTimestamp int          `json:"task_timestamp"`
 }
 
 func (n FirefoxLogin) Elastical() ([]byte, error) {
@@ -1196,8 +1622,18 @@ type IECache struct {
 }
 
 type Collect_IECache struct {
-	IECache IECache `json:"iecache"`
-	collectBase
+	IECache       IECache `json:"iecache"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n IECache) Elastical() ([]byte, error) {
@@ -1217,8 +1653,18 @@ type IELogin struct {
 }
 
 type Collect_IELogin struct {
-	IELogin IELogin `json:"ielogin"`
-	collectBase
+	IELogin       IELogin `json:"ielogin"`
+	UUID          string  `json:"uuid"`
+	Agent         string  `json:"agent"`
+	AgentIP       string  `json:"agentIP"`
+	AgentName     string  `json:"agentName"`
+	ItemMain      string  `json:"item_main"`
+	DateMain      int     `json:"date_main"`
+	TypeMain      string  `json:"type_main"`
+	EtcMain       string  `json:"etc_main"`
+	Task_id       string  `json:"task_id"`
+	Category      string  `json:"category"`
+	TaskTimestamp int     `json:"task_timestamp"`
 }
 
 func (n IELogin) Elastical() ([]byte, error) {
@@ -1245,8 +1691,18 @@ type Netadapters struct {
 }
 
 type Collect_Netadapters struct {
-	Netadapters Netadapters `json:"netadapters"`
-	collectBase
+	Netadapters   Netadapters `json:"netadapters"`
+	UUID          string      `json:"uuid"`
+	Agent         string      `json:"agent"`
+	AgentIP       string      `json:"agentIP"`
+	AgentName     string      `json:"agentName"`
+	ItemMain      string      `json:"item_main"`
+	DateMain      int         `json:"date_main"`
+	TypeMain      string      `json:"type_main"`
+	EtcMain       string      `json:"etc_main"`
+	Task_id       string      `json:"task_id"`
+	Category      string      `json:"category"`
+	TaskTimestamp int         `json:"task_timestamp"`
 }
 
 func (n Netadapters) Elastical() ([]byte, error) {
@@ -1270,8 +1726,18 @@ type RecentFile struct {
 }
 
 type Collect_RecentFile struct {
-	RecentFile RecentFile `json:"recentfile"`
-	collectBase
+	RecentFile    RecentFile `json:"recentfile"`
+	UUID          string     `json:"uuid"`
+	Agent         string     `json:"agent"`
+	AgentIP       string     `json:"agentIP"`
+	AgentName     string     `json:"agentName"`
+	ItemMain      string     `json:"item_main"`
+	DateMain      int        `json:"date_main"`
+	TypeMain      string     `json:"type_main"`
+	EtcMain       string     `json:"etc_main"`
+	Task_id       string     `json:"task_id"`
+	Category      string     `json:"category"`
+	TaskTimestamp int        `json:"task_timestamp"`
 }
 
 func (n RecentFile) Elastical() ([]byte, error) {
@@ -1293,8 +1759,18 @@ type Shellbags struct {
 }
 
 type Collect_Shellbags struct {
-	Shellbags Shellbags `json:"shellbags"`
-	collectBase
+	Shellbags     Shellbags `json:"shellbags"`
+	UUID          string    `json:"uuid"`
+	Agent         string    `json:"agent"`
+	AgentIP       string    `json:"agentIP"`
+	AgentName     string    `json:"agentName"`
+	ItemMain      string    `json:"item_main"`
+	DateMain      int       `json:"date_main"`
+	TypeMain      string    `json:"type_main"`
+	EtcMain       string    `json:"etc_main"`
+	Task_id       string    `json:"task_id"`
+	Category      string    `json:"category"`
+	TaskTimestamp int       `json:"task_timestamp"`
 }
 
 func (n Shellbags) Elastical() ([]byte, error) {
@@ -1325,8 +1801,18 @@ type SystemInfo struct {
 }
 
 type Collect_SystemInfo struct {
-	SystemInfo SystemInfo `json:"systeminfo"`
-	collectBase
+	SystemInfo    SystemInfo `json:"systeminfo"`
+	UUID          string     `json:"uuid"`
+	Agent         string     `json:"agent"`
+	AgentIP       string     `json:"agentIP"`
+	AgentName     string     `json:"agentName"`
+	ItemMain      string     `json:"item_main"`
+	DateMain      int        `json:"date_main"`
+	TypeMain      string     `json:"type_main"`
+	EtcMain       string     `json:"etc_main"`
+	Task_id       string     `json:"task_id"`
+	Category      string     `json:"category"`
+	TaskTimestamp int        `json:"task_timestamp"`
 }
 
 func (n SystemInfo) Elastical() ([]byte, error) {
@@ -1351,7 +1837,17 @@ type ChromeCookies struct {
 
 type Collect_ChromeCookies struct {
 	ChromeCookies ChromeCookies `json:"chromecookies"`
-	collectBase
+	UUID          string        `json:"uuid"`
+	Agent         string        `json:"agent"`
+	AgentIP       string        `json:"agentIP"`
+	AgentName     string        `json:"agentName"`
+	ItemMain      string        `json:"item_main"`
+	DateMain      int           `json:"date_main"`
+	TypeMain      string        `json:"type_main"`
+	EtcMain       string        `json:"etc_main"`
+	Task_id       string        `json:"task_id"`
+	Category      string        `json:"category"`
+	TaskTimestamp int           `json:"task_timestamp"`
 }
 
 func (n ChromeCookies) Elastical() ([]byte, error) {

@@ -204,20 +204,16 @@ func handleTaskrequest(ctx context.Context, taskid string) {
 	logger.Info("Handling task: " + taskid)
 	query.Update_task_status_by_taskid(taskid, 2)
 
-	// remove task info in redis before function return
-	defer func() {
-		if err := redis.RedisDelete(taskid); err != nil {
-			logger.Error("Error deleting task info in redis: " + err.Error())
-		} else {
-			logger.Info("Task info deleted in redis: " + taskid)
-		}
-	}()
-
 	// parse task info which store in redis
-	message := redis.RedisGetString(taskid)
+	message, err := redis.RedisGetString(taskid)
+	if err != nil {
+		logger.Error("Error getting task info from redis: " + err.Error())
+		query.Update_task_status_by_taskid(taskid, 6)
+		return
+	}
 	content := []byte(message)
 	NewPacket := new(packet.TaskPacket)
-	err := NewPacket.NewPacket(content)
+	err = NewPacket.NewPacket(content)
 	if err != nil {
 		logger.Error("Error reading task packet: " + err.Error())
 		query.Update_task_status_by_taskid(taskid, 6)

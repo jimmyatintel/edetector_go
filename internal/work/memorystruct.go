@@ -29,17 +29,18 @@ type Memory struct {
 }
 
 type Collect_Memory struct {
-	Memory    Memory `json:"memory"`
-	UUID      string `json:"uuid"`
-	Agent     string `json:"agent"`
-	AgentIP   string `json:"agentIP"`
-	AgentName string `json:"agentName"`
-	ItemMain  string `json:"item_main"`
-	DateMain  int    `json:"date_main"`
-	TypeMain  string `json:"type_main"`
-	EtcMain   string `json:"etc_main"`
-	Task_id   string `json:"task_id"`
-	Category  string `json:"category"`
+	Memory        Memory `json:"memory"`
+	UUID          string `json:"uuid"`
+	Agent         string `json:"agent"`
+	AgentIP       string `json:"agentIP"`
+	AgentName     string `json:"agentName"`
+	ItemMain      string `json:"item_main"`
+	DateMain      int    `json:"date_main"`
+	TypeMain      string `json:"type_main"`
+	EtcMain       string `json:"etc_main"`
+	Task_id       string `json:"task_id"`
+	Category      string `json:"category"`
+	TaskTimestamp int    `json:"task_timestamp"`
 }
 
 func (n Memory) Elastical() ([]byte, error) {
@@ -86,6 +87,7 @@ type Collect_MemoryNetwork struct {
 	EtcMain       string        `json:"etc_main"`
 	Task_id       string        `json:"task_id"`
 	Category      string        `json:"category"`
+	TaskTimestamp int           `json:"task_timestamp"`
 }
 
 func (n MemoryNetwork) Elastical() ([]byte, error) {
@@ -113,17 +115,18 @@ type MemoryTree struct {
 }
 
 type Collect_MemoryTree struct {
-	MemoryTree MemoryTree `json:"memory_tree"`
-	UUID       string     `json:"uuid"`
-	Agent      string     `json:"agent"`
-	AgentIP    string     `json:"agentIP"`
-	AgentName  string     `json:"agentName"`
-	ItemMain   string     `json:"item_main"`
-	DateMain   int        `json:"date_main"`
-	TypeMain   string     `json:"type_main"`
-	EtcMain    string     `json:"etc_main"`
-	Task_id    string     `json:"task_id"`
-	Category   string     `json:"category"`
+	MemoryTree    MemoryTree `json:"memory_tree"`
+	UUID          string     `json:"uuid"`
+	Agent         string     `json:"agent"`
+	AgentIP       string     `json:"agentIP"`
+	AgentName     string     `json:"agentName"`
+	ItemMain      string     `json:"item_main"`
+	DateMain      int        `json:"date_main"`
+	TypeMain      string     `json:"type_main"`
+	EtcMain       string     `json:"etc_main"`
+	Task_id       string     `json:"task_id"`
+	Category      string     `json:"category"`
+	TaskTimestamp int        `json:"task_timestamp"`
 }
 
 func (n MemoryTree) Elastical() ([]byte, error) {
