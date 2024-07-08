@@ -255,7 +255,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 					Path:              RelationMap[child].Path,
 					Disk:              diskInfo,
 					MD5_Sig:           getMD5Sig(fileSystem, explorerDataRaw[6]),
-					StartCluster:      getStartCluster(fileSystem, explorerDataRaw[10]),
+					StartCluster:      getStartCluster(fileSystem, explorerDataRaw),
 					YaraRuleHitCount:  0,
 					YaraRuleHit:       "",
 					IsRoot:            RelationMap[child].IsRoot,

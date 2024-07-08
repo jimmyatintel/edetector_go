@@ -27,9 +27,9 @@ func getMD5Sig(fileSystem string, signature string) string {
 	return ""
 }
 
-func getStartCluster(fileSystem string, startCluster string) int {
+func getStartCluster(fileSystem string, explorerDataRow []string) int {
 	if fileSystem == "FAT32" {
-		return strToInt(startCluster)
+		return strToInt(explorerDataRow[10])
 	}
 
 	return 0
