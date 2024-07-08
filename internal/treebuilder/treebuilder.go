@@ -218,7 +218,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			return
 		default:
 			explorerDataRaw := strings.Split(line, "|")
-			if len(explorerDataRaw) != 10 || len(explorerDataRaw) != 11 {
+			if len(explorerDataRaw) != 10 && len(explorerDataRaw) != 11 {
 				if len(explorerDataRaw) != 1 {
 					logger.Error("Invalid line (" + agent + "-" + diskInfo + "): " + line)
 				}
