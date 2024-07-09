@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -176,4 +177,26 @@ func GetValuesForKeys(keys []string) map[string]string {
 	}
 
 	return values
+}
+
+func UpdateDumpProgress(taskId string, progress int) {
+	oldInfo, err := RedisGetString(taskId + "-LoadDumpTask")
+	if err != nil {
+		logger.Error("Error getting progress from redis: " + err.Error())
+		return
+	}
+
+	newInfo := strings.Split(oldInfo, "|")
+	if len(newInfo) == 5 {
+		newInfo[4] = strconv.Itoa(int(progress))
+	} else {
+		logger.Error("The format of dump task info in redis is inccorect: " + oldInfo)
+	}
+
+	// set newInfo to redis
+	err = RedisSet(taskId+"-LoadDumpTask", strings.Join(newInfo, "|"))
+	if err != nil {
+		logger.Error("Error setting progress to redis: " + err.Error())
+		return
+	}
 }
