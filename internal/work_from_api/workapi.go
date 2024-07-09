@@ -7,6 +7,7 @@ import (
 )
 
 var WorkapiMap map[task.UserTaskType]func(packet.UserPacket) (task.TaskResult, error)
+var LoadDumpMap map[task.UserTaskType]func(string, string, string) (task.TaskResult, error)
 
 func init() {
 	WorkapiMap = map[task.UserTaskType]func(packet.UserPacket) (task.TaskResult, error){
@@ -18,11 +19,14 @@ func init() {
 		task.START_UPDATE:       StartUpdate,
 		task.START_REMOVE:       StartRemove,
 		task.START_MEMORY_TREE:  StartMemoryTree,
+		task.START_YARA_RULE:    StartYaraRule,
+		task.TERMINATE:          Terminate,
+	}
+
+	LoadDumpMap = map[task.UserTaskType]func(string, string, string) (task.TaskResult, error){
 		task.START_LOAD_DLL:     StartLoadDll,
 		task.START_DUMP_DLL:     StartDumpDll,
 		task.START_DUMP_PROCESS: StartDumpProcess,
 		task.START_DUMP_DRIVE:   StartDumpDrive,
-		task.START_YARA_RULE:    StartYaraRule,
-		task.TERMINATE:          Terminate,
 	}
 }
