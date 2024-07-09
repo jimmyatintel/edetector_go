@@ -15,6 +15,12 @@ type Request struct {
 	DeviceId string `json:"deviceId"`
 }
 
+type ReadyData struct {
+	TaskId   string `json:"taskId"`
+	DllPaths string `json:"dllPaths"`
+	Failed   string `json:"failed"`
+}
+
 func RequestToUser(id string) {
 	request := Request{
 		DeviceId: id,
@@ -55,6 +61,54 @@ func RequestToUser(id string) {
 		}
 	}
 	defer response.Body.Close()
+	// Check the response status code
+	if response.StatusCode != http.StatusOK {
+		logger.Error("Request failed with status code: " + fmt.Sprint(response.StatusCode))
+		return
+	}
+}
+
+func LoadDumpReady(info ReadyData) {
+	// Marshal payload into JSON
+	payload, err := json.Marshal(info)
+	if err != nil {
+		logger.Error("Error marshaling JSON: " + err.Error())
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Create an HTTP request
+	ip := config.Viper.GetString("WS_HOST")
+	port := config.Viper.GetString("WS_PORT")
+	path := fmt.Sprintf("http://%s:%s/loadDumpReady", ip, port)
+	req, err := http.NewRequest("POST", path, bytes.NewBuffer(payload))
+	if err != nil {
+		logger.Error("Error creating HTTP request: " + err.Error())
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Send the HTTP request
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	response, err := client.Do(req)
+	if err != nil {
+		select {
+		case <-ctx.Done():
+			if ctx.Err() == context.DeadlineExceeded {
+				logger.Error("Request timed out: " + err.Error())
+				return
+			}
+		default:
+			logger.Error("Error sending HTTP request: " + err.Error())
+			return
+		}
+	}
+	defer response.Body.Close()
+
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		logger.Error("Request failed with status code: " + fmt.Sprint(response.StatusCode))
