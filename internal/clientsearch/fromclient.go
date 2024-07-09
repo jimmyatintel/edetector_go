@@ -32,6 +32,7 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 	var updateDataRightChan chan net.Conn
 	var yaraDataRightChan chan net.Conn
 	var imageDataRightChan chan net.Conn
+	var dumpDataRightChan chan net.Conn
 	closeConn := make(chan bool)
 	for {
 		var NewPacket packet.Packet
@@ -63,7 +64,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		t := NewPacket.GetTaskType()
-		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "ReadyImage" && t != "DataRight" && t != "GiveDriveInfo" {
+		// These tasks are sent in small packets
+		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "ReadyImage" && t != "DataRight" && t != "GiveDriveInfo" && t != "ReadyDumpDrive" {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {
@@ -161,6 +163,13 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 			}
+		} else if NewPacket.GetTaskType() == task.READY_DUMP_DRIVE {
+			dumpDataRightChan = make(chan net.Conn)
+			_, err = work.ReadyDumpDrive(NewPacket, conn, dumpDataRightChan)
+			if err != nil {
+				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
+				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
+			}
 		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("UpdateDataRight: " + NewPacket.GetRkey())
 			updateDataRightChan <- conn
@@ -170,6 +179,9 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else if agentTaskType == "StartGetImage" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("ImageDataRight: " + NewPacket.GetRkey())
 			imageDataRightChan <- conn
+		} else if agentTaskType == "StartGetDrive" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+			logger.Info("ImageDataRight: " + NewPacket.GetRkey())
+			dumpDataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]
 			if !ok {

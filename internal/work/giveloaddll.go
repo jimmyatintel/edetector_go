@@ -1,13 +1,14 @@
 package work
 
 import (
-	"edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/connectionmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/redis"
+	"edetector_go/pkg/request"
 	"net"
 	"os"
 	"path/filepath"
@@ -22,6 +23,13 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	dataLen, pid := msgs[0], msgs[1]
 	logger.Info(key + "::GiveLoadDllInfo: " + msg)
 
+	// get taskId from the redis
+	taskId, err := redis.RedisGetString(key + string(task.START_LOAD_DLL) + pid)
+	if err != nil {
+		logger.Error(key + "::GiveLoadDllInfo: " + err.Error())
+		return task.FAIL, err
+	}
+
 	if dataLen == "-1" {
 		logger.Error(key + "::GiveLoadDllInfo: pid not found")
 	} else if dataLen == "0" {
@@ -33,8 +41,9 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
-	connectionmap.StoreConnMsg(conn, connectionmap.ConnMsg{
-		Info:    pid,
+	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
+		TaskId:  taskId,
+		Msg:     pid,
 		DataLen: total,
 	})
 
@@ -52,14 +61,14 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info(key + "::GiveLoadDllData")
 
 	// get pid from ConnMsgMap
-	msg, ok := connectionmap.GetConnMsg(conn)
+	connInfo, ok := connectionmap.GetConnInfo(conn)
 	if !ok {
 		logger.Error("Error getting pid from ConnMsgMap")
 		return task.FAIL, nil
 	}
 
 	// write file
-	path := filepath.Join(loadDllWorkingPath, key+"-"+msg.Info)
+	path := filepath.Join(loadDllWorkingPath, connInfo.TaskId+".zip")
 	content := getDataPacketContent(p)
 	if err := file.WriteFile(path, content); err != nil {
 		return task.FAIL, err
@@ -79,28 +88,27 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	logger.Info(key + "::GiveLoadDllEnd")
 
 	// remove the msg from ConnMsgMap before return
-	defer connectionmap.RemoveConnMsg(conn)
+	defer connectionmap.RemoveConnInfo(conn)
 
 	// get the pid and path info from ConnMsgMap
-	workPath, unstagePath, returnData := "", "", ""
-	msg, ok := connectionmap.GetConnMsg(conn)
+	connInfo, ok := connectionmap.GetConnInfo(conn)
 	if !ok {
 		logger.Error("Error getting msg from ConnMsgMap")
 		return task.FAIL, nil
 	}
 
-	if msg.DataLen > 0 {
-		workPath = filepath.Join(loadDllWorkingPath, key+"-"+msg.Info)
-		unstagePath = filepath.Join(loadDllUstagePath, key+"-"+msg.Info)
+	if connInfo.DataLen > 0 {
+		workPath := filepath.Join(loadDllWorkingPath, connInfo.TaskId+".zip")
+		unstagePath := filepath.Join(loadDllWorkingPath, connInfo.TaskId)
 
 		// truncate data
-		if err := file.TruncateFile(workPath, msg.DataLen); err != nil {
+		if err := file.TruncateFile(workPath, connInfo.DataLen); err != nil {
 			logger.Error("Error truncating file: " + err.Error())
 			return task.FAIL, err
 		}
 
 		// decompress the file
-		if err := file.DecompressFile(workPath, unstagePath, msg.DataLen); err != nil {
+		if err := file.DecompressFile(workPath, unstagePath, connInfo.DataLen); err != nil {
 			logger.Error("Error unzipping file: " + err.Error())
 			return task.FAIL, err
 		}
@@ -112,7 +120,11 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			return task.FAIL, err
 		}
 
-		returnData = strings.Join(lines, "|")
+		// send path info to API
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			DllPaths: strings.Join(lines, "|"),
+		})
 
 		// remove the working file
 		if err := os.Remove(unstagePath); err != nil {
@@ -120,7 +132,11 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			return task.FAIL, err
 		}
 	} else {
-		returnData = "Error: " + msg.Info
+		// send error to API
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			DllPaths: key + "::GiveLoadDllInfo: pid not found",
+		})
 	}
 
 	// send data right msg to client
@@ -128,13 +144,11 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
-	// send path info in load task channel to trigger response
-	load_chan, err := channelmap.GetLoadDumpChannel(key + "-" + string(task.START_LOAD_DLL) + "-" + msg.Info)
-	if err != nil {
-		logger.Error("Error getting load channel: " + err.Error())
+	// remove redis key
+	if err := redis.RedisDelete(key + string(task.START_LOAD_DLL) + connInfo.Msg); err != nil {
+		logger.Error(key + "::GiveLoadDllEnd: " + err.Error())
 		return task.FAIL, err
 	}
-	load_chan <- returnData
 
 	return task.SUCCESS, nil
 }

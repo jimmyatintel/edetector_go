@@ -5,25 +5,26 @@ import (
 	"sync"
 )
 
-var ConnMsgMap = sync.Map{}
+var ConnInfoMap = sync.Map{}
 
-type ConnMsg struct {
-	Info    string
+type ConnInfo struct {
+	TaskId  string
+	Msg     string
 	DataLen int
 }
 
-func StoreConnMsg(conn net.Conn, data ConnMsg) {
-	ConnMsgMap.Store(conn, data)
+func StoreConnInfo(conn net.Conn, data ConnInfo) {
+	ConnInfoMap.Store(conn, data)
 }
 
-func GetConnMsg(conn net.Conn) (ConnMsg, bool) {
-	data, ok := ConnMsgMap.Load(conn)
+func GetConnInfo(conn net.Conn) (ConnInfo, bool) {
+	data, ok := ConnInfoMap.Load(conn)
 	if !ok {
-		return ConnMsg{}, false
+		return ConnInfo{}, false
 	}
-	return data.(ConnMsg), true
+	return data.(ConnInfo), true
 }
 
-func RemoveConnMsg(conn net.Conn) {
-	ConnMsgMap.Delete(conn)
+func RemoveConnInfo(conn net.Conn) {
+	ConnInfoMap.Delete(conn)
 }

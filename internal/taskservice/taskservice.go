@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"edetector_go/config"
-	"edetector_go/internal/channelmap"
 	"edetector_go/internal/packet"
 	"edetector_go/internal/task"
 	work "edetector_go/internal/work"
@@ -24,6 +23,12 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
+
+type DumpTaskRequest struct {
+	Key        string `json:"key"`
+	Message    string `json:"message"`
+	DumpTaskId string `json:"dumpTaskId"`
+}
 
 type TaskRequest struct {
 	TaskID string `json:"taskID"`
@@ -63,7 +68,7 @@ func Start(ctx context.Context) {
 }
 
 func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
-	var req packet.TaskPacket
+	var req DumpTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Error("Invalid request format: " + err.Error())
 		res := Response{
@@ -74,27 +79,35 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 
-	// get the []byte from the packet
-	content := req.Fluent()
-	NewPacket := new(packet.TaskPacket)
-	if err := NewPacket.NewPacket(content); err != nil {
-		logger.Error("Error reading task packet: " + err.Error())
+	clientID := req.Key
+	msgs := strings.Split(req.Message, "|")
+	taskType := task.UserTaskType(c.Param("action"))
+	logger.Info(clientID + "::" + string(taskType) + " is handling...")
+
+	// check whether it is a duplicate task
+	var checkField string
+	if taskType == task.START_DUMP_PROCESS {
+		checkField = msgs[0]
+	} else if taskType == task.START_LOAD_DLL {
+		checkField = msgs[0]
+	} else if taskType == task.START_DUMP_DLL {
+		checkField = msgs[0] + msgs[1]
+	} else {
+		checkField = msgs[1]
+	}
+
+	if redis.RedisExists(clientID + string(taskType) + checkField) {
+		logger.Error("Duplicate task: " + clientID + "-" + string(taskType))
 		res := Response{
 			IsSuccess: false,
-			Message:   "Error reading task packet: " + err.Error(),
+			Message:   "Duplicate task: " + clientID + "-" + string(taskType),
 		}
 		c.JSON(http.StatusBadRequest, res)
 		return
 	}
 
-	clientID := NewPacket.GetRkey()
-	msg := NewPacket.GetMessage()
-	taskType := task.UserTaskType(c.Param("action"))
-	chanKey := clientID + "-" + string(taskType) + "-" + msg
-	logger.Info(clientID + "::" + string(taskType) + " is handling...")
-
 	// find the function to handle the task
-	taskFunc, ok := work_from_api.WorkapiMap[taskType]
+	taskFunc, ok := work_from_api.LoadDumpMap[taskType]
 	if !ok {
 		logger.Error("Function not found:" + string(taskType))
 		res := Response{
@@ -105,77 +118,17 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 		return
 	}
 
-	// check whether it is a duplicate task
-	if channelmap.IsDumpChannelExists(chanKey) {
-		logger.Error("Duplicate task: " + string(taskType))
-		res := Response{
-			IsSuccess: false,
-			Message:   "Duplicate task: " + string(taskType),
-		}
-		c.JSON(http.StatusBadRequest, res)
-		return
+	// response to the API
+	res := Response{
+		IsSuccess: true,
+		Message:   "Success",
 	}
-
-	// Assign the dump task channel
-	load_dump_chan := make(chan string)
-	channelmap.AssignLoadDumpChannel(chanKey, &load_dump_chan)
-	logger.Info("Create load dump channel: " + chanKey)
-
-	defer func() {
-		// remove the allocate channel map before function return
-		if err := channelmap.RemoveLoadDumpChannel(chanKey); err != nil {
-			logger.Error("Error removing dump/load channel: " + err.Error())
-		}
-	}()
+	c.JSON(http.StatusOK, res)
 
 	// handle the task
-	if _, err := taskFunc(NewPacket); err != nil {
+	if _, err := taskFunc(req.Key, req.DumpTaskId, req.Message); err != nil {
 		logger.Error("Task " + string(taskType) + " failed: " + err.Error())
-		res := Response{
-			IsSuccess: false,
-			Message:   "Task " + string(taskType) + " failed: " + err.Error(),
-		}
-		c.JSON(http.StatusInternalServerError, res)
 		return
-	}
-
-	// handle load & dump response differently
-	if taskType == task.START_LOAD_DLL {
-		// wait for the load task to finish & remove the channel
-		pathInfo := <-load_dump_chan
-		if strings.HasPrefix(pathInfo, "Error: ") {
-			res := Response{
-				IsSuccess: false,
-				Message:   pathInfo,
-			}
-			c.JSON(http.StatusInternalServerError, res)
-		} else {
-			res := Response{
-				IsSuccess: true,
-				Data:      pathInfo,
-			}
-			c.JSON(http.StatusOK, res)
-			logger.Info(clientID + "::" + string(taskType) + " finished, response with data: " + pathInfo)
-		}
-	} else {
-		// wait for the dump task to finish & remove the channel
-		dumpFileName := <-load_dump_chan
-		if strings.HasPrefix(dumpFileName, "Error: ") {
-			res := Response{
-				IsSuccess: false,
-				Message:   dumpFileName,
-			}
-			c.JSON(http.StatusInternalServerError, res)
-		} else {
-			c.File(dumpFileName)
-
-			// remove the file
-			if err := os.Remove(dumpFileName); err != nil {
-				logger.Error("Error removing dump file: " + err.Error())
-			}
-
-			logger.Info(clientID + "::" + string(taskType) + " finished, " + "respond with file name: " + dumpFileName)
-		}
 	}
 }
 

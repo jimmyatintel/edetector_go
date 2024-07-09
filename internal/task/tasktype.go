@@ -118,10 +118,18 @@ const (
 	GIVE_LOAD_DLL_END  TaskType = "GiveLoadDllEnd"
 
 	// dump drive
-	GET_DUMP_DRIVE       TaskType = "GetDumpDrive"
-	GIVE_DUMP_DRIVE_INFO TaskType = "GiveDumpDriveInfo"
-	GIVE_DUMP_DRIVE_DATA TaskType = "GiveDumpDriveData"
-	GIVE_DUMP_DRIVE_END  TaskType = "GiveDumpDriveEnd"
+	GET_DUMP_DRIVE              TaskType = "GetDumpDrive"
+	READY_DUMP_DRIVE            TaskType = "ReadyDumpDrive"
+	GIVE_DUMP_DRIVE_PATH_INFO   TaskType = "GiveDumpDrivePathInfo"
+	GIVE_DUMP_DRIVE_PATH        TaskType = "GiveDumpDrivePath"
+	GIVE_DUMP_DRIVE_PATH_END    TaskType = "GiveDumpDrivePathEnd"
+	GIVE_DUMP_DRIVE_PROGRESS    TaskType = "GiveDumpDriveProgress"
+	GIVE_DUMP_DRIVE_INFO        TaskType = "GiveDumpDriveInfo"
+	GIVE_DUMP_DRIVE_DATA        TaskType = "GiveDumpDriveData"
+	GIVE_DUMP_DRIVE_END         TaskType = "GiveDumpDriveEnd"
+	GIVE_DUMP_DRIVE_FAILED_INFO TaskType = "GiveDumpDriveFailedInfo"
+	GIVE_DUMP_DRIVE_FAILED_DATA TaskType = "GiveDumpDriveFailedData"
+	GIVE_DUMP_DRIVE_FAILED_END  TaskType = "GiveDumpDriveFailedEnd"
 
 	// task from API
 	CHANGE_DETECT_MODE      UserTaskType = "ChangeDetectMode"
@@ -227,9 +235,17 @@ var Worklist = []TaskType{
 	GIVE_LOAD_DLL_DATA,
 	GIVE_LOAD_DLL_END,
 	GET_DUMP_DRIVE,
+	READY_DUMP_DRIVE,
+	GIVE_DUMP_DRIVE_PATH_INFO,
+	GIVE_DUMP_DRIVE_PATH,
+	GIVE_DUMP_DRIVE_PATH_END,
+	GIVE_DUMP_DRIVE_PROGRESS,
 	GIVE_DUMP_DRIVE_INFO,
 	GIVE_DUMP_DRIVE_DATA,
 	GIVE_DUMP_DRIVE_END,
+	GIVE_DUMP_DRIVE_FAILED_INFO,
+	GIVE_DUMP_DRIVE_FAILED_DATA,
+	GIVE_DUMP_DRIVE_FAILED_END,
 }
 
 var UserWorklist = []UserTaskType{
