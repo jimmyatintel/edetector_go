@@ -1,13 +1,13 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/connectionmap"
 	packet "edetector_go/internal/packet"
 	task "edetector_go/internal/task"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/redis"
 	"edetector_go/pkg/request"
 	"net"
 	"path/filepath"
@@ -19,33 +19,52 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	key, msg := p.GetRkey(), p.GetMessage()
 	logger.Info(key + "::GiveDumpDriveProgress: " + msg)
 
-	// update progress
-	msgs := strings.Split(msg, "/")
-	finished, err := strconv.Atoi(msgs[0])
-	if err != nil {
-		logger.Error("Error converting finished to int: " + err.Error())
-		return task.FAIL, err
-	}
-	total, err := strconv.Atoi(msgs[1])
-	if err != nil {
-		logger.Error("Error converting total to int: " + err.Error())
-		return task.FAIL, err
-	}
-
-	// update progress set in redis and inform API (POST to loadDumpReady) that progress updated
-	progress := float64(finished) / float64(total) * 100
+	// get connInfo from ConnMsgMap
 	connInfo, ok := connectionmap.GetConnInfo(conn)
 	if !ok {
 		logger.Error("Error getting msg from ConnMsgMap")
 		return task.FAIL, nil
 	}
-	redis.UpdateDumpProgress(connInfo.TaskId, int(progress))
-	request.LoadDumpReady(request.ReadyData{TaskId: connInfo.TaskId})
+
+	// update progress
+	msgs := strings.Split(msg, "/")
+	finished, err := strconv.Atoi(msgs[0])
+	if err != nil {
+		logger.Error("Error converting finished to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+	total, err := strconv.Atoi(msgs[1])
+	if err != nil {
+		logger.Error("Error converting total to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+
+	// update progress set in redis and inform API (POST to loadDumpReady) that progress updated
+	progress := float64(finished) / float64(total) * config.Viper.GetFloat64("DUMP_FIRST_PART")
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: int(progress),
+	})
 
 	// send data right msg to client
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
 	if err != nil {
 		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -57,26 +76,39 @@ func GiveDumpDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	key := p.GetRkey()
 	logger.Info(key + "::GiveDumpDriveInfo: " + p.GetMessage())
 
-	dataLen, err := strconv.Atoi(strings.Split(p.GetMessage(), "|")[0])
-	if err != nil {
-		return task.FAIL, err
-	}
-
-	// update data length in ConnMsgMap
-	oldInfo, ok := connectionmap.GetConnInfo(conn)
+	// get connInfo from ConnMsgMap
+	connInfo, ok := connectionmap.GetConnInfo(conn)
 	if !ok {
 		logger.Error("Error getting msg from ConnMsgMap")
 		return task.FAIL, nil
 	}
 
+	dataLen, err := strconv.Atoi(strings.Split(p.GetMessage(), "|")[0])
+	if err != nil {
+		logger.Error("Error converting dataLen to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+
+	// update data length in ConnMsgMap
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  oldInfo.TaskId,
-		Msg:     oldInfo.Msg,
+		TaskId:  connInfo.TaskId,
+		Msg:     connInfo.Msg,
 		DataLen: dataLen,
 	})
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -99,11 +131,29 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	path := filepath.Join(dumpWorkingPath, connInfo.TaskId)
 	content := getDataPacketContent(p)
 	if err := file.WriteFile(path, content); err != nil {
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
+	// update Progress
+	progress := config.Viper.GetFloat64("DUMP_FIRST_PART") + float64(len(content))/float64(connInfo.DataLen)*(100-config.Viper.GetFloat64("DUMP_FIRST_PART"))
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: int(progress),
+	})
+
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -128,24 +178,41 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// truncate data
 	if err := file.TruncateFile(workPath, connInfo.DataLen); err != nil {
 		logger.Error("TruncateFile: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// move to unstage
 	if err := file.MoveFile(workPath, unstagePath); err != nil {
 		logger.Error("MoveFile: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// update progress set in redis and inform API (POST to loadDumpReady) that progress updated
-	redis.UpdateDumpProgress(connInfo.TaskId, 100)
-	request.LoadDumpReady(request.ReadyData{TaskId: connInfo.TaskId})
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: 100,
+	})
 
 	return task.SUCCESS, nil
 }

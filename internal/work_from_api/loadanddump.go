@@ -8,6 +8,7 @@ import (
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
 	"edetector_go/pkg/redis"
+	"edetector_go/pkg/request"
 	"errors"
 	"os"
 	"path/filepath"
@@ -22,11 +23,23 @@ func StartLoadDll(key, taskId, msg string) (task.TaskResult, error) {
 	// store taskId in redis
 	redisKey := key + string(task.START_LOAD_DLL) + strings.Split(msg, "|")[0]
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
+		logger.Error("StartLoadDll: redis set error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	err := clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_LOAD_DLL, msg)
 	if err != nil {
+		logger.Error("StartLoadDll: send tcp error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -38,13 +51,25 @@ func StartDumpDll(key, taskId, msg string) (task.TaskResult, error) {
 
 	// store taskId in redis
 	msgs := strings.Split(msg, "|")
-	redisKey := key + string(task.START_DUMP_DLL) + msgs[0] + msgs[1]
+	redisKey := key + string(task.START_DUMP_DLL) + msgs[0] + "|" + msgs[1]
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
+		logger.Error("StartDumpDll: redis set error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	err := clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_DUMP_DLL, msg)
 	if err != nil {
+		logger.Error("StartDumpDll: send tcp error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -57,11 +82,23 @@ func StartDumpProcess(key, taskId, msg string) (task.TaskResult, error) {
 	// store taskId in redis
 	redisKey := key + string(task.START_DUMP_PROCESS) + strings.Split(msg, "|")[0]
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
+		logger.Error("StartDumpProcess: redis set error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	err := clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_DUMP_PROCESS, msg)
 	if err != nil {
+		logger.Error("StartDumpProcess: send tcp error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -74,7 +111,16 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 	_, filePath := msgs[0], msgs[1]
 
 	// open a txt file to save the dump data
-	file.CreateFile(filepath.Join(dumpWorkingPath, taskId+".txt"))
+	err := file.CreateFile(filepath.Join(dumpWorkingPath, taskId+".txt"))
+	if err != nil {
+		logger.Error("StartDumpDrive: create file error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
 
 	// retrive all the file info that need to dump from elastic and save in a txt file
 	query := `{
@@ -90,6 +136,11 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 	if !ok {
 		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
 		logger.Error("StartDumpDrive: hit is not a map")
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, errors.New("hit is not a map")
 	}
 
@@ -97,6 +148,11 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 	if !ok {
 		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
 		logger.Error("StartDumpDrive: hitMap[\"_source\"] is not a map")
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, errors.New("hitMap[\"_source\"] is not a map")
 	}
 
@@ -104,6 +160,11 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 	if !ok {
 		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
 		logger.Error("StartDumpDrive: source[\"explorer\"] is not a map")
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, errors.New("source[\"explorer\"] is not a map")
 	}
 
@@ -111,6 +172,11 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 	if explorerData["dataLen"].(int) > 2*1024*1024*1024 {
 		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
 		logger.Error("StartDumpDrive: data is larger than 2GB")
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, errors.New("data is larger than 2GB")
 	}
 
@@ -119,15 +185,27 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 
 	// save task id in redis
 	redisKey := key + string(task.START_DUMP_DRIVE) + filePath
-	err := redis.RedisSet(redisKey, taskId)
+	err = redis.RedisSet(redisKey, taskId)
 	if err != nil {
 		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
 		logger.Error("redis set error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	err = clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_DUMP_DRIVE, strings.Split(msg, "|")[1])
 	if err != nil {
+		os.Remove(filepath.Join(dumpWorkingPath, taskId+".txt"))
+		logger.Error("StartDumpDrive: send tcp error" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 

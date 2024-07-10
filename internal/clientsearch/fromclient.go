@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	channelmap "edetector_go/internal/channelmap"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	packet "edetector_go/internal/packet"
@@ -64,8 +66,9 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			continue
 		}
 		t := NewPacket.GetTaskType()
-		// These tasks are sent in small packets
-		if t != "GiveInfo" && t != "GiveDetectInfoFirst" && t != "GiveDetectInfo" && t != "CheckConnect" && t != "ReadyUpdateAgent" && t != "ReadyYaraRule" && t != "ReadyImage" && t != "DataRight" && t != "GiveDriveInfo" && t != "ReadyDumpDrive" {
+		var taskInSmallPacket = []task.TaskType{"GiveInfo", "GiveDetectInfoFirst", "GiveDetectInfo", "CheckConnect", "ReadyUpdateAgent", "ReadyYaraRule", "ReadyImage", "ReadyDumpDll", "ReadyDumpProcess", "DataRight", "GiveDriveInfo", "ReadyDumpDrive"}
+		// parse big packets
+		if !slices.Contains(taskInSmallPacket, t) {
 			for len(Data_acache) < 65535 {
 				reqLen, err := conn.Read(buf)
 				if err != nil {

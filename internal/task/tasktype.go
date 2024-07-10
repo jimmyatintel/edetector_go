@@ -100,16 +100,20 @@ const (
 	GIVE_MEMORY_TREE_PROGRESS TaskType = "GiveMemoryTreeProgress"
 
 	// dump dll
-	GET_DUMP_DLL       TaskType = "GetDumpDll"
-	GIVE_DUMP_DLL_INFO TaskType = "GiveDumpDllInfo"
-	GIVE_DUMP_DLL_DATA TaskType = "GiveDumpDllData"
-	GIVE_DUMP_DLL_END  TaskType = "GiveDumpDllEnd"
+	GET_DUMP_DLL           TaskType = "GetDumpDll"
+	READY_DUMP_DLL         TaskType = "ReadyDumpDll"
+	GIVE_DUMP_DLL_PROGRESS TaskType = "GiveDumpDllProgress"
+	GIVE_DUMP_DLL_INFO     TaskType = "GiveDumpDllInfo"
+	GIVE_DUMP_DLL_DATA     TaskType = "GiveDumpDllData"
+	GIVE_DUMP_DLL_END      TaskType = "GiveDumpDllEnd"
 
 	// dump process
-	GET_DUMP_PROCESS       TaskType = "GetDumpProcess"
-	GIVE_DUMP_PROCESS_INFO TaskType = "GiveDumpProcessInfo"
-	GIVE_DUMP_PROCESS_DATA TaskType = "GiveDumpProcessData"
-	GIVE_DUMP_PROCESS_END  TaskType = "GiveDumpProcessEnd"
+	GET_DUMP_PROCESS           TaskType = "GetDumpProcess"
+	READY_DUMP_PROCESS         TaskType = "ReadyDumpProcess"
+	GIVE_DUMP_PROCESS_PROGRESS TaskType = "GiveDumpProcessProgress"
+	GIVE_DUMP_PROCESS_INFO     TaskType = "GiveDumpProcessInfo"
+	GIVE_DUMP_PROCESS_DATA     TaskType = "GiveDumpProcessData"
+	GIVE_DUMP_PROCESS_END      TaskType = "GiveDumpProcessEnd"
 
 	// load dll
 	GET_LOAD_DLL       TaskType = "GetLoadDll"

@@ -20,27 +20,39 @@ func GiveDumpDriveFailedInfo(p packet.Packet, conn net.Conn) (task.TaskResult, e
 	key, msg := p.GetRkey(), p.GetMessage()
 	logger.Info(key + "::GiveDumpDriveFailedInfo: " + msg)
 
-	dataLen, err := strconv.Atoi(strings.Split(msg, "|")[0])
-	if err != nil {
-		logger.Error("Error converting dataLen to int: " + err.Error())
-		return task.FAIL, err
-	}
-
-	// update data length in ConnMsgMap
-	oldInfo, ok := connectionmap.GetConnInfo(conn)
+	// get taskId from ConnMsgMap
+	connInfo, ok := connectionmap.GetConnInfo(conn)
 	if !ok {
 		logger.Error("Error getting msg from ConnMsgMap")
 		return task.FAIL, nil
 	}
 
+	dataLen, err := strconv.Atoi(strings.Split(msg, "|")[0])
+	if err != nil {
+		logger.Error("Error converting dataLen to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+
+	// update data length in ConnMsgMap
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  oldInfo.TaskId,
-		Msg:     oldInfo.Msg,
+		TaskId:  connInfo.TaskId,
+		Msg:     connInfo.Msg,
 		DataLen: dataLen,
 	})
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -62,11 +74,23 @@ func GiveDumpDriveFailedData(p packet.Packet, conn net.Conn) (task.TaskResult, e
 	path := filepath.Join(dumpWorkingPath, connInfo.TaskId+"-failed.zip")
 	content := getDataPacketContent(p)
 	if err := file.WriteFile(path, content); err != nil {
+		logger.Error("Error writing file: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -90,6 +114,11 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -97,19 +126,30 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 	srcPath := filepath.Join(dumpWorkingPath, connInfo.TaskId+"-failed.zip")
 	destPath := filepath.Join(dumpWorkingPath, connInfo.TaskId+"-failed.txt")
 	if err := file.DecompressFile(srcPath, destPath, connInfo.DataLen); err != nil {
+		logger.Error("Error decompressing file: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// read error path and send to API
-	failed := "Paths failed: "
-	if content, err := file.ReadFileLineByLine(destPath); err != nil {
+	content, err := file.ReadFileLineByLine(destPath)
+	if err != nil {
+		logger.Error("Error reading file: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
-	} else {
-		failed += strings.Join(content, ",")
 	}
 	request.LoadDumpReady(request.ReadyData{
-		TaskId: connInfo.TaskId,
-		Failed: failed,
+		TaskId:   connInfo.TaskId,
+		Failed:   "Paths failed: " + strings.Join(content, ","),
+		Progress: -2,
 	})
 
 	// remove the file
@@ -120,6 +160,11 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 	// remove key from redis
 	if err := redis.RedisDelete(key + string(task.START_DUMP_DRIVE) + connInfo.Msg); err != nil {
 		logger.Error("Error deleting key from redis: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 

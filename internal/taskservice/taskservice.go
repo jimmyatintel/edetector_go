@@ -91,7 +91,7 @@ func HandleLoadDumpTask(c *gin.Context, ctx context.Context) {
 	} else if taskType == task.START_LOAD_DLL {
 		checkField = msgs[0]
 	} else if taskType == task.START_DUMP_DLL {
-		checkField = msgs[0] + msgs[1]
+		checkField = msgs[0] + "|" + msgs[1]
 	} else {
 		checkField = msgs[1]
 	}

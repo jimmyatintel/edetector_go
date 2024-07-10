@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -179,24 +178,61 @@ func GetValuesForKeys(keys []string) map[string]string {
 	return values
 }
 
-func UpdateDumpProgress(taskId string, progress int) {
-	oldInfo, err := RedisGetString(taskId + "-LoadDumpTask")
+func CheckDumpTaskExists(taskId string) bool {
+	// create a context for redis Exists
+	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	defer cancel()
+
+	// get userId
+	userId, err := RedisClient.HGet(ctx, "DumpTask:"+taskId, "userID").Result()
 	if err != nil {
-		logger.Error("Error getting progress from redis: " + err.Error())
-		return
+		logger.Error("Error getting userId from dump task: " + err.Error())
+		return false
 	}
 
-	newInfo := strings.Split(oldInfo, "|")
-	if len(newInfo) == 5 {
-		newInfo[4] = strconv.Itoa(int(progress))
+	// check if the task exists in redis
+	if exist := RedisClient.HExists(ctx, "PendingDumps:"+userId, taskId); !exist.Val() {
+		return false
 	} else {
-		logger.Error("The format of dump task info in redis is inccorect: " + oldInfo)
+		return true
+	}
+}
+
+func UpdatePendingDump(taskId string, status int) {
+	// create a context for redis HSet
+	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	defer cancel()
+
+	// get userId
+	userId, err := RedisClient.HGet(ctx, "DumpTask:"+taskId, "userID").Result()
+	if err != nil {
+		logger.Error("Error getting userId from dump task: " + err.Error())
+		return
 	}
 
-	// set newInfo to redis
-	err = RedisSet(taskId+"-LoadDumpTask", strings.Join(newInfo, "|"))
+	// set the task as completed in redis
+	err = RedisClient.HSet(ctx, "PendingDumps:"+userId, taskId, status).Err()
 	if err != nil {
-		logger.Error("Error setting progress to redis: " + err.Error())
-		return
+		logger.Error("Error updating pending dump: " + err.Error())
+	}
+}
+
+func UpdateDumpTaskInfo(taskId, failure string, progress int) {
+	// create a context for redis HSet
+	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	defer cancel()
+
+	var updateFields []string
+	if failure != "nil" {
+		updateFields = append(updateFields, "failure", failure)
+	}
+	if progress != 0 {
+		updateFields = append(updateFields, "progress", strconv.Itoa(progress))
+	}
+
+	// set the new progress with redis HSet
+	err := RedisClient.HSet(ctx, "DumpTask:"+taskId, updateFields).Err()
+	if err != nil {
+		logger.Error("Error updating dump progress: " + err.Error())
 	}
 }

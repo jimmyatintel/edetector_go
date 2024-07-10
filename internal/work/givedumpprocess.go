@@ -1,6 +1,7 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/connectionmap"
 	packet "edetector_go/internal/packet"
@@ -15,36 +16,126 @@ import (
 	"strings"
 )
 
+func ReadyDumpProcess(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	// retrieve data from packet
+	key, msg := p.GetRkey(), p.GetMessage()
+	logger.Info(key + "::ReadyDumpProcess: " + msg)
+
+	// get taskId from redis
+	taskId, err := redis.RedisGetString(key + string(task.START_DUMP_PROCESS) + msg)
+	if err != nil {
+		logger.Error("Error getting taskId from redis: " + err.Error())
+		return task.FAIL, err
+	}
+
+	// store taskId and msg to ConnMsgMap
+	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
+		TaskId:  taskId,
+		Msg:     msg,
+		DataLen: 0,
+	})
+
+	return task.SUCCESS, nil
+}
+
+func GiveDumpProcessProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
+	// retrieve data from packet
+	key, msg := p.GetRkey(), p.GetMessage()
+	logger.Info(key + "::GiveDumpProcessProgress: " + msg)
+
+	// get connInfo from ConnMsg
+	connInfo, ok := connectionmap.GetConnInfo(conn)
+	if !ok {
+		logger.Error("Error getting msg from ConnMsgMap")
+		return task.FAIL, nil
+	}
+
+	// count progress
+	msgs := strings.Split(msg, "/")
+	finished, err := strconv.Atoi(msgs[0])
+	if err != nil {
+		logger.Error("Error converting finished to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+	total, err := strconv.Atoi(msgs[1])
+	if err != nil {
+		logger.Error("Error converting total to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+
+	// update progress
+	progress := float64(finished) / float64(total) * config.Viper.GetFloat64("DUMP_FIRST_PART")
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: int(progress),
+	})
+
+	// send data right msg to client
+	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
+		return task.FAIL, err
+	}
+
+	return task.SUCCESS, nil
+}
+
 func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// retrieve data from packet
-	key := p.GetRkey()
-	msg, msgs := p.GetMessage(), strings.Split(p.GetMessage(), "|")
+	key, msg := p.GetRkey(), p.GetMessage()
 	logger.Info(key + "::GiveDumpProcessInfo: " + msg)
 
-	dataLen, pid := msgs[0], msgs[1]
+	dataLen := strings.Split(p.GetMessage(), "|")[0]
 	if dataLen == "-1" {
 		logger.Error(key + "::GiveDumpProcessInfo: Dump process path not found")
 	}
 
-	total, err := strconv.Atoi(dataLen)
-	if err != nil {
-		return task.FAIL, err
+	// get connInfo from ConnMsgMap
+	connInfo, ok := connectionmap.GetConnInfo(conn)
+	if !ok {
+		logger.Error("Error getting msg from ConnMsgMap")
+		return task.FAIL, nil
 	}
 
-	// get taskId from redis
-	taskId, err := redis.RedisGetString(key + string(task.START_DUMP_PROCESS) + pid)
+	total, err := strconv.Atoi(dataLen)
 	if err != nil {
+		logger.Error("Error converting dataLen to int: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  taskId,
-		Msg:     pid,
+		TaskId:  connInfo.TaskId,
+		Msg:     connInfo.Msg,
 		DataLen: total,
 	})
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -67,11 +158,23 @@ func GiveDumpProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	path := filepath.Join(dumpWorkingPath, connInfo.TaskId)
 	content := getDataPacketContent(p)
 	if err := file.WriteFile(path, content); err != nil {
+		logger.Error("WriteFile: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("SendTCPtoClient: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -100,12 +203,22 @@ func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 		// truncate data
 		if err := file.TruncateFile(srcPath, connInfo.DataLen); err != nil {
 			logger.Error("TruncateFile: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				Progress: -1,
+			})
 			return task.FAIL, err
 		}
 
 		// move to unstage
 		if err := file.MoveFile(srcPath, destPath); err != nil {
 			logger.Error("MoveFile: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				Progress: -1,
+			})
 			return task.FAIL, err
 		}
 

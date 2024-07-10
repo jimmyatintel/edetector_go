@@ -5,6 +5,7 @@ import (
 	"context"
 	"edetector_go/config"
 	"edetector_go/pkg/logger"
+	"edetector_go/pkg/redis"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,10 +16,16 @@ type Request struct {
 	DeviceId string `json:"deviceId"`
 }
 
-type ReadyData struct {
+type ReadyRequest struct {
 	TaskId   string `json:"taskId"`
 	DllPaths string `json:"dllPaths"`
-	Failed   string `json:"failed"`
+}
+
+type ReadyData struct {
+	TaskId   string
+	DllPaths string
+	Failed   string
+	Progress int
 }
 
 func RequestToUser(id string) {
@@ -68,12 +75,34 @@ func RequestToUser(id string) {
 	}
 }
 
+// LoadDumpReady updates progress in redis and informs API
 func LoadDumpReady(info ReadyData) {
+	// check taskId exists in pendingDump:USERID
+	if redis.CheckDumpTaskExists(info.TaskId) == false {
+		logger.Warn("TaskId does not exist in pendingDump:USERID")
+		return
+	}
+
 	// Marshal payload into JSON
-	payload, err := json.Marshal(info)
+	payload, err := json.Marshal(ReadyRequest{
+		TaskId:   info.TaskId,
+		DllPaths: info.DllPaths,
+	})
 	if err != nil {
 		logger.Error("Error marshaling JSON: " + err.Error())
 		return
+	}
+
+	// update info in redis
+	redis.UpdateDumpTaskInfo(info.TaskId, info.Failed, info.Progress)
+
+	// update pending dump in redis
+	if info.Progress == 100 {
+		redis.UpdatePendingDump(info.TaskId, 1)
+	} else if info.Progress == -1 {
+		redis.UpdatePendingDump(info.TaskId, -1)
+	} else if info.Progress == -2 {
+		redis.UpdatePendingDump(info.TaskId, -2)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

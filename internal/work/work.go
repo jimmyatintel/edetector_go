@@ -96,19 +96,27 @@ func init() {
 		// task.GIVE_MEMORY_TREE_PROGRESS: GiveMemoryTreeProgress,
 
 		// dump dll
-		task.GIVE_DUMP_DLL_INFO: GiveDumpDllInfo,
-		task.GIVE_DUMP_DLL_DATA: GiveDumpDllData,
-		task.GIVE_DUMP_DLL_END:  GiveDumpDllEnd,
+		task.READY_DUMP_DLL:         ReadyDumpDll,
+		task.GIVE_DUMP_DLL_PROGRESS: GiveDumpDllProgress,
+		task.GIVE_DUMP_DLL_INFO:     GiveDumpDllInfo,
+		task.GIVE_DUMP_DLL_DATA:     GiveDumpDllData,
+		task.GIVE_DUMP_DLL_END:      GiveDumpDllEnd,
 
 		// dump process
-		task.GIVE_DUMP_PROCESS_INFO: GiveDumpProcessInfo,
-		task.GIVE_DUMP_PROCESS_DATA: GiveDumpProcessData,
-		task.GIVE_DUMP_PROCESS_END:  GiveDumpProcessEnd,
+		task.READY_DUMP_PROCESS:         ReadyDumpProcess,
+		task.GIVE_DUMP_PROCESS_PROGRESS: GiveDumpProcessProgress,
+		task.GIVE_DUMP_PROCESS_INFO:     GiveDumpProcessInfo,
+		task.GIVE_DUMP_PROCESS_DATA:     GiveDumpProcessData,
+		task.GIVE_DUMP_PROCESS_END:      GiveDumpProcessEnd,
 
 		// dump drive
-		task.GIVE_DUMP_DRIVE_INFO: GiveDumpDriveInfo,
-		task.GIVE_DUMP_DRIVE_DATA: GiveDumpDriveData,
-		task.GIVE_DUMP_DRIVE_END:  GiveDumpDriveEnd,
+		task.GIVE_DUMP_DRIVE_PROGRESS:    GiveDumpDriveProgress,
+		task.GIVE_DUMP_DRIVE_INFO:        GiveDumpDriveInfo,
+		task.GIVE_DUMP_DRIVE_DATA:        GiveDumpDriveData,
+		task.GIVE_DUMP_DRIVE_END:         GiveDumpDriveEnd,
+		task.GIVE_DUMP_DRIVE_FAILED_INFO: GiveDumpDriveFailedInfo,
+		task.GIVE_DUMP_DRIVE_FAILED_DATA: GiveDumpDriveFailedData,
+		task.GIVE_DUMP_DRIVE_FAILED_END:  GiveDumpDriveFailedEnd,
 
 		// load dll
 		task.GIVE_LOAD_DLL_INFO: GiveLoadDllInfo,
