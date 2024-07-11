@@ -53,11 +53,12 @@ func generateUUID(agent string, ind int, UUIDMap *map[string]int, RelationMap *m
 	if !exists {
 		uuid := uuid.NewString()
 		relation := Relation{
-			UUID:   uuid,
-			Name:   "",
-			Path:   "",
-			IsRoot: false,
-			Child:  []string{},
+			UUID:    uuid,
+			Name:    "",
+			Path:    "",
+			DataLen: 0,
+			IsRoot:  false,
+			Child:   []string{},
 		}
 		(*RelationMap)[ind] = relation
 		(*UUIDMap)[uuid] = ind
@@ -95,6 +96,26 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 	for _, uuid := range relation.Child {
 		treeTraversal(agent, (*UUIDMap)[uuid], false, path, diskInfo, UUIDMap, RelationMap, taskID)
 	}
+}
+
+func countFileSize(uuid int, UUIDMap *map[string]int, RelationMap *map[int](Relation)) int64 {
+	relation := (*RelationMap)[uuid]
+
+	// return dataLen if it is not a directory
+	if len(relation.Child) == 0 {
+		return relation.DataLen
+	}
+
+	var childDataLen int64 = 0
+
+	for _, childUUID := range relation.Child {
+		childDataLen += countFileSize((*UUIDMap)[childUUID], UUIDMap, RelationMap)
+	}
+
+	relation.DataLen = childDataLen
+	(*RelationMap)[uuid] = relation
+
+	return relation.DataLen
 }
 
 func clearBuilder(agent string, disk string, explorerFile string) {
