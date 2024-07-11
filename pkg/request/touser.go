@@ -25,6 +25,7 @@ type ReadyData struct {
 	TaskId   string
 	DllPaths string
 	Failed   string
+	RedisKey string
 	Progress int
 }
 
@@ -103,6 +104,13 @@ func LoadDumpReady(info ReadyData) {
 		redis.UpdatePendingDump(info.TaskId, -1)
 	} else if info.Progress == -2 {
 		redis.UpdatePendingDump(info.TaskId, -2)
+	}
+
+	// remove key from redis if the progress is 100, -1, -2
+	if info.Progress == 100 || info.Progress == -1 || info.Progress == -2 {
+		if err := redis.RedisDelete(info.RedisKey); err != nil {
+			logger.Error("Error deleting key from redis: " + err.Error())
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

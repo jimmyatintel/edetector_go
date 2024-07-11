@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -180,7 +181,7 @@ func GetValuesForKeys(keys []string) map[string]string {
 
 func CheckDumpTaskExists(taskId string) bool {
 	// create a context for redis Exists
-	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 	defer cancel()
 
 	// get userId
@@ -200,7 +201,7 @@ func CheckDumpTaskExists(taskId string) bool {
 
 func UpdatePendingDump(taskId string, status int) {
 	// create a context for redis HSet
-	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 	defer cancel()
 
 	// get userId
@@ -219,7 +220,7 @@ func UpdatePendingDump(taskId string, status int) {
 
 func UpdateDumpTaskInfo(taskId, failure string, progress int) {
 	// create a context for redis HSet
-	ctx, cancel := context.WithTimeout(context.Background(), 3)
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 	defer cancel()
 
 	var updateFields []string

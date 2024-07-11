@@ -38,6 +38,13 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 	total, err := strconv.Atoi(dataLen)
 	if err != nil {
+		logger.Error("Error convert dataLen to int" + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_LOAD_DLL) + pid,
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -49,6 +56,13 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("Error sending data right msg to client: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   taskId,
+			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_LOAD_DLL) + pid,
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -71,11 +85,25 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	path := filepath.Join(loadDllWorkingPath, connInfo.TaskId+".zip")
 	content := getDataPacketContent(p)
 	if err := file.WriteFile(path, content); err != nil {
+		logger.Error("Error writing file: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
+		logger.Error("Error sending data right msg to client: " + err.Error())
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			Progress: -1,
+		})
 		return task.FAIL, err
 	}
 
@@ -104,12 +132,24 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		// truncate data
 		if err := file.TruncateFile(workPath, connInfo.DataLen); err != nil {
 			logger.Error("Error truncating file: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				Progress: -1,
+			})
 			return task.FAIL, err
 		}
 
 		// decompress the file
 		if err := file.DecompressFile(workPath, unstagePath, connInfo.DataLen); err != nil {
 			logger.Error("Error unzipping file: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				Progress: -1,
+			})
 			return task.FAIL, err
 		}
 
@@ -117,6 +157,12 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		lines, err := file.ReadFileLineByLine(unstagePath)
 		if err != nil {
 			logger.Error("Error reading file: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				Progress: -1,
+			})
 			return task.FAIL, err
 		}
 
@@ -124,6 +170,8 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			DllPaths: strings.Join(lines, "|"),
+			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			Progress: 100,
 		})
 
 		// remove the working file
@@ -135,18 +183,14 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		// send error to API
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
-			DllPaths: key + "::GiveLoadDllInfo: pid not found",
+			Failed:   key + "::GiveLoadDllInfo: pid not found",
+			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			Progress: -1,
 		})
 	}
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
-		return task.FAIL, err
-	}
-
-	// remove redis key
-	if err := redis.RedisDelete(key + string(task.START_LOAD_DLL) + connInfo.Msg); err != nil {
-		logger.Error(key + "::GiveLoadDllEnd: " + err.Error())
 		return task.FAIL, err
 	}
 

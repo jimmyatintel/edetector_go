@@ -34,6 +34,7 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -44,6 +45,7 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -63,6 +65,7 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -89,6 +92,7 @@ func GiveDumpDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -107,6 +111,7 @@ func GiveDumpDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -134,6 +139,7 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -152,6 +158,7 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -181,6 +188,7 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -192,6 +200,7 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -203,6 +212,7 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err

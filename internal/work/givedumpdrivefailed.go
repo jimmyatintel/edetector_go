@@ -7,7 +7,6 @@ import (
 	"edetector_go/internal/task"
 	"edetector_go/pkg/file"
 	"edetector_go/pkg/logger"
-	"edetector_go/pkg/redis"
 	"edetector_go/pkg/request"
 	"net"
 	"os"
@@ -33,6 +32,7 @@ func GiveDumpDriveFailedInfo(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -51,6 +51,7 @@ func GiveDumpDriveFailedInfo(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -78,6 +79,7 @@ func GiveDumpDriveFailedData(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -89,6 +91,7 @@ func GiveDumpDriveFailedData(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -117,6 +120,7 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -130,6 +134,7 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -142,30 +147,21 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
 	}
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
-		Failed:   "Paths failed: " + strings.Join(content, ","),
+		Failed:   "Partial paths failed: " + strings.Join(content, ","),
+		RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 		Progress: -2,
 	})
 
 	// remove the file
 	if err := os.Remove(destPath); err != nil {
 		logger.Error("Error removing file: " + err.Error())
-	}
-
-	// remove key from redis
-	if err := redis.RedisDelete(key + string(task.START_DUMP_DRIVE) + connInfo.Msg); err != nil {
-		logger.Error("Error deleting key from redis: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			Progress: -1,
-		})
-		return task.FAIL, err
 	}
 
 	return task.SUCCESS, nil

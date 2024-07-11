@@ -56,6 +56,7 @@ func GiveDumpDllProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -84,6 +85,7 @@ func GiveDumpDllProgress(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -115,6 +117,7 @@ func GiveDumpDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -131,6 +134,7 @@ func GiveDumpDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -159,6 +163,7 @@ func GiveDumpDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -177,6 +182,7 @@ func GiveDumpDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -210,6 +216,7 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			request.LoadDumpReady(request.ReadyData{
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -221,6 +228,7 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			request.LoadDumpReady(request.ReadyData{
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -229,6 +237,7 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		// inform API that the dump dll is ready
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: 100,
 		})
 	} else {
@@ -236,6 +245,7 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "Dump dll path and pid not found",
+			RedisKey: key + string(task.START_DUMP_DLL) + connInfo.Msg,
 			Progress: -1,
 		})
 	}
@@ -243,22 +253,6 @@ func GiveDumpDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		logger.Error("Error sending packet: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			Progress: -1,
-		})
-		return task.FAIL, err
-	}
-
-	// remove the taskId from redis
-	if err := redis.RedisDelete(key + string(task.START_DUMP_DLL) + connInfo.Msg); err != nil {
-		logger.Error("Error deleting key from redis: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			Progress: -1,
-		})
 		return task.FAIL, err
 	}
 

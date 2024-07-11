@@ -58,6 +58,7 @@ func GiveDumpProcessProgress(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -68,6 +69,7 @@ func GiveDumpProcessProgress(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -86,6 +88,7 @@ func GiveDumpProcessProgress(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -101,7 +104,7 @@ func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 
 	dataLen := strings.Split(p.GetMessage(), "|")[0]
 	if dataLen == "-1" {
-		logger.Error(key + "::GiveDumpProcessInfo: Dump process path not found")
+		logger.Warn(key + "::GiveDumpProcessInfo: Dump process path not found")
 	}
 
 	// get connInfo from ConnMsgMap
@@ -117,6 +120,7 @@ func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -134,6 +138,7 @@ func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -162,6 +167,7 @@ func GiveDumpProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -173,6 +179,7 @@ func GiveDumpProcessData(p packet.Packet, conn net.Conn) (task.TaskResult, error
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -206,6 +213,7 @@ func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 			request.LoadDumpReady(request.ReadyData{
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -217,6 +225,7 @@ func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 			request.LoadDumpReady(request.ReadyData{
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -224,13 +233,17 @@ func GiveDumpProcessEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error)
 
 		// inform API that dump file is ready
 		request.LoadDumpReady(request.ReadyData{
-			TaskId: connInfo.TaskId,
+			TaskId:   connInfo.TaskId,
+			Progress: 100,
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
 		})
 	} else {
 		// inform API that there is an error
 		request.LoadDumpReady(request.ReadyData{
-			TaskId: connInfo.TaskId,
-			Failed: "Dump process pid not found",
+			TaskId:   connInfo.TaskId,
+			Failed:   "Dump process pid not found",
+			RedisKey: key + string(task.START_DUMP_PROCESS) + connInfo.Msg,
+			Progress: -1,
 		})
 	}
 

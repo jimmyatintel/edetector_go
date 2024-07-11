@@ -171,7 +171,6 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			_, err = work.ReadyDumpDrive(NewPacket, conn, dumpDataRightChan)
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
-				mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 			}
 		} else if agentTaskType == "StartUpdate" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("UpdateDataRight: " + NewPacket.GetRkey())
