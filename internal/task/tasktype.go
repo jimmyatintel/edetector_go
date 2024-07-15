@@ -89,7 +89,7 @@ const (
 	GIVE_YARA_PROGRESS   TaskType = "GiveYaraProgress"
 
 	// terminate
-	TERMINATE_ALL    TaskType = "TerminateAll"
+	TERMINATE_ALL    TaskType = "Terminate"
 	FINISH_TERMINATE TaskType = "FinishTerminate"
 
 	// memory tree

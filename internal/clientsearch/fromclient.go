@@ -194,6 +194,10 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 			if err != nil {
 				logger.Error("Task " + string(NewPacket.GetTaskType()) + " failed: " + err.Error())
 				if agentTaskType != "unknown" {
+					// tell agent to stop current task
+					agentTaskName := strings.Replace(agentTaskType, "Start", "", 1)
+					agentTaskName = strings.Replace(agentTaskName, "Get", "", 1)
+					clientsearchsend.SendTCPtoClient(NewPacket, task.TERMINATE_ALL, agentTaskName, conn)
 					mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 				}
 			}
