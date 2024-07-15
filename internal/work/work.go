@@ -131,6 +131,7 @@ func init() {
 	file.ClearDirContent(dbUstagePath)
 	file.ClearDirContent(fileWorkingPath)
 	file.ClearDirContent(fileUnstagePath)
+	file.ClearDirContent(loadDllWorkingPath)
 	file.ClearDirContent(dumpWorkingPath)
 	file.CheckDir(dumpUstagePath)
 	file.ClearDirContent(imageWorkingPath)
