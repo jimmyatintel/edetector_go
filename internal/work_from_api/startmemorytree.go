@@ -9,6 +9,7 @@ import (
 
 func StartMemoryTree(p packet.UserPacket) (task.TaskResult, error) {
 	logger.Info("StartMemoryTree: " + p.GetRkey())
+
 	err := clientsearchsend.SendUserTCPtoClient(p, task.GET_MEMORY_TREE, p.GetMessage())
 	if err != nil {
 		return task.FAIL, err

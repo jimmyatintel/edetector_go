@@ -57,6 +57,7 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),
 	})
+	logger.Info(key + "::GiveDumpDriveProgress: update progress to " + strconv.Itoa(int(progress)))
 
 	// send data right msg to client
 	err = clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn)
@@ -151,6 +152,7 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),
 	})
+	logger.Info(key + "::GiveDumpDriveData: update progress to " + strconv.Itoa(int(progress)))
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
@@ -225,6 +227,7 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		TaskId:   connInfo.TaskId,
 		Progress: config.Viper.GetInt("DUMP_DRIVE_THIRD_PART"),
 	})
+	logger.Info(key + "::GiveDumpDriveEnd: update progress to " + strconv.Itoa(config.Viper.GetInt("DUMP_DRIVE_THIRD_PART")))
 
 	return task.SUCCESS, nil
 }

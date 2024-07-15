@@ -332,6 +332,7 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 		TaskId:   taskId,
 		Progress: config.Viper.GetInt("DUMP_DRIVE_FIRST_PART"),
 	})
+	logger.Info(key + "::StartDumpDrive: update progress to " + strconv.Itoa(config.Viper.GetInt("DUMP_DRIVE_FIRST_PART")))
 
 	return task.SUCCESS, nil
 }

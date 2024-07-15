@@ -92,6 +92,7 @@ func GiveDumpDriveFailedData(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),
 	})
+	logger.Info(key + "::GiveDumpDriveFailedData: update progress to " + strconv.Itoa(int(progress)))
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
@@ -210,6 +211,7 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: 100,
 		})
+		logger.Info(key + "::GiveDumpDriveFailedEnd: update progress to " + strconv.Itoa(100))
 	}
 
 	// remove the file
