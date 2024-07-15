@@ -52,7 +52,7 @@ func GiveDumpDriveProgress(p packet.Packet, conn net.Conn) (task.TaskResult, err
 	}
 
 	// update progress set in redis and inform API (POST to loadDumpReady) that progress updated
-	progress := float64(finished) / float64(total) * config.Viper.GetFloat64("DUMP_FIRST_PART")
+	progress := config.Viper.GetFloat64("DUMP_DRIVE_FIRST_PART") + float64(finished)/float64(total)*(config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART")-config.Viper.GetFloat64("DUMP_DRIVE_FIRST_PART"))
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),
@@ -146,7 +146,7 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	}
 
 	// update Progress
-	progress := config.Viper.GetFloat64("DUMP_FIRST_PART") + float64(len(content))/float64(connInfo.DataLen)*(100-config.Viper.GetFloat64("DUMP_FIRST_PART"))
+	progress := config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART") + float64(len(content))/float64(connInfo.DataLen)*(config.Viper.GetFloat64("DUMP_DRIVE_THIRD_PART")-config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART"))
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),
@@ -182,28 +182,30 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	workPath := filepath.Join(dumpWorkingPath, connInfo.TaskId)
 	unstagePath := filepath.Join(dumpUstagePath, connInfo.TaskId+".zip")
 
-	// truncate data
-	if err := file.TruncateFile(workPath, connInfo.DataLen); err != nil {
-		logger.Error("TruncateFile: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
-			Progress: -1,
-		})
-		return task.FAIL, err
-	}
+	if connInfo.DataLen > 0 {
+		// truncate data
+		if err := file.TruncateFile(workPath, connInfo.DataLen); err != nil {
+			logger.Error("TruncateFile: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+				Progress: -1,
+			})
+			return task.FAIL, err
+		}
 
-	// move to unstage
-	if err := file.MoveFile(workPath, unstagePath); err != nil {
-		logger.Error("MoveFile: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
-			Progress: -1,
-		})
-		return task.FAIL, err
+		// move to unstage
+		if err := file.MoveFile(workPath, unstagePath); err != nil {
+			logger.Error("MoveFile: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+				Progress: -1,
+			})
+			return task.FAIL, err
+		}
 	}
 
 	// send data right msg to client
@@ -221,7 +223,7 @@ func GiveDumpDriveEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// update progress set in redis and inform API (POST to loadDumpReady) that progress updated
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
-		Progress: 100,
+		Progress: config.Viper.GetInt("DUMP_DRIVE_THIRD_PART"),
 	})
 
 	return task.SUCCESS, nil

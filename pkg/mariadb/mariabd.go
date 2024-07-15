@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"edetector_go/config"
 	"fmt"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -23,5 +24,7 @@ func Connect_init() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	DB.SetConnMaxLifetime(5 * time.Minute)
 	return connectionString, err
 }

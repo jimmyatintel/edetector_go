@@ -1,6 +1,7 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/connectionmap"
 	"edetector_go/internal/packet"
@@ -85,6 +86,13 @@ func GiveDumpDriveFailedData(p packet.Packet, conn net.Conn) (task.TaskResult, e
 		return task.FAIL, err
 	}
 
+	// update Progress
+	progress := config.Viper.GetFloat64("DUMP_DRIVE_THIRD_PART") + float64(len(content))/float64(connInfo.DataLen)*(config.Viper.GetFloat64("DUMP_DRIVE_FOURTH_PART")-config.Viper.GetFloat64("DUMP_DRIVE_THIRD_PART"))
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: int(progress),
+	})
+
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
 		logger.Error("SendTCPtoClient: " + err.Error())
@@ -127,41 +135,91 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 	}
 
 	// decompress file
+	dumpPathPath := filepath.Join(dumpWorkingPath, connInfo.TaskId+".txt")
 	srcPath := filepath.Join(dumpWorkingPath, connInfo.TaskId+"-failed.zip")
 	destPath := filepath.Join(dumpWorkingPath, connInfo.TaskId+"-failed.txt")
-	if err := file.DecompressFile(srcPath, destPath, connInfo.DataLen); err != nil {
-		logger.Error("Error decompressing file: " + err.Error())
-		request.LoadDumpReady(request.ReadyData{
-			TaskId:   connInfo.TaskId,
-			Failed:   "InternalServerError",
-			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
-			Progress: -1,
-		})
-		return task.FAIL, err
+	var failedLines int = connInfo.DataLen
+
+	if failedLines > 0 {
+		var err error
+		if err := file.DecompressFile(srcPath, destPath, connInfo.DataLen); err != nil {
+			logger.Error("Error decompressing file: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+				Progress: -1,
+			})
+			return task.FAIL, err
+		}
+
+		failedLines, err = file.GetNumberOfLine(destPath)
+		if err != nil {
+			logger.Error("Error getting number of lines: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+				Progress: -1,
+			})
+		}
 	}
 
-	// read error path and send to API
-	content, err := file.ReadFileLineByLine(destPath)
+	pathLines, err := file.GetNumberOfLine(dumpPathPath)
 	if err != nil {
-		logger.Error("Error reading file: " + err.Error())
+		logger.Error("Error getting number of lines: " + err.Error())
 		request.LoadDumpReady(request.ReadyData{
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
 			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
 			Progress: -1,
 		})
-		return task.FAIL, err
 	}
-	request.LoadDumpReady(request.ReadyData{
-		TaskId:   connInfo.TaskId,
-		Failed:   "Partial paths failed: " + strings.Join(content, ","),
-		RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
-		Progress: -2,
-	})
+
+	// check if all paths failed
+	if failedLines == pathLines {
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "All paths failed",
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+			Progress: -1,
+		})
+	} else if failedLines > 0 {
+		// read error path and send to API
+		content, err := file.ReadFileLineByLine(destPath)
+		if err != nil {
+			logger.Error("Error reading file: " + err.Error())
+			request.LoadDumpReady(request.ReadyData{
+				TaskId:   connInfo.TaskId,
+				Failed:   "InternalServerError",
+				RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+				Progress: -1,
+			})
+			return task.FAIL, err
+		}
+
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			Failed:   "Partial paths failed: " + strings.Join(content, ","),
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+			Progress: -2,
+		})
+	} else {
+		request.LoadDumpReady(request.ReadyData{
+			TaskId:   connInfo.TaskId,
+			RedisKey: key + string(task.START_DUMP_DRIVE) + connInfo.Msg,
+			Progress: 100,
+		})
+	}
 
 	// remove the file
-	if err := os.Remove(destPath); err != nil {
-		logger.Error("Error removing file: " + err.Error())
+	if failedLines > 0 {
+		if err := os.Remove(destPath); err != nil {
+			logger.Error("Error removing file: " + err.Error())
+		}
+	}
+	if err := os.Remove(dumpPathPath); err != nil {
+		logger.Error("Error removing txt in working path: " + err.Error())
 	}
 
 	return task.SUCCESS, nil

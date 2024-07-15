@@ -181,8 +181,8 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 		} else if agentTaskType == "StartGetImage" && NewPacket.GetTaskType() == task.DATA_RIGHT {
 			logger.Info("ImageDataRight: " + NewPacket.GetRkey())
 			imageDataRightChan <- conn
-		} else if agentTaskType == "StartGetDrive" && NewPacket.GetTaskType() == task.DATA_RIGHT {
-			logger.Info("ImageDataRight: " + NewPacket.GetRkey())
+		} else if agentTaskType == "StartDumpDrive" && NewPacket.GetTaskType() == task.DATA_RIGHT {
+			logger.Debug("DumpDriveDataRight: " + NewPacket.GetRkey())
 			dumpDataRightChan <- conn
 		} else {
 			taskFunc, ok := work.WorkMap[NewPacket.GetTaskType()]

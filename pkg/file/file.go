@@ -547,3 +547,27 @@ func ReadFileLineByLine(path string) ([]string, error) {
 
 	return lines, nil
 }
+
+func GetNumberOfLine(path string) (int, error) {
+	// Open the file
+	file, err := os.Open(path)
+	if err != nil {
+		return 0, err
+	}
+	defer file.Close() // Ensure the file is closed after reading
+
+	var count int
+	scanner := bufio.NewScanner(file)
+
+	// Read each line
+	for scanner.Scan() {
+		count++
+	}
+
+	// Check for errors encountered during scanning
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

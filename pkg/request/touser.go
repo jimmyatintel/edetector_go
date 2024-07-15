@@ -27,6 +27,7 @@ type ReadyData struct {
 	Failed   string
 	RedisKey string
 	Progress int
+	LoadDll  bool
 }
 
 func RequestToUser(id string) {
@@ -79,10 +80,11 @@ func RequestToUser(id string) {
 // LoadDumpReady updates progress in redis and informs API
 func LoadDumpReady(info ReadyData) {
 	// check taskId exists in pendingDump:USERID
-	if redis.CheckDumpTaskExists(info.TaskId) == false {
+	if !info.LoadDll && !redis.CheckDumpTaskExists(info.TaskId) {
 		logger.Warn("TaskId does not exist in pendingDump:USERID")
 		return
 	}
+	logger.Debug("TaskId exists in pendingDump:USERID")
 
 	// Marshal payload into JSON
 	payload, err := json.Marshal(ReadyRequest{
@@ -96,15 +98,19 @@ func LoadDumpReady(info ReadyData) {
 
 	// update info in redis
 	redis.UpdateDumpTaskInfo(info.TaskId, info.Failed, info.Progress)
+	logger.Debug("Updated task info in redis")
 
-	// update pending dump in redis
-	if info.Progress == 100 {
-		redis.UpdatePendingDump(info.TaskId, 1)
-	} else if info.Progress == -1 {
-		redis.UpdatePendingDump(info.TaskId, -1)
-	} else if info.Progress == -2 {
-		redis.UpdatePendingDump(info.TaskId, -2)
+	// update pending dump in redis if the task is not loadDll
+	if !info.LoadDll {
+		if info.Progress == 100 {
+			redis.UpdatePendingDump(info.TaskId, 1)
+		} else if info.Progress == -1 {
+			redis.UpdatePendingDump(info.TaskId, -1)
+		} else if info.Progress == -2 {
+			redis.UpdatePendingDump(info.TaskId, -2)
+		}
 	}
+	logger.Debug("Updated pending dump in redis")
 
 	// remove key from redis if the progress is 100, -1, -2
 	if info.Progress == 100 || info.Progress == -1 || info.Progress == -2 {
@@ -112,6 +118,7 @@ func LoadDumpReady(info ReadyData) {
 			logger.Error("Error deleting key from redis: " + err.Error())
 		}
 	}
+	logger.Debug("Deleted task key from redis (progress = 100, -1, -2)")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -145,10 +152,12 @@ func LoadDumpReady(info ReadyData) {
 		}
 	}
 	defer response.Body.Close()
+	logger.Debug("Sent request to API")
 
 	// Check the response status code
 	if response.StatusCode != http.StatusOK {
 		logger.Error("Request failed with status code: " + fmt.Sprint(response.StatusCode))
 		return
 	}
+	logger.Debug("Receive response from API")
 }

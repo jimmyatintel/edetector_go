@@ -43,6 +43,7 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   taskId,
 			Failed:   "InternalServerError",
 			RedisKey: key + string(task.START_LOAD_DLL) + pid,
+			LoadDll:  true,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -61,6 +62,7 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   taskId,
 			Failed:   "InternalServerError",
 			RedisKey: key + string(task.START_LOAD_DLL) + pid,
+			LoadDll:  true,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -90,6 +92,7 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
 			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			LoadDll:  true,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -102,6 +105,7 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   connInfo.TaskId,
 			Failed:   "InternalServerError",
 			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			LoadDll:  true,
 			Progress: -1,
 		})
 		return task.FAIL, err
@@ -136,6 +140,7 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
 				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				LoadDll:  true,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -148,6 +153,7 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
 				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				LoadDll:  true,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -161,6 +167,7 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 				TaskId:   connInfo.TaskId,
 				Failed:   "InternalServerError",
 				RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+				LoadDll:  true,
 				Progress: -1,
 			})
 			return task.FAIL, err
@@ -171,6 +178,7 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   connInfo.TaskId,
 			DllPaths: strings.Join(lines, "|"),
 			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			LoadDll:  true,
 			Progress: 100,
 		})
 
@@ -185,6 +193,7 @@ func GiveLoadDllEnd(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 			TaskId:   connInfo.TaskId,
 			Failed:   key + "::GiveLoadDllInfo: pid not found",
 			RedisKey: key + string(task.START_LOAD_DLL) + connInfo.Msg,
+			LoadDll:  true,
 			Progress: -1,
 		})
 	}

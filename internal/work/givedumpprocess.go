@@ -102,7 +102,7 @@ func GiveDumpProcessInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error
 	key, msg := p.GetRkey(), p.GetMessage()
 	logger.Info(key + "::GiveDumpProcessInfo: " + msg)
 
-	dataLen := strings.Split(p.GetMessage(), "|")[0]
+	dataLen := msg
 	if dataLen == "-1" {
 		logger.Warn(key + "::GiveDumpProcessInfo: Dump process path not found")
 	}

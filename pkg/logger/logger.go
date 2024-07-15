@@ -76,7 +76,7 @@ func Debug(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
-	callerFields := getCallerInfoForLog()
+	callerFields := GetCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Debug(message, fields...)
 }
@@ -85,7 +85,7 @@ func Info(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
-	callerFields := getCallerInfoForLog()
+	callerFields := GetCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Info(message, fields...)
 }
@@ -94,7 +94,7 @@ func Warn(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
-	callerFields := getCallerInfoForLog()
+	callerFields := GetCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Warn(message, fields...)
 	StoreLogToDB("WARN", message)
@@ -104,7 +104,7 @@ func Error(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
-	callerFields := getCallerInfoForLog()
+	callerFields := GetCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Error(message, fields...)
 	StoreLogToDB("ERROR", message)
@@ -114,13 +114,13 @@ func Panic(message string, fields ...zap.Field) {
 	if Log == nil {
 		return
 	}
-	callerFields := getCallerInfoForLog()
+	callerFields := GetCallerInfoForLog()
 	fields = append(fields, callerFields...)
 	Log.Panic(message, fields...)
 	StoreLogToDB("PANIC", message)
 }
 
-func getCallerInfoForLog() (callerFields []zap.Field) {
+func GetCallerInfoForLog() (callerFields []zap.Field) {
 	pc, file, line, ok := runtime.Caller(2)
 	if !ok {
 		return

@@ -28,10 +28,10 @@ func init() {
 
 		GIVE_MEMORY_TREE_INFO: "StartMemoryTree",
 
-		GIVE_DUMP_DLL_INFO:     "StartDumpDll",
-		GIVE_DUMP_PROCESS_INFO: "StartDumpProcess",
-		GIVE_LOAD_DLL_INFO:     "StartLoadDll",
-		GIVE_DUMP_DRIVE_INFO:   "StartDumpDrive",
+		READY_DUMP_DLL:     "StartDumpDll",
+		READY_DUMP_PROCESS: "StartDumpProcess",
+		GIVE_LOAD_DLL_INFO: "StartLoadDll",
+		READY_DUMP_DRIVE:   "StartDumpDrive",
 	}
 
 	UserTaskTypeMap = map[UserTaskType]string{
