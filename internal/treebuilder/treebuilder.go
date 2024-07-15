@@ -26,11 +26,12 @@ var count int
 var cancelMap = map[string][]context.CancelFunc{}
 
 type Relation struct {
-	UUID   string
-	Name   string
-	Path   string
-	IsRoot bool
-	Child  []string
+	UUID    string
+	Name    string
+	Path    string
+	DataLen int64
+	IsRoot  bool
+	Child   []string
 }
 
 func builder_init() {
@@ -166,9 +167,16 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 			}
 			generateUUID(agent, parent, &UUIDMap, &RelationMap)
 			generateUUID(agent, child, &UUIDMap, &RelationMap)
-			// record name
+			// record name and dataLen
 			tmp := RelationMap[child]
 			tmp.Name = values[0]
+			tmp.DataLen, err = strconv.ParseInt(values[7], 10, 64)
+			if err != nil {
+				logger.Error("Error getting dataLen (" + agent + "-" + diskInfo + "): " + err.Error())
+				mariadbquery.Failed_task(agent, "StartGetDrive", 6)
+				clearBuilder(agent, diskInfo, explorerFile)
+				return
+			}
 			RelationMap[child] = tmp
 			// record relation
 			if parent == child {
@@ -196,6 +204,12 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	taskID := mariadbquery.Load_task_id(agent, "StartGetDrive", 2)
 	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
+
+	// TODO: count file size for FAT and others
+	diskType := strings.Split(diskInfo, "|")[1]
+	if diskType != "NTFS" {
+		countFileSize(rootInd, &UUIDMap, &RelationMap)
+	}
 
 	// send to elastic
 	headData := Collect_Explorer{}
@@ -251,7 +265,7 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 					WriteTime:         strToInt(explorerDataRaw[4]),
 					AccessTime:        strToInt(explorerDataRaw[5]),
 					EntryModifiedTime: getEntryModifiedTime(fileSystem, explorerDataRaw[6]),
-					Datalen:           int64(strToInt(explorerDataRaw[7])),
+					Datalen:           RelationMap[child].DataLen,
 					Path:              RelationMap[child].Path,
 					Disk:              diskInfo,
 					MD5_Sig:           getMD5Sig(fileSystem, explorerDataRaw[6]),
