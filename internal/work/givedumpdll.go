@@ -29,9 +29,10 @@ func ReadyDumpDll(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 
 	// store taskId and msg to ConnMsgMap
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  taskId,
-		Msg:     msg,
-		DataLen: 0,
+		TaskId:     taskId,
+		Msg:        msg,
+		DataLen:    0,
+		CurDataLen: 0,
 	})
 
 	return task.SUCCESS, nil
@@ -123,11 +124,7 @@ func GiveDumpDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
-	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  connInfo.TaskId,
-		Msg:     connInfo.Msg,
-		DataLen: dataLen,
-	})
+	connectionmap.UpdateConnInfoDataLen(conn, dataLen)
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
@@ -169,8 +166,10 @@ func GiveDumpDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		return task.FAIL, err
 	}
 
+	curDataLen := connectionmap.UpdateConnInfoCurDataLen(conn, len(content))
+
 	// update progress
-	progress := config.Viper.GetFloat64("DUMP_FIRST_PART") + float64(len(content))/float64(connInfo.DataLen)*(100-config.Viper.GetFloat64("DUMP_FIRST_PART"))
+	progress := config.Viper.GetFloat64("DUMP_FIRST_PART") + float64(curDataLen)/float64(connInfo.DataLen)*(99-config.Viper.GetFloat64("DUMP_FIRST_PART"))
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),

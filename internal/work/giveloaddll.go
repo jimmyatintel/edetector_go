@@ -1,6 +1,7 @@
 package work
 
 import (
+	"edetector_go/config"
 	clientsearchsend "edetector_go/internal/clientsearch/send"
 	"edetector_go/internal/connectionmap"
 	packet "edetector_go/internal/packet"
@@ -50,9 +51,10 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	}
 
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  taskId,
-		Msg:     pid,
-		DataLen: total,
+		TaskId:     taskId,
+		Msg:        pid,
+		DataLen:    total,
+		CurDataLen: 0,
 	})
 
 	// send data right msg to client
@@ -97,6 +99,13 @@ func GiveLoadDllData(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 		})
 		return task.FAIL, err
 	}
+
+	curDataLen := connectionmap.UpdateConnInfoCurDataLen(conn, len(content))
+	progress := config.Viper.GetFloat64("DUMP_FIRST_PART") + float64(curDataLen)/float64(connInfo.DataLen)*(99-config.Viper.GetFloat64("DUMP_FIRST_PART"))
+	request.LoadDumpReady(request.ReadyData{
+		TaskId:   connInfo.TaskId,
+		Progress: int(progress),
+	})
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {

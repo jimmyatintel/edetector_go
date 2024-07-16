@@ -100,11 +100,7 @@ func GiveDumpDriveInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 	}
 
 	// update data length in ConnMsgMap
-	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  connInfo.TaskId,
-		Msg:     connInfo.Msg,
-		DataLen: dataLen,
-	})
+	connectionmap.UpdateConnInfoDataLen(conn, dataLen)
 
 	// send data right msg to client
 	if err := clientsearchsend.SendTCPtoClient(p, task.DATA_RIGHT, "", conn); err != nil {
@@ -146,8 +142,10 @@ func GiveDumpDriveData(p packet.Packet, conn net.Conn) (task.TaskResult, error) 
 		return task.FAIL, err
 	}
 
+	curDataLen := connectionmap.UpdateConnInfoCurDataLen(conn, len(content))
+
 	// update Progress
-	progress := config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART") + float64(len(content))/float64(connInfo.DataLen)*(config.Viper.GetFloat64("DUMP_DRIVE_THIRD_PART")-config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART"))
+	progress := config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART") + float64(curDataLen)/float64(connInfo.DataLen)*(config.Viper.GetFloat64("DUMP_DRIVE_THIRD_PART")-config.Viper.GetFloat64("DUMP_DRIVE_SECOND_PART"))
 	request.LoadDumpReady(request.ReadyData{
 		TaskId:   connInfo.TaskId,
 		Progress: int(progress),

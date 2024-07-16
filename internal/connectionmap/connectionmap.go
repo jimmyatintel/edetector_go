@@ -8,9 +8,10 @@ import (
 var ConnInfoMap = sync.Map{}
 
 type ConnInfo struct {
-	TaskId  string
-	Msg     string
-	DataLen int
+	TaskId     string
+	Msg        string
+	DataLen    int
+	CurDataLen int
 }
 
 func StoreConnInfo(conn net.Conn, data ConnInfo) {
@@ -27,4 +28,27 @@ func GetConnInfo(conn net.Conn) (ConnInfo, bool) {
 
 func RemoveConnInfo(conn net.Conn) {
 	ConnInfoMap.Delete(conn)
+}
+
+func UpdateConnInfoCurDataLen(conn net.Conn, dataLen int) int {
+	data, ok := ConnInfoMap.Load(conn)
+	if !ok {
+		return 0
+	}
+	connInfo := data.(ConnInfo)
+	connInfo.CurDataLen += dataLen
+	ConnInfoMap.Store(conn, connInfo)
+
+	return connInfo.CurDataLen
+}
+
+func UpdateConnInfoDataLen(conn net.Conn, dataLen int) {
+	data, ok := ConnInfoMap.Load(conn)
+	if !ok {
+		return
+	}
+	connInfo := data.(ConnInfo)
+	connInfo.DataLen = dataLen
+	connInfo.CurDataLen = 0
+	ConnInfoMap.Store(conn, connInfo)
 }

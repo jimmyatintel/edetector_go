@@ -29,9 +29,10 @@ func ReadyDumpDrive(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (ta
 	}
 
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
-		TaskId:  taskId,
-		Msg:     path,
-		DataLen: 0,
+		TaskId:     taskId,
+		Msg:        path,
+		DataLen:    0,
+		CurDataLen: 0,
 	})
 
 	go GiveDumpDrivePathInfo(p, conn, dataRight)
