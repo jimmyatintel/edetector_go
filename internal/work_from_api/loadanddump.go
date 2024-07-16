@@ -270,6 +270,11 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 			return task.FAIL, errors.New("hitMap[\"_source\"] is not a map")
 		}
 
+		// skip the wrong path and original path
+		if !strings.Contains(source["etc_main"].(string), filePath) || source["etc_main"].(string) == filePath {
+			continue
+		}
+
 		explorerData, ok := source["explorer"].(map[string]interface{})
 		if !ok {
 			errHandler(true, "source[\"explorer\"] is not a map")
