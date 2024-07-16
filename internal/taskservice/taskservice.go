@@ -250,12 +250,9 @@ func ErrorResponse(c *gin.Context, err error, msg string) {
 
 func DeleteAgentData(key string) {
 	query.DeleteAgent(key)
-	redisData := redis.GetKeysMatchingPattern(key + "*")
-	for _, r := range redisData {
-		err := redis.RedisDelete(r)
-		if err != nil {
-			logger.Error("Error deleting data from redis: " + err.Error())
-		}
+	err := redis.DeleteKeysMatchingPattern(key + "*")
+	if err != nil {
+		logger.Error("Error deleting key: " + err.Error())
 	}
 }
 

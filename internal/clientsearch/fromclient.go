@@ -226,6 +226,11 @@ func connectionClosedByAgent(key string, agentTaskType string, lastTask string, 
 			taskservice.DeleteAgentData(key)
 			logger.Info("Finish remove agent: " + key)
 		}
+		// remove all loadDll, DumpDll, DumpProcess, DumpDrive tasks in redis to avoid duplicate task
+		redis.DeleteKeysMatchingPattern(key + string(task.START_LOAD_DLL) + "*")
+		redis.DeleteKeysMatchingPattern(key + string(task.START_DUMP_DLL) + "*")
+		redis.DeleteKeysMatchingPattern(key + string(task.START_DUMP_DRIVE) + "*")
+		redis.DeleteKeysMatchingPattern(key + string(task.START_DUMP_PROCESS) + "*")
 	} else if agentTaskType != "unknown" {
 		if !strings.Contains(lastTask, "End") {
 			mq.Failed_task(key, agentTaskType, 7)
