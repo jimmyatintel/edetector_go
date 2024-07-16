@@ -252,8 +252,7 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 
 	hitsArray = elastic.SearchRequest(config.Viper.GetString("ELASTIC_PREFIX")+"_explorer", query, "uuid", 0)
 	if len(hitsArray) == 0 {
-		errHandler(true, "hitsArray is empty")
-		return task.FAIL, errors.New("hitsArray is empty")
+		logger.Info("StartDumpDrive: hitsArray is empty -> no children")
 	}
 
 	isFirst, isDirectory := true, true
