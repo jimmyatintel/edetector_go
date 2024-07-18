@@ -4,6 +4,7 @@ import (
 	"bytes"
 	config "edetector_go/config"
 	C_AES "edetector_go/internal/C_AES"
+	"edetector_go/internal/connectionmap"
 	"edetector_go/internal/task"
 	"edetector_go/internal/taskservice"
 	"fmt"
@@ -197,7 +198,27 @@ func handleTCPRequest(conn net.Conn, task_chan chan packet.Packet, port string) 
 					// tell agent to stop current task
 					agentTaskName := strings.Replace(agentTaskType, "Start", "", 1)
 					agentTaskName = strings.Replace(agentTaskName, "Get", "", 1)
-					clientsearchsend.SendTCPtoClient(NewPacket, task.TERMINATE_ALL, agentTaskName, conn)
+					if NewPacket.GetTaskType() == task.GIVE_LOAD_DLL_INFO {
+						connInfo, ok := connectionmap.GetConnInfo(conn)
+						if ok {
+							agentTaskName += "|" + connInfo.Msg
+						} else {
+							msg := strings.Split(NewPacket.GetMessage(), "|")
+							agentTaskName += "|" + msg[1] + "|" + msg[2]
+						}
+					} else if agentTaskName == "DumpProcess" || agentTaskName == "LoadDll" || agentTaskName == "DumpDll" || agentTaskName == "DumpDrive" {
+						connInfo, ok := connectionmap.GetConnInfo(conn)
+						if ok {
+							agentTaskName += "|" + connInfo.Msg
+						} else {
+							agentTaskName += NewPacket.GetMessage()
+						}
+					}
+					logger.Info("Terminate task: " + agentTaskName)
+					err := clientsearchsend.SendUserTCPtoClientUsingKey(NewPacket.GetRkey(), task.TERMINATE_ALL, agentTaskName)
+					if err != nil {
+						logger.Error("Error Sending: " + err.Error())
+					}
 					mq.Failed_task(NewPacket.GetRkey(), agentTaskType, 6)
 				}
 			}

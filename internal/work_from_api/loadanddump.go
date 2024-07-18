@@ -23,7 +23,7 @@ func StartLoadDll(key, taskId, msg string) (task.TaskResult, error) {
 	logger.Info(key + "::StartLoadDll: " + msg)
 
 	// store taskId in redis
-	redisKey := key + string(task.START_LOAD_DLL) + strings.Split(msg, "|")[0]
+	redisKey := key + string(task.START_LOAD_DLL) + msg
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
 		logger.Error("StartLoadDll: redis set error" + err.Error())
 		request.LoadDumpReady(request.ReadyData{
@@ -58,8 +58,7 @@ func StartDumpDll(key, taskId, msg string) (task.TaskResult, error) {
 	logger.Info(key + "::StartDumpDll: " + msg)
 
 	// store taskId in redis
-	msgs := strings.Split(msg, "|")
-	redisKey := key + string(task.START_DUMP_DLL) + msgs[0] + "|" + msgs[1]
+	redisKey := key + string(task.START_DUMP_DLL) + msg
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
 		logger.Error("StartDumpDll: redis set error" + err.Error())
 		request.LoadDumpReady(request.ReadyData{
@@ -90,7 +89,7 @@ func StartDumpProcess(key, taskId, msg string) (task.TaskResult, error) {
 	logger.Info(key + "::StartDumpProcess: " + msg)
 
 	// store taskId in redis
-	redisKey := key + string(task.START_DUMP_PROCESS) + strings.Split(msg, "|")[0]
+	redisKey := key + string(task.START_DUMP_PROCESS) + msg
 	if err := redis.RedisSet(redisKey, taskId); err != nil {
 		logger.Error("StartDumpProcess: redis set error" + err.Error())
 		request.LoadDumpReady(request.ReadyData{
@@ -255,7 +254,6 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 		logger.Info("StartDumpDrive: hitsArray is empty -> no children")
 	}
 
-	isFirst, isDirectory := true, true
 	for _, hit := range hitsArray {
 		hitMap, ok := hit.(map[string]interface{})
 		if !ok {
@@ -311,21 +309,9 @@ func StartDumpDrive(key, taskId, msg string) (task.TaskResult, error) {
 			}
 		}
 		file.WriteFile(filepath.Join(dumpWorkingPath, taskId+".txt"), []byte(data))
-
-		if isFirst {
-			isDirectory = explorerData["isDirectory"].(bool)
-			isFirst = false
-		}
 	}
 
-	toAgentMsg := filePath
-	if isDirectory {
-		toAgentMsg += "|1"
-	} else {
-		toAgentMsg += "|0"
-	}
-
-	err = clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_DUMP_DRIVE, toAgentMsg)
+	err = clientsearchsend.SendUserTCPtoClientUsingKey(key, task.GET_DUMP_DRIVE, filePath)
 	if err != nil {
 		errHandler(true, "send tcp error: "+err.Error())
 		return task.FAIL, err

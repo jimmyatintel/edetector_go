@@ -218,9 +218,9 @@ func GiveDumpDriveFailedEnd(p packet.Packet, conn net.Conn) (task.TaskResult, er
 			logger.Error("Error removing file: " + err.Error())
 		}
 	}
-	if err := os.Remove(dumpPathPath); err != nil {
-		logger.Error("Error removing txt in working path: " + err.Error())
-	}
+	// if err := os.Remove(dumpPathPath); err != nil {
+	// 	logger.Error("Error removing txt in working path: " + err.Error())
+	// }
 
 	return task.SUCCESS, nil
 }

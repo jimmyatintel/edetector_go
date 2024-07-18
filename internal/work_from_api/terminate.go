@@ -22,7 +22,7 @@ func init() {
 
 func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 	key := p.GetRkey()
-	logger.Info("Terminate: " + key + "::" + p.GetMessage())
+	logger.Info(key + "::" + "Terminate")
 	handlingTasks, err := query.Load_stored_task("nil", key, 2, "nil")
 	if err != nil {
 		return task.FAIL, err
@@ -46,7 +46,7 @@ func Terminate(p packet.UserPacket) (task.TaskResult, error) {
 			query.Terminated_task(key, t[3], 2)
 		}
 	}
-	err = clientsearchsend.SendUserTCPtoClient(p, task.TERMINATE_ALL, p.GetMessage())
+	err = clientsearchsend.SendUserTCPtoClient(p, task.TERMINATE_ALL, "All")
 	if err != nil {
 		return task.FAIL, err
 	}

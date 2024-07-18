@@ -17,11 +17,11 @@ import (
 )
 
 func ReadyDumpDrive(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (task.TaskResult, error) {
-	key, path := p.GetRkey(), p.GetMessage()
-	logger.Info(key + "::ReadyDumpDrive: " + path)
+	key, msg := p.GetRkey(), p.GetMessage()
+	logger.Info(key + "::ReadyDumpDrive: " + msg)
 
 	// save dump drive path in ConnMsg
-	redisKey := key + string(task.START_DUMP_DRIVE) + path
+	redisKey := key + string(task.START_DUMP_DRIVE) + msg
 	taskId, err := redis.RedisGetString(redisKey)
 	if err != nil {
 		logger.Error("Error getting taskId from redis: " + err.Error())
@@ -30,7 +30,7 @@ func ReadyDumpDrive(p packet.Packet, conn net.Conn, dataRight chan net.Conn) (ta
 
 	connectionmap.StoreConnInfo(conn, connectionmap.ConnInfo{
 		TaskId:     taskId,
-		Msg:        path,
+		Msg:        msg,
 		DataLen:    0,
 		CurDataLen: 0,
 	})

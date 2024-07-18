@@ -21,7 +21,7 @@ func GiveLoadDllInfo(p packet.Packet, conn net.Conn) (task.TaskResult, error) {
 	// retrieve data from packet
 	key := p.GetRkey()
 	msg, msgs := p.GetMessage(), strings.Split(p.GetMessage(), "|")
-	dataLen, pid := msgs[0], msgs[1]
+	dataLen, pid := msgs[0], msgs[1]+"|"+msgs[2]
 	logger.Info(key + "::GiveLoadDllInfo: " + msg)
 
 	// get taskId from the redis
