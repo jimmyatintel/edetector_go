@@ -236,3 +236,23 @@ func UpdateDumpTaskInfo(taskId, failure string, progress int) {
 		logger.Error("Error updating dump progress: " + err.Error())
 	}
 }
+
+func CheckProgress(taskId string, progress int) bool {
+	// create a context for redis HGet
+	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
+	defer cancel()
+
+	// get the current progress
+	currentProgress, err := RedisClient.HGet(ctx, "DumpTask:"+taskId, "progress").Result()
+	if err != nil {
+		logger.Error("Error getting progress from dump task: " + err.Error())
+		return false
+	}
+
+	// check if the progress is the same
+	if currentProgress == strconv.Itoa(progress) {
+		return false
+	} else {
+		return true
+	}
+}
