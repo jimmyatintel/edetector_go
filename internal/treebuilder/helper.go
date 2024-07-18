@@ -101,8 +101,8 @@ func treeTraversal(agent string, ind int, isRoot bool, path string, diskInfo str
 func countFileSize(uuid int, UUIDMap *map[string]int, RelationMap *map[int](Relation)) int64 {
 	relation := (*RelationMap)[uuid]
 
-	// return dataLen if it is not a directory
-	if len(relation.Child) == 0 {
+	// return dataLen if the dataLen is already calculated or it is not a directory
+	if relation.DataLen > 0 || len(relation.Child) == 0 {
 		return relation.DataLen
 	}
 

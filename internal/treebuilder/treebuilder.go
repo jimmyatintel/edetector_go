@@ -205,11 +205,9 @@ func treeBuilder(ctx context.Context, explorerFile string, agent string, diskInf
 	treeTraversal(agent, rootInd, true, "", diskInfo, &UUIDMap, &RelationMap, taskID)
 	logger.Info("Tree traversal & send relation to elastic (" + agent + "-" + diskInfo + ")")
 
-	// TODO: count file size for FAT and others
-	diskType := strings.Split(diskInfo, "|")[1]
-	if diskType != "NTFS" {
-		countFileSize(rootInd, &UUIDMap, &RelationMap)
-	}
+	// count file size
+	countFileSize(rootInd, &UUIDMap, &RelationMap)
+	logger.Info("Finsh counting file size (" + agent + "-" + diskInfo + ")")
 
 	// send to elastic
 	headData := Collect_Explorer{}
