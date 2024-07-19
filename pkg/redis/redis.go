@@ -237,7 +237,7 @@ func UpdateDumpTaskInfo(taskId, failure string, progress int) {
 	}
 }
 
-func CheckProgress(taskId string, progress int) bool {
+func NeedToUpdateProgress(taskId string, progress int) bool {
 	// create a context for redis HGet
 	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Millisecond)
 	defer cancel()

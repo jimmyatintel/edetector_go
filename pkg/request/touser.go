@@ -80,7 +80,7 @@ func RequestToUser(id string) {
 // LoadDumpReady updates progress in redis and informs API
 func LoadDumpReady(info ReadyData) {
 	// if progress is the same --> no need to update
-	if redis.CheckProgress(info.TaskId, info.Progress) {
+	if !redis.NeedToUpdateProgress(info.TaskId, info.Progress) {
 		return
 	}
 
