@@ -39,7 +39,11 @@ func UpdateConnInfoCurDataLen(conn net.Conn, dataLen int) int {
 	connInfo.CurDataLen += dataLen
 	ConnInfoMap.Store(conn, connInfo)
 
-	return connInfo.CurDataLen
+	if connInfo.CurDataLen >= connInfo.DataLen {
+		return connInfo.DataLen
+	} else {
+		return connInfo.CurDataLen
+	}
 }
 
 func UpdateConnInfoDataLen(conn net.Conn, dataLen int) {
